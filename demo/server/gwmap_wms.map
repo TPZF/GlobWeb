@@ -1,0 +1,87 @@
+# http://127.0.0.1/cgi-bin/mapserv.exe?MAP=C:/ms4w/apps/globweb/gwmap_wms.map&SERVICE=wms&VERSION=1.1.1&REQUEST=GetMAP&SRS=EPSG:4326&LAYERS=PO150m&WIDTH=2048&HEIGHT=1024&BBOX=0,40,10,45&FORMAT=image/tiff
+
+MAP
+
+NAME WMS_server
+STATUS ON
+SIZE 400 400
+#SYMBOLSET ../etc/symbols.txt
+## ESPG:4326 extents:
+EXTENT -180 -90 180 90
+UNITS DD
+SHAPEPATH "E:/Data"
+IMAGECOLOR 255 255 255
+#FONTSET ../etc/fonts.txt
+
+OUTPUTFORMAT
+	NAME jpeg
+	DRIVER "AGG/JPEG"
+	MIMETYPE "image/jpeg"
+	IMAGEMODE RGB
+	EXTENSION "jpg"
+END
+
+OUTPUTFORMAT
+	NAME asc
+	DRIVER "GDAL/AAIGrid"
+	MIMETYPE "text/plain"
+	IMAGEMODE INT16
+	EXTENSION "asc"
+END
+
+#
+# Start of web interface definition
+#
+WEB
+#
+# On Windows systems, /tmp and /tmp/ms_tmp/ should be created at the root 
+# of the drive where the .MAP file resides.
+#
+  IMAGEPATH "C:/ms4w/tmp/ms_tmp/" 
+  IMAGEURL "/ms_tmp/"
+  METADATA
+    "wms_title"   "GlobWeb WMS Server"
+    "wms_onlineresource" "http://127.0.0.1/cgi-bin/mapserv.exe?MAP=C:/ms4w/apps/globweb/gwmap_wms.map"
+    "wms_srs"   "EPSG:4326"
+    "wms_feature_info_mime_type" "text/html"
+    "wms_abstract"      "WMS server for GlobWeb."
+  END
+END
+
+PROJECTION
+  "init=epsg:4326"
+END
+
+
+#
+# Start of layer definitions
+#
+
+LAYER
+  NAME PO150m
+  METADATA
+    "wms_title" "PO150m"
+  END
+  TYPE RASTER
+  STATUS OFF
+  DATA PO150m_ycbcr.tif
+  PROJECTION
+    "init=epsg:4326"
+  END
+END
+
+LAYER
+  NAME GTOPO
+  METADATA
+    "wms_title" "GTOPO"
+  END
+  TYPE RASTER
+  STATUS ON
+  DATA gtopo/gtopo30_new.tif
+  PROCESSING "RESAMPLE=BILINEAR"
+  PROJECTION
+    "init=epsg:4326"
+  END
+END
+
+END # Map File

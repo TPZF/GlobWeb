@@ -1,0 +1,96 @@
+<html>
+
+<head>
+<title>GroundOverlay tests</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
+<script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
+<script type="text/javascript" src="../src/GlobWeb.js"></script>
+
+</head>
+
+
+<body>
+
+<script type="text/javascript">
+
+	$(document).ready(function(){
+
+    test("Simple Transform", function()
+	{
+		var quad = [ [4,5], [5,5], [5,6], [4,6] ];
+		var go = new GlobWeb.GroundOverlay( "", quad );
+		
+		var p = go.transformFromSquare( [0,0] );
+		deepEqual( p, [4,5] );
+	
+		p = go.transformFromSquare( [1,1] );
+		deepEqual( p, [5,6] );	
+ 	
+		p = go.transformFromSquare( [0.5,0.5] );
+		deepEqual( p, [4.5,5.5] );	
+  });
+
+	test("Simple Inverse Transform", function()
+	{
+		var quad = [ [4,5], [5,5], [5,6], [4,6] ];
+		var go = new GlobWeb.GroundOverlay( "", quad );
+		
+		var p = go.transformToSquare( [4,5] );
+		deepEqual( p, [0,0] );
+	
+		p = go.transformToSquare( [5,6] );
+		deepEqual( p, [1,1] );	
+ 	
+		p = go.transformToSquare( [4.5,5.5] );
+		deepEqual( p, [0.5,0.5] );	
+	});
+	
+    test("Complex Transform", function()
+	{
+		var quad = [ [4,5], [5,7], [3,8], [2,7] ];
+		var go = new GlobWeb.GroundOverlay( "", quad );
+		
+		var p = go.transformFromSquare( [0,0] );
+		deepEqual( p, [4,5] );
+	
+		p = go.transformFromSquare( [1,1] );
+		deepEqual( p, [3,8] );	
+ 	});
+
+	test("Complex Inverse Transform", function()
+	{
+		var quad = [ [4,5], [5,7], [3,8], [2,7] ];
+		var go = new GlobWeb.GroundOverlay( "", quad );
+		
+		var p = go.transformToSquare( [4,5] );
+		deepEqual( p, [0,0], 0.00001 );
+	
+		p = go.transformToSquare( [3,8] );
+		deepEqual( p, [1,1], 0.00001 );
+		
+		var p1 = go.transformToSquare( [4,6] );
+		var p2 = go.transformFromSquare( p1 );
+		deepEqual( [4,6], p2, 0.00001 );
+ 		
+		p1 = go.transformToSquare( [4,7] );
+		p2 = go.transformFromSquare( p1 );
+		deepEqual( [4,7], p2, 0.00001 );
+	});
+	
+	});
+	
+</script>
+
+<h1 id="qunit-header">QUnit GlobWeb</h1>
+<h2 id="qunit-banner"></h2>
+<div id="qunit-testrunner-toolbar"></div>
+<h2 id="qunit-userAgent"></h2>
+<ol id="qunit-tests"></ol>
+
+</body>
+
+</html>
+

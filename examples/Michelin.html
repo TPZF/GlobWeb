@@ -1,0 +1,104 @@
+<html>
+
+<head>
+<title>GlobWeb example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+<script type="text/javascript" src="../src/GlobWeb.js"></script>
+
+<script type="text/javascript">
+	
+	var fpsElement = null;
+	var globe = null;
+	
+	function stats()
+	{
+		if ( !globe.isRunning )
+			return;
+//		console.log( "FPS : " + numFrames );
+		console.log( "Num rendered tiles : " + globe.tileManager.numRenderedTiles );
+//		console.log( "Num traversed tiles : " + globe.tileManager.numTraversedTiles );
+//		console.log( "Num tiles : " + GlobWeb.tileManager.tileMap.getCount() );
+//		console.log( "Num created textures : " + GlobWeb.TilePool.numCreatedTextures );
+//		console.log( "Num reused textures : " + GlobWeb.TilePool.numReusedTextures );
+//		console.log( "Num created meshes : " + GlobWeb.TilePool.numCreatedMeshses );
+		console.log( "Num tile generated : " + globe.tileManager.numTilesGenerated + " " + GlobWeb.RenderContext.numFrames );
+/*		console.log( "TT : " + globe.tileManager.traversingTime / GlobWeb.RenderContext.numFrames + " RT : " + globe.tileManager.renderTime / GlobWeb.RenderContext.numFrames
+					+ " GT : " + globe.tileManager.generateTime / GlobWeb.RenderContext.numFrames
+					+ " LT : " + globe.tileManager.requestTime / GlobWeb.RenderContext.numFrames );
+			
+		globe.tileManager.traversingTime = 0;
+		globe.tileManager.renderTime = 0;
+		globe.tileManager.generateTime = 0;
+		globe.tileManager.requestTime = 0;*/
+
+		globe.tileManager.numTilesGenerated = 0;
+
+		if ( fpsElement != null )
+		{
+			fpsElement.innerHTML = "<span style=\"font-weight:bold\">FPS : " + GlobWeb.RenderContext.numFrames + "</span>";
+		}
+
+		var geoBound = GlobWeb.RenderContext.getViewportGeoBound();
+		GlobWeb.RenderContext.numFrames = 0;
+	}
+	
+	
+    function webGLStart() 
+	{	
+		globe = new GlobWeb.Globe("GlobWebCanvas");
+	//	globe.setAtmosphereVisible(true);
+	//	globe.setTiling(16,4,2);
+	//	globe.tileManager.textureSize = 128;
+
+		var navigator = new GlobWeb.Navigator(globe);
+		navigator.setupDefaultEventHandlers(true);
+		fpsElement = document.getElementById("fps");
+		
+		var publicWMSProvider = new GlobWeb.WMSTileProvider("http://demonstrator.vegaspace.com/wmspub",
+					{ layers: "BlueMarble,esat" } );
+		globe.setImageryProvider( publicWMSProvider );
+		var elevationProvider = new GlobWeb.PHPTileProvider("http://demonstrator.vegaspace.com/json_elevations/get.php");
+		globe.setElevationProvider( elevationProvider );
+		
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function(e)
+		{
+			if ( xhr.readyState == 4 )
+			{
+				var doc =  xhr.responseXML;
+				var points = doc.getElementsByTagName("point");
+				var coords = [];
+				for (var i = 0; i < points.length; i++)
+				{
+					var lon = points[i].getElementsByTagName("lon")[0];
+					var lat = points[i].getElementsByTagName("lat")[0];
+					coords.push( [ lon.childNodes[0].nodeValue / 1000000.0, lat.childNodes[0].nodeValue / 1000000.0 ] );
+				}
+				var feature = { type: "Feature", geometry: { type: "LineString", coordinates: coords } };
+				globe.addFeature( feature );
+				
+				var pathAnimation = new GlobWeb.PathAnimation(coords,1000,undefined,globe);
+				pathAnimation.start();
+			}
+		};
+		xhr.open("GET","coordonnees-geo-paris-marseille.xml");
+		xhr.send();
+		window.setInterval(stats,1000);
+    }
+
+
+</script>
+
+</head>
+
+
+<body onload="webGLStart();">
+	<h1>Glob Web</h1>
+    <canvas id="GlobWebCanvas" style="border: none;" width="800" height="450"></canvas> 
+  	<br/>
+	<div id="fps"><span style="font-weight:bold">FPS : 0</span></div>
+</body>
+
+</html>
+

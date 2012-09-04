@@ -1,0 +1,118 @@
+#
+#   VizieR Astronomical Server vizier.u-strasbg.fr 	2012-05-21T08:24:57 [V1.88 (30-Jan-2012)]
+#   (replaces the 'Astrores' format originally described at
+#    http://vizier.u-strasbg.fr/doc/astrores.htx)
+#   In case of problem, please report to:	question@simbad.u-strasbg.fr
+#
+#INFO	votable-version=1.88 (30-Jan-2012)	
+#INFO	-ref=VIZ4fb9f6df6278	
+#INFO	-out.max=100	
+#INFO	queryParameters=11	
+#-oc.form=dec
+#-out.max=100
+#-out.add=_r
+#-out.add=_RAJ,_DEJ
+#-sort=_r
+#-out.src=V/53A/names
+#-nav=cat:II/144&cat:II/145&cat:V/53A&tab:{V/53A/names}&cat:VII/103&cat:J/A+A/341/553&cat:J/A+A/442/381&cat:J/A+A/451/835&cat:J/A+A/466/917&cat:J/A+A/486/505&cat:J/A+AS/93/373&cat:J/A+AS/102/89&cat:J/A+AS/104/9&cat:J/A+AS/106/257&cat:J/AJ/75/167&cat:J/AJ/126/1996&cat:J/ApJ/469/629&cat:J/ApJS/199/23&key:source=brightest+star&HTTPPRM:&-ref=VIZ4fb9f6df6278&-out.max=100&-out.form=ascii table&-out.add=_r&-out.add=_RAJ,_DEJ&-sort=_r&-oc.form=dec&-order=I&-out=HR&-out=Name&-file=.&-meta.ucd=2&-meta=1&-meta.foot=1&-usenav=1&-out.src=V/53A/names
+#-source=V/53A/names
+#-order=I
+#-out=HR
+#-out=Name
+#
+
+#RESOURCE=yCat_5053
+#Name: V/53A
+#Title: Catalogue of the Brightest Stars (Ochsenbein+ 1988)
+#Table	V_53A_names:
+#Name: V/53A/names
+#Title: Star names / Noms des etoiles
+#Column	HR	(I4)	Bright Star number	[ucd=ID_MAIN]
+#Column	Name	(a12)	Common name of the star / Nom usuel	[ucd=ID_ALTERNATIVE]
+HR;Name
+ ;
+----;------------
+ 897;Acamar
+ 472;Achernar
+4730;Acrux
+2618;Adara
+5267;Agena
+5191;Alcaid
+5062;Alcor
+1165;Alcyone
+1457;Aldebaran
+8162;Alderamin
+  39;Algenib
+ 936;Algol
+2421;Alhena
+4905;Alioth
+ 603;Almach
+8425;Alnair
+1903;Alnilam
+3748;Alphard
+5793;Alphecca
+  15;Alpheratz
+7602;Alshain
+7557;Altair
+6134;Antares
+5340;Arcturus
+1865;Arneb
+1178;Atlas
+1790;Bellatrix
+2061;Betelgeuse
+2326;Canopus
+1708;Capella
+  21;Caph
+2890;Castor
+7924;Deneb
+4534;Denebola
+4301;Dubhe
+1142;Electra
+1791;Elnath
+8308;Enif
+6705;Etamin
+8728;Fomalhaut
+ 617;Hamal
+5506;Izar
+5563;Kochab
+1149;Maia
+8781;Markab
+4660;Megrez
+ 911;Menkar
+4295;Merak
+1156;Merope
+1852;Mintaka
+ 681;Mira
+ 337;Mirach
+1017;Mirfak
+5054;Mizar
+3165;Naos
+1829;Nihal
+7121;Nunki
+4554;Phecda
+ 424;Polaris
+2990;Pollux
+2943;Procyon
+6406;Rasalgethi
+6556;Rasalhague
+3982;Regulus
+1713;Rigel
+8414;Sadalmelik
+2004;Saiph
+8775;Scheat
+ 168;Schedar
+6527;Shaula
+2491;Sirius
+5056;Spica
+7525;Tarazed
+1145;Taygete
+5291;Thuban
+5854;Unukalhai
+7001;Vega
+4932;Vindemiatrix
+1231;Zaurak
+
+#INFO	Warning=Problem in vc_coo: **no RA** **no DE** for table: V/53A/names	
+#INFO	Warning=Column '_RAJ' can'be created (V/53A/names)	
+#INFO	Warning=Problem in vc_coo: **no RA** **no DE** for table: V/53A/names	
+#INFO	Warning=Column '_DEJ' can'be created (V/53A/names)	

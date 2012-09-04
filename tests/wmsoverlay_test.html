@@ -1,0 +1,120 @@
+<html>
+
+<head>
+<title>GroundOverlay tests</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
+<script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
+<script type="text/javascript" src="../src/GlobWeb.js"></script>
+
+</head>
+
+
+<body>
+
+<script type="text/javascript">
+
+	function createInterpolatedVertex(  t, p1, p2 )
+	{
+		return [ p1[0] + t * (p2[0] - p1[0]), p1[1] + t * (p2[1] - p1[1]) ];
+	}
+	
+	function clipPolygonToSide( coord, sign, value, polygon )
+	{
+		var clippedPolygon = [];
+
+		// iterate through vertices
+		for ( var i = 0; i < polygon.length; i++ )
+		{
+			var p1 = polygon[i];
+			var p2 = polygon[ (i+1) % polygon.length ];
+			var val1 = p1[coord];
+			var val2 = p2[coord];
+
+			// test containement
+			var firstInside = (val1 - value) * sign >= 0.0;
+			var secondInside = (val2 - value) * sign >= 0.0;
+		
+			// output vertices for inside polygon
+			if ( !firstInside && secondInside )
+			{
+				var t = (value - val1) / (val2- val1);
+				var newPoint = createInterpolatedVertex( t, p1, p2 );
+				clippedPolygon.push( newPoint );
+				clippedPolygon.push( p2 );
+			}
+			else if ( firstInside && secondInside )
+			{
+				clippedPolygon.push( p2 );
+			}
+			else if ( firstInside && !secondInside )
+			{
+				var t = (value - val1) / (val2- val1);
+				var newPoint = createInterpolatedVertex( t, p1, p2 );
+				clippedPolygon.push( newPoint );
+			}
+		}
+		
+		return clippedPolygon;
+	}
+		
+	function intersection( bound, coordinates )
+	{
+		var c;
+		
+		c = clipPolygonToSide( 0, 1, bound.west, coordinates );
+		c = clipPolygonToSide( 0, -1, bound.east, c );
+		c = clipPolygonToSide( 1, 1, bound.south, c );
+		c = clipPolygonToSide( 1, -1, bound.north, c );
+		
+		return c.length > 0;
+	}
+	
+	$(document).ready(function(){
+
+    test("Simple Transform", function()
+	{
+		var bound = new GlobWeb.GeoBound( 4, 5, 5, 6 );
+		var c1 = [ [3,5], [4.5,5], [3,4.5], [3,5] ];
+		
+		ok( intersection(bound,c1) );
+		
+		var c2 = [ [4.5,6.5], [4.5,5], [4.25,7.5], [4.5,6.5] ];
+		
+		ok( intersection(bound,c2) );
+	
+		var c3 = [ [3,5], [3.9,5], [3,4.5], [3,5] ];
+		
+		ok( !intersection(bound,c3) );
+	
+		var c4 = [ [4.5,3.5], [4.5,5], [4.25,2.5], [4.5,3.5] ];
+		
+		ok( intersection(bound,c4) );
+		
+		var c5 = [ [4.5,5], [6.5,5], [3,4.5], [4.5,5] ];
+		
+		ok( intersection(bound,c5) );
+		
+		var c6 = [ [6.5,5], [8.5,5], [7,4.5], [6.5,5] ];
+		
+		ok( !intersection(bound,c6) );
+	});
+		
+  });
+
+
+	
+</script>
+
+<h1 id="qunit-header">QUnit GlobWeb</h1>
+<h2 id="qunit-banner"></h2>
+<div id="qunit-testrunner-toolbar"></div>
+<h2 id="qunit-userAgent"></h2>
+<ol id="qunit-tests"></ol>
+
+</body>
+
+</html>
+

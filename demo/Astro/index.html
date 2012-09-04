@@ -1,0 +1,77 @@
+<html>
+
+<head>
+<title>AstroWeb example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<link rel="stylesheet" href="jquery-ui-1.8.21.custom.css">
+<link rel="stylesheet" href="style.css">
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script type="text/javascript" src="jquery-ui-1.8.21.custom.min.js"></script>
+
+
+<script type="text/javascript" src="../../build/AstroWeb.min.js"></script>
+<script type="text/javascript" src="main.js"></script>
+
+</head>
+
+
+<body>
+	
+	<div class="canvas">
+	
+		<div class="sidebar">
+			<div id="accordion">
+				<h3><a href="#">Point of interests</a></h3>
+				<div id="poiMenu">
+					<ul id="poiTable"></ul>
+				</div>
+				
+				<h3><a href="#">Imageries</a></h3>
+				<div id="ImageriesDiv">					
+						<input type="radio" id="radio1" name="imagery" checked="checked" value="DSS"/><label for="radio1">DSS</label>
+						<input type="radio" id="radio2" name="imagery" value="SDSS"/><label for="radio2">SDSS</label>
+				</div>
+				
+				<h3><a href="#">Coordinates</a></h3>
+				<div id="coordinates">
+					<span style="font-size: 0.9em;">To show equatorial coordinates Ctrl+click on canvas</span><br/><br/>
+					<div id="equatorialCoordinates"><em>Right ascension:</em> <br/>&nbsp&nbsp&nbsp&nbsp 0h 0' 0"<br /><em>Declination :</em> <br/>&nbsp&nbsp&nbsp&nbsp 0&#186 0' 0"</div>
+				</div>
+				
+				<h3><a href="#">Options</a></h3>
+				<div id="config">
+					<span class="ui-widget" style="font-weight:bold;">
+						<input type="checkbox" id="grid" /> Show HEALPix grid <br />
+						<input type="checkbox" id="constellation" checked /> Show constellations
+					</span>
+				</div>
+			</div>
+		</div>
+		
+		<img src="images/logos.png" id="telespazio"></img>
+		
+		<div id="webGLNotAvailable">
+			If you see this message, WebGL is not supported in your browser.<br>
+			Please install a recent version of <a href="http://www.mozilla.com">Firefox</a> or <a href="http://www.google.com/chrome">Google Chrome</a>.<br>
+			If you already have a recent version of Firefox or Google Chrome, your graphics driver are too old, please update it.<br>
+			On Google Chrome, you can check why it is not working by entering "about:gpu" in the url bar.
+		</div>
+		
+		
+		<div id="fps" class="fps ui-widget" style="font-weight:bold; left: 20px; bottom: 20px;">FPS : 0</div>
+		<!--<span id="geoCenterCoord" class="fps" style="font-weight:bold; top:740; left : 950;"> GeoX : 0<br/> GeoY : 0<br/> GeoZ : 0</span>
+		<span id="windowCoord" class="fps" style="font-weight:bold; top:750; left : 130;"> X : 0<br/> Y : 0</span>
+		<span id="3DCoord" class="fps" style="font-weight:bold; top:740; left : 200; right: 875"> x3d : 0<br/> y3d : 0<br/> z3d : 0</span>
+		<span id="geoCoord" class="fps" style="font-weight:bold; top:750; left : 420; right: 650"> Long : 0<br/> Lat   : 0</span>
+		<span id="equatorialCoord" class="fps ui-widget" style="font-weight:bold; position: absolute; width: 245px; bottom: 120px; right: 10px;"> RA &nbsp : 0<br/> Decl : 0</span>-->
+
+		
+		<canvas id="HEALPixCanvas" width="1024" height="768"></canvas>
+
+	</div>
+</body>
+
+</html>
+

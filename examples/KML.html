@@ -1,0 +1,58 @@
+<html>
+
+<head>
+<title>GlobWeb example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+
+<script type="text/javascript" src="../src/GlobWeb.js"></script>
+<script type="text/javascript" src="../src/KMLParser.js"></script>
+
+<script type="text/javascript">
+	
+	
+    function webGLStart() 
+	{	
+		var globe = new GlobWeb.Globe( { canvas: "GlobWebCanvas" } );
+
+		var navigation = new GlobWeb.Navigation(globe);
+		navigation.setupMouseEventHandlers(true);
+
+		var bmlayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub",
+					layers: "BlueMarble,esat" } );
+		globe.setBaseImagery( bmlayer );
+		
+		var elevation = new GlobWeb.BasicElevationLayer( {baseUrl:"http://demonstrator.vegaspace.com/json_elevations/get.php"});
+		globe.setBaseElevation( elevation );
+
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function(e)
+		{
+			if ( xhr.readyState == 4 )// && xhr.status == 200)
+			{
+				var vectorLayer = new GlobWeb.VectorLayer();
+				vectorLayer.addFeatureCollection( GlobWeb.KMLParser.parse( xhr.responseXML ) );
+				globe.addLayer( vectorLayer );
+			}
+		};
+		//xhr.open("GET", "world-borders/doc.kml");
+		xhr.open("GET", "doc.kml");
+		//xhr.open("GET", "testUS.kml");
+		xhr.send();
+    }
+
+
+</script>
+
+</head>
+
+
+<body onload="webGLStart();">
+	<h1>Glob Web</h1>
+    <canvas id="GlobWebCanvas" style="border: none;" width="800" height="450"></canvas> 
+  	<br/>
+	<div id="fps"><span style="font-weight:bold">FPS : 0</span></div>
+</body>
+
+</html>
+

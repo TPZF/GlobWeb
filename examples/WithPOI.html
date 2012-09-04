@@ -1,0 +1,153 @@
+<html>
+
+<head>
+<title>GlobWeb example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+<script type="text/javascript" src="../src/GlobWeb.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+<style>
+li.poi
+{
+	text-align: center;
+	border: 1px solid grey;
+	border-radius: 5px;
+	margin: 2px;
+	padding: 2px;
+	background: white;
+	list-style: none;
+}
+li.poi:hover
+{
+	background: grey;
+}
+
+</style>
+
+
+<script type="text/javascript">
+	
+	var menu = null;
+	var globe = null;
+	var nav = null;
+	var poiLayer = null;
+	
+	function addPoi(name,lat,lon)
+	{
+		var poi = {
+			geometry: { type: "Point",
+				coordinates: [lon,lat]
+			}
+		};
+		poiLayer.addFeature(poi);
+		
+		// Add an item to the menu
+		var li = $('<li class="poi">' + name + '</li>');
+		li.attr('data-lon',lon);
+		li.attr('data-lat',lat);
+		$("#poiMenu").append(li);
+	}
+	
+		
+    function webGLStart() 
+	{
+		globe = new GlobWeb.Globe( {canvas: "GlobWebCanvas"} );
+		nav = new GlobWeb.Navigation(globe);
+		nav.setupMouseEventHandlers(false);
+		
+		poiLayer = new GlobWeb.VectorLayer();
+		poiLayer.style = new GlobWeb.FeatureStyle({ iconUrl: "hotspot.png", pointMaxSize: 10000 });
+		globe.addLayer( poiLayer );
+		
+		var publicWMS = new GlobWeb.WMSLayer( {baseUrl: "http://demonstrator.vegaspace.com/wmspub",
+					 layers: "BlueMarble,esat" } );
+		globe.setBaseImagery( publicWMS );		
+	
+		addPoi("Toulouse", 43.6043, 1.4429);
+		addPoi("Bayonne", 43.4934, -1.4745);
+		addPoi("Alger", 35.7527, 3.0420);
+		addPoi("Astana", 51.1798, 71.4466);
+		addPoi("Bali", -8.4095, 115.1889);
+		addPoi("Bangkok", 13.7234, 100.4762);
+		addPoi("Berlin", 52.5234, 13.4113);
+		addPoi("Beijing", 39.9042, 116.4074);
+		addPoi("Bruxelles", 50.8503, 4.3517);
+		addPoi("Bogota", 4.5980, -74.0758);
+		addPoi("Boma", -5.8487, 13.0561);
+		addPoi("Buenos Aires", -34.6084, -58.3731);
+		addPoi("Caire", 30.0647, 31.2495);
+		addPoi("Caracas", 10.4910, -66.9020);
+		addPoi("Denver", 39.7391, -104.9847);
+		addPoi("Dhaka", 23.7099, 90.4071);
+		addPoi("Dodoma", -6.1730, 35.7419);
+		addPoi("Gaborone", -24.6541, 25.9087);
+		addPoi("Helsinki", 60.1698, 24.9382);
+		addPoi("Iakoutsk", 62.0392, 129.7463);
+		addPoi("Islamabad", 33.7181, 73.0605);
+		addPoi("Istanbul", 41.0052, 28.9769);
+		addPoi("Jakarta", -6.2115, 106.8451);
+		addPoi("Juneau", 58.3019, -134.4197);
+		addPoi("Katmandou", 27.7028, 85.3182);
+		addPoi("Kyoto", 35.0116, 135.7680);
+		addPoi("Le Cap", -33.9248, 18.4240);
+		addPoi("Lima", -12.0433, -77.0283);
+		addPoi("Lisbonne", 38.7070, -9.1354);
+		addPoi("Londres", 51.5001, -0.1262);
+		addPoi("Los Angeles", 34.0522, -118.2436);
+		addPoi("Madrid", 40.4166, -3.7003);
+		addPoi("Mexico", 23.6345, -102.5527);
+		addPoi("Montreal", 45.5088, -73.5541);
+		addPoi("Moscou", 55.7557, 37.6176);
+		addPoi("Ndjamena", 12.1047, 15.0445);
+		addPoi("New Delhi", 28.6353, 77.2249);
+		addPoi("New York", 40.7143, -74.0059);
+		addPoi("Niamey", 13.5126, 2.1125);
+		addPoi("Oslo", 59.9138, 10.7522);
+		addPoi("Oulan-Bator", 47.9213, 106.9055);
+		addPoi("Paris", 48.8566, 2.3509);
+		addPoi("Pyongyang", 39.0318, 125.7537);
+		addPoi("Riyad", 24.6880, 46.7224);
+		addPoi("Santiago", -33.4253, -70.5664);
+		addPoi("Sao Paulo", -23.5489, -46.6388);
+		addPoi("Seoul", 37.5665, 126.9776);
+		addPoi("Singapour", 1.3520, 103.8198);
+		addPoi("Sucre", -19.0339, -65.2626);
+		addPoi("Sydney", -33.8689, 151.2070);
+		addPoi("Téhéran", 35.6961, 51.4230);
+		addPoi("Tokyo", 35.6894, 139.6917);
+		addPoi("Washington", 38.8951, -77.0363);
+		
+		$('li.poi').click( function(event) {
+			var name = this.innerHTML;
+			console.log(name);
+			var lon = parseFloat($(this).attr('data-lon'));
+			var lat = parseFloat($(this).attr('data-lat'));
+			nav.zoomTo( [lon, lat], 50000, 5000 );
+		});
+    }
+
+
+</script>
+
+</head>
+
+
+<body onload="webGLStart();">
+	<h1>Glob Web</h1>
+  
+   <table border="0" cellpadding="0" cellspacing="4" width="100%">
+      <tbody>
+        <tr valign="top">
+          <td width="20%"><ul id="poiMenu"></ul> </td>
+          <td><canvas id="GlobWebCanvas" style="border: none;" width="1024" height="768"></canvas> </td>
+        </tr>
+      </tbody>
+    </table>
+	<br/>
+	<div id="fps"><span style="font-weight:bold">FPS : 0</span></div>
+
+</body>
+
+</html>
+

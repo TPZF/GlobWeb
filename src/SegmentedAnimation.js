@@ -1,0 +1,123 @@
+/***************************************
+ * Copyright 2011, 2012 GlobWeb contributors.
+ *
+ * This file is part of GlobWeb.
+ *
+ * GlobWeb is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * GlobWeb is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ ***************************************/
+
+/**************************************************************************************************************/
+
+/** @constructor
+  SegmentedAnimation is an animation defined with segments.
+  Each segment has a [start,end] pair of 't' value and a [start,end] pair of
+  values that will be interpolated with the interpolator set on the segment.
+  When the animation runs, a t parameter is mapped to [0,1] according to
+  current time and animation duration.
+  The current segment is then looked up with that 't' value and used to interpolate
+  the animation's current value.
+ */
+GlobWeb.SegmentedAnimation = function(duration, valueSetter)
+{
+    // Call ancestor constructor
+    GlobWeb.Animation.prototype.constructor.call(this);
+
+    this.segments = [];
+    this.duration = duration;
+    this.valueSetter = valueSetter;
+}
+
+/**************************************************************************************************************/
+
+GlobWeb.inherits(GlobWeb.Animation,GlobWeb.SegmentedAnimation);
+
+/**************************************************************************************************************/
+
+/** @constructor
+  Segment struct
+*/
+GlobWeb.SegmentedAnimation.Segment = function(start, startValue, end, endValue, interpolator)
+{
+    this.start = start;
+    this.startValue = startValue;
+    this.end = end;
+    this.endValue = endValue;
+    this.interpolator = interpolator;
+}
+
+/**************************************************************************************************************/
+
+/*
+	Adds a new segment to the animation.
+	start, end are 't' values at which the segment will be the current segment
+	startValue, endValue are animation values at 't'=start and 't'=end
+	interpolator is the function that will be called to interpolate bewteen startValue and endValue.
+*/
+GlobWeb.SegmentedAnimation.prototype.addSegment = function(start, startValue, end, endValue, interpolator)
+{
+    var count = this.segments.length;
+    var index = 0;
+    while (index < count && this.segments[index].end <= start) index++;
+    // Insert new segment at position 'index'
+    this.segments.splice(index, 0, new GlobWeb.SegmentedAnimation.Segment(start, startValue, end, endValue, interpolator));
+}
+
+/**************************************************************************************************************/
+
+GlobWeb.SegmentedAnimation.prototype.start = function()
+{
+    GlobWeb.Animation.prototype.start.call(this);
+    // Set first value
+    this.valueSetter(this.segments[0].startValue);
+}
+
+/**************************************************************************************************************/
+
+GlobWeb.SegmentedAnimation.prototype.stop = function()
+{
+    GlobWeb.Animation.prototype.stop.call(this);
+    // Set last value
+    var lastIndex = this.segments.length - 1;
+    this.valueSetter(this.segments[lastIndex].endValue);
+}
+
+/**************************************************************************************************************/
+
+/*
+	Animation update method
+*/
+GlobWeb.SegmentedAnimation.prototype.update = function(now)
+{
+    var t = Numeric.map01(now, this.startTime, this.startTime + this.duration);
+    if (t >= 1)
+    {
+        this.stop();
+        return;
+    }
+
+    // Find current segment
+    var count = this.segments.length;
+    var index = 0;
+    while (index < count && this.segments[index].end < t) index++;
+    index = Math.min(index, count-1);
+    
+    // Remap t between segment bounds
+    t = Numeric.map01(t, this.segments[index].start, this.segments[index].end);
+	// Interpolate value
+    var value = this.segments[index].interpolator(t, this.segments[index].startValue, this.segments[index].endValue);
+	// Use value
+    this.valueSetter(value);
+}
+
+/**************************************************************************************************************/

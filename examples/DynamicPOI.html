@@ -1,0 +1,80 @@
+<html>
+
+<head>
+<title>GlobWeb example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+<script type="text/javascript" src="../src/GlobWeb.js"></script>
+
+
+<script type="text/javascript">
+	
+		
+    function webGLStart() 
+	{
+		var cvs = document.getElementById("2d");
+		var ctx = cvs.getContext("2d");
+		//ctx.fillStyle = '#888';
+		//ctx.fillRect(0,0,128,64);
+		ctx.shadowColor = '#000';
+		ctx.shadowOffsetX = 1;
+		ctx.shadowOffsetY = 1;
+		ctx.shadowBlur = 2;
+		ctx.fillStyle = '#fff';
+		ctx.font = 'bold 20px sans-serif';
+		ctx.textBaseline = 'top';
+		ctx.fillText('HTML5 is cool!', 1, 1);
+		//ctx.lineWidth = 0.8;
+		//ctx.strokeText('HTML5 is cool!', 1, 1);
+
+		var globe = new GlobWeb.Globe({ canvas: "GlobWebCanvas" });
+		var nav = new GlobWeb.Navigation(globe);
+		nav.setupMouseEventHandlers(false);
+			
+		var publicWMS = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub",
+					 layers: "BlueMarble,esat" } );
+		globe.setBaseImagery( publicWMS );		
+	
+		var style = new GlobWeb.FeatureStyle();
+		style.iconUrl = null;
+		//style.icon = ctx.getImageData(0,0,128,22);
+		style.icon =  GlobWeb.Text.generateImageData("Coucou!");
+		style.pointMaxSize = 4000;
+		
+		var layer = new GlobWeb.VectorLayer({ style: style });
+		globe.addLayer(layer);
+		
+		var canvas = document.getElementById("GlobWebCanvas");
+		var poi;
+		canvas.onclick = function(event)
+		{
+			if (poi)
+				layer.removeFeature(poi);
+				
+			var pos = globe.renderContext.getXYRelativeToCanvas(event);	
+			var lonlat = globe.getLonLatFromPixel( pos[0], pos[1] );
+			poi = {
+				geometry: { type: "Point",
+					coordinates: lonlat
+				}
+			};
+			layer.addFeature(poi);
+		};
+   }
+
+
+</script>
+
+</head>
+
+
+<body onload="webGLStart();">
+	<h1>Glob Web</h1>
+  
+	<canvas id="GlobWebCanvas" style="border: none;" width="1024" height="768"></canvas>
+ 	<div id="fps"><span style="font-weight:bold">FPS : 0</span></div>
+	<canvas id="2d" width="128" height="22" ></canvas>
+</body>
+
+</html>
+

@@ -1,0 +1,125 @@
+<html>
+
+<head>
+
+<title>Frustum and plane tests</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
+<script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
+<script type="text/javascript" src="../src/GlobWeb.js"></script>
+
+</head>
+
+
+<body>
+
+
+<script type="text/javascript">
+
+	$(document).ready(function(){
+
+    test("Plane", function()
+	{
+		var v = vec3.subtract( [0,0,0], [1,0,0], [] );
+		deepEqual( v, [-1,0,0] );
+		
+		var plane = new GlobWeb.Plane();
+		plane.init( [0,0,0], [1,0,0], [0,1,0] );
+		
+		ok( plane.intersectSphere( [0,0,5], 2 ) == 1 );
+		ok( plane.intersectSphere( [0,0,5], 5 ) == 0 );
+		ok( plane.intersectSphere( [0,0,-5], 2 ) == -1 );
+		
+		plane.init( [0,0,4], [1,0,4], [0,1,4] );
+		
+		ok( plane.intersectSphere( [0,0,9], 2 ) == 1 );
+		ok( plane.intersectSphere( [0,0,9], 5 ) == 0 );
+		ok( plane.intersectSphere( [0,0,-9], 2 ) == -1 );
+		
+		plane.init( [0,0,0], [1,1,1], [-1,1,1] );
+		
+ 		ok( plane.intersectSphere( [5,5,5], 2 ) == 0 );
+		ok( plane.intersectSphere( [3,3,5], 1 ) == 1 );
+   });
+   
+	test("Bounding Box", function() 
+	{
+		var bbox = new GlobWeb.BoundingBox();
+		bbox.min = [-1,-1,-1];
+		bbox.max = [1,1,1];
+		deepEqual( bbox.getCenter(), [0,0,0] );
+		deepEqual( bbox.getCorner(0), [-1,-1,-1] );
+ 		deepEqual( bbox.getCorner(1), [1,-1,-1] );
+		deepEqual( bbox.getCorner(2), [-1,1,-1] );
+		deepEqual( bbox.getCorner(3), [1,1,-1] );
+		deepEqual( bbox.getCorner(4), [-1,-1,1] );
+  		deepEqual( bbox.getCorner(5), [1,-1,1] );
+		deepEqual( bbox.getCorner(6), [-1,1,1] );
+		deepEqual( bbox.getCorner(7), [1,1,1] );
+		
+		var plane = new GlobWeb.Plane();
+		plane.init( [3,0,0], [4,-1,1], [4,1,1] );
+		ok( plane.intersectBoundingBox( bbox ) == 1 );
+		plane.init( [1,0,0], [4,-1,1], [4,1,1] );
+		ok( plane.intersectBoundingBox( bbox ) == 0 );
+		plane.init( [1,0,5], [4,-1,1], [4,1,1] );
+		ok( plane.intersectBoundingBox( bbox ) == -1 );
+		
+		bbox = new GlobWeb.BoundingBox();
+		var vertices = [ -1, -1, -1, 1, 1, 1 ];
+		bbox.compute(vertices);
+		deepEqual( bbox.min, [-1,-1,-1] );
+		deepEqual( bbox.max, [1,1,1] );
+	});
+
+
+    test("Frustum", function() 
+	{
+		var projectionMatrix = mat4.create();
+		var viewMatrix = mat4.create();
+		
+		mat4.frustum ( -0.5, 0.5, -0.5, 0.5, 1, 1000, projectionMatrix );
+		mat4.lookAt( [-6,0,-1], [0,0,-1], [0,0,1], viewMatrix );
+		
+		var invViewMatrix = mat4.create();
+		mat4.inverse( viewMatrix, invViewMatrix );
+		
+		var vec = [0, 0, 0];
+		mat4.multiplyVec3(invViewMatrix,vec);
+		
+		var frustum = new GlobWeb.Frustum();
+		frustum.compute(projectionMatrix);
+		frustum.transform(frustum,invViewMatrix);
+		
+		ok( frustum.containsSphere( [1,0,0], 1.0 ) >= 0, "frustum.containsSphere( [1,0,0], 1.0 )"  );
+		ok( frustum.containsSphere( [1,0,3], 1.0 ) >= 0, "frustum.containsSphere( [1,0,3], 1.0 )" );
+		ok( frustum.containsSphere( [1,0,4], 1.0 ) < 0 );
+		ok( frustum.containsSphere( [1,0,0], 0.5 ) == 1 );
+		ok( frustum.containsSphere( [-6,0,4], 3.0 ) == -1 );
+		
+		var bbox = new GlobWeb.BoundingBox( [1,0,2], [2,0,3] );
+		ok( frustum.containsBoundingBox( bbox ) );
+		bbox = new GlobWeb.BoundingBox( [1,0,3.1], [2,0,4] );
+		ok( frustum.containsBoundingBox( bbox ) == false );
+		bbox = new GlobWeb.BoundingBox( [-6,0,0], [-5,0,1] );
+		ok( frustum.containsBoundingBox( bbox ) == false );
+		bbox = new GlobWeb.BoundingBox( [-6,0,-1], [-5,0,1] );
+		ok( frustum.containsBoundingBox( bbox ) );
+	});
+	
+	});
+
+</script>
+
+<h1 id="qunit-header">QUnit GlobWeb</h1>
+<h2 id="qunit-banner"></h2>
+<div id="qunit-testrunner-toolbar"></div>
+<h2 id="qunit-userAgent"></h2>
+<ol id="qunit-tests"></ol>
+ 
+</body>
+
+</html>
+

@@ -1,0 +1,55 @@
+<html>
+
+<head>
+<title>GlobWeb example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+<script type="text/javascript" src="../build/GlobWeb.min.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+
+<script type="text/javascript">
+		
+    function webGLStart() 
+	{
+		var globe = new GlobWeb.Globe( {canvas :"GlobWebCanvas"} );
+
+		var nav = new GlobWeb.Navigation(globe);
+		nav.setupMouseEventHandlers(true);
+		
+		var publicWMSProvider = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub",
+					 layers: "BlueMarble,esat" } );
+		globe.setBaseImagery( publicWMSProvider );
+		var elevationProvider = new GlobWeb.BasicElevationLayer({baseUrl:"http://demonstrator.vegaspace.com/json_elevations/get.php"});
+		globe.setBaseElevation( elevationProvider );
+		
+		
+		$.ajax({
+			  url: "europe.json",
+			  success: function(data)
+			  {
+				var vectorLayer = new GlobWeb.VectorLayer();
+				vectorLayer.addFeatureCollection( data );
+				globe.addLayer( vectorLayer );
+			  }
+		});
+   }
+
+
+</script>
+
+</head>
+
+
+<body onload="webGLStart();">
+	<h1>Glob Web</h1>
+    <canvas id="GlobWebCanvas" style="border: none;" width="1400" height="1050"></canvas> 
+  	<br/>
+	<div id="fps"><span style="font-weight:bold">FPS : 0</span></div>
+  	
+<!--	<image src="http://s0.tileservice.worldwindcentral.com/getTile?interface=map&version=1&dataset=bmng.topo.bathy.200401&level=2&x=0&y=1" /> -->
+
+</body>
+
+</html>
+
