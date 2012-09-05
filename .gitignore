@@ -1,0 +1,16 @@
+generated/
+
+############
+## Windows
+############
+
+# Windows image file caches
+Thumbs.db
+
+
+#############
+## Python
+#############
+
+*.py[co]
+

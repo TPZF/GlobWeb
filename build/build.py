@@ -1,5 +1,6 @@
 import jscompiler
 import os
+import os.path
 
 advanced = True
 
@@ -152,6 +153,8 @@ print error
 
 print "Writing to %s." % outputFilename
 licence = file("licence.txt","r+").read()
-file(outputFilename,"w").write(licence+minimized)
+if not os.path.exists("generated"):
+    os.mkdir("generated")
+file("generated/" + outputFilename,"w").write(licence+minimized)
 
 raw_input("Press a key to finish.")
