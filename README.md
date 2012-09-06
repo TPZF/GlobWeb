@@ -14,9 +14,9 @@ GlobWeb supports the following features:
 
 ### Demos ###
 
-<a href="http://demonstrator.vegaspace.com/GlobWeb/">Demonstration with earth observation data</a>  
-<a href="http://demonstrator.vegaspace.com/AstroWeb/">Demonstration with astronomic data</a>  
-<a href="http://demonstrator.vegaspace.com/EoliWebGL/">Prototype done for ESA</a>  
+<a href="http://demonstrator.telespazio.com/GlobWeb/">Demonstration with earth observation data</a>  
+<a href="http://demonstrator.telespazio.com/AstroWeb/">Demonstration with astronomic data</a>  
+<a href="http://demonstrator.telespazio.com/EoliWebGL/">Prototype done for ESA</a>  
 
 ### Getting started ###
 

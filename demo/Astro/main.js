@@ -184,7 +184,7 @@ function fillPOI() {
 		
 		// Attach event to created li's
 		$("#poiTable > li").click(function(event){
-			astroNavigator.zoomTo([parseFloat($(this).attr("long")), parseFloat($(this).attr("lat"))], 20000, 5000 );
+			astroNavigator.zoomTo([parseFloat($(this).attr("long")), parseFloat($(this).attr("lat"))], 5000 );
 		});
 		
 	}
