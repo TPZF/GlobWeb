@@ -23,16 +23,15 @@
 	@constructor
 	AstroNavigator constructor
  */
-GlobWeb.AstroNavigator = function(globe)
+GlobWeb.AstroNavigation = function(globe, options)
 {
 	this.globe = globe;
 	this.pressX = -1;
 	this.pressY = -1;
 	this.lastMouseX = -1;
 	this.lastMouseY = -1;
-	this.pressedButton = -1;
 	
-	// arbitrary values
+	// Arbitrary values
 	this.minFov = 2.5;
 	this.maxFov = 100;
 
@@ -45,31 +44,21 @@ GlobWeb.AstroNavigator = function(globe)
 	this.up = [0., 0., 1.]
 	
 	this.callbacks = {};
-
+	
+	// Copy options
+	for (var x in options)
+	{
+		this[x] = options[x];
+	}
+	
+	if( !this.handler )
+	{
+		this.handler = new GlobWeb.MouseNavigationHandler();
+	}
+	this.handler.install(this, true);
+	
 	// Update the view matrix now
 	this.computeViewMatrix();
-}
-
-/**************************************************************************************************************/
-
-/** 
- Setup the default event handlers for the navigator
- */
-GlobWeb.AstroNavigator.prototype.setupDefaultEventHandlers = function(zoomOnDblClick)
-{
-	// Setup the mouse event handlers
-	var self = this;
-	var canvas = this.globe.renderContext.canvas;
-	canvas.addEventListener("mousedown",function(e) { self.handleMouseDown(e||window.event); },false);
-	document.addEventListener("mouseup",function(e) { self.handleMouseUp(e||window.event); },false);
-	canvas.addEventListener("mousemove",function(e) { self.handleMouseMove(e||window.event); },false);
-	
-	if ( zoomOnDblClick )
-		canvas.addEventListener("dblclick",function(e) { self.handleMouseDblClick(e||window.event); },false);
-		
-	// For Firefox
-	canvas.addEventListener("DOMMouseScroll",function(e) { self.handleMouseWheel(e||window.event); },false);
-	canvas.addEventListener("mousewheel",function(e) { self.handleMouseWheel(e||window.event); },false);
 }
 
 /**************************************************************************************************************/
@@ -77,7 +66,7 @@ GlobWeb.AstroNavigator.prototype.setupDefaultEventHandlers = function(zoomOnDblC
 /** @export
   Subscribe to a navigation event : start (called when navigation is started), and end (called when navigation end)
 */
-GlobWeb.AstroNavigator.prototype.subscribe = function(name,callback)
+GlobWeb.AstroNavigation.prototype.subscribe = function(name,callback)
 {
 	if( !this.callbacks[name] ) {
 		this.callbacks[name] = [ callback ];
@@ -91,7 +80,7 @@ GlobWeb.AstroNavigator.prototype.subscribe = function(name,callback)
 /** @export
   Unsubscribe to a navigation event : start (called when navigation is started), and end (called when navigation end)
 */
-GlobWeb.AstroNavigator.prototype.unsubscribe = function(name,callback)
+GlobWeb.AstroNavigation.prototype.unsubscribe = function(name,callback)
 {
 	if( this.callbacks[name] ) {
 		var i = this.callbacks[name].indexOf( callback );
@@ -106,7 +95,7 @@ GlobWeb.AstroNavigator.prototype.unsubscribe = function(name,callback)
 /** 
   Publish a navigation event
 */
-GlobWeb.AstroNavigator.prototype.publish = function(name)
+GlobWeb.AstroNavigation.prototype.publish = function(name)
 {
 	if ( this.callbacks[name] ) {
 		var cbs = this.callbacks[name];
@@ -121,7 +110,7 @@ GlobWeb.AstroNavigator.prototype.publish = function(name)
 /** @export
   Zoom to a 3d position
 */
-GlobWeb.AstroNavigator.prototype.zoomTo = function(geoPos, duration, tilt )
+GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, duration, tilt )
 {
 	var navigator = this;
 	var destTilt = tilt || 90;
@@ -150,7 +139,7 @@ GlobWeb.AstroNavigator.prototype.zoomTo = function(geoPos, duration, tilt )
 	
 	if (middleFov > this.globe.renderContext.fov)
 	{
-		// two steps animation, 'rising' & 'falling'
+		// Two steps animation, 'rising' & 'falling'
 		
 		// Compute the middle value
 		var midValue = [startValue[0]*0.5 + endValue[0]*0.5,
@@ -215,7 +204,7 @@ GlobWeb.AstroNavigator.prototype.zoomTo = function(geoPos, duration, tilt )
 /*
 	Apply local rotation
  */
-GlobWeb.AstroNavigator.prototype.applyLocalRotation = function(matrix)
+GlobWeb.AstroNavigation.prototype.applyLocalRotation = function(matrix)
 {
 	mat4.rotate( matrix, Math.PI, [ 1.0, 0.0, 0.0 ] ); // zenith
 }
@@ -225,7 +214,7 @@ GlobWeb.AstroNavigator.prototype.applyLocalRotation = function(matrix)
 /*
 	Compute the view matrix
  */
-GlobWeb.AstroNavigator.prototype.computeViewMatrix = function()
+GlobWeb.AstroNavigation.prototype.computeViewMatrix = function()
 {
 
 	var eye = [];
@@ -246,42 +235,11 @@ GlobWeb.AstroNavigator.prototype.computeViewMatrix = function()
 /*
 	Event handler for mouse wheel
  */
-GlobWeb.AstroNavigator.prototype.handleMouseWheel = function(event)
+GlobWeb.AstroNavigation.prototype.zoom = function(delta)
 {
-	this.publish("start");
+	// Arbitrary value for smooth zooming
+	delta = 1 + delta * 0.1;
 	
-	// Check differences between firefox and the rest of the world 
-	if ( event.wheelDelta === undefined)
-	{
-		this.zoom(1 + event.detail * 0.1);
-	}
-	else
-	{
-		this.zoom(1 + (-event.wheelDelta / 120.0) * 0.1);
-	}
-	
-	// Stop mouse wheel to be propagated, because default is to scroll the page
-	// This is need when using Firefox event listener on DOMMouseScroll
-	if ( event.preventDefault )
-	{
-		event.preventDefault();
-	}
-	event.returnValue = false;
-	
-	this.publish("end");
-	this.globe.renderContext.requestFrame();
-		
-	// Return false to stop mouse wheel to be propagated when using onmousewheel
-	return false;
-}
-
-/**************************************************************************************************************/
-
-/*
-	Event handler for mouse wheel
- */
-GlobWeb.AstroNavigator.prototype.zoom = function(delta)
-{
 	this.publish("start");
 	
 	// Check differences between firefox and the rest of the world 
@@ -322,39 +280,12 @@ GlobWeb.AstroNavigator.prototype.zoom = function(delta)
 
 /**************************************************************************************************************/
 
-/*
-	Event handler for mouse down
- */
-GlobWeb.AstroNavigator.prototype.handleMouseDown = function(event)
-{
-	this.pressedButton = event.button;
-	
-	if ( event.button == 0 || event.button == 1 )
-	{
-		
-		this.pressX = event.clientX;
-		this.pressY = event.clientY;
-		
-		this.lastMouseX = event.clientX;
-		this.lastMouseY = event.clientY;
-		
-		this.publish("start");
-		
-		// Return false to stop mouse down to be propagated when using onmousedown
-		return false;
-	}
-	
-	return true;
-}
-
-/**************************************************************************************************************/
-
 /**
 *	Pan the navigator by computing the difference between 3D centers
-*	xs,ys : window coordinates of the point of start
-*	xd,yd : window coordinates of the point of destination
+*	xs,ys : window starting point
+*	xd,yd : window destination point
 */
-GlobWeb.AstroNavigator.prototype.geoPan = function(xs, ys, xd, yd)
+GlobWeb.AstroNavigation.prototype.pan = function(xs, ys, xd, yd)
 {
 	var geoSrc = [];
 	var geoDest = [];
@@ -363,14 +294,14 @@ GlobWeb.AstroNavigator.prototype.geoPan = function(xs, ys, xd, yd)
 	var source3d = this.globe.renderContext.get3DFromPixel(xs, ys);
 	var dest3d = this.globe.renderContext.get3DFromPixel(xd, yd);
 	
-	// compute direction vector
+	// Compute direction vector
 	var dir = [];
 	vec3.subtract(dest3d, source3d, dir);
 	
-	// get 3d position of geoCenter
+	// Get 3d position of geoCenter
 	var position = vec3.create();
 	
-	// translate center3d by direction
+	// Translate center3d by direction
 	vec3.subtract(this.center3d, dir, this.center3d);
 	
 	this.computeViewMatrix();
@@ -382,7 +313,7 @@ GlobWeb.AstroNavigator.prototype.geoPan = function(xs, ys, xd, yd)
 /*
 	Rotate the navigator
  */
-GlobWeb.AstroNavigator.prototype.rotate = function(dx,dy)
+GlobWeb.AstroNavigation.prototype.rotate = function(dx,dy)
 {
 	var previousHeading = this.heading;
 	var previousTilt = this.tilt;
@@ -391,83 +322,6 @@ GlobWeb.AstroNavigator.prototype.rotate = function(dx,dy)
 	this.tilt += dy * 0.1;
 	
 	this.computeViewMatrix();
-}
-
-/**************************************************************************************************************/
-
-/*
-	Event handler for mouse move
- */
-GlobWeb.AstroNavigator.prototype.handleMouseMove = function(event)
-{
-	// No button pressed
-	if (this.pressedButton < 0)
-		return;
-
-	var dx = (event.clientX - this.lastMouseX);
-	var dy = (event.clientY - this.lastMouseY);
-	
-	// Pan
-	if ( this.pressedButton == 0 )
-	{
-		// this.pan( dx, dy );
-		this.geoPan( this.lastMouseX, this.lastMouseY, event.clientX, event.clientY );
-		
-		this.lastMouseX = event.clientX;
-		this.lastMouseY = event.clientY;
-		this.globe.renderContext.requestFrame();
-		
-		return true;
-	}
-	// Rotate
-	else if ( this.pressedButton == 1 )
-	{
-		this.rotate(dx,dy);
-		this.globe.renderContext.requestFrame();
-		return true;
-	}
-	
-	return false;
-}
-
-/**************************************************************************************************************/
-
-/*
-	Event handler for mouse up
- */
-GlobWeb.AstroNavigator.prototype.handleMouseUp = function(event)
-{
-	// No button pressed anymore
-	this.pressedButton = -1;
-
-	if ( event.button == 0 || event.button == 1 )
-	{
-		this.publish("end");
-		
-	// Stop mouse up event
-	return false;
-	}
-
-	return true;
-}
-
-/**************************************************************************************************************/
-
-/*
-	Event handler for mouse double click
- */
-GlobWeb.AstroNavigator.prototype.handleMouseDblClick = function(event)
-{
-	if (event.button == 0)
-	{
-	var pos = this.globe.renderContext.getXYRelativeToCanvas(event);
-	var geo = this.globe.getLonLatFromPixel( pos[0], pos[1] );
-	
-	if (geo)
-	{
-		this.zoomTo(geo, 5000, this.tilt);
-	}
-	}
 }
 
 /**************************************************************************************************************/

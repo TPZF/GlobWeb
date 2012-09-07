@@ -444,8 +444,7 @@ $(function()
 	vectorRendererManager = new GlobWeb.VectorRendererManager(globe);
 
 	// Initialize navigator
-	astroNavigator = new GlobWeb.AstroNavigator(globe);
-	astroNavigator.setupDefaultEventHandlers(1);
+	astroNavigator = new GlobWeb.AstroNavigation(globe);
 	
 	var cdsLayer = new GlobWeb.HEALPixLayer( { baseUrl: "/Alasky/DssColor/"} );
 	globe.setBaseImagery( cdsLayer );

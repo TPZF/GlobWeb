@@ -26,7 +26,8 @@ commonFiles= [
 		"RasterLayer.js",
 		"TileRequest.js",
 		"Globe.js",
-		"PathAnimation.js", 
+		"PathAnimation.js",
+		"MouseNavigationHandler.js"
 	]
 		
 globFiles = [
@@ -37,35 +38,35 @@ globFiles = [
 		"MercatorTiling.js",
 		"WMSLayer.js",
 		"WMSElevationLayer.js",
-        "BingLayer.js",
+		"BingLayer.js",
 		"OSMLayer.js", 
 		"BasicElevationLayer.js", 
 	]
 
 vectorFiles = [
-	"VectorRendererManager.js",
-        "PointRenderer.js",
-        "FeatureStyle.js",
-        "TiledVectorRenderable.js",
-        "LineStringRenderable.js",
-        "TiledVectorRenderer.js",
-        "VectorLayer.js",
-        "KMLParser.js"
+		"VectorRendererManager.js",
+		"PointRenderer.js",
+		"FeatureStyle.js",
+		"TiledVectorRenderable.js",
+		"LineStringRenderable.js",
+		"TiledVectorRenderer.js",
+		"VectorLayer.js",
+		"KMLParser.js"
    ]
 
 astroFiles = [
 		"HEALPixLayer.js",
 		"HEALPixTiling.js",
-        "SimpleLineRenderer.js",
-		"AstroNavigator.js",
+		"SimpleLineRenderer.js",
+		"AstroNavigation.js",
 		"HEALPixTables.js",
 		"HEALPixBase.js",
 		"Long.js"
     ]
 
 experimentalFiles = [
-        "Triangulator.js",
-        "PolygonRenderable.js",
+		"Triangulator.js",
+		"PolygonRenderable.js",
     ]
 
 sourceFiles = []

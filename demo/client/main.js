@@ -281,7 +281,6 @@ $(function()
 	}
 		
 	nav = new GlobWeb.Navigator(globe);
-	nav.setupDefaultEventHandlers(true);
 	
 	initializeImagery('PO');
 	initializeElevation('GTOPO');

@@ -42,6 +42,7 @@ var GlobWeb = GlobWeb || {};
 		"Utils.js",
 		"Stats.js",
 		"GeoBound.js",
+		"MouseNavigationHandler.js",
 		"BoundingBox.js",
 		"Numeric.js",
 		"Animation.js",
@@ -85,7 +86,7 @@ var GlobWeb = GlobWeb || {};
 		"HEALPixLayer.js",
 		"TileRequest.js",
 		"Globe.js",
-		"AstroNavigator.js",
+		"AstroNavigation.js",
 		"HEALPixTables.js",
 		"HEALPixBase.js",
 		"Long.js"

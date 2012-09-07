@@ -54,7 +54,6 @@ li.poi:hover
 	{
 		globe = new GlobWeb.Globe( {canvas: "GlobWebCanvas"} );
 		nav = new GlobWeb.Navigation(globe);
-		nav.setupMouseEventHandlers(false);
 		
 		poiLayer = new GlobWeb.VectorLayer();
 		poiLayer.style = new GlobWeb.FeatureStyle({ iconUrl: "hotspot.png", pointMaxSize: 10000 });

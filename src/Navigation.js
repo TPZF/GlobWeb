@@ -26,11 +26,11 @@
 GlobWeb.Navigation = function(globe,options)
 {
 	this.globe = globe;
-    this.pressX = -1;
-    this.pressY = -1;
+	this.pressX = -1;
+	this.pressY = -1;
 	this.lastMouseX = -1;
 	this.lastMouseY = -1;
-    this.pressedButton = -1;
+	this.pressedButton = -1;
 	this.inverseViewMatrix = mat4.create();
 	
 	this.minDistance = 1.0;
@@ -48,6 +48,12 @@ GlobWeb.Navigation = function(globe,options)
 		this[x] = options[x];
 	}
 	
+	if( !this.handler )
+	{
+		this.handler = new GlobWeb.MouseNavigationHandler();
+	}
+	this.handler.install(this, true);
+	
 	this.minDistance *= GlobWeb.CoordinateSystem.heightScale;
 	this.maxDistance *= GlobWeb.CoordinateSystem.heightScale;
 	
@@ -55,28 +61,6 @@ GlobWeb.Navigation = function(globe,options)
 
 	// Update the view matrix now
 	this.computeViewMatrix();
-}
-
-/**************************************************************************************************************/
-
-/** 
- Setup the mouse event handlers for the navigation
- */
-GlobWeb.Navigation.prototype.setupMouseEventHandlers = function(zoomOnDblClick)
-{
-	// Setup the mouse event handlers
-	var self = this;
-	var canvas = this.globe.renderContext.canvas;
-	canvas.addEventListener("mousedown",function(e) { self.handleMouseDown(e||window.event); },false);
-	document.addEventListener("mouseup",function(e) { self.handleMouseUp(e||window.event); },false);
-	canvas.addEventListener("mousemove",function(e) { self.handleMouseMove(e||window.event); },false);
-	
-	if ( zoomOnDblClick )
-		canvas.addEventListener("dblclick",function(e) { self.handleMouseDblClick(e||window.event); },false);
-		
-	// For Firefox
-	canvas.addEventListener("DOMMouseScroll",function(e) { self.handleMouseWheel(e||window.event); },false);
-	canvas.addEventListener("mousewheel",function(e) { self.handleMouseWheel(e||window.event); },false);
 }
 
 /**************************************************************************************************************/
@@ -280,41 +264,6 @@ GlobWeb.Navigation.prototype.zoom = function(delta)
 /**************************************************************************************************************/
 
 /*
-	Event handler for mouse wheel
- */
-GlobWeb.Navigation.prototype.handleMouseWheel = function(event)
-{
-	this.publish("start");
-	
-	// Check differences between firefox and the rest of the world 
-	if ( event.wheelDelta === undefined)
-	{
-		this.zoom(event.detail);
-	}
-	else
-	{
-		this.zoom(-event.wheelDelta / 120.0);
-	}
-	
-	// Stop mouse wheel to be propagated, because default is to scroll the page
-	// This is need when using Firefox event listener on DOMMouseScroll
-	if ( event.preventDefault )
-	{
-		event.preventDefault();
-	}
-	event.returnValue = false;
-	
-	this.publish("end");
-	this.globe.renderContext.requestFrame();
-		
-	// Return false to stop mouse wheel to be propagated when using onmousewheel
-	return false;
-}
-
-
-/**************************************************************************************************************/
-
-/*
 	Check for collision
  */
 GlobWeb.Navigation.prototype.hasCollision = function()
@@ -331,9 +280,13 @@ GlobWeb.Navigation.prototype.hasCollision = function()
 
 /*
 	Pan the navigation
+*	xs,ys : window coordinates of the point of start
+*	xd,yd : window coordinates of the point of destination
  */
-GlobWeb.Navigation.prototype.pan = function(dx,dy)
+GlobWeb.Navigation.prototype.pan = function(xs,ys,xd,yd)
 {
+	var dx = xd - xs;
+	var dy = yd - ys;
 	var previousGeoCenter = vec3.create();
 	vec3.set( this.geoCenter, previousGeoCenter );
 	
@@ -421,115 +374,6 @@ GlobWeb.Navigation.prototype.rotate = function(dx,dy)
 		this.tilt = previousTilt;
 		this.computeViewMatrix();
 	}
-}
-
-/**************************************************************************************************************/
-
-/*
-	Event handler for mouse down
- */
-GlobWeb.Navigation.prototype.handleMouseDown = function(event)
-{
-	//console.log("button " + event.button);
-	//console.log("modifiers " + event.altKey);
-
-    this.pressedButton = event.button;
-	
-	if ( event.button == 0 || event.button == 1 ) // || event.button == 2 )
-	{
-        this.pressX = event.clientX;
-        this.pressY = event.clientY;
-		this.lastMouseX = event.clientX;
-		this.lastMouseY = event.clientY;
-		
-		this.publish("start");
-		
-        // Return false to stop mouse down to be propagated when using onmousedown
-		return false;
-	}
-
-	return true;
-}
-
-/**************************************************************************************************************/
-
-/*
-	Event handler for mouse move
- */
-GlobWeb.Navigation.prototype.handleMouseMove = function(event)
-{
-    // No button pressed
-    if (this.pressedButton < 0)
-        return;
-
-	var dx = (event.clientX - this.lastMouseX);
-	var dy = (event.clientY - this.lastMouseY);
-	
-	this.lastMouseX = event.clientX;
-	this.lastMouseY = event.clientY;
-	
-	// Pan
-    if ( this.pressedButton == 0 )
-    {
-		this.pan( dx, dy );
-		this.globe.renderContext.requestFrame();
-		return true;
-	}
-	// Rotate
-    else if ( this.pressedButton == 1 )
-    {
-		this.rotate(dx,dy);
-		this.globe.renderContext.requestFrame();
-		return true;
-    }
-	// Zoom
-/*    else if ( this.pressedButton == 2 )
-    {
-		this.zoom( dx );
-		this.globe.renderContext.requestFrame();
-		return true;
-    }*/
-	
-	return false;
-}
-
-/**************************************************************************************************************/
-
-/*
-	Event handler for mouse up
- */
-GlobWeb.Navigation.prototype.handleMouseUp = function(event)
-{
-    // No button pressed anymore
-	this.pressedButton = -1;
-
-	if ( event.button == 0 || event.button == 1 ) // || event.button == 2 )
-	{
-		this.publish("end");
-		
-       // Stop mouse up event
-        return false;
-	}
-
-    return true;
-}
-
-/**************************************************************************************************************/
-
-/*
-	Event handler for mouse double click
- */
-GlobWeb.Navigation.prototype.handleMouseDblClick = function(event)
-{
-    if (event.button == 0)
-    {
-		var pos = this.globe.renderContext.getXYRelativeToCanvas(event);
-        var geo = this.globe.getLonLatFromPixel( pos[0], pos[1] );
-		if (geo)
-        {
-            this.zoomTo(geo, this.distance / (4.0 * GlobWeb.CoordinateSystem.heightScale), 5000, this.tilt);
-        }
-    }
 }
 
 /**************************************************************************************************************/

@@ -17,8 +17,7 @@
 			showWireframe: false, 
 			continuousRendering: true } );
 		
-		var astroNavigator = new GlobWeb.AstroNavigator(globe);
-		astroNavigator.setupDefaultEventHandlers(1);
+		var astroNavigator = new GlobWeb.AstroNavigation(globe);
 		
 		new GlobWeb.Stats(globe,{element: "fps",verbose: true});
 		

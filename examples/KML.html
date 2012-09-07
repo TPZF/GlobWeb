@@ -16,7 +16,6 @@
 		var globe = new GlobWeb.Globe( { canvas: "GlobWebCanvas" } );
 
 		var navigation = new GlobWeb.Navigation(globe);
-		navigation.setupMouseEventHandlers(true);
 
 		var bmlayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub",
 					layers: "BlueMarble,esat" } );
