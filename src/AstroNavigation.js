@@ -22,17 +22,18 @@
 /** @export
 	@constructor
 	AstroNavigator constructor
+	@param globe Globe
+	@param options Configuration properties for the AstroNavigation :
+		<ul>
+			<li>handler : object defining navigation events</li>
+		</ul>
  */
 GlobWeb.AstroNavigation = function(globe, options)
 {
 	this.globe = globe;
-	this.pressX = -1;
-	this.pressY = -1;
-	this.lastMouseX = -1;
-	this.lastMouseY = -1;
-	
+
 	// Arbitrary values
-	this.minFov = 2.5;
+	this.minFov = 0.25;
 	this.maxFov = 100;
 
 	// Initialize the navigator
@@ -55,7 +56,7 @@ GlobWeb.AstroNavigation = function(globe, options)
 	{
 		this.handler = new GlobWeb.MouseNavigationHandler();
 	}
-	this.handler.install(this, true);
+	this.handler.install(this);
 	
 	// Update the view matrix now
 	this.computeViewMatrix();
@@ -64,7 +65,7 @@ GlobWeb.AstroNavigation = function(globe, options)
 /**************************************************************************************************************/
 
 /** @export
-  Subscribe to a navigation event : start (called when navigation is started), and end (called when navigation end)
+	Subscribe to a navigation event : start (called when navigation is started), and end (called when navigation end)
 */
 GlobWeb.AstroNavigation.prototype.subscribe = function(name,callback)
 {
@@ -78,7 +79,7 @@ GlobWeb.AstroNavigation.prototype.subscribe = function(name,callback)
 /**************************************************************************************************************/
 
 /** @export
-  Unsubscribe to a navigation event : start (called when navigation is started), and end (called when navigation end)
+	Unsubscribe to a navigation event : start (called when navigation is started), and end (called when navigation end)
 */
 GlobWeb.AstroNavigation.prototype.unsubscribe = function(name,callback)
 {
@@ -93,8 +94,8 @@ GlobWeb.AstroNavigation.prototype.unsubscribe = function(name,callback)
 /**************************************************************************************************************/
 
 /** 
-  Publish a navigation event
-*/
+	Publish a navigation event
+ */
 GlobWeb.AstroNavigation.prototype.publish = function(name)
 {
 	if ( this.callbacks[name] ) {
@@ -108,21 +109,28 @@ GlobWeb.AstroNavigation.prototype.publish = function(name)
 /**************************************************************************************************************/
 
 /** @export
-  Zoom to a 3d position
-*/
-GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, duration, tilt )
+	Zoom to a 3d position
+	@param {Float[]} geoPos Array of two floats corresponding to final Longitude and Latitude(in this order) to zoom
+	@param {Int} fov Final zooming fov in degrees
+	@param {Int} duration Duration of animation in milliseconds
+	@param {Int} tilt Defines the tilt in the end of animation
+ */
+GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, tilt )
 {
 	var navigator = this;
+	
+	// default values
+	var destFov = fov || 15;
+	duration = duration || 5000;
 	var destTilt = tilt || 90;
 	
 	// Create a single animation to animate center3d, fov and tilt
 	var geoStart = [];
-	var finalFov = 15; 	// arbitrary value of fov in the end of animation
 	var middleFov = 45;	// arbitrary middle fov value which determines if the animation needs two segments
 	
 	GlobWeb.CoordinateSystem.from3DToGeo(this.center3d, geoStart);
 	var startValue = [geoStart[0], geoStart[1], this.globe.renderContext.fov, this.tilt];
-	var endValue = [geoPos[0], geoPos[1], finalFov, destTilt];
+	var endValue = [geoPos[0], geoPos[1], destFov, destTilt];
 	
 	var animation = new GlobWeb.SegmentedAnimation(
 		duration,
@@ -202,16 +210,6 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, duration, tilt )
 /**************************************************************************************************************/
 
 /*
-	Apply local rotation
- */
-GlobWeb.AstroNavigation.prototype.applyLocalRotation = function(matrix)
-{
-	mat4.rotate( matrix, Math.PI, [ 1.0, 0.0, 0.0 ] ); // zenith
-}
-
-/**************************************************************************************************************/
-
-/*
 	Compute the view matrix
  */
 GlobWeb.AstroNavigation.prototype.computeViewMatrix = function()
@@ -219,13 +217,10 @@ GlobWeb.AstroNavigation.prototype.computeViewMatrix = function()
 
 	var eye = [];
 	vec3.normalize(this.center3d);
-	var lookAt = [];
-	vec3.subtract(this.center3d, [0., 0., 0.], lookAt);
-	vec3.scale(lookAt, (1. - this.globe.renderContext.fov/100.), eye);
 	
 	var vm = this.globe.renderContext.viewMatrix;
 	
-	mat4.lookAt(eye, this.center3d, this.up, vm);
+	mat4.lookAt([0., 0., 0.], this.center3d, this.up, vm);
 	this.up = [ vm[1], vm[5], vm[9] ];
 
 }
@@ -234,6 +229,7 @@ GlobWeb.AstroNavigation.prototype.computeViewMatrix = function()
 
 /*
 	Event handler for mouse wheel
+	@param delta Delta zoom
  */
 GlobWeb.AstroNavigation.prototype.zoom = function(delta)
 {
@@ -281,25 +277,18 @@ GlobWeb.AstroNavigation.prototype.zoom = function(delta)
 /**************************************************************************************************************/
 
 /**
-*	Pan the navigator by computing the difference between 3D centers
-*	xs,ys : window starting point
-*	xd,yd : window destination point
-*/
-GlobWeb.AstroNavigation.prototype.pan = function(xs, ys, xd, yd)
+	Pan the navigator by computing the difference between 3D centers
+	@param dx Window delta x
+	@param dy Window delta y
+ */
+GlobWeb.AstroNavigation.prototype.pan = function(dx, dy)
 {
-	var geoSrc = [];
-	var geoDest = [];
-	
-	// Geo coordinates of source&destination
-	var source3d = this.globe.renderContext.get3DFromPixel(xs, ys);
-	var dest3d = this.globe.renderContext.get3DFromPixel(xd, yd);
+	var pixelSource = [this.globe.renderContext.canvas.width / 2., this.globe.renderContext.canvas.height / 2.];
+	var dest3d = this.globe.renderContext.get3DFromPixel(pixelSource[0] + dx, pixelSource[1] + dy);
 	
 	// Compute direction vector
 	var dir = [];
-	vec3.subtract(dest3d, source3d, dir);
-	
-	// Get 3d position of geoCenter
-	var position = vec3.create();
+	vec3.subtract(dest3d, this.center3d, dir);
 	
 	// Translate center3d by direction
 	vec3.subtract(this.center3d, dir, this.center3d);
@@ -312,6 +301,8 @@ GlobWeb.AstroNavigation.prototype.pan = function(xs, ys, xd, yd)
 
 /*
 	Rotate the navigator
+	@param dx Window delta x
+	@param dy Window delta y
  */
 GlobWeb.AstroNavigation.prototype.rotate = function(dx,dy)
 {

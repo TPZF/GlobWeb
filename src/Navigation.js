@@ -22,15 +22,15 @@
 /** @export
 	@constructor
 	Navigation constructor
+	@param globe Globe
+	@param options Configuration properties for the AstroNavigation :
+		<ul>
+			<li>handler : object defining navigation events</li>
+		</ul>
  */
 GlobWeb.Navigation = function(globe,options)
 {
 	this.globe = globe;
-	this.pressX = -1;
-	this.pressY = -1;
-	this.lastMouseX = -1;
-	this.lastMouseY = -1;
-	this.pressedButton = -1;
 	this.inverseViewMatrix = mat4.create();
 	
 	this.minDistance = 1.0;
@@ -50,9 +50,9 @@ GlobWeb.Navigation = function(globe,options)
 	
 	if( !this.handler )
 	{
-		this.handler = new GlobWeb.MouseNavigationHandler();
+		this.handler = new GlobWeb.MouseNavigationHandler({ zoomOnDblClick: true });
 	}
-	this.handler.install(this, true);
+	this.handler.install(this);
 	
 	this.minDistance *= GlobWeb.CoordinateSystem.heightScale;
 	this.maxDistance *= GlobWeb.CoordinateSystem.heightScale;
@@ -66,7 +66,7 @@ GlobWeb.Navigation = function(globe,options)
 /**************************************************************************************************************/
 
 /** @export
-  Subscribe to a navigation event : start (called when navigation is started), and end (called when navigation end)
+	Subscribe to a navigation event : start (called when navigation is started), and end (called when navigation end)
 */
 GlobWeb.Navigation.prototype.subscribe = function(name,callback)
 {
@@ -80,7 +80,7 @@ GlobWeb.Navigation.prototype.subscribe = function(name,callback)
 /**************************************************************************************************************/
 
 /** @export
-  Unsubscribe to a navigation event : start (called when navigation is started), and end (called when navigation end)
+	Unsubscribe to a navigation event : start (called when navigation is started), and end (called when navigation end)
 */
 GlobWeb.Navigation.prototype.unsubscribe = function(name,callback)
 {
@@ -95,7 +95,7 @@ GlobWeb.Navigation.prototype.unsubscribe = function(name,callback)
 /**************************************************************************************************************/
 
 /** 
-  Publish a navigation event
+	Publish a navigation event
 */
 GlobWeb.Navigation.prototype.publish = function(name)
 {
@@ -110,90 +110,96 @@ GlobWeb.Navigation.prototype.publish = function(name)
 /**************************************************************************************************************/
 
 /** @export
-  Zoom to a 3d position
+	Zoom to a 3d position
+	@param {Float[]} geoPos Array of two floats corresponding to final Longitude and Latitude(in this order) to zoom
+	@param {Int} distance Final zooming distance in meters
+	@param {Int} duration Duration of animation in milliseconds
+	@param {Int} tilt Defines the tilt in the end of animation
 */
 GlobWeb.Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt )
 {
-    var navigation = this;
+	var navigation = this;
 	
+	var destDistance = distance || this.distance / (4.0 * GlobWeb.CoordinateSystem.heightScale);
+	duration = duration || 5000;
 	var destTilt = tilt || 90;
+	
+	// Create a single animation to animate geoCenter, distance and tilt
+	var startValue = [this.geoCenter[0], this.geoCenter[1], this.distance, this.tilt];
+	var endValue = [geoPos[0], geoPos[1], destDistance * GlobWeb.CoordinateSystem.heightScale, destTilt];
+	var animation = new GlobWeb.SegmentedAnimation(
+		duration,
+		// Value setter
+		function(value) {
+			navigation.geoCenter[0] = value[0];
+			navigation.geoCenter[1] = value[1];
+			navigation.distance = value[2];
+			navigation.tilt = value[3];
+			navigation.computeViewMatrix();
+		});
 
-    // Create a single animation to animate geoCenter, distance and tilt
-    var startValue = [this.geoCenter[0], this.geoCenter[1], this.distance, this.tilt];
-    var endValue = [geoPos[0], geoPos[1], distance * GlobWeb.CoordinateSystem.heightScale, destTilt];
-    var animation = new GlobWeb.SegmentedAnimation(
-        duration,
-        // Value setter
-        function(value) {
-            navigation.geoCenter[0] = value[0];
-            navigation.geoCenter[1] = value[1];
-            navigation.distance = value[2];
-            navigation.tilt = value[3];
-            navigation.computeViewMatrix();
-        });
-
-    // Compute a max altitude for the animation
-    var worldStart = GlobWeb.CoordinateSystem.fromGeoTo3D(this.geoCenter);
-    var worldEnd   = GlobWeb.CoordinateSystem.fromGeoTo3D(geoPos);
-    var vec = vec3.subtract(worldStart, worldEnd);
-    var len = vec3.length(vec);
+	// Compute a max altitude for the animation
+	var worldStart = GlobWeb.CoordinateSystem.fromGeoTo3D(this.geoCenter);
+	var worldEnd   = GlobWeb.CoordinateSystem.fromGeoTo3D(geoPos);
+	var vec = vec3.subtract(worldStart, worldEnd);
+	var len = vec3.length(vec);
 	var canvas = this.globe.renderContext.canvas;
-    var minFov = Math.min(Numeric.toRadian(45.0),
-                          Numeric.toRadian(45.0 * canvas.width / canvas.height));
-    var maxAltitude = 1.1 * ((len / 2.0) / Math.tan(minFov / 2.0));
-    if (maxAltitude > this.distance)
-    {
-        // Compute the middle value
-        var midValue = [startValue[0]*0.5 + endValue[0]*0.5,
-                        startValue[1]*0.5 + endValue[1]*0.5,
-                        maxAltitude, destTilt];
+	var minFov = Math.min(Numeric.toRadian(45.0),
+				Numeric.toRadian(45.0 * canvas.width / canvas.height));
+	var maxAltitude = 1.1 * ((len / 2.0) / Math.tan(minFov / 2.0));
+	if (maxAltitude > this.distance)
+	{
+		// Compute the middle value
+		var midValue = [startValue[0]*0.5 + endValue[0]*0.5,
+				startValue[1]*0.5 + endValue[1]*0.5,
+				maxAltitude, destTilt];
 
-        // Add two segments
-        animation.addSegment(
-            0.0, startValue,
-            0.5, midValue,
-            function(t, a, b) {
-                var pt = Numeric.easeInQuad(t);
-                var dt = Numeric.easeOutQuad(t);
-                return [Numeric.lerp(pt, a[0], b[0]), // geoPos.long
-                        Numeric.lerp(pt, a[1], b[1]), // geoPos.lat
-                        Numeric.lerp(dt, a[2], b[2]), // distance
-                        Numeric.lerp(t, a[3], b[3])]; // tilt
-            });
+		// Add two segments
+		animation.addSegment(
+		0.0, startValue,
+		0.5, midValue,
+		function(t, a, b) {
+			var pt = Numeric.easeInQuad(t);
+			var dt = Numeric.easeOutQuad(t);
+			return [Numeric.lerp(pt, a[0], b[0]), // geoPos.long
+				Numeric.lerp(pt, a[1], b[1]), // geoPos.lat
+				Numeric.lerp(dt, a[2], b[2]), // distance
+				Numeric.lerp(t, a[3], b[3])]; // tilt
+		});
 
-        animation.addSegment(
-            0.5, midValue,
-            1.0, endValue,
-            function(t, a, b) {
-                var pt = Numeric.easeOutQuad(t);
-                var dt = Numeric.easeInQuad(t);
-                return [Numeric.lerp(pt, a[0], b[0]), // geoPos.long
-                        Numeric.lerp(pt, a[1], b[1]), // geoPos.lat
-                        Numeric.lerp(dt, a[2], b[2]), // distance
-                        Numeric.lerp(t, a[3], b[3])]; // tilt
-            });
-    }
-    else
-    {
-        // Add only one segments
-        animation.addSegment(
-            0.0, startValue,
-            1.0, endValue,
-            function(t, a, b) {
-                var pt = Numeric.easeOutQuad(t);
-                var dt = Numeric.easeInQuad(t);
-                return [Numeric.lerp(pt, a[0], b[0]),  // geoPos.long
-                        Numeric.lerp(pt, a[1], b[1]),  // geoPos.lat
-                        Numeric.lerp(dt, a[2], b[2]),  // distance
-                        Numeric.lerp(t, a[3], b[3])]; // tilt
-            });
-    }
+		animation.addSegment(
+		0.5, midValue,
+		1.0, endValue,
+		function(t, a, b) {
+			var pt = Numeric.easeOutQuad(t);
+			var dt = Numeric.easeInQuad(t);
+			return [Numeric.lerp(pt, a[0], b[0]), // geoPos.long
+				Numeric.lerp(pt, a[1], b[1]), // geoPos.lat
+				Numeric.lerp(dt, a[2], b[2]), // distance
+				Numeric.lerp(t, a[3], b[3])]; // tilt
+		});
+	}
+	else
+	{
+		// Add only one segments
+		animation.addSegment(
+		0.0, startValue,
+		1.0, endValue,
+		function(t, a, b) {
+			var pt = Numeric.easeOutQuad(t);
+			var dt = Numeric.easeInQuad(t);
+			return [Numeric.lerp(pt, a[0], b[0]),  // geoPos.long
+				Numeric.lerp(pt, a[1], b[1]),  // geoPos.lat
+				Numeric.lerp(dt, a[2], b[2]),  // distance
+				Numeric.lerp(t, a[3], b[3])]; // tilt
+		});
+	}
 
 	animation.onstop = function() {
 		navigation.publish("end");
 	}
 	this.globe.addAnimation(animation);
-    animation.start();
+	animation.start();
 	
 	this.publish("start");
 }
@@ -236,6 +242,7 @@ GlobWeb.Navigation.prototype.computeInverseViewMatrix = function()
 
 /*
 	Event handler for mouse wheel
+	@param delta Delta zoom
  */
 GlobWeb.Navigation.prototype.zoom = function(delta)
 {
@@ -279,14 +286,12 @@ GlobWeb.Navigation.prototype.hasCollision = function()
 /**************************************************************************************************************/
 
 /*
-	Pan the navigation
-*	xs,ys : window coordinates of the point of start
-*	xd,yd : window coordinates of the point of destination
- */
-GlobWeb.Navigation.prototype.pan = function(xs,ys,xd,yd)
+*	Pan the navigation
+	@param dx Window delta x
+	@param dy Window delta y
+*/
+GlobWeb.Navigation.prototype.pan = function(dx, dy)
 {
-	var dx = xd - xs;
-	var dy = yd - ys;
 	var previousGeoCenter = vec3.create();
 	vec3.set( this.geoCenter, previousGeoCenter );
 	
@@ -357,6 +362,8 @@ GlobWeb.Navigation.prototype.pan = function(xs,ys,xd,yd)
 
 /*
 	Rotate the navigation
+	@param dx Window delta x
+	@param dy Window delta y
  */
 GlobWeb.Navigation.prototype.rotate = function(dx,dy)
 {

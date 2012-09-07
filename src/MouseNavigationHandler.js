@@ -3,11 +3,19 @@
 /** @export
 	@constructor
 	MouseNavigationHandler constructor
+	@param options Configuration properties for the MouseNavigationHandler :
+			<ul>
+				<li>zoomOnDblClick : if true defines animation on double click</li>
+			</ul>
  */
 GlobWeb.MouseNavigationHandler = function(options){
 	
-	this.navigator = null;
+	this.navigation = null;
 	this.pressedButton = -1;
+	this.pressX = -1;
+	this.pressY = -1;
+	this.lastMouseX = -1;
+	this.lastMouseY = -1;
 	
 	// Copy options
 	for (var x in options)
@@ -20,21 +28,21 @@ GlobWeb.MouseNavigationHandler = function(options){
 /**************************************************************************************************************/
 
 /** 
- Setup the default event handlers for the navigator
+	Setup the default event handlers for the navigation
  */
-GlobWeb.MouseNavigationHandler.prototype.install = function(nav, zoomOnDblClick)
+GlobWeb.MouseNavigationHandler.prototype.install = function(navigation)
 {
 	// Setup the mouse event handlers
-	this.navigator = nav;
+	this.navigation = navigation;
 	
-	var canvas = this.navigator.globe.renderContext.canvas;
-	var self = this;	
+	var canvas = this.navigation.globe.renderContext.canvas;
+	var self = this;
 	
 	canvas.addEventListener("mousedown",function(e) { self.handleMouseDown(e||window.event); },false);
 	document.addEventListener("mouseup",function(e) { self.handleMouseUp(e||window.event); },false);
 	canvas.addEventListener("mousemove",function(e) { self.handleMouseMove(e||window.event); },false);
 	
-	if ( zoomOnDblClick )
+	if ( this.zoomOnDblClick )
 		canvas.addEventListener("dblclick",function(e) { self.handleMouseDblClick(e||window.event); },false);
 		
 	// For Firefox
@@ -45,12 +53,12 @@ GlobWeb.MouseNavigationHandler.prototype.install = function(nav, zoomOnDblClick)
 /**************************************************************************************************************/
 
 /** 
- Setup the default event handlers for the navigator
+	Remove the default event handlers for the navigation
  */
 GlobWeb.MouseNavigationHandler.prototype.uninstall = function()
 {
 	// Setup the mouse event handlers
-	var canvas = this.navigator.globe.renderContext.canvas;
+	var canvas = this.navigation.globe.renderContext.canvas;
 
 	canvas.removeEventListener("mousedown",function(e) { self.handleMouseDown(e||window.event); },false);
 	document.removeEventListener("mouseup",function(e) { self.handleMouseUp(e||window.event); },false);
@@ -71,18 +79,16 @@ GlobWeb.MouseNavigationHandler.prototype.uninstall = function()
  */
 GlobWeb.MouseNavigationHandler.prototype.handleMouseWheel = function(event)
 {
-	this.navigator.publish("start");
-	
-	// Check differences between firefox and the rest of the world
+	this.navigation.publish("start");
 	
 	// Check differences between firefox and the rest of the world 
 	if ( event.wheelDelta === undefined)
 	{
-		this.navigator.zoom(event.detail);
+		this.navigation.zoom(event.detail);
 	}
 	else
 	{
-		this.navigator.zoom(-event.wheelDelta / 120.0);
+		this.navigation.zoom(-event.wheelDelta / 120.0);
 	}
 	
 	// Stop mouse wheel to be propagated, because default is to scroll the page
@@ -93,8 +99,8 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseWheel = function(event)
 	}
 	event.returnValue = false;
 	
-	this.navigator.publish("end");
-	this.navigator.globe.renderContext.requestFrame();
+	this.navigation.publish("end");
+	this.navigation.globe.renderContext.requestFrame();
 		
 	// Return false to stop mouse wheel to be propagated when using onmousewheel
 	return false;
@@ -118,7 +124,7 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseDown = function(event)
 		this.lastMouseX = event.clientX;
 		this.lastMouseY = event.clientY;
 		
-		this.navigator.publish("start");
+		this.navigation.publish("start");
 		
 		// Return false to stop mouse down to be propagated when using onmousedown
 		return false;
@@ -139,7 +145,7 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseUp = function(event)
 
 	if ( event.button == 0 || event.button == 1 )
 	{
-		this.navigator.publish("end");
+		this.navigation.publish("end");
 		
 		// Stop mouse up event
 		return false;
@@ -158,19 +164,19 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseMove = function(event)
 	// No button pressed
 	if (this.pressedButton < 0)
 		return;
-
+	
 	var dx = (event.clientX - this.lastMouseX);
 	var dy = (event.clientY - this.lastMouseY);
 	
 	// Pan
 	if ( this.pressedButton == 0 )
 	{
-
-		this.navigator.pan( this.lastMouseX, this.lastMouseY, event.clientX, event.clientY );
+	
+		this.navigation.pan( dx, dy );
 		
 		this.lastMouseX = event.clientX;
 		this.lastMouseY = event.clientY;
-		this.navigator.globe.renderContext.requestFrame();
+		this.navigation.globe.renderContext.requestFrame();
 		
 		return true;
 	}
@@ -178,7 +184,7 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseMove = function(event)
 	else if ( this.pressedButton == 1 )
 	{
 		this.rotate(dx,dy);
-		this.navigator.globe.renderContext.requestFrame();
+		this.navigation.globe.renderContext.requestFrame();
 		return true;
 	}
 	
@@ -194,15 +200,12 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseDblClick = function(event)
 {
 	if (event.button == 0)
 	{
-		var pos = this.navigator.globe.renderContext.getXYRelativeToCanvas(event);
-		var geo = this.navigator.globe.getLonLatFromPixel( pos[0], pos[1] );
+		var pos = this.navigation.globe.renderContext.getXYRelativeToCanvas(event);
+		var geo = this.navigation.globe.getLonLatFromPixel( pos[0], pos[1] );
 	
 		if (geo)
 		{
-			this.navigator.zoomTo(geo, 5000, this.tilt);
+			this.navigation.zoomTo(geo);
 		}
 	}
 }
-
-
-
