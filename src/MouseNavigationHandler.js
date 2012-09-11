@@ -38,7 +38,7 @@ GlobWeb.MouseNavigationHandler.prototype.install = function(navigation)
 	var canvas = this.navigation.globe.renderContext.canvas;
 	var self = this;
 	
-	canvas.addEventListener("mousedown",function(e) { self.handleMouseDown(e||window.event); },false);
+	canvas.addEventListener("mousedown",function(e) { e.preventDefault(); self.handleMouseDown(e||window.event); },false);
 	document.addEventListener("mouseup",function(e) { self.handleMouseUp(e||window.event); },false);
 	canvas.addEventListener("mousemove",function(e) { self.handleMouseMove(e||window.event); },false);
 	
@@ -46,8 +46,8 @@ GlobWeb.MouseNavigationHandler.prototype.install = function(navigation)
 		canvas.addEventListener("dblclick",function(e) { self.handleMouseDblClick(e||window.event); },false);
 		
 	// For Firefox
-	canvas.addEventListener("DOMMouseScroll",function(e) { self.handleMouseWheel(e||window.event); },false);
-	canvas.addEventListener("mousewheel",function(e) { self.handleMouseWheel(e||window.event); },false);
+	canvas.addEventListener("DOMMouseScroll",function(e) { e.preventDefault(); self.handleMouseWheel(e||window.event); },false);
+	canvas.addEventListener("mousewheel",function(e) { e.preventDefault(); self.handleMouseWheel(e||window.event); },false);
 }
 
 /**************************************************************************************************************/

@@ -239,14 +239,7 @@ GlobWeb.AstroNavigation.prototype.zoom = function(delta)
 	this.publish("start");
 	
 	// Check differences between firefox and the rest of the world 
-	if ( event.wheelDelta === undefined)
-	{
-		this.globe.renderContext.fov *= delta;
-	}
-	else
-	{
-		this.globe.renderContext.fov *= delta;
-	}
+	this.globe.renderContext.fov *= delta;
 	
 	if ( this.globe.renderContext.fov > this.maxFov )
 	{
@@ -258,14 +251,6 @@ GlobWeb.AstroNavigation.prototype.zoom = function(delta)
 	}
 	
 	this.computeViewMatrix();
-	
-	// Stop mouse wheel to be propagated, because default is to scroll the page
-	// This is need when using Firefox event listener on DOMMouseScroll
-	if ( event.preventDefault )
-	{
-		event.preventDefault();
-	}
-	event.returnValue = false;
 	
 	this.publish("end");
 	this.globe.renderContext.requestFrame();
