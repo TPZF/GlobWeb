@@ -97,10 +97,10 @@ GlobWeb.Stats.prototype.print = function()
 		
 		if ( this.showFPS )
 		{
-			content += "FPS : " + this.numFrames;
+			content += "FPS : " + this.numFrames + "<br>";
 		}
 		
-		content += "<br>Average render time : " + (this["sum_globalRenderTime"] / this.numFrames).toFixed(2) + " ms";
+		content += "Average render time : " + (this["sum_globalRenderTime"] / this.numFrames).toFixed(2) + " ms";
 		content += "<br># rendered tiles : " + this.globe.tileManager.tilesToRender.length;
 		//content += "<br># level zero tiles : " + this.globe.tileManager.level0Tiles.length;
 		

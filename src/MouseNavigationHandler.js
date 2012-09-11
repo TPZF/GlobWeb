@@ -168,27 +168,26 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseMove = function(event)
 	var dx = (event.clientX - this.lastMouseX);
 	var dy = (event.clientY - this.lastMouseY);
 	
+	var ret = false;
 	// Pan
 	if ( this.pressedButton == 0 )
 	{
-	
 		this.navigation.pan( dx, dy );
-		
-		this.lastMouseX = event.clientX;
-		this.lastMouseY = event.clientY;
 		this.navigation.globe.renderContext.requestFrame();
-		
-		return true;
+		ret = true;
 	}
 	// Rotate
 	else if ( this.pressedButton == 1 )
 	{
-		this.rotate(dx,dy);
+		this.navigation.rotate(dx,dy);
 		this.navigation.globe.renderContext.requestFrame();
-		return true;
+		ret = true;
 	}
 	
-	return false;
+	this.lastMouseX = event.clientX;
+	this.lastMouseY = event.clientY;
+	
+	return ret;
 }
 
 /**************************************************************************************************************/

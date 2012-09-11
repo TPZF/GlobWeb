@@ -76,7 +76,7 @@ GlobWeb.Animation.prototype.start = function()
 		else
 		{
 			// resume after pause
-			this.startTime = now - this.pauseTime;
+			this.startTime += now - this.pauseTime;
 			this.pauseTime = -1;
 		}
 		

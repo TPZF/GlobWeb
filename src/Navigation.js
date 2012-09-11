@@ -48,6 +48,7 @@ GlobWeb.Navigation = function(globe,options)
 		this[x] = options[x];
 	}
 	
+	// Create handler if not passed in options before
 	if( !this.handler )
 	{
 		this.handler = new GlobWeb.MouseNavigationHandler({ zoomOnDblClick: true });

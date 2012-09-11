@@ -150,17 +150,15 @@ GlobWeb.TileManager.prototype.removePostRenderer = function(renderer)
 	Set the imagery provider to be used
  */
 GlobWeb.TileManager.prototype.setImageryProvider = function(ip)
-{	
-	this.imageryProvider = ip;
-	
+{
 	this.reset();
+	this.imageryProvider = ip;
 	
 	if (ip)
 	{
 		// Rebuild level zero tiles
 		this.tileConfig.imageSize = ip.tilePixelSize;
 		this.level0Tiles = ip.tiling.generateLevelZeroTiles(this.tileConfig,this.tilePool);
-		this.level0TilesLoaded = false;
 	}
 }
 
@@ -187,8 +185,7 @@ GlobWeb.TileManager.prototype.reset = function()
 	for (var i = 0; i < this.level0Tiles.length; i++)
 	{
 		this.level0Tiles[i].deleteChildren(this.tilePool);
-		this.level0Tiles[i].state = GlobWeb.Tile.State.NONE;
-		this.level0Tiles[i].dispose();
+		this.level0Tiles[i].dispose(this.tilePool);
 	}
 	
 	// Reset the shared buffers : texture coordinate and indices
@@ -198,6 +195,8 @@ GlobWeb.TileManager.prototype.reset = function()
 	this.tcoordBuffer = null;
 	
 	this.levelZeroTexture = null;
+	
+	this.level0TilesLoaded = false;
 }
 
 /**************************************************************************************************************/

@@ -127,14 +127,25 @@ GlobWeb.Globe.prototype.setOption = function(name,value)
 /**************************************************************************************************************/
 
 /** 
+  Refresh rendering, must be called when canvas size is modified
+ */
+GlobWeb.Globe.prototype.refresh = function()
+{
+	this.renderContext.requestFrame();
+}
+
+/**************************************************************************************************************/
+
+/** 
   Set the base imagery layer for the globe
   
   @param {GlobWeb.RasterLayer} layer the layer to use, must be an imagery RasterLayer
 */
 GlobWeb.Globe.prototype.setBaseImagery = function(layer)
 {
+	if (this.tileManager.imageryProvider) this.tileManager.imageryProvider._detach();
 	this.tileManager.setImageryProvider(layer);
-	layer._attach(this);
+	if (layer) layer._attach(this);
 	this.renderContext.requestFrame();
 }
 
@@ -147,8 +158,9 @@ GlobWeb.Globe.prototype.setBaseImagery = function(layer)
 */
 GlobWeb.Globe.prototype.setBaseElevation = function(layer)
 {
+	if (this.tileManager.elevationProvider) this.tileManager.imageryProvider._detach();
 	this.tileManager.setElevationProvider(layer);
-	layer._attach(this);
+	if (layer) layer._attach(this);
 	this.renderContext.requestFrame();
 }
 

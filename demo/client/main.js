@@ -1,7 +1,6 @@
 var globe = null;
 var nav = null;
 var pathAnimation = null;
-var fpsElement = null;
 var geocoder = null;
 var previousFrameNumber = 0;
 var imageries = {};
@@ -38,18 +37,16 @@ onGoToClicked = function(e)
 onImageryClicked = function(e)
 {
 	var value = e.currentTarget.value;
-	globe.removeLayer( activeImagery );
 	activeImagery = imageries[value];
-	globe.addLayer( activeImagery );
+	globe.setBaseImagery( activeImagery );
 }
 
 // Called when elevation is clicked
 onElevationClicked = function(e)
 {
 	var value = e.currentTarget.value;
-	if (activeElevation) globe.removeLayer( activeElevation );
 	activeElevation = elevations[value];
-	if (activeElevation) globe.addLayer( activeElevation );
+	globe.setBaseElevation( activeElevation );
 }
 
 // Called when a POI is clicked
@@ -63,6 +60,7 @@ onWindowResize = function(e)
 	var canvas = document.getElementById('GlobWebCanvas');
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;
+	globe.refresh();
 }
 
 // Initialize the POI into GlobWeb
@@ -88,25 +86,15 @@ initializePoi = function(pois)
 	globe.addLayer(poiLayer);
 }
 
-// FPS update
-function fpsUpdate()
-{
-	if ( fpsElement != null )
-	{
-		var currentFrameNumber = globe.getFrameNumber();
-		fpsElement.innerHTML = "FPS : " + (currentFrameNumber - previousFrameNumber);
-		previousFrameNumber = currentFrameNumber;
-	}
-}
-
 // Initialize the elevation
 initializeElevation = function(value)
 {
 	elevations["None"] = null;
-	elevations["GTOPO"] = new GlobWeb.BasicElevationLayer( { baseUrl: config.serverUrl + "/GlobeWeb/map.php"} );
-	
+	elevations["GTOPO"] = new GlobWeb.WMSElevationLayer({ baseUrl: config.serverUrl + "/wmspub", layers: "GTOPO"});
+		//new GlobWeb.BasicElevationLayer( { baseUrl: config.serverUrl + "/GlobeWeb/map.php"} );
+
 	activeElevation = elevations[value];
-	globe.addLayer( activeElevation );
+	globe.setBaseElevation( activeElevation );
 }
 
 // Initialize the imagery
@@ -117,7 +105,7 @@ initializeImagery = function(value)
 	imageries["OSM"] = new GlobWeb.WMSLayer( { baseUrl: config.serverUrl + "/geocache/wms", layers: "imposm-fr", format: "image/png" } );
 
 	activeImagery = imageries[value];
-	globe.addLayer( activeImagery );
+	globe.setBaseImagery( activeImagery );
 }
 
 initializePath = function()
@@ -216,7 +204,8 @@ initializePath = function()
 			pathLayer.addFeature( feature );
 			globe.addLayer(pathLayer);
 			
-			pathAnimation = new GlobWeb.PathAnimation(coords,1000,undefined,globe);
+			pathAnimation = new GlobWeb.PathAnimation(coords,1000,undefined);
+			globe.addAnimation(pathAnimation);
 			
 			}
 	});
@@ -270,7 +259,7 @@ $(function()
 	try
 	{
 		globe = new GlobWeb.Globe({ canvas: 'GlobWebCanvas', 
-				atmosphere: true, 
+				atmosphere: false, 
 				shadersPath: config.shadersPath 
 		});
 	}
@@ -280,7 +269,7 @@ $(function()
 		document.getElementById('webGLNotAvailable').style.display = "block";
 	}
 		
-	nav = new GlobWeb.Navigator(globe);
+	nav = new GlobWeb.Navigation(globe);
 	
 	initializeImagery('PO');
 	initializeElevation('GTOPO');
@@ -288,9 +277,8 @@ $(function()
 	// Initialize follow path
 	initializePath();
 
-	// Init FPS
-	fpsElement = document.getElementById("fps");
-	window.setInterval(fpsUpdate,1000);
+	// Init Stats
+	var stats = new GlobWeb.Stats(globe,{element: "fps",verbose: false});
 
 });
 

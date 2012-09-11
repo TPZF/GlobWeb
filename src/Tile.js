@@ -272,11 +272,13 @@ GlobWeb.Tile.prototype.dispose = function(tilePool)
 			if ( this.extension[x].dispose )
 				this.extension[x].dispose();
 		}
-	}
 
-	this.vertexBuffer = null;
-	this.texture = null;
-	this.parent = null;
+		this.vertexBuffer = null;
+		this.texture = null;
+		this.parent = null;
+		
+		this.state = GlobWeb.Tile.State.NONE;
+	}
 }
 
 /**************************************************************************************************************/

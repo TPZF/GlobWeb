@@ -259,6 +259,7 @@ GlobWeb.TiledVectorRenderer.TileData.prototype.dispose = function()
 	{
 		this.renderables[i].dispose();
 	}
+	this.renderables.length = 0;
 }
 
 /**************************************************************************************************************/

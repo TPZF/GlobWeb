@@ -25,6 +25,7 @@ GlobWeb.Globe.prototype['getLonLatFromPixel'] = GlobWeb.Globe.prototype.getLonLa
 GlobWeb.Globe.prototype['getViewportGeoBound'] = GlobWeb.Globe.prototype.getViewportGeoBound;
 GlobWeb.Globe.prototype['setBaseImagery'] = GlobWeb.Globe.prototype.setBaseImagery;
 GlobWeb.Globe.prototype['setBaseElevation'] = GlobWeb.Globe.prototype.setBaseElevation;
+GlobWeb.Globe.prototype['refresh'] = GlobWeb.Globe.prototype.refresh;
 
 // VectorLayer exports
 GlobWeb.VectorLayer.prototype['addFeatureCollection'] = GlobWeb.VectorLayer.prototype.addFeatureCollection;
@@ -36,8 +37,6 @@ GlobWeb.VectorLayer.prototype['removeFeature'] = GlobWeb.VectorLayer.prototype.r
 GlobWeb.Navigation.prototype['zoomTo'] = GlobWeb.Navigation.prototype.zoomTo;
 GlobWeb.Navigation.prototype['subscribe'] = GlobWeb.Navigation.prototype.subscribe;
 GlobWeb.Navigation.prototype['unsubscribe'] = GlobWeb.Navigation.prototype.unsubscribe;
-GlobWeb.Navigation.prototype['setupMouseEventHandlers'] = GlobWeb.Navigation.prototype.setupMouseEventHandlers;
-//GlobWeb.Navigation.prototype['setupTouchEventHandlers'] = GlobWeb.Navigation.prototype.setupTouchEventHandlers;
 
 // Path animation exports
 window['GlobWeb']['PathAnimation'] = GlobWeb.PathAnimation;

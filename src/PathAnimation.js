@@ -23,7 +23,7 @@
 	@constructor
   PathAnimation is an animation defined with a path.
  */
-GlobWeb.PathAnimation = function(coords,speed,valueSetter,globe)
+GlobWeb.PathAnimation = function(coords,speed,valueSetter)
 {
     // Call ancestor constructor
     GlobWeb.Animation.prototype.constructor.call(this);
@@ -68,7 +68,6 @@ GlobWeb.PathAnimation = function(coords,speed,valueSetter,globe)
 	this.nodes[i].velocity = vec3.subtract( temp, this.nodes[i-1].velocity, vec3.create() );
 	vec3.scale( this.nodes[i].velocity, 0.5 );
 
-	this.globe = globe;
 	this.index = 0;
 	this.currentDistance = 0;
 	this.previousTime = -1;
@@ -95,7 +94,7 @@ GlobWeb.PathAnimation = function(coords,speed,valueSetter,globe)
 			var dirn = vec3.normalize( direction, vec3.create() );
 			var center = vec3.add( eye, dirn, vec3.create() );
 			vec3.add( center, vec3.scale(up, that.centerOffset, vec3.create()) );
-			mat4.lookAt( eye, center, up, GlobWeb.RenderContext.viewMatrix );
+			mat4.lookAt( eye, center, up, that.globe.renderContext.viewMatrix );
 		};
 	}
 }
@@ -142,7 +141,7 @@ GlobWeb.PathAnimation.prototype.setDirectionAngle = function(vertical)
 GlobWeb.PathAnimation.prototype.start = function()
 {
 	var previousStartTime = -1;
-	if ( this.state == GlobWeb.Animation.State.PAUSED )
+	if ( this.pauseTime != -1 )
 	{
 		previousStartTime = this.startTime;
 	}
