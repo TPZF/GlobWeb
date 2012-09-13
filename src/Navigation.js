@@ -25,40 +25,23 @@
 	@param globe Globe
 	@param options Configuration properties for the AstroNavigation :
 		<ul>
-			<li>handler : object defining navigation events</li>
+			<li>handlers : Array of objects defining navigation events</li>
 		</ul>
  */
 GlobWeb.Navigation = function(globe,options)
 {
-	this.globe = globe;
+	GlobWeb.BaseNavigation.prototype.constructor.call( this, globe, options );
+	
 	this.inverseViewMatrix = mat4.create();
 	
 	this.minDistance = 1.0;
 	this.maxDistance = 3.0 * GlobWeb.CoordinateSystem.realEarthRadius;
 
 	// Initialize the navigation
-	this.geoCenter = [0.0, 0.0, 0.0];
 	this.distance = 3.0 * GlobWeb.CoordinateSystem.radius;
-	this.heading = 0.0;
-	this.tilt = 90.0;
-	
-	// Copy options
-	for (var x in options)
-	{
-		this[x] = options[x];
-	}
-	
-	// Create handler if not passed in options before
-	if( !this.handler )
-	{
-		this.handler = new GlobWeb.MouseNavigationHandler({ zoomOnDblClick: true });
-	}
-	this.handler.install(this);
 	
 	this.minDistance *= GlobWeb.CoordinateSystem.heightScale;
 	this.maxDistance *= GlobWeb.CoordinateSystem.heightScale;
-	
-	this.callbacks = {};
 
 	// Update the view matrix now
 	this.computeViewMatrix();
@@ -66,47 +49,7 @@ GlobWeb.Navigation = function(globe,options)
 
 /**************************************************************************************************************/
 
-/** @export
-	Subscribe to a navigation event : start (called when navigation is started), and end (called when navigation end)
-*/
-GlobWeb.Navigation.prototype.subscribe = function(name,callback)
-{
-	if( !this.callbacks[name] ) {
-		this.callbacks[name] = [ callback ];
-	} else {
-		this.callbacks[name].push( callback );
-	}
-}
-
-/**************************************************************************************************************/
-
-/** @export
-	Unsubscribe to a navigation event : start (called when navigation is started), and end (called when navigation end)
-*/
-GlobWeb.Navigation.prototype.unsubscribe = function(name,callback)
-{
-	if( this.callbacks[name] ) {
-		var i = this.callbacks[name].indexOf( callback );
-		if ( i != -1 ) {
-			this.callbacks[name].splice(i,1);
-		}
-	}
-}
-
-/**************************************************************************************************************/
-
-/** 
-	Publish a navigation event
-*/
-GlobWeb.Navigation.prototype.publish = function(name)
-{
-	if ( this.callbacks[name] ) {
-		var cbs = this.callbacks[name];
-		for ( var i = 0; i < cbs.length; i++ ) {
-			cbs[i]();
-		}
-	}
-}
+GlobWeb.inherits( GlobWeb.BaseNavigation,GlobWeb.Navigation );
 
 /**************************************************************************************************************/
 

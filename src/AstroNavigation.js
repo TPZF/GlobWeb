@@ -25,12 +25,12 @@
 	@param globe Globe
 	@param options Configuration properties for the AstroNavigation :
 		<ul>
-			<li>handler : object defining navigation events</li>
+			<li>handlers : Array of objects defining navigation events</li>
 		</ul>
  */
 GlobWeb.AstroNavigation = function(globe, options)
 {
-	this.globe = globe;
+	GlobWeb.BaseNavigation.prototype.constructor.call( this, globe, options );
 
 	// Arbitrary values
 	this.minFov = 0.25;
@@ -38,29 +38,16 @@ GlobWeb.AstroNavigation = function(globe, options)
 
 	// Initialize the navigator
 	this.center3d = [1.0, 0.0, 0.0];
-
-	this.heading = 0.0;
-	this.tilt = 90.0;
 	
 	this.up = [0., 0., 1.]
-	
-	this.callbacks = {};
-	
-	// Copy options
-	for (var x in options)
-	{
-		this[x] = options[x];
-	}
-	
-	if( !this.handler )
-	{
-		this.handler = new GlobWeb.MouseNavigationHandler();
-	}
-	this.handler.install(this);
 	
 	// Update the view matrix now
 	this.computeViewMatrix();
 }
+
+/**************************************************************************************************************/
+
+GlobWeb.inherits( GlobWeb.BaseNavigation,GlobWeb.AstroNavigation );
 
 /**************************************************************************************************************/
 

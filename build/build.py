@@ -27,7 +27,9 @@ commonFiles= [
 		"TileRequest.js",
 		"Globe.js",
 		"PathAnimation.js",
-		"MouseNavigationHandler.js"
+		"MouseNavigationHandler.js",
+		"KeyboardNavigationHandler.js",
+		"BaseNavigation.js"
 	]
 		
 globFiles = [

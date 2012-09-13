@@ -32,12 +32,13 @@ GlobWeb.MouseNavigationHandler = function(options){
  */
 GlobWeb.MouseNavigationHandler.prototype.install = function(navigation)
 {
-	// Setup the mouse event handlers
+	
 	this.navigation = navigation;
 	
 	var canvas = this.navigation.globe.renderContext.canvas;
 	var self = this;
 	
+	// Setup the mouse event handlers
 	canvas.addEventListener("mousedown",function(e) { e.preventDefault(); self.handleMouseDown(e||window.event); },false);
 	document.addEventListener("mouseup",function(e) { self.handleMouseUp(e||window.event); },false);
 	canvas.addEventListener("mousemove",function(e) { self.handleMouseMove(e||window.event); },false);
