@@ -45,6 +45,11 @@ GlobWeb.TileRequest = function(cb)
 		{
 			that.handleLoadedElevation( that );
 		}
+
+		if ( that.xhr.status >= 400)
+		{
+			that.handleErrorElevation( that );
+		}
 	};
 }
 
@@ -83,6 +88,23 @@ GlobWeb.TileRequest.prototype.handleLoadedElevation = function()
 {
 	this.elevations = this.xhr.responseText;
 		
+	this.elevationLoaded = true;
+	
+	if ( this.imageLoaded )
+	{
+		this.successfull = true;
+		this.callback();
+	}
+}
+
+/**************************************************************************************************************/
+
+/*
+	Handle when loading elevation failed
+ */
+GlobWeb.TileRequest.prototype.handleErrorElevation = function() 
+{
+	this.elevations = null;
 	this.elevationLoaded = true;
 	
 	if ( this.imageLoaded )
