@@ -38,6 +38,7 @@ globFiles = [
 		"MercatorTiling.js",
 		"WMSLayer.js",
 		"WMSElevationLayer.js",
+        "WCSElevationLayer.js",
 		"BingLayer.js",
 		"OSMLayer.js", 
 		"BasicElevationLayer.js", 
