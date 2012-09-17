@@ -26,22 +26,29 @@
 	@param options Configuration properties for the AstroNavigation :
 		<ul>
 			<li>handlers : Array of objects defining navigation events</li>
+			<li>minDistance : The minimum distance</li>
+			<li>maxDistance : The maximum distance</li>
 		</ul>
  */
 GlobWeb.Navigation = function(globe,options)
 {
-	GlobWeb.BaseNavigation.prototype.constructor.call( this, globe, options );
-	
-	this.inverseViewMatrix = mat4.create();
-	
+	// Default values for min and max distance (in meter)
 	this.minDistance = 1.0;
 	this.maxDistance = 3.0 * GlobWeb.CoordinateSystem.realEarthRadius;
-
+	
+	GlobWeb.BaseNavigation.prototype.constructor.call( this, globe, options );
+	
 	// Initialize the navigation
+	this.geoCenter = [0.0, 0.0, 0.0];
+	this.heading = 0.0;
+	this.tilt = 90.0;
 	this.distance = 3.0 * GlobWeb.CoordinateSystem.radius;
 	
+	// Scale min and max distance from meter to internal ratio
 	this.minDistance *= GlobWeb.CoordinateSystem.heightScale;
 	this.maxDistance *= GlobWeb.CoordinateSystem.heightScale;
+
+	this.inverseViewMatrix = mat4.create();
 
 	// Update the view matrix now
 	this.computeViewMatrix();
