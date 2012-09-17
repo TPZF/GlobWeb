@@ -71,7 +71,7 @@ var GlobWeb = GlobWeb || {};
 		"Triangulator.js",
 		"GroundOverlayLayer.js",
 		"GroundOverlayRenderer.js",
-		"WMSOverlayRenderer.js",
+		"RasterOverlayRenderer.js",
 		"TileIndexBuffer.js",
 		"Tile.js",
 		"TilePool.js",

@@ -43,7 +43,6 @@ GlobWeb.Globe = function(options)
 	this.tileManager = new GlobWeb.TileManager( this.renderContext );
 	this.tileManager.showWireframe = options['showWireframe'];
 	this.vectorRendererManager = new GlobWeb.VectorRendererManager( this );
-	this.layers = [];
 	this.activeAnimations = [];
 	
 	var glob = this;	
@@ -145,8 +144,11 @@ GlobWeb.Globe.prototype.setBaseImagery = function(layer)
 {
 	if (this.tileManager.imageryProvider) this.tileManager.imageryProvider._detach();
 	this.tileManager.setImageryProvider(layer);
-	if (layer) layer._attach(this);
-	this.renderContext.requestFrame();
+	if ( layer )
+	{
+		layer.overlay = false;
+		this.addLayer(layer);
+	}
 }
 
 /**************************************************************************************************************/
@@ -160,21 +162,24 @@ GlobWeb.Globe.prototype.setBaseElevation = function(layer)
 {
 	if (this.tileManager.elevationProvider) this.tileManager.imageryProvider._detach();
 	this.tileManager.setElevationProvider(layer);
-	if (layer) layer._attach(this);
-	this.renderContext.requestFrame();
+	if ( layer )
+	{
+		layer.overlay = false;
+		this.addLayer(layer);
+	}
 }
 
 
 /**************************************************************************************************************/
 
 /** 
-  Add a layer.
+  Add a layer to the globe.
+  A layer must be added to be visualized on the globe.
   
   @param layer the layer to add
 */
 GlobWeb.Globe.prototype.addLayer = function(layer)
 {
-	this.layers.push( layer );
 	layer._attach(this);
 	this.renderContext.requestFrame();
 }
@@ -184,16 +189,12 @@ GlobWeb.Globe.prototype.addLayer = function(layer)
 /** 
   Remove a layer
   
-  @param layer the layer to add
+  @param layer the layer to remove
 */
 GlobWeb.Globe.prototype.removeLayer = function(layer)
 {
-	var index = this.layers.indexOf(layer);
-	if ( index != -1 )
-	{
-		this.layers.splice(index,1);
-		layer._detach();
-	}
+	layer._detach();
+	this.renderContext.requestFrame();
 }
 
 /**************************************************************************************************************/

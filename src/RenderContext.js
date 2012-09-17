@@ -313,7 +313,7 @@ GlobWeb.RenderContext.prototype.getPixelFrom3D = function(x,y,z)
 /**************************************************************************************************************/
 
 /** 
-	Create a texture from an image
+	Create a non power of two texture from an image
 */
 GlobWeb.RenderContext.prototype.createNonPowerOfTwoTextureFromImage = function(image)
 {	

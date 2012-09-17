@@ -29,7 +29,8 @@ commonFiles= [
 		"PathAnimation.js",
 		"MouseNavigationHandler.js",
 		"KeyboardNavigationHandler.js",
-		"BaseNavigation.js"
+		"BaseNavigation.js",
+		"RasterOverlayRenderer.js"
 	]
 		
 globFiles = [

@@ -31,7 +31,9 @@
 	this.tiling = null;
 	this.numberOfLevels = -1;
 	this.name = options && options.hasOwnProperty('name') ? options['name'] : "";
-	this.overlay = options && options.hasOwnProperty('overlay') ? options['overlay'] : false;
+	this.overlay = options && options.hasOwnProperty('overlay') ? options['overlay'] : true;
+	this.geoBound = options['geoBound'] || null;
+	this.coordinates = options['coordinates'] || null;
 	
 	// Internal
 	this.ready = true;
@@ -41,23 +43,39 @@
 /**************************************************************************************************************/
 
 /** 
-  Attach the vector layer from the globe
+  Attach the raster layer to the globe
  */
 GlobWeb.RasterLayer.prototype._attach = function( g )
 {
 	this.globe = g;
-	// TODO
+	
+	// When raster is an overlvay, RasterOverlayRenderer is used to render it 
+	if ( this.overlay )
+	{
+		// Create the renderer if needed
+		if ( !g.rasterOverlayRenderer )
+		{
+			var renderer = new GlobWeb.RasterOverlayRenderer(g.tileManager);
+			g.tileManager.addPostRenderer(renderer);
+			g.rasterOverlayRenderer = renderer;
+		}
+		g.rasterOverlayRenderer.addOverlay(this);
+	}
 }
 
 /**************************************************************************************************************/
 
 /** 
-  Detach the vector layer from the globe
+  Detach the raster layer from the globe
  */
 GlobWeb.RasterLayer.prototype._detach = function( g )
 {
+	// Remove raster from overlay renderer if needed
+	if ( this.overlay && this.globe.rasterOverlayRenderer )
+	{
+		this.globe.rasterOverlayRenderer.removeOverlay(this);
+	}
 	this.globe = null;
-	// TODO
 }
 
 /**************************************************************************************************************/

@@ -22,7 +22,7 @@
 /** 
 	@constructor
  */
-GlobWeb.WMSOverlayRenderer = function(tileManager)
+GlobWeb.RasterOverlayRenderer = function(tileManager)
 {
 	var vertexShader = "\
 	attribute vec3 vertex;\n\
@@ -72,7 +72,7 @@ GlobWeb.WMSOverlayRenderer = function(tileManager)
 		//image.crossOrigin = '';
 		image.onload = function() 
 		{
-			console.log("Load " + this.src);
+			//console.log("Load " + this.src);
 			var gl = tileManager.renderContext.gl;
 			var texture = gl.createTexture();
 			gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -119,7 +119,7 @@ GlobWeb.WMSOverlayRenderer = function(tileManager)
 	Create a renderable for the overlay.
 	There is one renderable per overlay and per tile.
  */
-GlobWeb.WMSOverlayRenderable = function( overlay )
+GlobWeb.RasterOverlayRenderable = function( overlay )
 {
 	this.overlay = overlay;
 	this.texture = null;
@@ -131,7 +131,7 @@ GlobWeb.WMSOverlayRenderable = function( overlay )
 /** 
 	Dispose the renderable
  */
-GlobWeb.WMSOverlayRenderable.prototype.dispose = function()
+GlobWeb.RasterOverlayRenderable.prototype.dispose = function()
 {
 	if ( this.texture ) 
 	{
@@ -149,7 +149,7 @@ GlobWeb.WMSOverlayRenderable.prototype.dispose = function()
 	Create tile data for the WMS overlay renderer.
 	The tile data is just an array of renderables.
  */
-GlobWeb.WMSOverlayRenderer.TileData = function()
+GlobWeb.RasterOverlayRenderer.TileData = function()
 {
 	this.renderables = [];
 }
@@ -159,7 +159,7 @@ GlobWeb.WMSOverlayRenderer.TileData = function()
 /** 
 	Find the renderable of an overlay on a tile
  */
-GlobWeb.WMSOverlayRenderer.TileData.prototype.findRenderable = function(overlay)
+GlobWeb.RasterOverlayRenderer.TileData.prototype.findRenderable = function(overlay)
 {
 	for ( var i = 0; i < this.renderables.length; i++ )
 	{
@@ -176,7 +176,7 @@ GlobWeb.WMSOverlayRenderer.TileData.prototype.findRenderable = function(overlay)
 /** 
 	Dispose tile data. Just dispose all renderables.
  */
-GlobWeb.WMSOverlayRenderer.TileData.prototype.dispose = function()
+GlobWeb.RasterOverlayRenderer.TileData.prototype.dispose = function()
 {
 	for ( var i = 0; i < this.renderables.length; i++ )
 	{
@@ -190,7 +190,7 @@ GlobWeb.WMSOverlayRenderer.TileData.prototype.dispose = function()
 	Add an overlay into the renderer.
 	The overlay is added to all loaded tiles.
  */
-GlobWeb.WMSOverlayRenderer.prototype.addOverlay = function( overlay )
+GlobWeb.RasterOverlayRenderer.prototype.addOverlay = function( overlay )
 {
 	this.overlays.push( overlay );
 	for ( var i = 0; i < this.tileManager.level0Tiles.length; i++ )
@@ -209,7 +209,7 @@ GlobWeb.WMSOverlayRenderer.prototype.addOverlay = function( overlay )
 	Remove an overlay
 	The overlay is removed from all loaded tiles.
  */
-GlobWeb.WMSOverlayRenderer.prototype.removeOverlay = function( overlay )
+GlobWeb.RasterOverlayRenderer.prototype.removeOverlay = function( overlay )
 {
 	var index = this.overlays.indexOf( overlay );
 	this.overlays.splice(index,1);
@@ -241,10 +241,10 @@ GlobWeb.WMSOverlayRenderer.prototype.removeOverlay = function( overlay )
 	Add an overlay into a tile.
 	Create tile data if needed, and create the renderable for the overlay.
  */
-GlobWeb.WMSOverlayRenderer.prototype.addOverlayToTile = function( tile, overlay )
+GlobWeb.RasterOverlayRenderer.prototype.addOverlayToTile = function( tile, overlay )
 {
 	if ( !tile.extension.wmsOverlay )
-		tile.extension.wmsOverlay = new GlobWeb.WMSOverlayRenderer.TileData();
+		tile.extension.wmsOverlay = new GlobWeb.RasterOverlayRenderer.TileData();
 	
 	tile.extension.wmsOverlay.renderables.push( new GlobWeb.WMSOverlayRenderable(overlay) );
 	
@@ -255,7 +255,6 @@ GlobWeb.WMSOverlayRenderer.prototype.addOverlayToTile = function( tile, overlay 
 		{
 			if ( tile.children[i].state == GlobWeb.Tile.State.LOADED
 					&& this.overlayIntersects( tile.children[i].geoBound, overlay ) )
-					//&& overlay.geoBound.intersects( tile.children[i].geoBound ) )
 			{
 				this.addOverlayToTile( tile.children[i], overlay );
 			}
@@ -269,7 +268,7 @@ GlobWeb.WMSOverlayRenderer.prototype.addOverlayToTile = function( tile, overlay 
 /**
 	Create an interpolated for polygon clipping
  */	
-GlobWeb.WMSOverlayRenderer.prototype.createInterpolatedVertex = function( t, p1, p2 )
+GlobWeb.RasterOverlayRenderer.prototype.createInterpolatedVertex = function( t, p1, p2 )
 {
 	return [ p1[0] + t * (p2[0] - p1[0]), p1[1] + t * (p2[1] - p1[1]) ];
 }
@@ -279,7 +278,7 @@ GlobWeb.WMSOverlayRenderer.prototype.createInterpolatedVertex = function( t, p1,
 /**
 	Clip polygon to a side (used by bound-overlay intersection)
  */	
-GlobWeb.WMSOverlayRenderer.prototype.clipPolygonToSide = function( coord, sign, value, polygon )
+GlobWeb.RasterOverlayRenderer.prototype.clipPolygonToSide = function( coord, sign, value, polygon )
 {
 	var clippedPolygon = [];
 
@@ -323,25 +322,33 @@ GlobWeb.WMSOverlayRenderer.prototype.clipPolygonToSide = function( coord, sign, 
 /**
 	Check the intersection between a geo bound and an overlay
  */	
-GlobWeb.WMSOverlayRenderer.prototype.overlayIntersects = function( bound, overlay )
+GlobWeb.RasterOverlayRenderer.prototype.overlayIntersects = function( bound, overlay )
 {
-	var c;
+	if ( overlay.coordinates )
+	{
+		var c;
+		c = this.clipPolygonToSide( 0, 1, bound.west, overlay.coordinates );
+		c = this.clipPolygonToSide( 0, -1, bound.east, c );
+		c = this.clipPolygonToSide( 1, 1, bound.south, c );
+		c = this.clipPolygonToSide( 1, -1, bound.north, c );
+		return c.length > 0;
+	}
+	else if ( overlay.geoBound )
+	{
+		return overlay.geoBound.intersects( bound );
+	}
 	
-	c = this.clipPolygonToSide( 0, 1, bound.west, overlay.coordinates );
-	c = this.clipPolygonToSide( 0, -1, bound.east, c );
-	c = this.clipPolygonToSide( 1, 1, bound.south, c );
-	c = this.clipPolygonToSide( 1, -1, bound.north, c );
-	
-	return c.length > 0;
+	// No geobound or coordinates : always return true
+	return true;
 }
 
 /**************************************************************************************************************/
 
 /**
-	Generate WMS overlay data on the tile.
+	Generate Raster overlay data on the tile.
 	The method is called by TileManager when a new tile has been generated.
  */
-GlobWeb.WMSOverlayRenderer.prototype.generate = function( tile )
+GlobWeb.RasterOverlayRenderer.prototype.generate = function( tile )
 {
 	if ( tile.parent )
 	{	
@@ -351,8 +358,7 @@ GlobWeb.WMSOverlayRenderer.prototype.generate = function( tile )
 		for ( var i = 0; i < rl; i++ )
 		{
 			var overlay = data.renderables[i].overlay;		
-			if ( overlay.geoBound.intersects( tile.geoBound ) )
-			//if ( this.overlayIntersects( tile.geoBound, overlay ) )
+			if ( this.overlayIntersects( tile.geoBound, overlay ) )
 				this.addOverlayToTile(tile,overlay);
 		}
 	}
@@ -362,8 +368,7 @@ GlobWeb.WMSOverlayRenderer.prototype.generate = function( tile )
 		for ( var i = 0; i < this.overlays.length; i++ )
 		{
 			var overlay = this.overlays[i];
-			if ( overlay.geoBound.intersects( tile.geoBound ) )
-			//if ( this.overlayIntersects( tile.geoBound, overlay ) )
+			if ( this.overlayIntersects( tile.geoBound, overlay ) )
 				this.addOverlayToTile(tile,overlay);
 		}
 	}
@@ -374,7 +379,7 @@ GlobWeb.WMSOverlayRenderer.prototype.generate = function( tile )
 /**
 	Request the overlay texture for a tile
  */
-GlobWeb.WMSOverlayRenderer.prototype.requestOverlayTextureForTile = function( tile, renderable )
+GlobWeb.RasterOverlayRenderer.prototype.requestOverlayTextureForTile = function( tile, renderable )
 {	
 	if ( !renderable.request )
 	{
@@ -390,26 +395,10 @@ GlobWeb.WMSOverlayRenderer.prototype.requestOverlayTextureForTile = function( ti
 		
 		if ( imageRequest )
 		{
-			var size = 256;
-			var url = renderable.overlay.baseUrl;
-			url += "&width=";
-			url += size;
-			url += "&height=";
-			url += size;
-			url += "&bbox=";
-			
-			url += tile.geoBound.west;
-			url += ",";
-			url += tile.geoBound.south;
-			url += ",";
-			url += tile.geoBound.east;
-			url += ",";
-			url += tile.geoBound.north;
-			
 			imageRequest.renderable = renderable;
 			renderable.request = imageRequest;
 			imageRequest.frameNumber = this.frameNumber;
-			imageRequest.src = url;
+			imageRequest.src = renderable.overlay.getUrl(tile);
 		}
 	}
 	else
@@ -421,10 +410,14 @@ GlobWeb.WMSOverlayRenderer.prototype.requestOverlayTextureForTile = function( ti
 //*************************************************************************
 
 /**
-	Render the ground overlays above the tiles in parameter
+ *	Render the raster overlays for the given tiles
  */
-GlobWeb.WMSOverlayRenderer.prototype.render = function( tiles )
+GlobWeb.RasterOverlayRenderer.prototype.render = function( tiles )
 {
+	// First check if there is someting to do
+	if ( this.overlays.length == 0 )
+		return;
+		
 	var rc = this.tileManager.renderContext;
  	var gl = rc.gl;
 
@@ -446,6 +439,8 @@ GlobWeb.WMSOverlayRenderer.prototype.render = function( tiles )
 	for ( var i = 0; i < tiles.length; i++ )
 	{
 		var tile = tiles[i];
+		
+		// First retreive tileData for overlay
 		var isTileLoaded = (tile.state == GlobWeb.Tile.State.LOADED);
 		var tileData = isTileLoaded ? tile.extension.wmsOverlay : tile.parent.extension.wmsOverlay;
 		if ( tileData )
@@ -474,6 +469,7 @@ GlobWeb.WMSOverlayRenderer.prototype.render = function( tiles )
 				var textureTile = isTileLoaded ? tile : tile.parent;
 				var prevTextureTile = textureTile;
 				
+				// Request high resolution first : always request the texture for the given tile
 				if ( this.requestHighestResolutionFirst )
 				{
 					if ( !renderable.texture )
@@ -482,6 +478,7 @@ GlobWeb.WMSOverlayRenderer.prototype.render = function( tiles )
 					}
 				}
 				
+				// If no texture on tile, try to find a valid texture with parent
 				while ( !renderable.texture && textureTile )
 				{
 					prevTextureTile = textureTile;
@@ -493,6 +490,7 @@ GlobWeb.WMSOverlayRenderer.prototype.render = function( tiles )
 					}
 				}
 				
+				// Request low resolution texture
 				if ( !this.requestHighestResolutionFirst )
 				{
 					if ( prevTextureTile != textureTile )

@@ -56,10 +56,18 @@ GlobWeb.WMSLayer = function( options )
 	}
 	url += "&format=";
 	url += options.hasOwnProperty('format') ? options['format'] : 'image/jpeg';
+	if ( options.hasOwnProperty('transparent') )
+	{
+		url += "&transparent=" + options.transparent;
+	}
 	url += "&width=";
 	url += this.tilePixelSize;
 	url += "&height=";
 	url += this.tilePixelSize;
+	if ( options.hasOwnProperty('time') )
+	{
+		url += "&time=" + options.time;
+	}
 	
 	this.getMapBaseUrl = url;
 }

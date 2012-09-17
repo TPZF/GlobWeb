@@ -28,15 +28,20 @@
 	
 		var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble" });
 		globe.setBaseImagery( blueMarbleLayer );
-		
-		
-		var url = "http://127.0.0.1/WMS2EOS/servlets/wms?SERVICE=WMS&REQUEST=GetMap&EXCEPTIONS=application/vnd.ogc.se_xml&TRANSPARENT=TRUE&STYLES=ellipsoid&VERSION=1.1.1&SRS=EPSG:4326&FORMAT=image/png&TRANSPARENT=TRUE&BGCOLOR=0xffffff&REQUEST=GetMap&LAYERS=urn:ogc:def:EOP:ESA:ESA.EECF.ENVISAT_ASA_IMx_xS&TIME=2011-04-12T08:53:20.110Z/2011-04-12T08:57:30.100Z";
-
-		var overlayRenderer = new GlobWeb.WMSOverlayRenderer(globe.tileManager);
-		overlayRenderer.addOverlay( { geoBound: new GlobWeb.GeoBound(-1.1911907196044922,29.734153747558594,34.946327209472656,51.279144287109375),
-			baseUrl: url, coordinates: [ [-1.1911907196044922,29.734153747558594], [34.946327209472656,29.734153747558594], [34.946327209472656,51.279144287109375], 
-			[-1.1911907196044922,51.279144287109375], [-1.1911907196044922,29.734153747558594] ] } );
-		globe.tileManager.addPostRenderer( overlayRenderer );
+				
+		var eosLayer = new GlobWeb.WMSLayer({
+			baseUrl: "http://127.0.0.1/WMS2EOS/servlets/wms",
+			styles: "ellipsoid",
+			version: "1.1.1",
+			layers: "urn:ogc:def:EOP:ESA:ESA.EECF.ENVISAT_ASA_IMx_xS",
+			time: "2011-04-12T08:53:20.110Z/2011-04-12T08:57:30.100Z",
+			format: "image/png",
+			transparent: "true",
+			geoBound: new GlobWeb.GeoBound(-1.1911907196044922,29.734153747558594,34.946327209472656,51.279144287109375),
+			coordinates: [ [-1.1911907196044922,29.734153747558594], [34.946327209472656,29.734153747558594], [34.946327209472656,51.279144287109375], 
+			[-1.1911907196044922,51.279144287109375], [-1.1911907196044922,29.734153747558594] ]
+		});
+		globe.addLayer( eosLayer );
     }
 
 
