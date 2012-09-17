@@ -52,50 +52,6 @@ GlobWeb.inherits( GlobWeb.BaseNavigation,GlobWeb.AstroNavigation );
 /**************************************************************************************************************/
 
 /** @export
-	Subscribe to a navigation event : start (called when navigation is started), and end (called when navigation end)
-*/
-GlobWeb.AstroNavigation.prototype.subscribe = function(name,callback)
-{
-	if( !this.callbacks[name] ) {
-		this.callbacks[name] = [ callback ];
-	} else {
-		this.callbacks[name].push( callback );
-	}
-}
-
-/**************************************************************************************************************/
-
-/** @export
-	Unsubscribe to a navigation event : start (called when navigation is started), and end (called when navigation end)
-*/
-GlobWeb.AstroNavigation.prototype.unsubscribe = function(name,callback)
-{
-	if( this.callbacks[name] ) {
-		var i = this.callbacks[name].indexOf( callback );
-		if ( i != -1 ) {
-			this.callbacks[name].splice(i,1);
-		}
-	}
-}
-
-/**************************************************************************************************************/
-
-/** 
-	Publish a navigation event
- */
-GlobWeb.AstroNavigation.prototype.publish = function(name)
-{
-	if ( this.callbacks[name] ) {
-		var cbs = this.callbacks[name];
-		for ( var i = 0; i < cbs.length; i++ ) {
-			cbs[i]();
-		}
-	}
-}
-
-/**************************************************************************************************************/
-
-/** @export
 	Zoom to a 3d position
 	@param {Float[]} geoPos Array of two floats corresponding to final Longitude and Latitude(in this order) to zoom
 	@param {Int} fov Final zooming fov in degrees

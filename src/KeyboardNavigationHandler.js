@@ -6,27 +6,23 @@
 	@param options Configuration properties for the KeyboardNavigationHandler :
 			<ul>
 				<li>panFactor  : Factor for panning within the scene</li>
-				<li>zoomFactor :Factor for zooming into the scene</li>
+				<li>zoomFactor : Factor for zooming into the scene</li>
+				<li>focusableCanvas : if true set canvas focusable</li>
 			</ul>
  */
 GlobWeb.KeyboardNavigationHandler = function(options){
 	
 	this.navigation = null;
 	
-	// Copy options
+	// Default options
+	this.panFactor = 10.;
+	this.zoomFactor = 1.;
+	this.focusableCanvas = false;
+	
+	// Override options
 	for (var x in options)
 	{
 		this[x] = options[x];
-	}
-	
-	// Create factors if not passed in options before
-	if( !this.panFactor )
-	{
-		this.panFactor = 10.;
-	}
-	if( !this.zoomFactor )
-	{
-		this.zoomFactor = 1.;
 	}
 }
 
@@ -40,10 +36,25 @@ GlobWeb.KeyboardNavigationHandler.prototype.install = function(navigation)
 	// Setup the keyboard event handlers
 	this.navigation = navigation;
 	
-	var canvas = this.navigation.globe.renderContext.canvas;
 	var self = this;
 	
-	document.addEventListener("keydown",function(e) { e.preventDefault(); self.handleKeyDown(e||window.event); },false);
+	if ( this.focusableCanvas )
+	{
+		var canvas = this.navigation.globe.renderContext.canvas;
+		
+		// Passing by jquery selector because javascript canvas.focus() seems to not work
+		$('#'+canvas.id)
+			// Add tab index to ensure the canvas retains focus
+			.attr("tabindex", "0")
+			// Mouse down override to prevent default browser controls from appearing
+			.mousedown(function(){ $(this).focus(); return false; })
+			// Set navigation event
+			.keydown(function(e){ e.preventDefault(); self.handleKeyDown(e||window.event); });
+	}
+	else
+	{
+		document.addEventListener("keydown",function(e) { self.handleKeyDown(e||window.event); },false);
+	}
 }
 
 /**************************************************************************************************************/

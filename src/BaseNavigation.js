@@ -14,16 +14,13 @@ GlobWeb.BaseNavigation = function(globe, options)
 	
 	this.callbacks = {};
 	
+	// Default handlers
+	this.handlers = [new GlobWeb.MouseNavigationHandler({ zoomOnDblClick : true }), new GlobWeb.KeyboardNavigationHandler()];
+	
 	// Copy options
 	for (var x in options)
 	{
 		this[x] = options[x];
-	}
-	
-	// Create handler if not passed in options before
-	if( !this.handlers )
-	{
-		this.handlers = [new GlobWeb.MouseNavigationHandler({ zoomOnDblClick : true }), new GlobWeb.KeyboardNavigationHandler()];
 	}
 	
 	// Install handlers
