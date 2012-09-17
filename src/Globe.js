@@ -83,7 +83,7 @@ GlobWeb.Globe = function(options)
 GlobWeb.Globe.prototype.dispose = function()
 {	
 	this.tileManager.tilePool.disposeAll();
-	this.tileManager.resetSharedBuffers();
+	this.tileManager.reset();
 }
 
 /**************************************************************************************************************/
