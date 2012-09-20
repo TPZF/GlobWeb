@@ -25,6 +25,8 @@
  */
 GlobWeb.VectorLayer = function( options )
 {
+	GlobWeb.BaseLayer.prototype.constructor.call( this, options );
+	
 	// Set style
 	if ( options && options['style'] )
 		this.style = options['style'];
@@ -32,11 +34,12 @@ GlobWeb.VectorLayer = function( options )
 		this.style = new GlobWeb.FeatureStyle();
 		
 	this.features = [];
-	this.globe = null;
 	this.type = "Vector";
-	this.attribution = options['attribution'] || "";
-	this.name = options['name'] || "";
 }
+
+/**************************************************************************************************************/
+
+GlobWeb.inherits( GlobWeb.BaseLayer,GlobWeb.VectorLayer );
 
 /**************************************************************************************************************/
 
@@ -45,25 +48,16 @@ GlobWeb.VectorLayer = function( options )
  */
 GlobWeb.VectorLayer.prototype._attach = function( g )
 {
-	this.globe = g;
-	for ( var i=0; i < this.features.length; i++ )
+	GlobWeb.BaseLayer.prototype._attach.call( this, g );
+	
+	if ( this.visible )
 	{
-		this._addFeatureToRenderers( this.features[i] );
+		for ( var i=0; i < this.features.length; i++ )
+		{
+			this._addFeatureToRenderers( this.features[i] );
+		}
 	}
-}
-
-/**************************************************************************************************************/
-
-/** 
-  Detach the vector layer from the globe
- */
-GlobWeb.VectorLayer.prototype._detach = function( g )
-{
-	for ( var i=0; i < this.features.length; i++ )
-	{
-		this.globe.vectorRendererManager.removeFeature( this.features[i] );
-	}
-	this.globe = null;
+	
 }
 
 /**************************************************************************************************************/
@@ -177,11 +171,12 @@ GlobWeb.VectorLayer.prototype.addFeature = function( feature )
 		return;
 	this.features.push( feature );
 	
-	if ( this.globe )
-	{			
-		this._addFeatureToRenderers(feature);
-		this.globe.renderContext.requestFrame();
-	}
+	// Visible by default
+// 	if ( this.globe )
+// 	{			
+// 		this._addFeatureToRenderers(feature);
+// 		this.globe.renderContext.requestFrame();
+// 	}
 }
 
 /**************************************************************************************************************/
@@ -233,3 +228,36 @@ GlobWeb.VectorLayer.prototype._crossDateLine = function(geometry)
 };
 
 /**************************************************************************************************************/
+
+/**
+  Set the layer visible
+ */
+GlobWeb.VectorLayer.prototype.setVisible = function( arg )
+{
+	if ( this.visible != arg ){
+		this.visible = arg;
+		if ( arg ){
+			for ( var i=0; i < this.features.length; i++ )
+			{
+				this._addFeatureToRenderers( this.features[i] );
+			}
+		}
+		else
+		{
+			for ( var i=0; i < this.features.length; i++ )
+			{
+				this.globe.vectorRendererManager.removeFeature( this.features[i] );
+			}
+		}
+	}
+}
+
+/**************************************************************************************************************/
+
+/**
+  Set the opacity of the vector layer
+ */
+GlobWeb.VectorLayer.prototype.setOpacity = function( arg )
+{
+	// TODO
+}

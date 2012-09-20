@@ -10,6 +10,7 @@ commonFiles= [
 		"Utils.js",
 		"GeoBound.js",
 		"BoundingBox.js",
+		"BaseLayer.js",
 		"Numeric.js",
 		"Animation.js",
 		"InterpolatedAnimation.js",

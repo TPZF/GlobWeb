@@ -186,11 +186,7 @@ GlobWeb.Globe.prototype.setBaseElevation = function(layer)
   @param layer the layer to add
 */
 GlobWeb.Globe.prototype.addLayer = function(layer)
-{	
-	if ( layer.attribution )
-	{
-		this.attributionHandler.addAttribution(layer);
-	}
+{
 	layer._attach(this);
 	this.renderContext.requestFrame();
 }
@@ -204,10 +200,6 @@ GlobWeb.Globe.prototype.addLayer = function(layer)
 */
 GlobWeb.Globe.prototype.removeLayer = function(layer)
 {
-	if ( layer.attribution )
-	{
-		this.attributionHandler.removeAttribution(layer);
-	}
 	layer._detach();
 	this.renderContext.requestFrame();
 }
@@ -268,11 +260,11 @@ GlobWeb.Globe.prototype.getViewportGeoBound = function()
 	
 	// Compute eye in world space
 	mat4.inverse(rc.viewMatrix, tmpMat);
-    var eye = [tmpMat[12], tmpMat[13], tmpMat[14]];
+	var eye = [tmpMat[12], tmpMat[13], tmpMat[14]];
 	
 	// Compute the inverse of view/proj matrix
-    mat4.multiply(rc.projectionMatrix, rc.viewMatrix, tmpMat);
-    mat4.inverse(tmpMat);
+	mat4.multiply(rc.projectionMatrix, rc.viewMatrix, tmpMat);
+	mat4.inverse(tmpMat);
 	
 	// Transform the four corners of the frustum into world space
 	// and then for each corner compute the intersection of ray starting from the eye with the earth

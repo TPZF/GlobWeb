@@ -26,20 +26,23 @@
  */
  GlobWeb.RasterLayer = function( options )
 {
+	GlobWeb.BaseLayer.prototype.constructor.call( this, options );
+	
 	// Base properties
 	this.tilePixelSize = -1;
 	this.tiling = null;
 	this.numberOfLevels = -1;
-	this.name = options && options.hasOwnProperty('name') ? options['name'] : "";
 	this.overlay = options && options.hasOwnProperty('overlay') ? options['overlay'] : true;
 	this.geoBound = options['geoBound'] || null;
 	this.coordinates = options['coordinates'] || null;
-	this.attribution = options['attribution'] || "";
 	
 	// Internal
 	this.ready = true;
-	this.globe = null;
 }
+
+/**************************************************************************************************************/
+
+GlobWeb.inherits( GlobWeb.BaseLayer,GlobWeb.RasterLayer );
 
 /**************************************************************************************************************/
 
@@ -48,9 +51,8 @@
  */
 GlobWeb.RasterLayer.prototype._attach = function( g )
 {
-	this.globe = g;
+	GlobWeb.BaseLayer.prototype._attach.call( this, g );
 	
-	// When raster is an overlvay, RasterOverlayRenderer is used to render it 
 	if ( this.overlay )
 	{
 		// Create the renderer if needed
@@ -76,7 +78,41 @@ GlobWeb.RasterLayer.prototype._detach = function( g )
 	{
 		this.globe.rasterOverlayRenderer.removeOverlay(this);
 	}
-	this.globe = null;
+	
+	GlobWeb.BaseLayer.prototype._detach.call( this, g );
 }
 
 /**************************************************************************************************************/
+
+/**
+  Set the raster layer visible
+ */
+GlobWeb.RasterLayer.prototype.setVisible = function( arg )
+{
+	if ( this.visible != arg ) 
+	{
+		this.visible = arg;
+		// When raster is an overlay, RasterOverlayRenderer is used to render it 
+		if ( this.overlay )
+		{
+			// Create the renderer if needed
+			if ( !g.rasterOverlayRenderer )
+			{
+				var renderer = new GlobWeb.RasterOverlayRenderer(g.tileManager);
+				g.tileManager.addPostRenderer(renderer);
+				g.rasterOverlayRenderer = renderer;
+			}
+			g.rasterOverlayRenderer.addOverlay(this);
+		}
+	}
+}
+
+/**************************************************************************************************************/
+
+/**
+  Set the opacity of the raster layer
+ */
+GlobWeb.VectorLayer.prototype.setOpacity = function( arg )
+{
+	// TODO
+}
