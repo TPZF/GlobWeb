@@ -70,7 +70,7 @@ GlobWeb.AttributionHandler = function(options, style)
 */
 GlobWeb.AttributionHandler.prototype.removeAttribution = function( layer )
 {
-	var div = document.getElementById( layer.id );
+	var div = document.getElementById( "attribution_"+layer.id );
 	this.attributionDiv.removeChild( div );
 }
 
