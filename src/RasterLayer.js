@@ -34,6 +34,7 @@
 	this.overlay = options && options.hasOwnProperty('overlay') ? options['overlay'] : true;
 	this.geoBound = options['geoBound'] || null;
 	this.coordinates = options['coordinates'] || null;
+	this.attribution = options['attribution'] || "";
 	
 	// Internal
 	this.ready = true;

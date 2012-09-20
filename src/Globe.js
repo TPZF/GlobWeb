@@ -43,6 +43,7 @@ GlobWeb.Globe = function(options)
 	this.tileManager = new GlobWeb.TileManager( this.renderContext );
 	this.tileManager.showWireframe = options['showWireframe'];
 	this.vectorRendererManager = new GlobWeb.VectorRendererManager( this );
+	this.attributionHandler = new GlobWeb.AttributionHandler();
 	this.activeAnimations = [];
 	
 	var glob = this;	
@@ -142,7 +143,10 @@ GlobWeb.Globe.prototype.refresh = function()
 */
 GlobWeb.Globe.prototype.setBaseImagery = function(layer)
 {
-	if (this.tileManager.imageryProvider) this.tileManager.imageryProvider._detach();
+	if ( this.tileManager.imageryProvider )
+	{
+		this.removeLayer( this.tileManager.imageryProvider );
+	}
 	this.tileManager.setImageryProvider(layer);
 	if ( layer )
 	{
@@ -160,7 +164,10 @@ GlobWeb.Globe.prototype.setBaseImagery = function(layer)
 */
 GlobWeb.Globe.prototype.setBaseElevation = function(layer)
 {
-	if (this.tileManager.elevationProvider) this.tileManager.imageryProvider._detach();
+	if ( this.tileManager.elevationProvider )
+	{
+		this.removeLayer( this.tileManager.elevationProvider );
+	}
 	this.tileManager.setElevationProvider(layer);
 	if ( layer )
 	{
@@ -179,7 +186,11 @@ GlobWeb.Globe.prototype.setBaseElevation = function(layer)
   @param layer the layer to add
 */
 GlobWeb.Globe.prototype.addLayer = function(layer)
-{
+{	
+	if ( layer.attribution )
+	{
+		this.attributionHandler.addAttribution(layer);
+	}
 	layer._attach(this);
 	this.renderContext.requestFrame();
 }
@@ -193,6 +204,10 @@ GlobWeb.Globe.prototype.addLayer = function(layer)
 */
 GlobWeb.Globe.prototype.removeLayer = function(layer)
 {
+	if ( layer.attribution )
+	{
+		this.attributionHandler.removeAttribution(layer);
+	}
 	layer._detach();
 	this.renderContext.requestFrame();
 }

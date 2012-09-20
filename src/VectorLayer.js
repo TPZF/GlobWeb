@@ -34,6 +34,8 @@ GlobWeb.VectorLayer = function( options )
 	this.features = [];
 	this.globe = null;
 	this.type = "Vector";
+	this.attribution = options['attribution'] || "";
+	this.name = options['name'] || "";
 }
 
 /**************************************************************************************************************/

@@ -43,6 +43,7 @@ var GlobWeb = GlobWeb || {};
 		"Stats.js",
 		"GeoBound.js",
 		"BaseNavigation.js",
+		"AttributionHandler.js",
 		"MouseNavigationHandler.js",
 		"KeyboardNavigationHandler.js",
 		"BoundingBox.js",

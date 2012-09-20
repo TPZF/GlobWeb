@@ -26,6 +26,7 @@ commonFiles= [
 		"RasterLayer.js",
 		"TileRequest.js",
 		"Globe.js",
+		"AttributionHandler.js",
 		"PathAnimation.js",
 		"MouseNavigationHandler.js",
 		"KeyboardNavigationHandler.js",
