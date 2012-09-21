@@ -86,27 +86,18 @@ GlobWeb.TileManager = function(renderContext)
 	";
 
 	var fragmentShader = "\
-	#ifdef GL_ES\n\
-	precision highp float;\n\
-	#endif\n\
-	\n\
+	precision highp float; \n\
 	varying vec2 texCoord;\n";
 	if ( renderContext.lighting )
 		fragmentShader += "varying vec3 color;\n";
 	fragmentShader += "\
 	uniform sampler2D colorTexture;\n\
-	uniform int wireframe;\n\
-	\n\
 	void main(void)\n\
 	{\n\
-		if(wireframe == 1)\n\
-			gl_FragColor.rgb = vec3(1.0,1.0,1.0);\n\
-		else {\n\
-			gl_FragColor.rgb = texture2D(colorTexture, texCoord).rgb;\n";
+		gl_FragColor.rgb = texture2D(colorTexture, texCoord).rgb;\n";
 	if ( renderContext.lighting )
 		fragmentShader += "gl_FragColor.rgb *= color;\n";
 	fragmentShader += "\
-		}\n\
 		gl_FragColor.a = 1.0;\n\
 	}\n\
 	";
@@ -444,7 +435,7 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
  GlobWeb.TileManager.prototype.renderTiles = function()
  {	
 	var rc = this.renderContext;
-	var gl = this.renderContext.gl;
+	var gl = rc.gl;
 	
 	gl.enable(gl.POLYGON_OFFSET_FILL);
 	gl.polygonOffset(0,4);
@@ -505,34 +496,13 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 		// Update uniforms for modelview matrix
 		mat4.multiply( rc.viewMatrix, tile.matrix, rc.modelViewMatrix );
 		gl.uniformMatrix4fv(this.program.uniforms["modelViewMatrix"], false, rc.modelViewMatrix);
-		
-		//gl.uniform3fv(this.program.uniforms["color"], tile.color );
 	
 		// Bind the vertex buffer
 		gl.bindBuffer(gl.ARRAY_BUFFER, tile.vertexBuffer);
 		gl.vertexAttribPointer(attributes['vertex'], 3, gl.FLOAT, false, 4*this.tileConfig.vertexSize, 0);
 		if (this.tileConfig.normals)
 			gl.vertexAttribPointer(attributes['normal'], 3, gl.FLOAT, false, 4*this.tileConfig.vertexSize, 12);
-		
-		if ( this.showWireframe )
-		{
-			var indexBuffer = ( isLoaded || isLevelZero ) ? this.tileIndexBuffer.getWireframe() : this.tileIndexBuffer.getSubWireframe(tile.parentIndex);
-			// Bind the index buffer only if different (index buffer is shared between tiles)
-			if ( currentIB != indexBuffer )
-			{
-				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-				currentIB = indexBuffer;
-			}
-			
-			gl.uniform1i(this.program.uniforms["wireframe"], 1 );
-			
-			// Draw the tiles in wireframe mode
-			var numIndices = currentIB.numIndices;
-			gl.drawElements(gl.LINES, currentIB.numIndices, gl.UNSIGNED_SHORT, 0);
-			
-			gl.uniform1i(this.program.uniforms["wireframe"], 0 );
-		}
-		
+				
 		var indexBuffer = ( isLoaded || isLevelZero ) ? this.tileIndexBuffer.getSolid() : this.tileIndexBuffer.getSubSolid(tile.parentIndex);
 		// Bind the index buffer only if different (index buffer is shared between tiles)
 		if ( currentIB != indexBuffer )

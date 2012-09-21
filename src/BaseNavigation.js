@@ -61,7 +61,7 @@ GlobWeb.BaseNavigation.prototype.unsubscribe = function(name,callback)
 
 /**************************************************************************************************************/
 
-/** 
+/** @export
   Publish a navigation event
 */
 GlobWeb.BaseNavigation.prototype.publish = function(name)

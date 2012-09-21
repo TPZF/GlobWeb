@@ -31,7 +31,6 @@
 			<li>contextAttribs : the attributes when creating WebGL context, see WebGL specification</li>
 			<li>atmosphere : if true use an atmosphere</li>
 			<li>backgroundColor : the background color of the canvas (an array of 4 floats)</li>
-			<li>showWireframe : if true wireframe is shown when rendering terrain (for debug purposes)</li>
 			<li>shadersPath : the path to shaders file</li>
 			<li>continuousRendering: if true rendering is done continuously, otherwise it is done only if needed</li>
 		</ul>
@@ -41,7 +40,6 @@ GlobWeb.Globe = function(options)
 {
 	this.renderContext = new GlobWeb.RenderContext(options);
 	this.tileManager = new GlobWeb.TileManager( this.renderContext );
-	this.tileManager.showWireframe = options['showWireframe'];
 	this.vectorRendererManager = new GlobWeb.VectorRendererManager( this );
 	this.attributionHandler = new GlobWeb.AttributionHandler();
 	this.activeAnimations = [];
@@ -118,9 +116,6 @@ GlobWeb.Globe.prototype.setOption = function(name,value)
 				this.atmosphere = null;
 			}
 		}
-		break;
-	case "showWireframe":
-		this.tileManager.showWireframe = value;
 		break;
 	}
 }

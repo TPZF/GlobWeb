@@ -88,6 +88,7 @@ var GlobWeb = GlobWeb || {};
 		"BasicElevationLayer.js",
 		"BingLayer.js",
 		"HEALPixLayer.js",
+		"TileWireframeLayer.js",
 		"TileRequest.js",
 		"Globe.js",
 		"AstroNavigation.js",
