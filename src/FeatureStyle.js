@@ -34,6 +34,7 @@ GlobWeb.FeatureStyle = function(style)
 	this.label = null;
 	this.fill = false;
 	this.pointMaxSize = 40;
+	this.opacity = 1;
 	
 	if ( style )
 	{

@@ -50,7 +50,7 @@ GlobWeb.VectorLayer.prototype._attach = function( g )
 {
 	GlobWeb.BaseLayer.prototype._attach.call( this, g );
 	
-	if ( this.visible )
+	if ( this._visible )
 	{
 		for ( var i=0; i < this.features.length; i++ )
 		{
@@ -171,12 +171,12 @@ GlobWeb.VectorLayer.prototype.addFeature = function( feature )
 		return;
 	this.features.push( feature );
 	
-	// Visible by default
-// 	if ( this.globe )
-// 	{			
-// 		this._addFeatureToRenderers(feature);
-// 		this.globe.renderContext.requestFrame();
-// 	}
+	// Add features to renderer if attached to globe and visible
+	if ( this.globe && this._visible )
+	{			
+		this._addFeatureToRenderers(feature);
+		this.globe.renderContext.requestFrame();
+	}
 }
 
 /**************************************************************************************************************/
@@ -232,10 +232,10 @@ GlobWeb.VectorLayer.prototype._crossDateLine = function(geometry)
 /**
   Set the layer visible
  */
-GlobWeb.VectorLayer.prototype.setVisible = function( arg )
+GlobWeb.VectorLayer.prototype.visible = function( arg )
 {
-	if ( this.visible != arg ){
-		this.visible = arg;
+	if ( this._visible != arg ){
+		this._visible = arg;
 		if ( arg ){
 			for ( var i=0; i < this.features.length; i++ )
 			{
@@ -256,8 +256,16 @@ GlobWeb.VectorLayer.prototype.setVisible = function( arg )
 
 /**
   Set the opacity of the vector layer
+  @param arg Argument of opacity defined in the interval [0, 1]
  */
-GlobWeb.VectorLayer.prototype.setOpacity = function( arg )
+GlobWeb.VectorLayer.prototype.opacity = function( arg )
 {
-	// TODO
+	for ( var i=0; i<this.features.length; i++ )
+	{
+		var style = this.features[i].properties.style || new GlobWeb.FeatureStyle();
+		style.label = true;
+		style.iconUrl = null;
+		style.opacity = arg;
+		this.modifyFeatureStyle( this.features[i], style );
+	}
 }

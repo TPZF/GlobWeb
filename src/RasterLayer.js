@@ -87,11 +87,11 @@ GlobWeb.RasterLayer.prototype._detach = function( g )
 /**
   Set the raster layer visible
  */
-GlobWeb.RasterLayer.prototype.setVisible = function( arg )
+GlobWeb.RasterLayer.prototype.visible = function( arg )
 {
-	if ( this.visible != arg ) 
+	if ( this._visible != arg ) 
 	{
-		this.visible = arg;
+		this._visible = arg;
 		// When raster is an overlay, RasterOverlayRenderer is used to render it 
 		if ( this.overlay )
 		{
@@ -112,7 +112,7 @@ GlobWeb.RasterLayer.prototype.setVisible = function( arg )
 /**
   Set the opacity of the raster layer
  */
-GlobWeb.VectorLayer.prototype.setOpacity = function( arg )
+GlobWeb.RasterLayer.prototype.opacity = function( arg )
 {
 	// TODO
 }

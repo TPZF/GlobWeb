@@ -45,6 +45,7 @@ GlobWeb.Globe = function(options)
 	this.vectorRendererManager = new GlobWeb.VectorRendererManager( this );
 	this.attributionHandler = new GlobWeb.AttributionHandler();
 	this.activeAnimations = [];
+	this.nbLayers = 0;
 	
 	var glob = this;	
 	this.renderContext.frame = function() 
@@ -187,8 +188,10 @@ GlobWeb.Globe.prototype.setBaseElevation = function(layer)
 */
 GlobWeb.Globe.prototype.addLayer = function(layer)
 {
+	layer.id = this.nbLayers;
 	layer._attach(this);
 	this.renderContext.requestFrame();
+	this.nbLayers++;
 }
 
 /**************************************************************************************************************/
@@ -202,6 +205,7 @@ GlobWeb.Globe.prototype.removeLayer = function(layer)
 {
 	layer._detach();
 	this.renderContext.requestFrame();
+	this.nbLayers--;
 }
 
 /**************************************************************************************************************/

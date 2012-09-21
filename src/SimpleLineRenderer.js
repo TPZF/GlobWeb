@@ -53,7 +53,7 @@ GlobWeb.SimpleLineRenderer = function(tileManager)
 	";
 	
 	this.program = new GlobWeb.Program(this.renderContext);
-    this.program.createFromSource(vertexShader, fragmentShader);
+	this.program.createFromSource(vertexShader, fragmentShader);
 	
 }
 

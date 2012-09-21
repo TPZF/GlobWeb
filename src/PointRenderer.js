@@ -111,10 +111,12 @@ GlobWeb.PointRenderer = function(tileManager)
 	\n\
 	varying vec2 texCoord; \n\
 	uniform sampler2D texture; \n\
+	uniform float alpha; \n\
 	\n\
 	void main(void) \n\
 	{ \n\
-		gl_FragColor = texture2D(texture, texCoord); \n\
+		vec4 textureColor = texture2D(texture, texCoord); \n\
+		gl_FragColor = vec4(textureColor.rgb, textureColor.a * alpha); \n\
 	} \n\
 	";
 
@@ -189,6 +191,11 @@ GlobWeb.PointRenderer.prototype.removeFeature = function(feature)
 			if ( bucket.points[j].feature == feature )
 			{
 				bucket.points.splice( j, 1 );
+				
+				if ( bucket.points.length == 0 )
+				{
+					this.buckets.splice( i, 1 );
+				}
 				return;
 			}
 		}
@@ -257,24 +264,24 @@ GlobWeb.PointRenderer.prototype.render = function()
 	var renderContext = this.renderContext;
 	var gl = this.renderContext.gl;
 	
-    // Setup states
-   // gl.disable(gl.DEPTH_TEST);
-    gl.enable(gl.BLEND);
-    gl.blendEquation(gl.FUNC_ADD);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+	// Setup states
+	// gl.disable(gl.DEPTH_TEST);
+	gl.enable(gl.BLEND);
+	gl.blendEquation(gl.FUNC_ADD);
+	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-    // Setup program
-    this.program.apply();
+	// Setup program
+	this.program.apply();
 	
-    // The shader only needs the viewProjection matrix, use GlobWeb.modelViewMatrix as a temporary storage
-    mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
-    gl.uniformMatrix4fv(this.program.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
+	// The shader only needs the viewProjection matrix, use GlobWeb.modelViewMatrix as a temporary storage
+	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
+	gl.uniformMatrix4fv(this.program.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
 	gl.uniform1i(this.program.uniforms["texture"], 0);
 
-    // Compute eye direction from inverse view matrix
-    mat4.inverse(renderContext.viewMatrix, renderContext.modelViewMatrix);
-    var camZ = [renderContext.modelViewMatrix[8], renderContext.modelViewMatrix[9], renderContext.modelViewMatrix[10]];
-    vec3.normalize(camZ);
+	// Compute eye direction from inverse view matrix
+	mat4.inverse(renderContext.viewMatrix, renderContext.modelViewMatrix);
+	var camZ = [renderContext.modelViewMatrix[8], renderContext.modelViewMatrix[9], renderContext.modelViewMatrix[10]];
+	vec3.normalize(camZ);
 	vec3.scale(camZ, this.tileConfig.cullSign, camZ);
 	
 	// Compute pixel size vector to offset the points from the earth
@@ -316,6 +323,7 @@ GlobWeb.PointRenderer.prototype.render = function()
 				var z = poiVec[2] * scale + worldPoi[2];
 				
 				gl.uniform3f(this.program.uniforms["poiPosition"], x, y, z);
+				gl.uniform1f(this.program.uniforms["alpha"], bucket.style.opacity);
 				
 				this.mesh.render(this.program.attributes);
 				
