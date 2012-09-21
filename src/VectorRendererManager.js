@@ -29,7 +29,7 @@ GlobWeb.VectorRendererManager = function(globe)
 	this.globe = globe;
 	this.factories = [];
 	
-	// Copy 'global' factories to this instance
+	// Clone 'global' factories to this instance
 	var globalFactories = GlobWeb.VectorRendererManager.globalFactories;
 	for ( var i = 0; i < globalFactories.length; i++ )
 	{
@@ -40,7 +40,9 @@ GlobWeb.VectorRendererManager = function(globe)
 /**************************************************************************************************************/
 
 /** 
-	The singleton factory
+	A global array that contains a factory for each vector renderer
+	A factory is just two function.
+	@see GlobWeb.VectorRendererManager.registerRenderer
  */
 GlobWeb.VectorRendererManager.globalFactories = [];
 
@@ -48,7 +50,7 @@ GlobWeb.VectorRendererManager.globalFactories = [];
 /**************************************************************************************************************/
 
 /** 
-	Register a renderer in the singleton factory
+	Register a renderer in the manager
 	@param factory the factory to create a renderer
 	@param factory.creator a function to create a renderer
 	@param factory.canApply a function to check if the renderer can be applied

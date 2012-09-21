@@ -44,8 +44,9 @@ GlobWeb.Program.prototype.createShader = function(type, source)
 	gl.compileShader(shader);
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
     {
-        console.log("Shader compilation error: " + gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
+		console.log("Shader compilation error: " + gl.getShaderInfoLog(shader));
+		console.log(source);
+		gl.deleteShader(shader);
         return null;
     }
 
