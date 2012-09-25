@@ -25,8 +25,13 @@
  */
 GlobWeb.TileWireframeLayer = function( options )
 {
+	GlobWeb.BaseLayer.prototype.constructor.call( this, options );
 	this.globe = null;
 }
+
+/**************************************************************************************************************/
+
+GlobWeb.inherits( GlobWeb.BaseLayer,GlobWeb.TileWireframeLayer );
 
 /**************************************************************************************************************/
 
@@ -36,7 +41,12 @@ GlobWeb.TileWireframeLayer = function( options )
 GlobWeb.TileWireframeLayer.prototype._attach = function( g )
 {
 	this.globe = g;
-	this.globe.tileManager.addPostRenderer(this);
+	
+	if ( this._visible )
+	{
+		this.globe.tileManager.addPostRenderer(this);
+	}
+	
 	if (!this.program)
 	{
 		var vertexShader = "\
@@ -51,9 +61,10 @@ GlobWeb.TileWireframeLayer.prototype._attach = function( g )
 
 		var fragmentShader = "\
 		precision highp float; \n\
+		uniform float alpha; \n\
 		void main(void)\n\
 		{\n\
-				gl_FragColor = vec4(1.0,1.0,1.0,1.0);\n\
+				gl_FragColor = vec4(1.0,1.0,1.0,alpha);\n\
 		}\n\
 		";
 		
@@ -82,9 +93,11 @@ GlobWeb.TileWireframeLayer.prototype.render = function( tiles )
 {
 	var rc = this.globe.renderContext;
 	var gl = rc.gl;
-		
-    // Setup program
-    this.program.apply();
+	
+	gl.enable(gl.BLEND);
+	
+	// Setup program
+	this.program.apply();
 	gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
 	
 	var vertexAttribute = this.program.attributes['vertex'];
@@ -101,6 +114,7 @@ GlobWeb.TileWireframeLayer.prototype.render = function( tiles )
 		// Update uniforms for modelview matrix
 		mat4.multiply( rc.viewMatrix, tile.matrix, rc.modelViewMatrix );
 		gl.uniformMatrix4fv(this.program.uniforms["modelViewMatrix"], false, rc.modelViewMatrix);
+		gl.uniform1f(this.program.uniforms["alpha"], this._opacity );
 			
 		// Bind the vertex buffer
 		gl.bindBuffer(gl.ARRAY_BUFFER, tile.vertexBuffer);
@@ -118,6 +132,36 @@ GlobWeb.TileWireframeLayer.prototype.render = function( tiles )
 		var numIndices = currentIB.numIndices;
 		gl.drawElements(gl.LINES, currentIB.numIndices, gl.UNSIGNED_SHORT, 0);
 	}
+	
+	gl.disable(gl.BLEND);
 }
 
 /**************************************************************************************************************/
+
+/**
+ * 	Set visibility of the layer
+ */
+GlobWeb.TileWireframeLayer.prototype.visible = function( arg )
+{
+	if ( this._visible != arg ){
+		this._visible = arg;
+		
+		if ( arg ){
+			this.globe.tileManager.addPostRenderer(this);
+		}
+		else
+		{
+			this.globe.tileManager.removePostRenderer(this);
+		}
+	}
+}
+
+/**************************************************************************************************************/
+
+/**
+ * 	Set opacity of the layer
+ */
+GlobWeb.TileWireframeLayer.prototype.opacity = function( arg )
+{
+	this._opacity = arg;
+}

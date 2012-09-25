@@ -27,7 +27,7 @@ GlobWeb.SimpleLineRenderer = function(tileManager)
 {
 	this.renderContext = tileManager.renderContext;
 	
-	// renderables
+	// Renderables
 	this.shapes = [];
 	
 	var vertexShader = "\
@@ -54,70 +54,93 @@ GlobWeb.SimpleLineRenderer = function(tileManager)
 	
 	this.program = new GlobWeb.Program(this.renderContext);
 	this.program.createFromSource(vertexShader, fragmentShader);
-	
 }
 
+/**************************************************************************************************************/
+
+/**
+ *	Add line shape to renderer
+ */
 GlobWeb.SimpleLineRenderer.prototype.addFeature = function(feature, style){
 	
+	// Create renderable
 	var shape = {
 		mesh : null,
-		name : feature['properties']['name']
+		feature : feature,
+		style : style
 	}
 	
-	var indices = [];
-	for( var i=0; i<feature['geometry']['coordinates'].length/3 - 1; i++ ){
-		indices.push(i);
-		indices.push(i+1);
-	}
-	indices.push(i);
-	indices.push(0);
+	shape.mesh = new GlobWeb.Mesh(this.renderContext);
 	
+	// Fill array by line shape coordinates
 	var vertices = [];
-	for( var i=0; i<feature['geometry']['coordinates'].length; i+=3){
+	for ( var i=0; i<feature['geometry']['coordinates'].length; i+=3)
+	{
 		vertices = vertices.concat([ feature['geometry']['coordinates'][i], feature['geometry']['coordinates'][i+1], feature['geometry']['coordinates'][i+2] ]);
 	}
 	
-	var mesh = new GlobWeb.Mesh(this.renderContext);
+	// Compute the indices corresponding to line shape
+	var indices = [];
+	for ( var i=0; i<feature['geometry']['coordinates'].length/3 - 1; i++ )
+	{
+		indices.push(i);
+		indices.push(i+1);
+	}
+	// Connect last point with the first one
+	indices.push(i);
+	indices.push(0);
 	
-	mesh.setIndices(indices);
-	mesh.setVertices(vertices);
-	mesh.mode = this.renderContext.gl.LINES;
+	shape.mesh.setVertices(vertices);
+	shape.mesh.setIndices(indices);
+	shape.mesh.mode = this.renderContext.gl.LINES;
 	
-	shape.mesh = mesh;
-	
+	// Add to renderables
 	this.shapes.push(shape);
 }
 
-GlobWeb.SimpleLineRenderer.prototype.removeFeature = function(feature, style){
+/**************************************************************************************************************/
+
+/**
+ * 	Remove line shape from renderer
+ */
+GlobWeb.SimpleLineRenderer.prototype.removeFeature = function(feature){
 	
-	for( var i = 0; i<this.shapes.length; i++ )
+	for ( var i = 0; i<this.shapes.length; i++ )
 	{
 		var currentShape = this.shapes[i];
-		if ( currentShape.name == feature['properties']['name'] ){
+		if ( currentShape.feature == feature){
 			this.shapes.splice(i, 1);
 		}
 	}
 }
 
+/**************************************************************************************************************/
+
+/**
+ * 	Render all the lines
+ */
 GlobWeb.SimpleLineRenderer.prototype.render = function(){
 	var renderContext = this.renderContext;
 	var gl = renderContext.gl;
 
 	gl.disable(gl.DEPTH_TEST);
+	gl.enable(gl.BLEND);
 
 	this.program.apply();
 
 	// The shader only needs the viewProjection matrix, use GlobWeb.modelViewMatrix as a temporary storage
 	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
 	gl.uniformMatrix4fv(this.program.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
-	gl.uniform4f(this.program.uniforms["color"], 0.03125 , 0.23046875, 0.65625, 1.);
 	
 	for ( var n = 0; n < this.shapes.length; n++ )
 	{
+		// opacity HACK
+		gl.uniform4f(this.program.uniforms["color"], 0.03125 , 0.23046875, 0.65625, this.shapes[n].style.opacity / 2);
 		this.shapes[n].mesh.render(this.program.attributes);
 	}
 	
 	gl.enable(gl.DEPTH_TEST);
+	gl.disable(gl.BLEND);
 }
 
 
@@ -125,9 +148,8 @@ GlobWeb.SimpleLineRenderer.prototype.render = function(){
 
 // Register the renderer
 GlobWeb.VectorRendererManager.registerRenderer({
-									creator: function(globe) { 
-											return new GlobWeb.SimpleLineRenderer(globe.tileManager);
-										},
-									canApply: function(type,style) {return type == "SimpleLineCollection"; }
-								});
-										
+	creator: function(globe) { 
+			return new GlobWeb.SimpleLineRenderer(globe.tileManager);
+		},
+	canApply: function(type,style) {return type == "SimpleLineCollection"; }
+});

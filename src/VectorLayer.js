@@ -260,6 +260,7 @@ GlobWeb.VectorLayer.prototype.visible = function( arg )
  */
 GlobWeb.VectorLayer.prototype.opacity = function( arg )
 {
+	this._opacity = arg;
 	for ( var i=0; i<this.features.length; i++ )
 	{
 		var style = this.features[i].properties.style || new GlobWeb.FeatureStyle();
