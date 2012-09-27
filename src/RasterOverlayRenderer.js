@@ -70,7 +70,7 @@ GlobWeb.RasterOverlayRenderer = function(tileManager)
 		var image = new Image();
 		image.renderable = null;
 		image.frameNumber = -1;
-		//image.crossOrigin = '';
+		image.crossOrigin = '';
 		image.onload = function() 
 		{
 			//console.log("Load " + this.src);
