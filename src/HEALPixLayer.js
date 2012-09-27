@@ -58,7 +58,6 @@ GlobWeb.HEALPixLayer = function(options)
 	}
 	
 	this.ready = false;
-	this.levelZeroImage.src = this.baseUrl + "/Norder3/Allsky.jpg";
 }
 
 /**************************************************************************************************************/
@@ -67,9 +66,22 @@ GlobWeb.inherits(GlobWeb.RasterLayer,GlobWeb.HEALPixLayer);
 
 /**************************************************************************************************************/
 
-/*
-*	Get url from a given tile
-*/
+/** 
+  Attach the raster layer to the globe
+ */
+GlobWeb.HEALPixLayer.prototype._attach = function( g )
+{
+	GlobWeb.RasterLayer.prototype._attach.call( this, g );
+
+	// Load level zero image now
+	this.levelZeroImage.src = this.baseUrl + "/Norder3/Allsky.jpg";
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Get url from a given tile
+ */
 GlobWeb.HEALPixLayer.prototype.getUrl = function(tile)
 {
 	var url = this.baseUrl;
