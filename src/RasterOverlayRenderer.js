@@ -52,6 +52,7 @@ GlobWeb.RasterOverlayRenderer = function(tileManager)
 	void main(void)\n\
 	{\n\
 		gl_FragColor.rgba = texture2D(overlayTexture, texCoord.xy); \n\
+		gl_FragColor.a *= opacity; \n\
 	}\n\
 	";
 	
@@ -73,31 +74,23 @@ GlobWeb.RasterOverlayRenderer = function(tileManager)
 		image.onload = function() 
 		{
 			//console.log("Load " + this.src);
-			var gl = tileManager.renderContext.gl;
-			var texture = gl.createTexture();
-			gl.bindTexture(gl.TEXTURE_2D, texture);
-			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-			gl.generateMipmap(gl.TEXTURE_2D);
-			this.renderable.texture = texture;
+			this.renderable.texture = tileManager.tilePool.createGLTexture(this);
 			this.renderable.request = null;
+			this.renderable.requestFinished = true;
 			this.renderable = null;
 		};
 		image.onerror = function()
 		{
-			console.log("WMS overlay request error.");
 			if ( this.renderable )
 			{
 				this.renderable.request = null;
+				this.renderable.requestFinished = true;
 				this.renderable = null;
 			}
 		};
 		image.onabort = function()
 		{
-			console.log("WMS overlay request abort.");
+			console.log("Raster overlay request abort.");
 			if ( this.renderable )
 			{
 				this.renderable.request = null;
@@ -124,6 +117,7 @@ GlobWeb.RasterOverlayRenderable = function( overlay )
 	this.overlay = overlay;
 	this.texture = null;
 	this.request = null;
+	this.requestFinished = false;
 }
 
 /**************************************************************************************************************/
@@ -131,12 +125,11 @@ GlobWeb.RasterOverlayRenderable = function( overlay )
 /** 
 	Dispose the renderable
  */
-GlobWeb.RasterOverlayRenderable.prototype.dispose = function()
+GlobWeb.RasterOverlayRenderable.prototype.dispose = function(renderContext,tilePool)
 {
 	if ( this.texture ) 
 	{
-		var gl = this.tileManager.renderContext.gl;
-		gl.deleteTexture( this.texture );
+		tilePool.disposeGLTexture(this.texture);
 		this.texture = null;
 	}
 }
@@ -146,7 +139,7 @@ GlobWeb.RasterOverlayRenderable.prototype.dispose = function()
 
 /** 
 	@constructor
-	Create tile data for the WMS overlay renderer.
+	Create tile data for the Raster overlay renderer.
 	The tile data is just an array of renderables.
  */
 GlobWeb.RasterOverlayRenderer.TileData = function()
@@ -176,11 +169,11 @@ GlobWeb.RasterOverlayRenderer.TileData.prototype.findRenderable = function(overl
 /** 
 	Dispose tile data. Just dispose all renderables.
  */
-GlobWeb.RasterOverlayRenderer.TileData.prototype.dispose = function()
+GlobWeb.RasterOverlayRenderer.TileData.prototype.dispose = function(renderContext,tilePool)
 {
 	for ( var i = 0; i < this.renderables.length; i++ )
 	{
-		this.renderables[i].dispose();
+		this.renderables[i].dispose(renderContext,tilePool);
 	}
 }
 
@@ -214,9 +207,11 @@ GlobWeb.RasterOverlayRenderer.prototype.removeOverlay = function( overlay )
 	var index = this.overlays.indexOf( overlay );
 	this.overlays.splice(index,1);
 	
+	var rc = this.tileManager.renderContext;
+	var tp = this.tileManager.tilePool;
 	this.tileManager.visitTiles( function(tile) 
 			{
-				var rs = tile.extension.wmsOverlay;
+				var rs = tile.extension.rasterOverlay;
 				var renderable = rs ?  rs.findRenderable( overlay ) : null;
 				if ( renderable ) 
 				{
@@ -225,11 +220,11 @@ GlobWeb.RasterOverlayRenderer.prototype.removeOverlay = function( overlay )
 					rs.renderables.splice(index,1);
 					
 					// Dispose its data
-					renderable.dispose();
+					renderable.dispose(rc,tp);
 					
 					// Remove tile data if not needed anymore
 					if ( rs.renderables.length == 0 )
-						delete tile.extension.wmsOverlay;
+						delete tile.extension.rasterOverlay;
 				}
 			}
 	);
@@ -243,10 +238,10 @@ GlobWeb.RasterOverlayRenderer.prototype.removeOverlay = function( overlay )
  */
 GlobWeb.RasterOverlayRenderer.prototype.addOverlayToTile = function( tile, overlay )
 {
-	if ( !tile.extension.wmsOverlay )
-		tile.extension.wmsOverlay = new GlobWeb.RasterOverlayRenderer.TileData();
+	if ( !tile.extension.rasterOverlay )
+		tile.extension.rasterOverlay = new GlobWeb.RasterOverlayRenderer.TileData();
 	
-	tile.extension.wmsOverlay.renderables.push( new GlobWeb.WMSOverlayRenderable(overlay) );
+	tile.extension.rasterOverlay.renderables.push( new GlobWeb.RasterOverlayRenderable(overlay) );
 	
 	if ( tile.children )
 	{
@@ -353,7 +348,7 @@ GlobWeb.RasterOverlayRenderer.prototype.generate = function( tile )
 	if ( tile.parent )
 	{	
 		// Only add feature from parent tile (if any)
-		var data = tile.parent.extension.wmsOverlay;
+		var data = tile.parent.extension.rasterOverlay;
 		var rl = data ?  data.renderables.length : 0;
 		for ( var i = 0; i < rl; i++ )
 		{
@@ -439,10 +434,16 @@ GlobWeb.RasterOverlayRenderer.prototype.render = function( tiles )
 	for ( var i = 0; i < tiles.length; i++ )
 	{
 		var tile = tiles[i];
-		
+				
 		// First retreive tileData for overlay
 		var isTileLoaded = (tile.state == GlobWeb.Tile.State.LOADED);
-		var tileData = isTileLoaded ? tile.extension.wmsOverlay : tile.parent.extension.wmsOverlay;
+		var tileData;
+		
+		if ( isTileLoaded )
+			tileData = tile.extension.rasterOverlay;
+		else if ( tile.parent) 
+			tileData = tile.parent.extension.rasterOverlay;
+			
 		if ( tileData )
 		{
 			mat4.multiply( rc.viewMatrix, tile.matrix, modelViewMatrix );
@@ -465,27 +466,44 @@ GlobWeb.RasterOverlayRenderer.prototype.render = function( tiles )
 			{
 				var renderable = tileData.renderables[j];
 				
+				// Skip not visible layer
+				if ( !renderable.overlay._visible )
+					continue;
+				
+				var uvScale = 1.0;
+				var uTrans = 0.0;
+				var vTrans = 0.0;
+				
 				// Retrieve the texture to use
 				var textureTile = isTileLoaded ? tile : tile.parent;
+				
+				if ( !textureTile )
+					continue;
+					
 				var prevTextureTile = textureTile;
 				
 				// Request high resolution first : always request the texture for the given tile
 				if ( this.requestHighestResolutionFirst )
 				{
-					if ( !renderable.texture )
+					if ( !renderable.requestFinished )
 					{	
 						this.requestOverlayTextureForTile( textureTile, renderable );
 					}
 				}
 				
 				// If no texture on tile, try to find a valid texture with parent
-				while ( !renderable.texture && textureTile )
+				while ( !renderable.requestFinished && textureTile )
 				{
 					prevTextureTile = textureTile;
 					textureTile = textureTile.parent;
 					if ( textureTile )
 					{
-						var data = textureTile.extension.wmsOverlay;
+						uTrans *= 0.5;
+						vTrans *= 0.5;
+						uvScale *= 0.5;
+						uTrans += (prevTextureTile.parentIndex & 1) ? 0.5 : 0;
+						vTrans += (prevTextureTile.parentIndex & 2) ? 0.5 : 0;
+						var data = textureTile.extension.rasterOverlay;
 						renderable = data.findRenderable( renderable.overlay );
 					}
 				}
@@ -499,15 +517,11 @@ GlobWeb.RasterOverlayRenderer.prototype.render = function( tiles )
 					}
 				}
 				
-				if ( textureTile )
+				if ( textureTile && renderable.texture )
 				{
 					var tileGeoBound = isTileLoaded ? tile.geoBound : tile.parent.geoBound;
-					//gl.uniform1f(this.program.uniforms["opacity"], overlay.opacity );
-					var uScale = ( tileGeoBound.east - tileGeoBound.west ) / ( textureTile.geoBound.east - textureTile.geoBound.west );
-					var vScale = ( tileGeoBound.north - tileGeoBound.south ) / ( textureTile.geoBound.north - textureTile.geoBound.south );
-					var uTrans =  ( tileGeoBound.west - textureTile.geoBound.west ) / ( textureTile.geoBound.east - textureTile.geoBound.west );
-					var vTrans =  ( tileGeoBound.north - textureTile.geoBound.north ) / ( textureTile.geoBound.south - textureTile.geoBound.north );
-					gl.uniform4f(this.program.uniforms["textureTransform"], uScale, vScale, uTrans, vTrans );
+					gl.uniform1f(this.program.uniforms["opacity"], renderable.overlay._opacity );
+					gl.uniform4f(this.program.uniforms["textureTransform"], uvScale, uvScale, uTrans, vTrans );
 					
 					gl.activeTexture(gl.TEXTURE0);
 					gl.bindTexture(gl.TEXTURE_2D, renderable.texture );
