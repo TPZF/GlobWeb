@@ -260,7 +260,7 @@ GlobWeb.Tile.prototype.isCulled = function(renderContext)
 /*
 	Dispose the tile
  */
-GlobWeb.Tile.prototype.dispose = function(tilePool)
+GlobWeb.Tile.prototype.dispose = function(renderContext,tilePool)
 {		
 	if ( this.state == GlobWeb.Tile.State.LOADED  )
 	{
@@ -270,7 +270,7 @@ GlobWeb.Tile.prototype.dispose = function(tilePool)
 		for ( var x in this.extension )
 		{
 			if ( this.extension[x].dispose )
-				this.extension[x].dispose();
+				this.extension[x].dispose(renderContext,tilePool);
 		}
 
 		this.vertexBuffer = null;
@@ -286,15 +286,15 @@ GlobWeb.Tile.prototype.dispose = function(tilePool)
 /*
 	Delete the children
  */
-GlobWeb.Tile.prototype.deleteChildren = function(tilePool)
+GlobWeb.Tile.prototype.deleteChildren = function(renderContext,tilePool)
 {
 	if ( this.children )
 	{
 		// Dispose children resources, and then delete its children
 		for (var i = 0; i < 4; i++)
 		{
-			this.children[i].dispose(tilePool);
-			this.children[i].deleteChildren(tilePool);
+			this.children[i].dispose(renderContext,tilePool);
+			this.children[i].deleteChildren(renderContext,tilePool);
 		}
 		
 		// Cleanup the tile

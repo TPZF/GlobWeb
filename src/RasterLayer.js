@@ -102,22 +102,7 @@ GlobWeb.RasterLayer.prototype._detach = function( g )
  */
 GlobWeb.RasterLayer.prototype.visible = function( arg )
 {
-	if ( this._visible != arg ) 
-	{
-		this._visible = arg;
-		// When raster is an overlay, RasterOverlayRenderer is used to render it 
-		if ( this.overlay )
-		{
-			// Create the renderer if needed
-			if ( !g.rasterOverlayRenderer )
-			{
-				var renderer = new GlobWeb.RasterOverlayRenderer(g.tileManager);
-				g.tileManager.addPostRenderer(renderer);
-				g.rasterOverlayRenderer = renderer;
-			}
-			g.rasterOverlayRenderer.addOverlay(this);
-		}
-	}
+	this._visible = arg;
 }
 
 /**************************************************************************************************************/
@@ -127,5 +112,5 @@ GlobWeb.RasterLayer.prototype.visible = function( arg )
  */
 GlobWeb.RasterLayer.prototype.opacity = function( arg )
 {
-	// TODO
+	this._opacity = arg;
 }

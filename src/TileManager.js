@@ -175,8 +175,8 @@ GlobWeb.TileManager.prototype.reset = function()
 	// Reset all level zero tiles : destroy render data, and reset state to NONE
 	for (var i = 0; i < this.level0Tiles.length; i++)
 	{
-		this.level0Tiles[i].deleteChildren(this.tilePool);
-		this.level0Tiles[i].dispose(this.tilePool);
+		this.level0Tiles[i].deleteChildren(this.renderContext,this.tilePool);
+		this.level0Tiles[i].dispose(this.renderContext,this.tilePool);
 	}
 	
 	// Reset the shared buffers : texture coordinate and indices
@@ -320,7 +320,7 @@ GlobWeb.TileManager.prototype.launchRequest = function(tile)
 						tile.state = GlobWeb.Tile.State.NONE;
 				}
 				// Delete its children
-				tile.deleteChildren(this.tilePool);
+				tile.deleteChildren(this.renderContext,this.tilePool);
 			}
 		}
 	}
@@ -368,7 +368,7 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 			}
 			else
 			{
-				tile.children[i].deleteChildren(this.tilePool);
+				tile.children[i].deleteChildren(this.renderContext,this.tilePool);
 			}
 		}
 	}
