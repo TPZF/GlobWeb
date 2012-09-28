@@ -244,7 +244,7 @@ GlobWeb.VectorLayer.prototype.visible = function( arg )
 		if ( arg ){
 			for ( var i=0; i < this.features.length; i++ )
 			{
-				this._addFeatureToRenderers( this.features[i], this.style );
+				this._addFeatureToRenderers( this.features[i] );
 			}
 		}
 		else
