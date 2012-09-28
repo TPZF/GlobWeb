@@ -53,6 +53,16 @@ GlobWeb.RasterLayer.prototype._attach = function( g )
 {
 	GlobWeb.BaseLayer.prototype._attach.call( this, g );
 	
+	if ( this.attribution )
+	{
+		if ( !this.overlay )
+		{
+			// Override id of background layer because of unicity of background not overlayed layer
+			this.id = 0;
+		}
+		this.globe.attributionHandler.addAttribution(this);
+	}
+	
 	if ( this._visible )
 	{
 		if ( this.overlay )

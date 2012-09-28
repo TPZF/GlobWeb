@@ -50,6 +50,11 @@ GlobWeb.VectorLayer.prototype._attach = function( g )
 {
 	GlobWeb.BaseLayer.prototype._attach.call( this, g );
 	
+	if ( this.attribution )
+	{
+		this.globe.attributionHandler.addAttribution(this);
+	}
+	
 	if ( this._visible )
 	{
 		for ( var i=0; i < this.features.length; i++ )
@@ -239,7 +244,7 @@ GlobWeb.VectorLayer.prototype.visible = function( arg )
 		if ( arg ){
 			for ( var i=0; i < this.features.length; i++ )
 			{
-				this._addFeatureToRenderers( this.features[i] );
+				this._addFeatureToRenderers( this.features[i], this.style );
 			}
 		}
 		else
@@ -261,6 +266,7 @@ GlobWeb.VectorLayer.prototype.visible = function( arg )
 GlobWeb.VectorLayer.prototype.opacity = function( arg )
 {
 	this._opacity = arg;
+	this.style.opacity = arg;
 	for ( var i=0; i<this.features.length; i++ )
 	{
 		var style = this.features[i].properties.style || new GlobWeb.FeatureStyle();

@@ -86,7 +86,17 @@ GlobWeb.AttributionHandler.prototype.addAttribution = function(layer)
 	div.innerHTML = layer.attribution;
 	div.id = "attribution_"+layer.id;
 	
-	this.attributionDiv.appendChild( div );
+	if(layer.id == 0)
+	{
+		// Background layer
+		this.attributionDiv.insertBefore( div, this.attributionDiv.firstChild );
+	}
+	else
+	{
+		this.attributionDiv.appendChild( div );
+	}
+	
+	
 }
 
 /**************************************************************************************************************/
