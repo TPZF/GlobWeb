@@ -32,6 +32,7 @@ GlobWeb.FeatureStyle = function(style)
 	this.iconUrl = "hotspot.png";
 	this.icon = null;
 	this.label = null;
+	this.textColor = [1.0, 1.0, 1.0, 1.0];
 	this.fill = false;
 	this.pointMaxSize = 40;
 	this.opacity = 1.;
@@ -62,6 +63,20 @@ GlobWeb.FeatureStyle.hexToColor = function(hex)
 	color[0] = parseInt( hex.substring(6,8), 16 ) / 255.0;
 
 	return color;
+}
+
+/**************************************************************************************************************/
+
+/** 
+ * Convert an internal color to hexa color (#ffffff)
+ */
+GlobWeb.FeatureStyle.colorToHex = function(color)
+{		
+	var rr = parseInt( color[0] * 255.0 ).toString(16);
+	var gg = parseInt( color[1] * 255.0 ).toString(16);
+	var bb = parseInt( color[2] * 255.0 ).toString(16);
+
+	return '#' + rr + gg + bb;
 }
 
 /**************************************************************************************************************/

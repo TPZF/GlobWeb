@@ -31,7 +31,7 @@ GlobWeb.TiledVectorRenderable = function( style, gl )
  	this.indexBuffer = null;
 	this.vertices = [];
 	this.indices = [];
-	this.featureInfos = [];
+	this.geometryInfos = [];
 	this.dirtyVB = true;
 	this.dirtyIB = true;
 	this.childrenIndexBuffers = null;
@@ -57,17 +57,17 @@ GlobWeb.TiledVectorRenderable.prototype.buildChildrenIndices = function( )
 /**************************************************************************************************************/
 
 /**
- *	Remove a feature from the renderable
+ *	Remove a geometry from the renderable
  */
-GlobWeb.TiledVectorRenderable.prototype.removeFeature = function( feature )
+GlobWeb.TiledVectorRenderable.prototype.removeGeometry = function( geometry )
 {
 	var fiIndex = -1;
 
 	// Find the feature
-	for ( var i = 0; i < this.featureInfos.length; i++ )
+	for ( var i = 0; i < this.geometryInfos.length; i++ )
 	{
-		var fi = this.featureInfos[i];
-		if ( fi.feature == feature )
+		var fi = this.geometryInfos[i];
+		if ( fi.geometry == geometry )
 		{
 			// Remove feature from vertex and index buffer
 			this.vertices.splice( fi.startVertices, fi.vertexCount );
@@ -92,15 +92,15 @@ GlobWeb.TiledVectorRenderable.prototype.removeFeature = function( feature )
 		this.dirtyIB = true;
 		
 		// Update feature infos
-		for ( var i = fiIndex + 1; i < this.featureInfos.length; i++ )
+		for ( var i = fiIndex + 1; i < this.geometryInfos.length; i++ )
 		{
-			var fi = this.featureInfos[i];
-			fi.startVertices -= this.featureInfos[fiIndex].vertexCount;
-			fi.startIndices -= this.featureInfos[fiIndex].indexCount;
+			var fi = this.geometryInfos[i];
+			fi.startVertices -= this.geometryInfos[fiIndex].vertexCount;
+			fi.startIndices -= this.geometryInfos[fiIndex].indexCount;
 		}
 			
 		// Remove the feature from the infos array
-		this.featureInfos.splice( fiIndex, 1 );
+		this.geometryInfos.splice( fiIndex, 1 );
 		
 		// Erase children buffers : need to be rebuild
 		this.disposeChildrenIndexBuffers();
@@ -120,20 +120,19 @@ GlobWeb.TiledVectorRenderable.prototype.removeFeature = function( feature )
 /**
  *	Add a feature to the renderable
  */
-GlobWeb.TiledVectorRenderable.prototype.addFeature = function( feature, tile )
+GlobWeb.TiledVectorRenderable.prototype.addGeometry = function( geometry, tile )
 {	
 	var coords = null;
 	
 	// Note : use property defined as ['']  to avoid renaming when compiled in advanced mode with the closure compiler
 	
 	var crossDateLine = false;
-	if ( feature['_crossDateLine']
+	if ( geometry['_negCoordinates']
 		&& tile.geoBound.west < 0.0 ) 
 	{
 		crossDateLine = true;
 	}
 	
-	var geometry = feature['geometry'];
 	if ( geometry['type'] == "Polygon" )
 	{
 		// Close the coordinates if needed
@@ -151,7 +150,7 @@ GlobWeb.TiledVectorRenderable.prototype.addFeature = function( feature, tile )
 	if ( coords == null )
 		return;
 		
-	var featureInfo = { feature: feature,
+	var geometryInfo = { geometry: geometry,
 						startVertices: this.vertices.length,
 						startIndices: this.indices.length,
 						vertexCount: 0,
@@ -159,12 +158,12 @@ GlobWeb.TiledVectorRenderable.prototype.addFeature = function( feature, tile )
 	
 	this.buildVerticesAndIndices( tile, coords );
 	
-	featureInfo.vertexCount = this.vertices.length - featureInfo.startVertices;
-	featureInfo.indexCount = this.indices.length - featureInfo.startIndices;
+	geometryInfo.vertexCount = this.vertices.length - geometryInfo.startVertices;
+	geometryInfo.indexCount = this.indices.length - geometryInfo.startIndices;
 		
-	if ( featureInfo.vertexCount > 0 )
+	if ( geometryInfo.vertexCount > 0 )
 	{
-		this.featureInfos.push( featureInfo );
+		this.geometryInfos.push( geometryInfo );
 		this.dirtyVB = true;
 		this.dirtyIB = true;
 		

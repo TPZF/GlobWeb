@@ -117,6 +117,7 @@ GlobWeb.KMLParser = (function()
 					properties: {},
 					geometry: null };
 		
+		var shareStyle = false;
 		var child = node.firstElementChild;
 		while ( child )
 		{
@@ -128,13 +129,16 @@ GlobWeb.KMLParser = (function()
 			case "styleUrl":
 				{
 					var id = child.childNodes[0].nodeValue;
-					if ( styles.hasOwnProperty(id) )
+					if ( styles.hasOwnProperty(id) ) 
+					{
 						feature.properties.style = styles[id];
+						shareStyle = true;
+					}
 				}
 				break;
 			case "Style":
 				{
-					var style = parseStyle(child);
+					var style = parseStyle(child,feature.properties.name);
 					if ( style )
 					{
 						feature.properties.style = style;
@@ -152,7 +156,20 @@ GlobWeb.KMLParser = (function()
 		}
 		
 		if ( feature.geometry )
+		{
+			// Manage the fact that labels are always active with KML
+			var style = feature.properties.style;
+			if ( style && style.textColor[3] > 0.0 && feature.geometry.type == "Point" )
+			{
+				if ( shareStyle )
+				{
+					style = feature.properties.style = new GlobWeb.FeatureStyle(style);
+				}
+				style.label = feature.properties.name;
+			}
+			
 			featureCollection.features.push( feature );
+		}
 	}
 		
 	/*
@@ -238,7 +255,10 @@ GlobWeb.KMLParser = (function()
 			case "color":
 				var labelColor = GlobWeb.FeatureStyle.hexToColor( child.textContent.trim() );
 				if ( labelColor[3] == 0 )
-					style.label = false;
+				{
+					style.label = null;
+					style.textColor = labelColor;
+				}
 				break;
 			/*case "Icon":
 				if ( child.firstElementChild )
@@ -259,8 +279,6 @@ GlobWeb.KMLParser = (function()
 		var id = '#' + node.getAttribute("id");
 
 		var style = new GlobWeb.FeatureStyle();
-		// Label is always active with KML
-		style.label = true;
 		styles[id] = style;
 		
 		// Iterate through child to manage all different style element
