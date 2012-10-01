@@ -11,6 +11,7 @@ commonFiles= [
 		"GeoBound.js",
 		"BoundingBox.js",
 		"BaseLayer.js",
+		"TileWireframeLayer.js",
 		"Numeric.js",
 		"Animation.js",
 		"InterpolatedAnimation.js",
@@ -67,6 +68,7 @@ astroFiles = [
 		"AstroNavigation.js",
 		"HEALPixTables.js",
 		"HEALPixBase.js",
+		"EquatorialGridLayer.js",
 		"Long.js"
     ]
 
@@ -131,7 +133,7 @@ elif response == 3:
 	package.append(globFiles)
 	package.append(astroFiles)
 	makeSourceFiles(package, "Total.export.js")
-	outputFilename="GlobAstroWeb.min.js"
+	outputFilename="GlobWeb.min.js"
 elif response == 4:
 	package.append(globFiles)
 	package.append(astroFiles)

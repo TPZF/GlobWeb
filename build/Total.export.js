@@ -2,10 +2,26 @@ window['GlobWeb'] = {};
 window['GlobWeb']['Globe'] = GlobWeb.Globe;
 window['GlobWeb']['Stats'] = GlobWeb.Stats;
 window['GlobWeb']['Navigation'] = GlobWeb.Navigation;
-window['GlobWeb']['AstroNavigator'] = GlobWeb.AstroNavigator;
+window['GlobWeb']['AstroNavigation'] = GlobWeb.AstroNavigation;
 
 // Layers
 window['GlobWeb']['HEALPixLayer'] = GlobWeb.HEALPixLayer;
+window['GlobWeb']['WMSElevationLayer'] = GlobWeb.WMSElevationLayer;
+window['GlobWeb']['WCSElevationLayer'] = GlobWeb.WCSElevationLayer;
+window['GlobWeb']['OSMLayer'] = GlobWeb.OSMLayer;
+window['GlobWeb']['BingLayer'] = GlobWeb.BingLayer;
+window['GlobWeb']['BasicElevationLayer'] = GlobWeb.BasicElevationLayer;
+window['GlobWeb']['VectorLayer'] = GlobWeb.VectorLayer;
+window['GlobWeb']['GroundOverlayLayer'] = GlobWeb.GroundOverlayLayer;
+window['GlobWeb']['EquatorialGridLayer'] = GlobWeb.EquatorialGridLayer;
+window['GlobWeb']['TileWireframeLayer'] = GlobWeb.TileWireframeLayer;
+
+window['GlobWeb']['VectorLayer'].prototype.visible = GlobWeb.VectorLayer.prototype.visible;
+window['GlobWeb']['TileWireframeLayer'].prototype.visible = GlobWeb.TileWireframeLayer.prototype.visible;
+window['GlobWeb']['EquatorialGridLayer'].prototype.visible = GlobWeb.EquatorialGridLayer.prototype.visible;
+
+// FeatureStyle exports
+window['GlobWeb']['FeatureStyle'] = GlobWeb.FeatureStyle;
 
 // Hack for inheritance problem
 //window['GlobWeb']['a'] = GlobWeb.RasterLayer;
@@ -21,6 +37,13 @@ GlobWeb.Globe.prototype['getViewportGeoBound'] = GlobWeb.Globe.prototype.getView
 GlobWeb.Globe.prototype['setBaseImagery'] = GlobWeb.Globe.prototype.setBaseImagery;
 GlobWeb.Globe.prototype['setBaseElevation'] = GlobWeb.Globe.prototype.setBaseElevation;
 
+// CoordinateSystem exports
+window['GlobWeb']['CoordinateSystem'] = GlobWeb.CoordinateSystem;
+window['GlobWeb']['CoordinateSystem']['fromEquatorialToGeo'] = GlobWeb.CoordinateSystem.fromEquatorialToGeo;
+window['GlobWeb']['CoordinateSystem']['fromGeoTo3D'] = GlobWeb.CoordinateSystem.fromGeoTo3D;
+window['GlobWeb']['CoordinateSystem']['from3DToGeo'] = GlobWeb.CoordinateSystem.from3DToGeo;
+window['GlobWeb']['CoordinateSystem']['fromGeoToEquatorial'] = GlobWeb.CoordinateSystem.fromGeoToEquatorial;
+
 // VectorLayer exports
 GlobWeb.VectorLayer.prototype['addFeatureCollection'] = GlobWeb.VectorLayer.prototype.addFeatureCollection;
 GlobWeb.VectorLayer.prototype['addFeature'] = GlobWeb.VectorLayer.prototype.addFeature;
@@ -35,11 +58,11 @@ GlobWeb.Navigation.prototype['setupDefaultEventHandlers'] = GlobWeb.Navigation.p
 GlobWeb.Navigation.prototype['setupMouseEventHandlers'] = GlobWeb.Navigation.prototype.setupMouseEventHandlers;
 
 // AstroNavigator exports
-GlobWeb.AstroNavigator.prototype['zoomTo'] = GlobWeb.AstroNavigator.prototype.zoomTo;
-GlobWeb.AstroNavigator.prototype['subscribe'] = GlobWeb.AstroNavigator.prototype.subscribe;
-GlobWeb.AstroNavigator.prototype['unsubscribe'] = GlobWeb.AstroNavigator.prototype.unsubscribe;
-GlobWeb.AstroNavigator.prototype['setupDefaultEventHandlers'] = GlobWeb.AstroNavigator.prototype.setupDefaultEventHandlers;
-GlobWeb.AstroNavigator.prototype['computeViewMatrix'] = GlobWeb.AstroNavigator.prototype.computeViewMatrix;
+GlobWeb.AstroNavigation.prototype['zoomTo'] = GlobWeb.AstroNavigation.prototype.zoomTo;
+GlobWeb.AstroNavigation.prototype['subscribe'] = GlobWeb.AstroNavigation.prototype.subscribe;
+GlobWeb.AstroNavigation.prototype['unsubscribe'] = GlobWeb.AstroNavigation.prototype.unsubscribe;
+GlobWeb.AstroNavigation.prototype['setupDefaultEventHandlers'] = GlobWeb.AstroNavigation.prototype.setupDefaultEventHandlers;
+GlobWeb.AstroNavigation.prototype['computeViewMatrix'] = GlobWeb.AstroNavigation.prototype.computeViewMatrix;
 
 // Path animation exports
 window['GlobWeb']['PathAnimation'] = GlobWeb.PathAnimation;
