@@ -63,19 +63,16 @@ GlobWeb.RasterLayer.prototype._attach = function( g )
 		this.globe.attributionHandler.addAttribution(this);
 	}
 	
-	if ( this._visible )
+	if ( this.overlay )
 	{
-		if ( this.overlay )
+		// Create the renderer if needed
+		if ( !g.rasterOverlayRenderer )
 		{
-			// Create the renderer if needed
-			if ( !g.rasterOverlayRenderer )
-			{
-				var renderer = new GlobWeb.RasterOverlayRenderer(g.tileManager);
-				g.tileManager.addPostRenderer(renderer);
-				g.rasterOverlayRenderer = renderer;
-			}
-			g.rasterOverlayRenderer.addOverlay(this);
+			var renderer = new GlobWeb.RasterOverlayRenderer(g.tileManager);
+			g.tileManager.addPostRenderer(renderer);
+			g.rasterOverlayRenderer = renderer;
 		}
+		g.rasterOverlayRenderer.addOverlay(this);
 	}
 }
 

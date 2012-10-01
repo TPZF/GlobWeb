@@ -61,12 +61,12 @@ GlobWeb.SimpleLineRenderer = function(tileManager)
 /**
  *	Add line shape to renderer
  */
-GlobWeb.SimpleLineRenderer.prototype.addFeature = function(feature, style){
+GlobWeb.SimpleLineRenderer.prototype.addGeometry = function(geometry, style){
 	
 	// Create renderable
 	var shape = {
 		mesh : null,
-		feature : feature,
+		geometry : geometry,
 		style : style
 	}
 	
@@ -74,14 +74,14 @@ GlobWeb.SimpleLineRenderer.prototype.addFeature = function(feature, style){
 	
 	// Fill array by line shape coordinates
 	var vertices = [];
-	for ( var i=0; i<feature['geometry']['coordinates'].length; i+=3)
+	for ( var i=0; i<geometry['coordinates'].length; i+=3)
 	{
-		vertices = vertices.concat([ feature['geometry']['coordinates'][i], feature['geometry']['coordinates'][i+1], feature['geometry']['coordinates'][i+2] ]);
+		vertices = vertices.concat([ geometry['coordinates'][i], geometry['coordinates'][i+1], geometry['coordinates'][i+2] ]);
 	}
 	
 	// Compute the indices corresponding to line shape
 	var indices = [];
-	for ( var i=0; i<feature['geometry']['coordinates'].length/3 - 1; i++ )
+	for ( var i=0; i<geometry['coordinates'].length/3 - 1; i++ )
 	{
 		indices.push(i);
 		indices.push(i+1);
@@ -103,12 +103,12 @@ GlobWeb.SimpleLineRenderer.prototype.addFeature = function(feature, style){
 /**
  * 	Remove line shape from renderer
  */
-GlobWeb.SimpleLineRenderer.prototype.removeFeature = function(feature){
+GlobWeb.SimpleLineRenderer.prototype.removeGeometry = function(geometry,style){
 	
 	for ( var i = 0; i<this.shapes.length; i++ )
 	{
 		var currentShape = this.shapes[i];
-		if ( currentShape.feature == feature){
+		if ( currentShape.geometry == geometry){
 			this.shapes.splice(i, 1);
 		}
 	}

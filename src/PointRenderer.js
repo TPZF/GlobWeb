@@ -40,14 +40,15 @@ GlobWeb.Text = (function()
 		if (!canvas2d)
 			initialize();
 		
-		if (!textColor)
-			textColor = '#fff';
-		else 
-			textColor = GlobWeb.FeatureStyle.colorToHex(textColor);
+		var fillColor = textColor;
+		if (!fillColor)
+			fillColor = '#fff';
+		else if ( fillColor instanceof Array )
+			fillColor = GlobWeb.FeatureStyle.colorToHex(textColor);
 		
 		var ctx = canvas2d.getContext("2d");
 		ctx.clearRect(0,0,canvas2d.width,canvas2d.height);
-		ctx.fillStyle = textColor;
+		ctx.fillStyle = fillColor;
 		ctx.font = fontSize + 'px sans-serif';
 		ctx.textBaseline = 'top';
 		ctx.shadowColor = '#000';

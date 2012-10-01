@@ -32,7 +32,8 @@ GlobWeb.VectorLayer = function( options )
 		this.style = options['style'];
 	else
 		this.style = new GlobWeb.FeatureStyle();
-		
+	
+	this.style.opacity = this._opacity;
 	this.features = [];
 	this.type = "Vector";
 }
@@ -116,6 +117,7 @@ GlobWeb.VectorLayer.prototype._addFeatureToRenderers = function( feature )
 	if ( props && props['style'] )
 	{
 		style = props['style'];
+		style.opacity = this._opacity;
 	}
 	
 	// DateLine crossing fix
@@ -299,8 +301,6 @@ GlobWeb.VectorLayer.prototype.opacity = function( arg )
 	for ( var i=0; i<this.features.length; i++ )
 	{
 		var style = this.features[i].properties.style || new GlobWeb.FeatureStyle();
-		style.label = true;
-		style.iconUrl = null;
 		style.opacity = arg;
 		this.modifyFeatureStyle( this.features[i], style );
 	}
