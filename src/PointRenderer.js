@@ -40,8 +40,10 @@ GlobWeb.Text = (function()
 		if (!canvas2d)
 			initialize();
 		
-		if(!textColor)
+		if (!textColor)
 			textColor = '#fff';
+		else 
+			textColor = GlobWeb.FeatureStyle.colorToHex(textColor);
 		
 		var ctx = canvas2d.getContext("2d");
 		ctx.clearRect(0,0,canvas2d.width,canvas2d.height);
@@ -150,7 +152,7 @@ GlobWeb.PointRenderer.prototype._buildTextureFromImage = function(bucket,image)
 /*
 	Add a point to the renderer
  */
-GlobWeb.PointRenderer.prototype.addFeature = function(feature,style)
+GlobWeb.PointRenderer.prototype.addGeometry = function(geometry,style)
 {
 	if ( style )
 	{
@@ -158,19 +160,19 @@ GlobWeb.PointRenderer.prototype.addFeature = function(feature,style)
 		
 		if ( style.label )
 		{
-			var imageData = GlobWeb.Text.generateImageData(feature['properties']['name'], feature['properties']['textColor']);
+			var imageData = GlobWeb.Text.generateImageData(style.label, style.textColor);
 			this._buildTextureFromImage(bucket,imageData);
 		}
 
 		
-		var posGeo = feature['geometry']['coordinates'];
+		var posGeo = geometry['coordinates'];
 		var pos3d = GlobWeb.CoordinateSystem.fromGeoTo3D( posGeo );
 		var vertical = vec3.create();
 		vec3.normalize(pos3d, vertical);
 		
 		var pointRenderData = { pos3d: pos3d,
 							vertical: vertical,
-							feature: feature };
+							geometry: geometry };
 
 		bucket.points.push( pointRenderData );
 	}
@@ -181,14 +183,14 @@ GlobWeb.PointRenderer.prototype.addFeature = function(feature,style)
 /*
 	Remove a point from renderer
  */
-GlobWeb.PointRenderer.prototype.removeFeature = function(feature)
+GlobWeb.PointRenderer.prototype.removeGeometry = function(geometry)
 {
 	for ( var i = 0; i < this.buckets.length; i++ )
 	{
 		var bucket = this.buckets[i];
 		for ( var j = 0; j < bucket.points.length; j++ )
 		{
-			if ( bucket.points[j].feature == feature )
+			if ( bucket.points[j].geometry == geometry )
 			{
 				bucket.points.splice( j, 1 );
 				
@@ -210,17 +212,15 @@ GlobWeb.PointRenderer.prototype.removeFeature = function(feature)
 GlobWeb.PointRenderer.prototype.getOrCreateBucket = function(style)
 {
 	// Find an existing bucket for the given style, except if label is set, always create a new one
-	if ( !style.label )
+	for ( var i = 0; i < this.buckets.length; i++ )
 	{
-		for ( var i = 0; i < this.buckets.length; i++ )
+		var bucket = this.buckets[i];
+		if ( bucket.style.isEqualForPoint(style) )
 		{
-			var bucket = this.buckets[i];
-			if ( bucket.style.isEqualForPoint(style) )
-			{
-				return bucket;
-			}
+			return bucket;
 		}
 	}
+
 
 	// Create a bucket
 	var bucket = {

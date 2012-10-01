@@ -65,9 +65,9 @@ GlobWeb.VectorRendererManager.registerRenderer = function(factory)
 /** 
 	Add a feature to renderers
  */
-GlobWeb.VectorRendererManager.prototype.addFeature = function(feature,style)
+GlobWeb.VectorRendererManager.prototype.addGeometry = function(geometry,style)
 {
-	var type = feature['geometry']['type'];
+	var type = geometry['type'];
 	for ( var i = 0; i < this.factories.length; i++ )
 	{
 		var factory = this.factories[i];
@@ -78,7 +78,7 @@ GlobWeb.VectorRendererManager.prototype.addFeature = function(feature,style)
 				factory.instance = factory.creator(this.globe);
 				this.globe.tileManager.addPostRenderer(factory.instance);
 			}
-			factory.instance.addFeature(feature,style);
+			factory.instance.addGeometry(geometry,style);
 		}
 	}
 }
@@ -88,13 +88,16 @@ GlobWeb.VectorRendererManager.prototype.addFeature = function(feature,style)
 /** 
 	Remove a feature from renderers
  */
-GlobWeb.VectorRendererManager.prototype.removeFeature = function(feature)
+GlobWeb.VectorRendererManager.prototype.removeGeometry = function(geometry,style)
 {
+	var type = geometry['type'];
 	for ( var i = 0; i < this.factories.length; i++ )
 	{
 		var factory = this.factories[i];
-		if ( factory.instance )
-			factory.instance.removeFeature(feature);
+		if ( factory.instance && factory.canApply(type,style) )
+		{
+			factory.instance.removeGeometry(geometry,style);
+		}
 	}
 }
 

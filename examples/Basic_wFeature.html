@@ -22,10 +22,6 @@
 				statsElement: "fps" });
 				
 	
-		$(document).keypress( function(event) { 
-				if (event.which == 115) 
-					globe.tileManager.freeze = !globe.tileManager.freeze; 
-		});
 
 		var navigation = new GlobWeb.Navigation(globe);
 			
@@ -36,6 +32,12 @@
 		
 		var vectorLayer = new GlobWeb.VectorLayer();
 		globe.addLayer( vectorLayer );
+		
+		$(document).keypress( function(event) { 
+				if (event.which == 115) 
+					vectorLayer.visible(false);
+					//globe.tileManager.freeze = !globe.tileManager.freeze; 
+		});
 		
 	
 		var feature = { type: "Feature",
@@ -55,7 +57,7 @@
 		
 		
 		$.ajax({
-			  url: "europe.json",
+			  url: "examples.json",
 			  success: function(data)
 			  {
 				vectorLayer.addFeatureCollection( data );

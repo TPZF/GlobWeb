@@ -70,6 +70,7 @@ var GlobWeb = GlobWeb || {};
 		"SimpleLineRenderer.js",
 		"BaseLayer.js",
 		"VectorLayer.js",
+		"EquatorialGridLayer.js",
 		"Triangulator.js",
 		"GroundOverlayLayer.js",
 		"GroundOverlayRenderer.js",

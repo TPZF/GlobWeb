@@ -7,6 +7,7 @@ window['GlobWeb']['KMLParser'] = GlobWeb.KMLParser;
 // Layers
 window['GlobWeb']['WMSLayer'] = GlobWeb.WMSLayer;
 window['GlobWeb']['WMSElevationLayer'] = GlobWeb.WMSElevationLayer;
+window['GlobWeb']['WCSElevationLayer'] = GlobWeb.WCSElevationLayer;
 window['GlobWeb']['OSMLayer'] = GlobWeb.OSMLayer;
 window['GlobWeb']['BingLayer'] = GlobWeb.BingLayer;
 window['GlobWeb']['BasicElevationLayer'] = GlobWeb.BasicElevationLayer;

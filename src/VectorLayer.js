@@ -50,6 +50,11 @@ GlobWeb.VectorLayer.prototype._attach = function( g )
 {
 	GlobWeb.BaseLayer.prototype._attach.call( this, g );
 	
+	if ( this.attribution )
+	{
+		this.globe.attributionHandler.addAttribution(this);
+	}
+	
 	if ( this._visible )
 	{
 		for ( var i=0; i < this.features.length; i++ )
@@ -98,8 +103,8 @@ GlobWeb.VectorLayer.prototype.removeFeatureCollection = function( featureCollect
 
 /**************************************************************************************************************/
 
-/** @export
-  Add a feature to the layer
+/** 
+  Add a feature to renderers
 */
 GlobWeb.VectorLayer.prototype._addFeatureToRenderers = function( feature )
 {
@@ -114,6 +119,7 @@ GlobWeb.VectorLayer.prototype._addFeatureToRenderers = function( feature )
 	}
 	
 	// DateLine crossing fix
+	// TODO : should be put in another place
 	if ( geometry.type == "LineString" )
 	{
 		if ( this._crossDateLine(geometry) )
@@ -136,25 +142,52 @@ GlobWeb.VectorLayer.prototype._addFeatureToRenderers = function( feature )
 		}
 	}
 
-	// Manage geometry collection : not optimized for the moment
+	// Manage geometry collection
 	if ( geometry.type == "GeometryCollection" )
 	{
 		var geoms = geometry["geometries"];
 		for ( var i = 0; i < geoms.length; i++ )
 		{
-			var dumfeature = {
-				'type': 'Feature',
-				'properties': feature['properties'],
-				'geometry': geoms[i]
-			};
-			dumfeature['properties']['style'] = style;
-			this.globe.vectorRendererManager.addFeature( dumfeature, style );
+			this.globe.vectorRendererManager.addGeometry( geoms[i], style );
 		}
 	}
 	else
 	{
-		// Add feature to renderers
-		this.globe.vectorRendererManager.addFeature(feature,style);
+		// Add geometry to renderers
+		this.globe.vectorRendererManager.addGeometry( geometry, style );
+	}
+}
+
+/**************************************************************************************************************/
+
+/** 
+  Remove a feature from renderers
+*/
+GlobWeb.VectorLayer.prototype._removeFeatureFromRenderers = function( feature )
+{
+	var geometry = feature['geometry']
+	
+	// Manage style, if undefined try with properties, otherwise use defaultStyle
+	var style = this.style;
+	var props = feature['properties'];
+	if ( props && props['style'] )
+	{
+		style = props['style'];
+	}
+
+
+	// Manage geometry collection
+	if ( geometry.type == "GeometryCollection" )
+	{
+		var geoms = geometry["geometries"];
+		for ( var i = 0; i < geoms.length; i++ )
+		{
+			this.globe.vectorRendererManager.removeGeometry( geoms[i], style );
+		}
+	}
+	else
+	{
+		this.globe.vectorRendererManager.removeGeometry( geometry, style );
 	}
 }
 
@@ -190,7 +223,7 @@ GlobWeb.VectorLayer.prototype.removeFeature = function( feature )
 	this.features.splice( index, 1 );
 	if ( this.globe )
 	{
-		this.globe.vectorRendererManager.removeFeature( feature );
+		this._removeFeatureFromRenderers( feature );
 		this.globe.renderContext.requestFrame();
 	}
 }
@@ -202,8 +235,9 @@ GlobWeb.VectorLayer.prototype.removeFeature = function( feature )
 */
 GlobWeb.VectorLayer.prototype.modifyFeatureStyle = function( feature, style )
 {
-	this.globe.vectorRendererManager.removeFeature( feature );
-	this.globe.vectorRendererManager.addFeature( feature, style );
+	this._removeFeatureFromRenderers( feature );
+	feature['properties']['style'] = style;
+	this._addFeatureToRenderers( feature );
 }
 
 /**************************************************************************************************************/
@@ -246,7 +280,7 @@ GlobWeb.VectorLayer.prototype.visible = function( arg )
 		{
 			for ( var i=0; i < this.features.length; i++ )
 			{
-				this.globe.vectorRendererManager.removeFeature( this.features[i] );
+				this._removeFeatureFromRenderers( this.features[i] );
 			}
 		}
 	}
@@ -261,6 +295,7 @@ GlobWeb.VectorLayer.prototype.visible = function( arg )
 GlobWeb.VectorLayer.prototype.opacity = function( arg )
 {
 	this._opacity = arg;
+	this.style.opacity = arg;
 	for ( var i=0; i<this.features.length; i++ )
 	{
 		var style = this.features[i].properties.style || new GlobWeb.FeatureStyle();

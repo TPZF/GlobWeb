@@ -23,13 +23,14 @@
 		
 		var elevation = new GlobWeb.BasicElevationLayer( {baseUrl:"http://demonstrator.vegaspace.com/json_elevations/get.php"});
 		globe.setBaseElevation( elevation );
+		
+		var vectorLayer = new GlobWeb.VectorLayer();
 
 		var xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = function(e)
 		{
 			if ( xhr.readyState == 4 )// && xhr.status == 200)
 			{
-				var vectorLayer = new GlobWeb.VectorLayer();
 				vectorLayer.addFeatureCollection( GlobWeb.KMLParser.parse( xhr.responseXML ) );
 				globe.addLayer( vectorLayer );
 			}
@@ -38,7 +39,15 @@
 		xhr.open("GET", "doc.kml");
 		//xhr.open("GET", "testUS.kml");
 		xhr.send();
-    }
+		
+		
+		var vis = true;
+ 		document.onkeypress = function(event)
+		{
+			vis = !vis;
+			vectorLayer.visible( vis );
+		}
+   }
 
 
 </script>
