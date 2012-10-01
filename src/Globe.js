@@ -40,12 +40,15 @@
 GlobWeb.Globe = function(options)
 {
 	this.renderContext = new GlobWeb.RenderContext(options);
-	this.tileManager = new GlobWeb.TileManager( this.renderContext );
+	this.tileManager = new GlobWeb.TileManager( this );
 	this.tileManager.showWireframe = options['showWireframe'];
 	this.vectorRendererManager = new GlobWeb.VectorRendererManager( this );
 	this.attributionHandler = new GlobWeb.AttributionHandler();
 	this.activeAnimations = [];
 	this.nbCreatedLayers = 0;
+	
+	// Event callbacks
+	this.callbacks = {};
 	
 	var glob = this;	
 	this.renderContext.frame = function() 
@@ -368,3 +371,65 @@ GlobWeb.Globe.prototype.render = function()
 }
 
 /**************************************************************************************************************/
+
+/** @export
+	Subscribe to an event
+	
+	@param name Event name
+		<ul>
+			<li>startAnimation : navigation animation start event</li>
+			<li>endAnimation : navigation animation end event</li>
+			<li>level0TilesLoaded : level zero loaded event</li>
+			<li>levelZeroTextureLoaded : level zero texture loaded event</li>
+		</ul>
+	@param callback Callback function
+*/
+GlobWeb.Globe.prototype.subscribe = function(name,callback)
+{
+	if( !this.callbacks[name] ) {
+		this.callbacks[name] = [ callback ];
+	} else {
+		this.callbacks[name].push( callback );
+	}
+}
+
+/**************************************************************************************************************/
+
+/** @export
+	Unsubscribe to an event 
+	
+	@param name Event name
+		<ul>
+			<li>startAnimation : navigation animation start event</li>
+			<li>endAnimation : navigation animation end event</li>
+			<li>level0TilesLoaded : level zero loaded event</li>
+			<li>levelZeroTextureLoaded : level zero texture loaded event</li>
+		</ul>
+	@param callback Callback function
+*/
+GlobWeb.Globe.prototype.unsubscribe = function(name,callback)
+{
+	if( this.callbacks[name] ) {
+		var i = this.callbacks[name].indexOf( callback );
+		if ( i != -1 ) {
+			this.callbacks[name].splice(i,1);
+		}
+	}
+}
+
+/**************************************************************************************************************/
+
+/** @export
+	Publish a navigation event
+	
+	@param name Event name
+*/
+GlobWeb.Globe.prototype.publish = function(name)
+{
+	if ( this.callbacks[name] ) {
+		var cbs = this.callbacks[name];
+		for ( var i = 0; i < cbs.length; i++ ) {
+			cbs[i]();
+		}
+	}
+}

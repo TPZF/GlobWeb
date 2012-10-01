@@ -136,13 +136,13 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration )
 	}
 
 	animation.onstop = function() {
-		navigator.publish("end");
+		navigator.globe.publish("endAnimation");
 	}
 	
 	this.globe.addAnimation(animation);
 	animation.start();
 	
-	this.publish("start");
+	this.globe.publish("startAnimation");
 }
 
 /**************************************************************************************************************/
@@ -173,8 +173,6 @@ GlobWeb.AstroNavigation.prototype.zoom = function(delta)
 	// Arbitrary value for smooth zooming
 	delta = 1 + delta * 0.1;
 	
-	this.publish("start");
-	
 	// Check differences between firefox and the rest of the world 
 	this.globe.renderContext.fov *= delta;
 	
@@ -189,7 +187,6 @@ GlobWeb.AstroNavigation.prototype.zoom = function(delta)
 	
 	this.computeViewMatrix();
 	
-	this.publish("end");
 	this.globe.renderContext.requestFrame();
 		
 	// Return false to stop mouse wheel to be propagated when using onmousewheel

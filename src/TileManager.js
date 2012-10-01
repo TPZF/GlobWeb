@@ -20,10 +20,11 @@
 /** @constructor
 	TileManager constructor
  */
-GlobWeb.TileManager = function(renderContext)
+GlobWeb.TileManager = function( globe )
 {
-	this.renderContext = renderContext;
-	this.tilePool = new GlobWeb.TilePool(renderContext);
+	this.globe = globe;
+	this.renderContext = this.globe.renderContext;
+	this.tilePool = new GlobWeb.TilePool(this.renderContext);
 	this.imageryProvider = null;
 	this.elevationProvider = null;
 	this.tilesToRender = [];
@@ -33,6 +34,7 @@ GlobWeb.TileManager = function(renderContext)
 	this.levelZeroTexture = null;
 	
 	// Tile requests : limit to 4 at a given time
+	var renderContext = this.renderContext;
 	var callback = function() { renderContext.requestFrame(); };
 	this.tileRequests = [];
 	for ( var i=0; i < 4; i++ )
@@ -48,8 +50,8 @@ GlobWeb.TileManager = function(renderContext)
 		skirt: true,
 		cullSign: 1.0,
 		imageSize: 256,
-		vertexSize: renderContext.lighting ? 6 : 3, 
-		normals: renderContext.lighting
+		vertexSize: this.renderContext.lighting ? 6 : 3, 
+		normals: this.renderContext.lighting
 	};
 		
 	// Shared index and texture coordinate buffer : all tiles uses the same
@@ -72,13 +74,13 @@ GlobWeb.TileManager = function(renderContext)
 	uniform mat4 projectionMatrix;\n\
 	uniform vec4 texTransform;\n\
 	varying vec2 texCoord;\n";
-	if ( renderContext.lighting )
+	if ( this.renderContext.lighting )
 		vertexShader += "attribute vec3 normal;\nvarying vec3 color;\n";
 	vertexShader += "\
 	void main(void) \n\
 	{\n\
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(vertex, 1.0);\n";
-	if ( renderContext.lighting )
+	if ( this.renderContext.lighting )
 		vertexShader += "vec4 vn = modelViewMatrix * vec4(normal,0);\ncolor = max( vec3(-vn[2],-vn[2],-vn[2]), 0.0 );\n";
 	vertexShader += "\
 		texCoord = vec2(tcoord.s * texTransform.x + texTransform.z, tcoord.t * texTransform.y + texTransform.w);\n\
@@ -88,21 +90,21 @@ GlobWeb.TileManager = function(renderContext)
 	var fragmentShader = "\
 	precision highp float; \n\
 	varying vec2 texCoord;\n";
-	if ( renderContext.lighting )
+	if ( this.renderContext.lighting )
 		fragmentShader += "varying vec3 color;\n";
 	fragmentShader += "\
 	uniform sampler2D colorTexture;\n\
 	void main(void)\n\
 	{\n\
 		gl_FragColor.rgb = texture2D(colorTexture, texCoord).rgb;\n";
-	if ( renderContext.lighting )
+	if ( this.renderContext.lighting )
 		fragmentShader += "gl_FragColor.rgb *= color;\n";
 	fragmentShader += "\
 		gl_FragColor.a = 1.0;\n\
 	}\n\
 	";
 	
-    this.program = new GlobWeb.Program(this.renderContext);
+	this.program = new GlobWeb.Program(this.renderContext);
 	this.program.createFromSource( vertexShader, fragmentShader );
 }
 
@@ -296,6 +298,7 @@ GlobWeb.TileManager.prototype.launchRequest = function(tile)
 				}
 			}
 		}
+		this.globe.publish("level0TilesLoaded");
 	}
 	
 	// Traverse tiles
@@ -572,6 +575,7 @@ GlobWeb.TileManager.prototype.render = function()
 	if ( this.levelZeroTexture == null && this.imageryProvider.levelZeroImage )
 	{
 		this.levelZeroTexture = this.renderContext.createNonPowerOfTwoTextureFromImage(this.imageryProvider.levelZeroImage);
+		this.globe.publish("levelZeroTextureLoaded");
 	}
 
 	var stats = this.renderContext.stats;
