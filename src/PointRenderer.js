@@ -159,13 +159,6 @@ GlobWeb.PointRenderer.prototype.addGeometry = function(geometry,style)
 	{
 		var bucket = this.getOrCreateBucket( style );
 		
-		if ( style.label )
-		{
-			var imageData = GlobWeb.Text.generateImageData(style.label, style.textColor);
-			this._buildTextureFromImage(bucket,imageData);
-		}
-
-		
 		var posGeo = geometry['coordinates'];
 		var pos3d = GlobWeb.CoordinateSystem.fromGeoTo3D( posGeo );
 		var vertical = vec3.create();
@@ -230,8 +223,13 @@ GlobWeb.PointRenderer.prototype.getOrCreateBucket = function(style)
 		style: style
 	};
 		
-	// Initialzie bucket : create the texture
-	if ( style['iconUrl'] )
+	// Initialize bucket : create the texture	
+	if ( style['label'] )
+	{
+		var imageData = GlobWeb.Text.generateImageData(style['label'], style['textColor']);
+		this._buildTextureFromImage(bucket,imageData);
+	}
+	else if ( style['iconUrl'] )
 	{
 		var image = new Image();
 		var self = this;

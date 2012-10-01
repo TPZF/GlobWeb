@@ -112,7 +112,7 @@ GlobWeb.FeatureStyle.prototype.isEqualForPoint = function(style)
 {
 	return this.iconUrl == style.iconUrl
 		&& this.icon == style.icon
-		&& this.label == this.label;
+		&& this.label == style.label;
 }
 
 /**************************************************************************************************************/
