@@ -300,7 +300,7 @@ GlobWeb.VectorLayer.prototype.opacity = function( arg )
 	this.style.opacity = arg;
 	for ( var i=0; i<this.features.length; i++ )
 	{
-		var style = this.features[i].['properties'].style || new GlobWeb.FeatureStyle();
+		var style = this.features[i]['properties']['style'] || new GlobWeb.FeatureStyle();
 		style.opacity = arg;
 		this.modifyFeatureStyle( this.features[i], style );
 	}

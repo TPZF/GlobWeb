@@ -54,15 +54,13 @@ GlobWeb.VectorLayer.prototype['removeFeature'] = GlobWeb.VectorLayer.prototype.r
 GlobWeb.Navigation.prototype['zoomTo'] = GlobWeb.Navigation.prototype.zoomTo;
 GlobWeb.Navigation.prototype['subscribe'] = GlobWeb.Navigation.prototype.subscribe;
 GlobWeb.Navigation.prototype['unsubscribe'] = GlobWeb.Navigation.prototype.unsubscribe;
-GlobWeb.Navigation.prototype['setupDefaultEventHandlers'] = GlobWeb.Navigation.prototype.setupDefaultEventHandlers;
-GlobWeb.Navigation.prototype['setupMouseEventHandlers'] = GlobWeb.Navigation.prototype.setupMouseEventHandlers;
+GlobWeb.Navigation.prototype['getFov'] = GlobWeb.Navigation.prototype.getFov;
 
 // AstroNavigator exports
 GlobWeb.AstroNavigation.prototype['zoomTo'] = GlobWeb.AstroNavigation.prototype.zoomTo;
 GlobWeb.AstroNavigation.prototype['subscribe'] = GlobWeb.AstroNavigation.prototype.subscribe;
 GlobWeb.AstroNavigation.prototype['unsubscribe'] = GlobWeb.AstroNavigation.prototype.unsubscribe;
-GlobWeb.AstroNavigation.prototype['setupDefaultEventHandlers'] = GlobWeb.AstroNavigation.prototype.setupDefaultEventHandlers;
-GlobWeb.AstroNavigation.prototype['computeViewMatrix'] = GlobWeb.AstroNavigation.prototype.computeViewMatrix;
+GlobWeb.AstroNavigation.prototype['getFov'] = GlobWeb.AstroNavigation.prototype.getFov;
 
 // Path animation exports
 window['GlobWeb']['PathAnimation'] = GlobWeb.PathAnimation;

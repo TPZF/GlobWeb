@@ -29,6 +29,15 @@ GlobWeb.BaseNavigation = function(globe, options)
 	}
 }
 
+/**************************************************************************************************************/
+
+/** @export
+  Get the field of view used by the navigation
+*/
+GlobWeb.BaseNavigation.prototype.getFov = function()
+{
+	return this.globe.renderContext.fov;
+}
 
 /**************************************************************************************************************/
 
