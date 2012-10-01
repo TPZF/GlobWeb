@@ -8,6 +8,7 @@ window['GlobWeb']['AstroNavigation'] = GlobWeb.AstroNavigation;
 window['GlobWeb']['HEALPixLayer'] = GlobWeb.HEALPixLayer;
 window['GlobWeb']['WMSElevationLayer'] = GlobWeb.WMSElevationLayer;
 window['GlobWeb']['WCSElevationLayer'] = GlobWeb.WCSElevationLayer;
+window['GlobWeb']['WMSLayer'] = GlobWeb.WMSLayer;
 window['GlobWeb']['OSMLayer'] = GlobWeb.OSMLayer;
 window['GlobWeb']['BingLayer'] = GlobWeb.BingLayer;
 window['GlobWeb']['BasicElevationLayer'] = GlobWeb.BasicElevationLayer;
