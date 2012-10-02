@@ -387,10 +387,9 @@ GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 // 	for (var phi = phiStart; phi <= phiStop; phi+=this.longitudeSample) {
 	for (var phi = 0; phi < 360; phi+=this.longitudeSample) {
 		var posGeo = [ phi, posXgeo[1] ];
-		var posEquat = [];
-		GlobWeb.CoordinateSystem.fromGeoToEquatorial( posGeo, posEquat );
-		var stringEquat = GlobWeb.CoordinateSystem.equatorialLayout( posEquat );
-		var imageData = GlobWeb.Text.generateImageData(stringEquat[0]);
+
+		var stringPhi = GlobWeb.CoordinateSystem.fromDegreesToHMS( phi );
+		var imageData = GlobWeb.Text.generateImageData( stringPhi );
 		var text = {};
 		this._buildTextureFromImage(text,imageData);
 		
@@ -410,9 +409,8 @@ GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 		var posGeo = [ posXgeo[0], theta ];
 		
 		var posEquat = [];
-		GlobWeb.CoordinateSystem.fromGeoToEquatorial( posGeo, posEquat );
-		var stringEquat = GlobWeb.CoordinateSystem.equatorialLayout( posEquat );
-		var imageData = GlobWeb.Text.generateImageData(stringEquat[1]);
+		var stringTheta = GlobWeb.CoordinateSystem.fromDegreesToDMS( theta );
+		var imageData = GlobWeb.Text.generateImageData( stringTheta );
 		
 		var text = {};
 		this._buildTextureFromImage(text,imageData);

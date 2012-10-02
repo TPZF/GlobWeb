@@ -273,6 +273,20 @@ Numeric.raySphereIntersection = function(rayOrigin, rayDirection, sphereCenter, 
 
 /**************************************************************************************************************/
 
+/**
+ * 	Round the given number
+ * 
+ * 	@param num Number to round
+ * 	@param dec Number of decimals
+ */
+Numeric.roundNumber = function (num, dec)
+{
+	var result = Math.round(num*Math.pow(10,dec))/Math.pow(10,dec);
+	return result;
+}
+
+/**************************************************************************************************************/
+
 // Additions and fixes to the glMatrix lib ...
 
 /**************************************************************************************************************/

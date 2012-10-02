@@ -19,6 +19,8 @@
 
 GlobWeb.CoordinateSystem = { radius: 1.0, heightScale: 1.0 / 6356752.3142, realEarthRadius: 6356752.3142  };
 
+/**************************************************************************************************************/
+
 /*
 	Convert a geographic position to 3D
  */
@@ -41,6 +43,8 @@ GlobWeb.CoordinateSystem.fromGeoTo3D = function(geo, dest)
     return dest;
 }
 
+/**************************************************************************************************************/
+
 /*
 	Convert a 3D position to geographic
     Returns 3 values [long, lat, distance from earth surface]
@@ -62,6 +66,8 @@ GlobWeb.CoordinateSystem.from3DToGeo = function(position3d, dest)
     return dest;
 }
 
+/**************************************************************************************************************/
+
 /**
 *	Convert a 3D position to equatorial coordinates
 */
@@ -77,6 +83,8 @@ GlobWeb.CoordinateSystem.from3DToEquatorial = function(position3d, dest){
 	return dest;
 }
 
+/**************************************************************************************************************/
+
 /**
 *	Converts an equatorial position to 3D
 */
@@ -91,6 +99,8 @@ GlobWeb.CoordinateSystem.fromEquatorialTo3D = function(equatorial, dest){
 	
 	return dest;	
 }
+
+/**************************************************************************************************************/
 
 /**
 *	Convert an equatorial position to geographic
@@ -129,59 +139,78 @@ GlobWeb.CoordinateSystem.fromEquatorialToGeo = function(equatorial, dest){
 
 }
 
+/**************************************************************************************************************/
+
 /**
 *	Convert a geographic position to equatorial
 *	@param {Float[]} geo Array of two floats corresponding to Longitude and Latitude
 *	@param {String[]} dest Destination array of two strings corresponding to Right Ascension and Declination
-*					  specified by: "hours minuts seconds" and "degrees minuts seconds" respectively
+*					  specified by: 'hours+"h" minuts+"m" seconds+"s"' and 'degrees+"°" minuts+"\'" seconds+"""' respectively
+* 	@see <GlobWeb.CoordinateSystem.fromDegreesToDMS>
+* * 	@see <GlobWeb.CoordinateSystem.fromDegreesToHMS>
 */
 GlobWeb.CoordinateSystem.fromGeoToEquatorial = function(geo, dest){
 	
 	if (!dest) dest = [];
-	
-	function stringSign(val){
-		return (val>=0 ? "" : "-");
-	}
 	
 	var deg = geo[0];
 	// RA
 	if(deg < 0){
 		deg += 360;
 	}
+
+	dest[0] = GlobWeb.CoordinateSystem.fromDegreesToHMS( deg );
+	dest[1] = GlobWeb.CoordinateSystem.fromDegreesToDMS(geo[1]);
 	
-	var deg = deg/15;
+	return dest;
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Function converting degrees to DMS("degrees minuts seconds")
+ * 
+ *	@param {Float} degree The degree
+ */
+
+GlobWeb.CoordinateSystem.fromDegreesToDMS = function(degree)
+{
+	function stringSign(val)
+	{
+		return (val>=0 ? "": "-");
+	}
 	
-	var absLon = Math.abs(deg);
-	var hours = Math.floor(absLon);
-	var decimal = (absLon - hours) * 60;
-	var min = Math.floor(decimal);
-	var sec = (decimal - min) * 60;
-	
-	dest[0] = hours+" "+min+" "+sec;
-	
-	// Decl
-	var absLat = Math.abs(geo[1]);
+	var absLat = Math.abs(degree);
 	deg = Math.floor(absLat);
 	decimal = (absLat - deg) * 60;
 	min = Math.floor(decimal);
 	sec = (decimal - min) * 60;
 	
-	dest[1] = stringSign(geo[1]) +""+ deg + " " + min + " " + sec;
+	return stringSign(degree) + deg + String.fromCharCode(176) +" "+ min +"' "+ Numeric.roundNumber(sec, 2)+"\"";
 	
-	return dest;
 }
 
-GlobWeb.CoordinateSystem.equatorialLayout = function(equatorialCoordinates)
+/**
+ *	Function converting degrees to HMS("hours minuts seconds")
+ *
+ *	@param {Float} degree The degree > 0
+ */
+
+GlobWeb.CoordinateSystem.fromDegreesToHMS = function(degree)
 {
-	function roundNumber(num, dec) {
-		var result = Math.round(num*Math.pow(10,dec))/Math.pow(10,dec);
-		return result;
-	}
+	var degree = degree/15;
 	
-	var wordRA = equatorialCoordinates[0].split(" ");
-	var wordDecl = equatorialCoordinates[1].split(" ");
-	return [ wordRA[0] +"h "+ wordRA[1] +"mn "+ roundNumber(parseFloat(wordRA[2]), 2) +"s", wordDecl[0]+String.fromCharCode(176) +" "+ wordDecl[1] +"' "+ roundNumber(parseFloat(wordDecl[2]), 2) ];
+	var absLon = Math.abs(degree);
+	var hours = Math.floor(absLon);
+	var decimal = (absLon - hours) * 60;
+	var min = Math.floor(decimal);
+	var sec = (decimal - min) * 60;
+	
+	return hours+"h "+min+"m "+ Numeric.roundNumber(sec, 2) +"s";
+
 }
+
+/**************************************************************************************************************/
 
 /*
 	Get local transformation
@@ -199,27 +228,29 @@ GlobWeb.CoordinateSystem.getLocalTransform = function(geo, dest)
 	vec3.cross( up, east, north );
 	
 	dest[0] = east[0];
-    dest[1] = east[1];
-    dest[2] = east[2];
-    dest[3] = 0.0;
-	
-    dest[4] = north[0];
-    dest[5] = north[1];
-    dest[6] = north[2];
-    dest[7] = 0.0;
-	
-    dest[8] = up[0];
-    dest[9] = up[1];
-    dest[10] = up[2];
-    dest[11] = 0.0;
+	dest[1] = east[1];
+	dest[2] = east[2];
+	dest[3] = 0.0;
+		
+	dest[4] = north[0];
+	dest[5] = north[1];
+	dest[6] = north[2];
+	dest[7] = 0.0;
+		
+	dest[8] = up[0];
+	dest[9] = up[1];
+	dest[10] = up[2];
+	dest[11] = 0.0;
 
-    dest[12] = 0.0;
-    dest[13] = 0.0;
-    dest[14] = 0.0;
-    dest[15] = 1.0;
+	dest[12] = 0.0;
+	dest[13] = 0.0;
+	dest[14] = 0.0;
+	dest[15] = 1.0;
 
 	return dest;
 }
+
+/**************************************************************************************************************/
 
 /*
 	Get local transformation
@@ -239,27 +270,29 @@ GlobWeb.CoordinateSystem.getLHVTransform = function(geo, dest)
 	var pt = GlobWeb.CoordinateSystem.fromGeoTo3D(geo);
 	
 	dest[0] = east[0];
-    dest[1] = east[1];
-    dest[2] = east[2];
-    dest[3] = 0.0;
-	
-    dest[4] = north[0];
-    dest[5] = north[1];
-    dest[6] = north[2];
-    dest[7] = 0.0;
-	
-    dest[8] = up[0];
-    dest[9] = up[1];
-    dest[10] = up[2];
-    dest[11] = 0.0;
+	dest[1] = east[1];
+	dest[2] = east[2];
+	dest[3] = 0.0;
+		
+	dest[4] = north[0];
+	dest[5] = north[1];
+	dest[6] = north[2];
+	dest[7] = 0.0;
+		
+	dest[8] = up[0];
+	dest[9] = up[1];
+	dest[10] = up[2];
+	dest[11] = 0.0;
 
-    dest[12] = pt[0];
-    dest[13] = pt[1];
-    dest[14] = pt[2];
-    dest[15] = 1.0;
+	dest[12] = pt[0];
+	dest[13] = pt[1];
+	dest[14] = pt[2];
+	dest[15] = 1.0;
 
 	return dest;
 }
+
+/**************************************************************************************************************/
 
 /*
 	Get the side (i.e. X) vector from a local transformation
@@ -273,6 +306,8 @@ GlobWeb.CoordinateSystem.getSideVector = function( matrix, v )
     return v;
 }
 
+/**************************************************************************************************************/
+
 /*
 	Get the front (i.e. Y) vector from a local transformation
  */
@@ -285,6 +320,8 @@ GlobWeb.CoordinateSystem.getFrontVector = function( matrix, v )
     return v;
 }
 
+/**************************************************************************************************************/
+
 /*
 	Get the up (i.e. Z) vector from a local transformation
  */
@@ -296,4 +333,6 @@ GlobWeb.CoordinateSystem.getUpVector = function( matrix, v )
 	
     return v;
 }
+
+/**************************************************************************************************************/
 
