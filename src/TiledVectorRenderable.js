@@ -111,9 +111,60 @@ GlobWeb.TiledVectorRenderable.prototype.removeGeometry = function( geometry )
 	else
 	{
 		return false;
-	}
-		
+	}	
 }
+
+/**************************************************************************************************************/
+
+/** 
+  Check if a geometry crosses the date line
+*/
+GlobWeb.TiledVectorRenderable.prototype._fixDateLine = function( tile, coords ) 
+{
+	var crossDateLine = false;
+	var startLon = coords[0][0];
+	for ( var i = 1; i < coords.length && !crossDateLine; i++) {
+		var deltaLon = Math.abs( coords[i][0] - startLon );
+		if ( deltaLon > 180 ) {
+			// DateLine!
+			crossDateLine =  true;
+		}
+	}
+	
+	if ( crossDateLine )
+	{
+		var fixCoords = [];
+		
+		if ( tile.geoBound.west < 0.0 )
+		{
+			// Ensure coordinates are always negative
+			for ( var n = 0; n < coords.length; n++) {
+				if ( coords[n][0] > 0 ) {
+					fixCoords[n] = [ coords[n][0] - 360, coords[n][1] ];
+				} else {
+					fixCoords[n] = [ coords[n][0], coords[n][1] ];
+				}
+			}
+		}
+		else
+		{
+			// Ensure coordinates are always positive
+			for ( var n = 0; n < coords.length; n++) {
+				if ( coords[n][0] < 0 ) {
+					fixCoords[n] = [ coords[n][0] + 360, coords[n][1] ];
+				} else {
+					fixCoords[n] = [ coords[n][0], coords[n][1] ];
+				}
+			}
+		}
+		
+		return fixCoords;
+	}
+	else
+	{
+		return coords;
+	}
+};
 
 /**************************************************************************************************************/
 
@@ -121,42 +172,31 @@ GlobWeb.TiledVectorRenderable.prototype.removeGeometry = function( geometry )
  *	Add a feature to the renderable
  */
 GlobWeb.TiledVectorRenderable.prototype.addGeometry = function( geometry, tile )
-{	
-	var coords = null;
-	
-	// Note : use property defined as ['']  to avoid renaming when compiled in advanced mode with the closure compiler
-	
-	var crossDateLine = false;
-	if ( geometry['_negCoordinates']
-		&& tile.geoBound.west < 0.0 ) 
-	{
-		crossDateLine = true;
-	}
-	
-	if ( geometry['type'] == "Polygon" )
-	{
-		// Close the coordinates if needed
-		coords = crossDateLine ? geometry['_negCoordinates'][0] : geometry['coordinates'][0];
-		if ( coords[0][0] != coords[coords.length-1][0] || coords[0][1] != coords[coords.length-1][1] )
-		{
-			coords.push( coords[0] );
-		}
-	}
-	else if ( geometry['type'] == "LineString" )
-	{
-		coords = crossDateLine ? geometry['_negCoordinates'] : geometry['coordinates'];
-	}
-	
-	if ( coords == null )
-		return;
-		
+{		
 	var geometryInfo = { geometry: geometry,
 						startVertices: this.vertices.length,
 						startIndices: this.indices.length,
 						vertexCount: 0,
 						indexCount: 0 };
-	
-	this.buildVerticesAndIndices( tile, coords );
+						
+	var coords = geometry['coordinates'];
+	switch (geometry['type'])
+	{
+		case "LineString":
+			this.buildVerticesAndIndices( tile, coords );
+			break;
+		case "Polygon":
+			this.buildVerticesAndIndices( tile, coords[0] );
+			break;
+		case "MultiLineString":
+			for ( var i = 0; i < coords.length; i++ )
+				this.buildVerticesAndIndices( tile, coords[i] );
+			break;
+		case "MultiPolygon":
+			for ( var i = 0; i < coords.length; i++ )
+				this.buildVerticesAndIndices( tile, coords[i][0] );
+			break;
+	}
 	
 	geometryInfo.vertexCount = this.vertices.length - geometryInfo.startVertices;
 	geometryInfo.indexCount = this.indices.length - geometryInfo.startIndices;

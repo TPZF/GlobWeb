@@ -76,8 +76,11 @@ GlobWeb.LineStringRenderable.prototype.buildChildrenIndices = function()
  * Build vertices and indices from the coordinates.
  * Clamp a line string on a tile
  */
-GlobWeb.LineStringRenderable.prototype.buildVerticesAndIndices = function( tile, coordinates )
-{		
+GlobWeb.LineStringRenderable.prototype.buildVerticesAndIndices = function( tile, coords )
+{
+	// Fix date line for coordinates first
+	var coordinates = this._fixDateLine( tile, coords );
+	
 	var ul = tile.geoBound.east - tile.geoBound.west;
 	var vl = tile.geoBound.south - tile.geoBound.north;
 	
@@ -191,13 +194,17 @@ GlobWeb.LineStringRenderable.prototype.buildVerticesAndIndices = function( tile,
 
 // Register the renderer
 GlobWeb.VectorRendererManager.registerRenderer({
-										creator: function(globe) { 
-											var lineStringRenderer = new GlobWeb.TiledVectorRenderer(globe.tileManager);
-											lineStringRenderer.id = "lineString";
-											lineStringRenderer.styleEquals = function(s1,s2) { return s1.isEqualForLine(s2); };
-											lineStringRenderer.renderableConstuctor = GlobWeb.LineStringRenderable;
-											return lineStringRenderer;
-										},
-										canApply: function(type,style) {return type == "LineString" || (type == "Polygon" && !style.fill); } 
-									});
+					creator: function(globe) { 
+						var lineStringRenderer = new GlobWeb.TiledVectorRenderer(globe.tileManager);
+						lineStringRenderer.id = "lineString";
+						lineStringRenderer.styleEquals = function(s1,s2) { return s1.isEqualForLine(s2); };
+						lineStringRenderer.renderableConstuctor = GlobWeb.LineStringRenderable;
+						return lineStringRenderer;
+					},
+					canApply: function(type,style) {
+						// LineStringRenderer supports line string (multi or not) and polygon (or multi) when not filled
+						return type == "LineString" || type == "MultiLineString"
+							|| (!style.fill && (type == "Polygon" || type == "MultiPolygon")); 
+					} 
+				});
 										

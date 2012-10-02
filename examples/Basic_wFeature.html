@@ -57,13 +57,21 @@
 		
 		
 		$.ajax({
-			  url: "examples.json",
+			  url: "europe.json",
 			  success: function(data)
 			  {
 				vectorLayer.addFeatureCollection( data );
 			  }
 		});
-    }
+ 		
+		$.ajax({
+			  url: "multiPolygon.json",
+			  success: function(data)
+			  {
+				vectorLayer.addFeatureCollection( data );
+			  }
+		});
+   }
 
 
 </script>

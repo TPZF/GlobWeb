@@ -119,30 +119,6 @@ GlobWeb.VectorLayer.prototype._addFeatureToRenderers = function( feature )
 		style = props['style'];
 		style.opacity = this._opacity;
 	}
-	
-	// DateLine crossing fix
-	// TODO : should be put in another place
-	if ( geometry.type == "LineString" )
-	{
-		if ( this._crossDateLine(geometry) )
-		{
-			feature['_crossDateLine'] = true;
-				
-			var coords = geometry['coordinates'][0];
-			for ( var n = 0; n < coords.length; n++) {
-				if ( coords[n][0] < 0 ) {
-					coords[n][0] += 360;
-				}
-			}
-			
-			var negCoords = [];
-			for ( var n = 0; n < coords.length; n++) {
-				negCoords[n] = [ coords[n][0] - 360, coords[n][1] ];
-			}
-			
-			geometry['_negCoordinates'] = [ negCoords ];
-		}
-	}
 
 	// Manage geometry collection
 	if ( geometry.type == "GeometryCollection" )
@@ -241,27 +217,6 @@ GlobWeb.VectorLayer.prototype.modifyFeatureStyle = function( feature, style )
 	feature['properties']['style'] = style;
 	this._addFeatureToRenderers( feature );
 }
-
-/**************************************************************************************************************/
-
-/** 
-  Check if a geometry crosses the date line
-*/
-GlobWeb.VectorLayer.prototype._crossDateLine = function(geometry) 
-{
-	var coords = geometry['coordinates'][0];
-	var startLon = coords[0][0];
-	for ( var i = 1; i < coords.length; i++) {
-		var deltaLon = Math.abs( coords[i][0] - startLon );
-		if ( deltaLon > 180 ) {
-			// DayLine!
-			return true;
-		}
-		coord = coords[i];
-	}
-	
-	return false;
-};
 
 /**************************************************************************************************************/
 
