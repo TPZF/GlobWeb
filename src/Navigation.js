@@ -147,12 +147,12 @@ GlobWeb.Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt 
 	}
 
 	animation.onstop = function() {
-		navigation.globe.publish("endAnimation");
+		navigation.globe.publish("endNavigation");
 	}
 	this.globe.addAnimation(animation);
 	animation.start();
 	
-	this.globe.publish("startAnimation");
+	this.globe.publish("startNavigation");
 }
 
 /**************************************************************************************************************/

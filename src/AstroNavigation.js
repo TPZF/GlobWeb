@@ -136,13 +136,13 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration )
 	}
 
 	animation.onstop = function() {
-		navigator.globe.publish("endAnimation");
+		navigator.globe.publish("endNavigation");
 	}
 	
 	this.globe.addAnimation(animation);
 	animation.start();
 	
-	this.globe.publish("startAnimation");
+	this.globe.publish("startNavigation");
 }
 
 /**************************************************************************************************************/
