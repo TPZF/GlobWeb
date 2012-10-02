@@ -30,13 +30,15 @@ GlobWeb.BaseNavigation = function(globe, options)
 /**************************************************************************************************************/
 
 /** @export
-  Get the field of view used by the navigation
+	Get the field of view used by the navigation
+	
+	@return {Float[]} Fovx and fovy in degrees
 */
 
 GlobWeb.BaseNavigation.prototype.getFov = function()
 {
-	 
-	return this.globe.renderContext.fov;
+	var aspect = this.globe.renderContext.canvas.width / this.globe.renderContext.canvas.height;
+	return [ aspect * this.globe.renderContext.fov, this.globe.renderContext.fov ];
 }
 
 /**************************************************************************************************************/
