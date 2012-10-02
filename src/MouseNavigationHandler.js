@@ -80,7 +80,7 @@ GlobWeb.MouseNavigationHandler.prototype.uninstall = function()
  */
 GlobWeb.MouseNavigationHandler.prototype.handleMouseWheel = function(event)
 {
-	this.navigation.publish("start");
+	this.navigation.globe.publish("startMouseWheel");
 	
 	// Check differences between firefox and the rest of the world 
 	if ( event.wheelDelta === undefined)
@@ -100,7 +100,7 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseWheel = function(event)
 	}
 	event.returnValue = false;
 	
-	this.navigation.publish("end");
+	this.navigation.globe.publish("endMouseWheel");
 	this.navigation.globe.renderContext.requestFrame();
 		
 	// Return false to stop mouse wheel to be propagated when using onmousewheel
@@ -125,7 +125,7 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseDown = function(event)
 		this.lastMouseX = event.clientX;
 		this.lastMouseY = event.clientY;
 		
-		this.navigation.publish("start");
+		this.navigation.globe.publish("mouseDown");
 		
 		// Return false to stop mouse down to be propagated when using onmousedown
 		return false;
@@ -146,7 +146,7 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseUp = function(event)
 
 	if ( event.button == 0 || event.button == 1 )
 	{
-		this.navigation.publish("end");
+		this.navigation.globe.publish("mouseUp");
 		
 		// Stop mouse up event
 		return false;

@@ -402,6 +402,10 @@ GlobWeb.Globe.prototype.subscribe = function(name,callback)
 		<ul>
 			<li>startAnimation : navigation animation start event</li>
 			<li>endAnimation : navigation animation end event</li>
+			<li>mouseDown : mouse down click event</li>
+			<li>mouseUp : mouse up click event</li>
+			<li>startMouseWheel : mouse start wheel event</li>
+			<li>endMouseWheel : mouse end wheel event</li>
 			<li>level0TilesLoaded : level zero loaded event</li>
 			<li>levelZeroTextureLoaded : level zero texture loaded event</li>
 		</ul>
