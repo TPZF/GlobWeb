@@ -37,6 +37,7 @@ GlobWeb.Globe.prototype['getLonLatFromPixel'] = GlobWeb.Globe.prototype.getLonLa
 GlobWeb.Globe.prototype['getViewportGeoBound'] = GlobWeb.Globe.prototype.getViewportGeoBound;
 GlobWeb.Globe.prototype['setBaseImagery'] = GlobWeb.Globe.prototype.setBaseImagery;
 GlobWeb.Globe.prototype['setBaseElevation'] = GlobWeb.Globe.prototype.setBaseElevation;
+GlobWeb.Globe.prototype['subscribe'] = GlobWeb.Globe.prototype.subscribe;
 
 // CoordinateSystem exports
 window['GlobWeb']['CoordinateSystem'] = GlobWeb.CoordinateSystem;
@@ -44,6 +45,7 @@ window['GlobWeb']['CoordinateSystem']['fromEquatorialToGeo'] = GlobWeb.Coordinat
 window['GlobWeb']['CoordinateSystem']['fromGeoTo3D'] = GlobWeb.CoordinateSystem.fromGeoTo3D;
 window['GlobWeb']['CoordinateSystem']['from3DToGeo'] = GlobWeb.CoordinateSystem.from3DToGeo;
 window['GlobWeb']['CoordinateSystem']['fromGeoToEquatorial'] = GlobWeb.CoordinateSystem.fromGeoToEquatorial;
+window['GlobWeb']['CoordinateSystem']['fromDegreesToDMS'] = GlobWeb.CoordinateSystem.fromDegreesToDMS;
 
 // VectorLayer exports
 GlobWeb.VectorLayer.prototype['addFeatureCollection'] = GlobWeb.VectorLayer.prototype.addFeatureCollection;

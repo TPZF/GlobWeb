@@ -33,8 +33,8 @@
 GlobWeb.AstroNavigation = function(globe, options)
 {
 	// Default values for fov (in degrees)
-	this.minFov = 0.25;
-	this.maxFov = 100;
+	this['minFov'] = 0.25;
+	this['maxFov'] = 100;
 	
 	GlobWeb.BaseNavigation.prototype.constructor.call( this, globe, options );
 
@@ -176,13 +176,13 @@ GlobWeb.AstroNavigation.prototype.zoom = function(delta)
 	// Check differences between firefox and the rest of the world 
 	this.globe.renderContext.fov *= delta;
 	
-	if ( this.globe.renderContext.fov > this.maxFov )
+	if ( this.globe.renderContext.fov > this['maxFov'] )
 	{
-		this.globe.renderContext.fov = this.maxFov;
+		this.globe.renderContext.fov = this['maxFov'];
 	}
-	if ( this.globe.renderContext.fov < this.minFov )
+	if ( this.globe.renderContext.fov < this['minFov'] )
 	{
-		this.globe.renderContext.fov = this.minFov;
+		this.globe.renderContext.fov = this['minFov'];
 	}
 	
 	this.computeViewMatrix();
