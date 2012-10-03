@@ -120,20 +120,22 @@ GlobWeb.PointRenderer = function(tileManager)
 	{ \n\
 		vec4 textureColor = texture2D(texture, texCoord); \n\
 		gl_FragColor = vec4(textureColor.rgb, textureColor.a * alpha); \n\
+		if (gl_FragColor.a <= 0.0) discard; \n\
 	} \n\
 	";
 
     this.program = new GlobWeb.Program(this.renderContext);
     this.program.createFromSource(vertexShader, fragmentShader);
-  
-    this.mesh = new GlobWeb.Mesh(this.renderContext);
-    var vertices = [-0.5, -0.5, 0.0,
+
+	var vertices = new Float32Array([-0.5, -0.5, 0.0,
                     -0.5,  0.5, 0.0,
                      0.5,  0.5, 0.0,
-                     0.5, -0.5, 0.0];
-    var indices = [0, 3, 1, 1, 3, 2];
-    this.mesh.setVertices(vertices);
-    this.mesh.setIndices(indices);
+                     0.5, -0.5, 0.0]);
+					 
+	var gl = this.renderContext.gl;
+	this.vertexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 }
 
 /**************************************************************************************************************/
@@ -285,6 +287,10 @@ GlobWeb.PointRenderer.prototype.render = function()
 	
 	// Compute pixel size vector to offset the points from the earth
 	var pixelSizeVector = renderContext.computePixelSizeVector();
+	
+	// Warning : use quoted strings to access properties of the attributes, to work correclty in advanced mode with closure compiler
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+	gl.vertexAttribPointer(this.program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
 
 	for ( var n = 0; n < this.buckets.length; n++ )
 	{
@@ -324,7 +330,7 @@ GlobWeb.PointRenderer.prototype.render = function()
 				gl.uniform3f(this.program.uniforms["poiPosition"], x, y, z);
 				gl.uniform1f(this.program.uniforms["alpha"], bucket.style.opacity);
 				
-				this.mesh.render(this.program.attributes);
+				gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 				
 				this.numberOfRenderPoints++;
 			}
