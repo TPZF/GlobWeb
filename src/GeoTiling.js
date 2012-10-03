@@ -17,6 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+/**************************************************************************************************************/
+
 /** @constructor
 	GeoTiling constructor
  */
@@ -137,6 +139,29 @@ GlobWeb.GeoTile.prototype.createChildren = function()
 	this.children = [ tile00, tile10, tile01, tile11 ];	
 }
 
+/**************************************************************************************************************/
+
+/*
+	Convert coordinates in longitude,latitude to coordinate in "tile space"
+	Tile space means coordinates are between [0,tesselation-1] if inside the tile
+	Used by renderers algorithm to clamp coordinates on the tile
+ */
+GlobWeb.GeoTile.prototype.lonlat2tile = function(coordinates)
+{
+	var ul = this.geoBound.east - this.geoBound.west;
+	var vl = this.geoBound.south - this.geoBound.north;
+	var factor = this.config.tesselation-1;
+	
+	var tileCoords = [];
+	for ( var i = 0; i < coordinates.length; i++ )
+	{
+		var u = factor * (coordinates[i][0] - this.geoBound.west) / ul;
+		var v = factor * (coordinates[i][1] - this.geoBound.north) / vl;
+		tileCoords.push( [ u, v ] );	
+	}
+	
+	return tileCoords;
+}
 
 /**************************************************************************************************************/
 

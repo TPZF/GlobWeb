@@ -30,6 +30,9 @@
 		var elevationLayer = new GlobWeb.BasicElevationLayer({ baseUrl:"http://demonstrator.vegaspace.com/json_elevations/get.php"});
 		globe.setBaseElevation( elevationLayer );
 		
+/*		var osmLayer = new GlobWeb.OSMLayer( {baseUrl:"http://tile.openstreetmap.org"} );
+		globe.setBaseImagery( osmLayer );*/
+		
 		var vectorLayer = new GlobWeb.VectorLayer();
 		globe.addLayer( vectorLayer );
 		

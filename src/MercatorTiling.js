@@ -17,6 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+/**************************************************************************************************************/
+
 /** @constructor
 	MercatorTiling constructor
  */
@@ -60,6 +62,7 @@ GlobWeb.MercatorTiling.prototype.generateLevelZeroTiles = function(config)
  */
 GlobWeb.MercatorTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 {	
+	// TODO
 	return 0;
 }
 
@@ -103,6 +106,7 @@ GlobWeb.MercatorTile.prototype = new GlobWeb.Tile;
 */
 GlobWeb.MercatorTile.prototype.getElevation = function(lon,lat)
 {
+	// TODO
 	return 0.0;
 }
 
@@ -127,6 +131,30 @@ GlobWeb.MercatorTile.prototype.createChildren = function()
 	this.children = [ tile00, tile10, tile01, tile11 ];	
 }
 
+/**************************************************************************************************************/
+
+/*
+	Convert coordinates in longitude,latitude to coordinate in "tile space"
+	Tile space means coordinates are between [0,tesselation-1] if inside the tile
+	Used by renderers algorithm to clamp coordinates on the tile
+ */
+GlobWeb.MercatorTile.prototype.lonlat2tile = function(coordinates)
+{
+	var tpl = Math.pow(2,this.level);
+	var factor = this.config.tesselation-1;
+	
+	var tileCoords = [];
+	for ( var i = 0; i < coordinates.length; i++ )
+	{
+		var x = ( coordinates[i][0] + 180.) / 360.; 
+		var sinLat = Math.sin(coordinates[i][1] * Math.PI / 180.);
+		var y = 0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4. * Math.PI);
+		
+		tileCoords.push( [ factor * (x * tpl - this.x), factor * (y * tpl - this.y) ] );	
+	}
+	
+	return tileCoords;
+}
 
 /**************************************************************************************************************/
 

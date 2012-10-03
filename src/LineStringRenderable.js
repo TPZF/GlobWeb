@@ -80,28 +80,29 @@ GlobWeb.LineStringRenderable.prototype.buildVerticesAndIndices = function( tile,
 {
 	// Fix date line for coordinates first
 	var coordinates = this._fixDateLine( tile, coords );
-	
-	var ul = tile.geoBound.east - tile.geoBound.west;
-	var vl = tile.geoBound.south - tile.geoBound.north;
-	
+		
 	var size = tile.config.tesselation;
 	var vs = tile.config.vertexSize;
+	
+	// Convert lon/lat coordinates to tile coordinates (between [0,size-1] inside the tile)
+	var tileCoords = tile.lonlat2tile(coords);
 
 	for ( var i = 0; i < coordinates.length - 1; i++ )
 	{
-		var u1 = (size-1) * (coordinates[i][0] - tile.geoBound.west) / ul;
-		var v1 = (size-1) * (coordinates[i][1] - tile.geoBound.north) / vl;
+		var u1 = tileCoords[i][0];
+		var v1 = tileCoords[i][1];
 		
-		var u2 = (size-1) * (coordinates[i+1][0] - tile.geoBound.west) / ul;
-		var v2 = (size-1) * (coordinates[i+1][1] - tile.geoBound.north) / vl;
+		var u2 = tileCoords[i+1][0];
+		var v2 = tileCoords[i+1][1];
 		
+		var intersections = [];
+	
+		// Intersect the segment with the tile grid
+		
+		// First intersect with columns
+		// uStart, uEnd represent a range of the tile columns that the segement can intersect
 		var uStart = Math.max( -1, Math.min( u1, u2 ) );
 		var uEnd = Math.min( size-1, Math.max( u1, u2 ) );
-		
-		var vStart = Math.max( -1, Math.min( v1, v2 ) );
-		var vEnd = Math.min( size-1, Math.max( v1, v2 ) );
-
-		var intersections = [];
 		for ( var n = Math.floor(uStart)+1; n < Math.floor(uEnd)+1; n++)
 		{
 			var u = n;
@@ -118,6 +119,11 @@ GlobWeb.LineStringRenderable.prototype.buildVerticesAndIndices = function( tile,
 				intersections.push( [ res[0], x, y, z ] );
 			}
 		}
+	
+		// Then intersect with rows
+		// vStart, vEnd represent a range of the tile rows that the segement can intersect
+		var vStart = Math.max( -1, Math.min( v1, v2 ) );
+		var vEnd = Math.min( size-1, Math.max( v1, v2 ) );
 		for ( var n = Math.floor(vStart)+1; n < Math.floor(vEnd)+1; n++)
 		{
 			var v = n;
@@ -153,8 +159,10 @@ GlobWeb.LineStringRenderable.prototype.buildVerticesAndIndices = function( tile,
 			}
 		}*/
 		
+		// Sort intersections found on the segment
 		intersections.sort( function(a,b) { return a[0] > b[0]; } );
 		
+		// Build the vertices from the intersections found
 		var startIndex = this.vertices.length / 3;
 		
 		if ( u1 > 0.0 && u1 < size-1 &&  v1 > 0.0 && v1 < size-1 )
