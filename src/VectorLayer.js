@@ -225,22 +225,30 @@ GlobWeb.VectorLayer.prototype.modifyFeatureStyle = function( feature, style )
  */
 GlobWeb.VectorLayer.prototype.visible = function( arg )
 {
-	if ( this._visible != arg ){
+	if ( typeof arg == "boolean" && this._visible != arg )
+	{
 		this._visible = arg;
-		if ( arg ){
-			for ( var i=0; i < this.features.length; i++ )
-			{
-				this._addFeatureToRenderers( this.features[i] );
-			}
-		}
-		else
+		if ( this.globe )
 		{
-			for ( var i=0; i < this.features.length; i++ )
+			if ( arg )
 			{
-				this._removeFeatureFromRenderers( this.features[i] );
+				for ( var i=0; i < this.features.length; i++ )
+				{
+					this._addFeatureToRenderers( this.features[i] );
+				}
 			}
+			else
+			{
+				for ( var i=0; i < this.features.length; i++ )
+				{
+					this._removeFeatureFromRenderers( this.features[i] );
+				}
+			}
+			this.globe.renderContext.requestFrame();
 		}
 	}
+	
+	return this._visible;
 }
 
 /**************************************************************************************************************/

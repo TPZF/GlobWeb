@@ -233,7 +233,7 @@ GlobWeb.PointRenderer.prototype.getOrCreateBucket = function(style)
 	{
 		var image = new Image();
 		var self = this;
-		image.onload = function() {self._buildTextureFromImage(bucket,image); }
+		image.onload = function() {self._buildTextureFromImage(bucket,image); self.renderContext.requestFrame(); }
 		image.src = style.iconUrl;
 	}
 	else if ( style['icon'] )
