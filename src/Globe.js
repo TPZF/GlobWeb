@@ -23,15 +23,13 @@
 	@constructor
 	@class
 	Add a virtual globe in a canvas element.
-	The virtual globe data must be set using setBaseImage/addLayer methods.
+	The virtual globe data is set using setBaseImage/addLayer methods.
 	
 	@param options Configuration properties for the Globe :
 		<ul>
 			<li>canvas : the canvas for WebGL, can be string (id) or a canvas element</li>
 			<li>contextAttribs : the attributes when creating WebGL context, see WebGL specification</li>
-			<li>atmosphere : if true use an atmosphere</li>
 			<li>backgroundColor : the background color of the canvas (an array of 4 floats)</li>
-			<li>showWireframe : if true wireframe is shown when rendering terrain (for debug purposes)</li>
 			<li>shadersPath : the path to shaders file</li>
 			<li>continuousRendering: if true rendering is done continuously, otherwise it is done only if needed</li>
 		</ul>
@@ -41,10 +39,10 @@ GlobWeb.Globe = function(options)
 {
 	this.renderContext = new GlobWeb.RenderContext(options);
 	this.tileManager = new GlobWeb.TileManager( this );
-	this.tileManager.showWireframe = options['showWireframe'];
 	this.vectorRendererManager = new GlobWeb.VectorRendererManager( this );
 	this.attributionHandler = new GlobWeb.AttributionHandler();
 	this.activeAnimations = [];
+	this.preRenderers = [];
 	this.nbCreatedLayers = 0;
 	
 	// Event callbacks
@@ -72,11 +70,6 @@ GlobWeb.Globe = function(options)
 	};
 	
 	this.renderContext.requestFrame();
-	
-	if ( options['atmosphere'] )
-	{
-		this.atmosphere = new GlobWeb.Atmosphere(this.renderContext);
-	}
 }
 
 /**************************************************************************************************************/
@@ -90,43 +83,6 @@ GlobWeb.Globe.prototype.dispose = function()
 	this.tileManager.reset();
 }
 
-/**************************************************************************************************************/
-
-/** 
-	Modify an option, not all options can be modified after creation.
-	The modifiable options are :
-		<ul>
-			<li>atmosphere</li>
-			<li>showWireframe</li>
-		</ul>
-	@param name the name of the option
-	@param value the value of the option
- */
-GlobWeb.Globe.prototype.setOption = function(name,value)
-{	
-	switch ( name )
-	{
-	case "atmosphere":
-		if ( value )
-		{
-			if ( !this.atmosphere )
-			{
-				this.atmosphere = new GlobWeb.Atmosphere(this.renderContext);
-			}
-		}
-		else
-		{
-			if ( this.atmosphere )
-			{
-				this.atmosphere = null;
-			}
-		}
-		break;
-	case "showWireframe":
-		this.tileManager.showWireframe = value;
-		break;
-	}
-}
 
 /**************************************************************************************************************/
 
@@ -353,19 +309,15 @@ GlobWeb.Globe.prototype.render = function()
 	// Update view dependent properties to be used during rendering : view matrix, frustum, projection, etc...
 	rc.updateViewDependentProperties();
 	
-	// 	Pre render atmosphere
-	if ( this.atmosphere )
-		this.atmosphere.preRender( this.tileManager );
-	
+	// Call pre-renderers
+	for ( var i = 0 ; i < this.preRenderers.length; i++ )
+		this.preRenderers[i].preRender();
+		
 	// Render tiles
 	this.tileManager.render();
 	
 	if ( this.tileManager.tilesToRender.length == 0 )
 		return;
-	
-	// Render the atmosphere
-	if ( this.atmosphere )
-		this.atmosphere.render();
 		
 	if (stats) stats.end("globalRenderTime");
 }

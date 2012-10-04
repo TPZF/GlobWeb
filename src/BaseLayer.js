@@ -61,3 +61,25 @@ GlobWeb.BaseLayer.prototype._detach = function( g )
 }
 
 /**************************************************************************************************************/
+
+/**
+  Set the layer visible
+ */
+GlobWeb.BaseLayer.prototype.visible = function( arg )
+{
+	if ( typeof arg == "boolean" )
+		this._visible = arg;
+	return this._visible;
+}
+
+/**************************************************************************************************************/
+
+/**
+  Set the opacity of the layer
+ */
+GlobWeb.BaseLayer.prototype.opacity = function( arg )
+{
+	if ( typeof arg == "boolean" )
+		this._opacity = arg;
+	return this._opacity;
+}

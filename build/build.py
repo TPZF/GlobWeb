@@ -40,7 +40,7 @@ commonFiles= [
 globFiles = [
 		"PositionAttitudeAnimation.js", 
 		"Navigation.js", 
-		"Atmosphere.js",
+		"AtmosphereLayer.js",
 		"GeoTiling.js", 
 		"MercatorTiling.js",
 		"WMSLayer.js",

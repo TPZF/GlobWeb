@@ -17,7 +17,6 @@
 		
 		// Create the globe
 		var globe = new GlobWeb.Globe( { canvas: cvs, 
-				atmosphere: false,
 				lighting: false,
 				tileErrorTreshold: 3, 
 				continuousRendering: true } );
@@ -41,10 +40,13 @@
 		globe.setBaseImagery( osmLayer );*/
 		
 		//globe.addLayer( new GlobWeb.TileWireframeLayer() );
+		var atmosphere = new GlobWeb.AtmosphereLayer({ visible: false, exposure: 1.4 });
+		globe.addLayer( atmosphere );
 		
  		document.onkeypress = function(event)
 		{
-			globe.tileManager.freeze = !globe.tileManager.freeze;
+			atmosphere.visible( !atmosphere.visible() );
+			//globe.tileManager.freeze = !globe.tileManager.freeze;
 		}
    }
 

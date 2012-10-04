@@ -93,21 +93,3 @@ GlobWeb.RasterLayer.prototype._detach = function( g )
 }
 
 /**************************************************************************************************************/
-
-/**
-  Set the raster layer visible
- */
-GlobWeb.RasterLayer.prototype.visible = function( arg )
-{
-	this._visible = arg;
-}
-
-/**************************************************************************************************************/
-
-/**
-  Set the opacity of the raster layer
- */
-GlobWeb.RasterLayer.prototype.opacity = function( arg )
-{
-	this._opacity = arg;
-}
