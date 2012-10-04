@@ -136,7 +136,7 @@ GlobWeb.SimpleLineRenderer.prototype.render = function(){
 	for ( var n = 0; n < this.shapes.length; n++ )
 	{
 		// opacity HACK
-		gl.uniform4f(this.program.uniforms["color"], 0.03125 , 0.23046875, 0.65625, this.shapes[n].style.opacity / 2);
+		gl.uniform4f(this.program.uniforms["color"], this.shapes[n].style.strokeColor[0] , this.shapes[n].style.strokeColor[1], this.shapes[n].style.strokeColor[2], this.shapes[n].style.opacity / 2);
 		this.shapes[n].mesh.render(this.program.attributes);
 	}
 	
@@ -152,5 +152,5 @@ GlobWeb.VectorRendererManager.registerRenderer({
 	creator: function(globe) { 
 			return new GlobWeb.SimpleLineRenderer(globe.tileManager);
 		},
-	canApply: function(type,style) {return (style.rendererInt == "Basic") && (type == "Polygon"); }
+	canApply: function(type,style) {return (style.rendererHint == "Basic") && (type == "Polygon"); }
 });
