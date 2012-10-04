@@ -36,6 +36,7 @@ GlobWeb.FeatureStyle = function(style)
 	this.fill = false;
 	this.pointMaxSize = 40;
 	this.opacity = 1.;
+	this['rendererHint'] = "Tiled";
 	
 	if ( style )
 	{

@@ -33,7 +33,6 @@ GlobWeb.VectorLayer = function( options )
 	else
 		this.style = new GlobWeb.FeatureStyle();
 	
-	this.style.opacity = this._opacity;
 	this.features = [];
 	this.type = "Vector";
 }
@@ -117,7 +116,8 @@ GlobWeb.VectorLayer.prototype._addFeatureToRenderers = function( feature )
 	if ( props && props['style'] )
 	{
 		style = props['style'];
-		style.opacity = this._opacity;
+		feature.properties.style.opacity = this.style.opacity;
+		feature.properties.style.rendererHint = this.style.rendererHint;
 	}
 
 	// Manage geometry collection
@@ -259,12 +259,11 @@ GlobWeb.VectorLayer.prototype.visible = function( arg )
  */
 GlobWeb.VectorLayer.prototype.opacity = function( arg )
 {
-	this._opacity = arg;
 	this.style.opacity = arg;
 	for ( var i=0; i<this.features.length; i++ )
 	{
-		var style = this.features[i]['properties']['style'] || new GlobWeb.FeatureStyle();
-		style.opacity = arg;
-		this.modifyFeatureStyle( this.features[i], style );
+		this._removeFeatureFromRenderers( this.features[i] );
+		this._addFeatureToRenderers( this.features[i] );
 	}
 }
+

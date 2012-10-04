@@ -74,14 +74,15 @@ GlobWeb.SimpleLineRenderer.prototype.addGeometry = function(geometry, style){
 	
 	// Fill array by line shape coordinates
 	var vertices = [];
-	for ( var i=0; i<geometry['coordinates'].length; i+=3)
+	for ( var i=0; i<geometry['coordinates'][0].length; i++)
 	{
-		vertices = vertices.concat([ geometry['coordinates'][i], geometry['coordinates'][i+1], geometry['coordinates'][i+2] ]);
+// 		vertices = vertices.concat([ geometry['coordinates'][i], geometry['coordinates'][i+1], geometry['coordinates'][i+2] ]);
+		vertices = vertices.concat(geometry['coordinates'][0][i]);
 	}
 	
 	// Compute the indices corresponding to line shape
 	var indices = [];
-	for ( var i=0; i<geometry['coordinates'].length/3 - 1; i++ )
+	for ( var i=0; i<geometry['coordinates'][0].length-1; i++ )
 	{
 		indices.push(i);
 		indices.push(i+1);
@@ -151,5 +152,5 @@ GlobWeb.VectorRendererManager.registerRenderer({
 	creator: function(globe) { 
 			return new GlobWeb.SimpleLineRenderer(globe.tileManager);
 		},
-	canApply: function(type,style) {return type == "SimpleLineCollection"; }
+	canApply: function(type,style) {return (style.rendererInt == "Basic") && (type == "Polygon"); }
 });

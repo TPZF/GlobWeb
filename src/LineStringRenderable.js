@@ -211,8 +211,9 @@ GlobWeb.VectorRendererManager.registerRenderer({
 					},
 					canApply: function(type,style) {
 						// LineStringRenderer supports line string (multi or not) and polygon (or multi) when not filled
-						return type == "LineString" || type == "MultiLineString"
-							|| (!style.fill && (type == "Polygon" || type == "MultiPolygon")); 
+
+						return (style.rendererHint == "Tiled") && (type == "LineString" || type == "MultiLineString"
+							|| (!style.fill && (type == "Polygon" || type == "MultiPolygon"))); 
 					} 
 				});
 										
