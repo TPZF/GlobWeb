@@ -33,7 +33,7 @@
 		/*var elevationLayer = new GlobWeb.BasicElevationLayer({ baseUrl:"http://demonstrator.vegaspace.com/json_elevations/get.php"});
 		globe.setBaseElevation( elevationLayer );*/
 		
-		var elevationLayer = new GlobWeb.WMSElevationLayer({ baseUrl:"http://demonstrator.vegaspace.com/wmspub", layers: "GTOPO"});
+		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.vegaspace.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
 		globe.setBaseElevation( elevationLayer );
 		
 		/*var osmLayer = new GlobWeb.OSMLayer( {baseUrl:"http://tile.openstreetmap.org"} );

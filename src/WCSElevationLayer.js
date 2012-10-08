@@ -33,8 +33,8 @@ GlobWeb.WCSElevationLayer = function( options )
 	this.tiling = new GlobWeb.GeoTiling( 4, 2 );
 	this.numberOfLevels = options['numberOfLevels'] || 21;
 	this.type = "ImageryRaster";
-	this.version = options.hasOwnProperty('version') ? options['version'] : '2.0.0';
-	this.format = options.hasOwnProperty('format') ? options['format'] : 'image/x-aaigrid';
+	this.version = options['version'] || '2.0.0';
+	this.format = options['format'] || 'image/x-aaigrid';
 	
 	// Build the base GetMap URL
 	var url = this.baseUrl;
@@ -49,19 +49,20 @@ GlobWeb.WCSElevationLayer = function( options )
 	url += "&version=" + this.version;
 	url += "&request=GetCoverage";
 
-	switch (this.version.substring(0,3)) {
+	switch (this.version.substring(0,3)) 
+	{
 		case '2.0':
-			this.crs = (
-				options.hasOwnProperty('outputCRS') ? options['outputCRS'] : (
-					options.hasOwnProperty('crs') ? options['crs'] : (
-						options.hasOwnProperty('crs') ? options['crs'] : 'http://www.opengis.net/def/crs/EPSG/0/4326'
-					)
-				)
-			);
+			this.crs = options['outputCRS'] || options['crs'] || 'http://www.opengis.net/def/crs/EPSG/0/4326';
 			url += '&outputCRS=' + this.crs;
 			url += "&size=x(" + this.tilePixelSize + ")";
 			url += "&size=y(" + this.tilePixelSize + ")";
 			url += "&coverageid=" + options['coverage'];
+			break;
+		case '1.0':
+			url += "&width=" + this.tilePixelSize;
+			url += "&height=" + this.tilePixelSize;
+			url += '&crs=' + (options['crs'] || 'EPSG:4326');
+			url += "&coverage=" + options['coverage'];
 			break;
 	}
 	url += '&format=' + this.format;
@@ -149,9 +150,21 @@ GlobWeb.WCSElevationLayer.prototype.getUrl = function(tile)
 	var geoBound = tile.geoBound;
 	var url = this.getCoverageBaseUrl;
 
-	if (this.version.substring(0,3) === '2.0') {
+	if (this.version.substring(0,3) === '2.0') 
+	{
 		url += '&subset=x,' + this.crs + '(' + geoBound.west + ',' + geoBound.east + ')';
 		url += '&subset=y,' + this.crs + '(' + geoBound.south + ',' + geoBound.north + ')';
+	}
+	else if (this.version.substring(0,3) === '1.0') 
+	{
+		url += "&bbox=";	
+		url += geoBound.west;
+		url += ",";
+		url += geoBound.south;
+		url += ",";
+		url += geoBound.east;
+		url += ",";
+		url += geoBound.north;
 	}
 	
 	return url;
