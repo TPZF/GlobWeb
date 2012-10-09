@@ -116,8 +116,8 @@ GlobWeb.VectorLayer.prototype._addFeatureToRenderers = function( feature )
 	if ( props && props['style'] )
 	{
 		style = props['style'];
-		feature.properties.style.opacity = this.style.opacity;
-		feature.properties.style.rendererHint = this.style.rendererHint;
+		props['style'].opacity = this.style.opacity;
+		props['style'].rendererHint = this.style.rendererHint;
 	}
 
 	// Manage geometry collection
