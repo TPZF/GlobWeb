@@ -158,11 +158,8 @@ GlobWeb.EquatorialGridLayer.prototype.render = function( tiles )
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 	
 	var geoBound = this.globe.getViewportGeoBound();
-	if(this.needToBeComputed(geoBound))
-	{
-		this.generateMesh();
-
-	}
+	this.needToBeComputed(geoBound)
+	this.generateMesh();
 	
 	this.program.apply();
 	
@@ -289,27 +286,63 @@ GlobWeb.EquatorialGridLayer.prototype.generateMesh = function()
 	var geoBound = this.globe.getViewportGeoBound();
 	
 	// Adaptative rendering... not implemented yet
+	//  TODO calculate bands mathematically
 // 	var latitudeBands = Math.floor((geoBound.north - geoBound.south)/this.latitudeSample);
-// 	var longitudeBands = Math.floor((geoBound.east - geoBound.west)/this.longitudeSample);
+// 	var longitudeBandsBis = Math.floor((geoBound.east - geoBound.west)/this.longitudeSample);
+	
 	var latitudeBands = 180. / this.latitudeSample;
-	var longitudeBands = 360. / this.longitudeSample;
+// 	var longitudeBands = 360. / this.longitudeSample;
+	longitudeBands = 0;
 
+	var latStep = this.latitudeSample * Math.PI / 180;
+	var longStep = this.longitudeSample * Math.PI / 180;
+	
+	var west = (Math.floor(geoBound.west / this.longitudeSample))*this.longitudeSample;
+	var east = (Math.ceil(geoBound.east / this.longitudeSample))*this.longitudeSample;
+
+	// Adaptative rendering... not implemented yet
+	phiStart = Math.min( west, east );
+	phiStop = Math.max( west, east );
+	
+	// Difference is larger than hemisphere
+	if ( (east - west) > 180. )
+	{
+		// pole in the viewport
+		phiStart = 0;
+		phiStop = 360;
+	}
+	else
+	{
+		phiStart = west;
+		phiStop = east;
+	}
+	
 	var vertexPositionData = [];
 	for (var latNumber = 0; latNumber <= latitudeBands; latNumber++) {
 	
-	var latStep = this.latitudeSample * Math.PI / 180;
-	var longStep = this.longitudeSample * Math.PI / 180;
+// 	var posX3d = renderContext.get3DFromPixel( this.globe.renderContext.canvas.width / 2. , this.globe.renderContext.canvas.height / 2. );
+// 	var posXgeo = [];
+// 	GlobWeb.CoordinateSystem.from3DToGeo( posX3d, posXgeo );
+// 	
+// 	lon2 = longStep * (posXgeo[0] / longStep+0.5);
+//         lat2 = latStep * (posXgeo[1] / latStep+0.5);
+//         Vec3d firstPoint;
+//         StelUtils::spheToRect(lon2, lat2, firstPoint);
 	
 // 	for (var theta = geoBound.south; theta <= geoBound.north; theta+=latStep) {
 		var theta = latNumber * Math.PI / latitudeBands;
 		var sinTheta = Math.sin(theta);
 		var cosTheta = Math.cos(theta);
-
-		for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
+		
+		longitudeBands = 0;
+		for (var phi = phiStart; phi <= phiStop ; phi+=this.longitudeSample) {
+// 		for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
 // 		for (var phi = geoBound.west; phi <= geoBound.east; phi+=longStep) {
-			var phi = longNumber * 2 * Math.PI / longitudeBands;
-			var sinPhi = Math.sin(phi);
-			var cosPhi = Math.cos(phi);
+// 			var phi = longNumber * 2 * Math.PI / longitudeBands;
+			var radPhi = phi * Math.PI / 180;
+			
+			var sinPhi = Math.sin(radPhi);
+			var cosPhi = Math.cos(radPhi);
 			
 			// z is the up vector
 			var x = cosPhi * sinTheta;
@@ -319,14 +352,20 @@ GlobWeb.EquatorialGridLayer.prototype.generateMesh = function()
 			vertexPositionData.push(x);
 			vertexPositionData.push(y);
 			vertexPositionData.push(z);
+			
+			longitudeBands++;
 		}
 	}
 	
 	var indexData = [];
+	var longNumber = 0;
 	for (var latNumber = 0; latNumber < latitudeBands; latNumber++) {
-		for (var longNumber = 0; longNumber < longitudeBands; longNumber++) {
-			var first = (latNumber * (longitudeBands + 1)) + longNumber;
-			var second = first + longitudeBands + 1;
+// 		for (var longNumber = 0; longNumber < longitudeBands; longNumber++) {
+		for (var phi = phiStart; phi < phiStop ; phi+=this.longitudeSample, longNumber++) {
+// 			var first = (latNumber * (longitudeBands + 1)) + longNumber;
+			var first = (latNumber * (longitudeBands)) + longNumber % (longitudeBands - 1);
+// 			var second = first + longitudeBands + 1;
+			var second = first + longitudeBands;
 			indexData.push(first);
 			indexData.push(first + 1);
 			
@@ -357,35 +396,34 @@ GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 {
 	this.texts = [];
 	var west = (Math.floor(geoBound.west / this.longitudeSample))*this.longitudeSample;
-
-	var east = (Math.floor(geoBound.east / this.longitudeSample))*this.longitudeSample;
+	var east = (Math.ceil(geoBound.east / this.longitudeSample))*this.longitudeSample;
 
 	// Adaptative rendering... not implemented yet
-// 	phiStart = Math.min( west, east );
-// 	phiStop = Math.max( west, east );
+	phiStart = Math.min( west, east );
+	phiStop = Math.max( west, east );
 	
 	// Difference is larger than hemisphere
-// 	if ( (east - west) > 180. )
-// 	{
+	if ( (east - west) > 180. )
+	{
+		// pole in the viewport
 // 		phiStart = east - 360;
 // 		phiStop = west;
-// 	}
-// 	else
-// 	{
-// 		phiStart = west;
-// 		phiStop = east;
-// 	}
-	
-// 	var lonStep = (east - west > 180) ?
-// 		-this.longitudeSample : 
-// 		this.longitudeSample ;
+		phiStart = 0;
+		phiStop = 360;
+	}
+	else
+	{
+		phiStart = west;
+		phiStop = east;
+	}
+
 	
 	var posX3d = this.globe.renderContext.get3DFromPixel( this.globe.renderContext.canvas.width / 2. , this.globe.renderContext.canvas.height / 2. );
 	var posXgeo = [];
 	GlobWeb.CoordinateSystem.from3DToGeo( posX3d, posXgeo );
 	
-// 	for (var phi = phiStart; phi <= phiStop; phi+=this.longitudeSample) {
-	for (var phi = 0; phi < 360; phi+=this.longitudeSample) {
+	for (var phi = phiStart; phi <= phiStop; phi+=this.longitudeSample) {
+// 	for (var phi = 0; phi < 360; phi+=this.longitudeSample) {
 		var posGeo = [ phi, posXgeo[1] ];
 
 		var stringPhi = GlobWeb.CoordinateSystem.fromDegreesToHMS( phi );
@@ -405,7 +443,15 @@ GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 		this.texts.push( pointRenderData );
 	}
 	
-	for (var theta = -90; theta < 90; theta+=this.latitudeSample) {
+	var north = (Math.ceil(geoBound.north / this.latitudeSample))*this.latitudeSample;
+	var south = (Math.floor(geoBound.south / this.latitudeSample))*this.latitudeSample;
+	
+	// Adaptative rendering... not implemented yet
+	thetaStart = Math.min( north, south );
+	thetaStop = Math.max( north, south );
+	
+	for (var theta = thetaStart; theta <= thetaStop; theta+=this.latitudeSample) {
+// 	for (var theta = -90; theta < 90; theta+=this.latitudeSample) {
 		var posGeo = [ posXgeo[0], theta ];
 		
 		var posEquat = [];
