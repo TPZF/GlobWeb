@@ -76,8 +76,10 @@ GlobWeb.SimpleLineRenderer.prototype.addGeometry = function(geometry, style){
 	var vertices = [];
 	for ( var i=0; i<geometry['coordinates'][0].length; i++)
 	{
+		var pos3d = [];
+		GlobWeb.CoordinateSystem.fromGeoTo3D(geometry['coordinates'][0][i], pos3d);
 // 		vertices = vertices.concat([ geometry['coordinates'][i], geometry['coordinates'][i+1], geometry['coordinates'][i+2] ]);
-		vertices = vertices.concat(geometry['coordinates'][0][i]);
+		vertices = vertices.concat(pos3d);
 	}
 	
 	// Compute the indices corresponding to line shape
