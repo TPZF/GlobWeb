@@ -45,7 +45,7 @@ GlobWeb.inherits( GlobWeb.BaseLayer,GlobWeb.EquatorialGridLayer );
  */
 GlobWeb.EquatorialGridLayer.prototype._attach = function( g )
 {
-	this.globe = g;
+	GlobWeb.BaseLayer.prototype._attach.call( this, g );
 	
 	if ( this._visible )
 	{
@@ -137,7 +137,7 @@ GlobWeb.EquatorialGridLayer.prototype._attach = function( g )
 GlobWeb.EquatorialGridLayer.prototype._detach = function()
 {
 	this.globe.tileManager.removePostRenderer(this);
-	this.globe = null;
+	GlobWeb.BaseLayer.prototype._detach.call( this, g );
 }
 
 /**************************************************************************************************************/
@@ -222,7 +222,8 @@ GlobWeb.EquatorialGridLayer.prototype.render = function( tiles )
  */
 GlobWeb.EquatorialGridLayer.prototype.visible = function( arg )
 {
-	if ( this._visible != arg ){
+	if ( typeof arg == "boolean" && this._visible != arg )
+	{
 		this._visible = arg;
 		
 		if ( arg ){
@@ -233,6 +234,8 @@ GlobWeb.EquatorialGridLayer.prototype.visible = function( arg )
 			this.globe.tileManager.removePostRenderer(this);
 		}
 	}
+	
+	return this._visible;
 }
 
 /**************************************************************************************************************/
@@ -242,7 +245,7 @@ GlobWeb.EquatorialGridLayer.prototype.visible = function( arg )
  */
 GlobWeb.EquatorialGridLayer.prototype.opacity = function( arg )
 {
-	this._opacity = arg;
+	return GlobWeb.BaseLayer.prototype.opacity.call( this, arg );
 }
 
 /**************************************************************************************************************/
@@ -318,17 +321,9 @@ GlobWeb.EquatorialGridLayer.prototype.generateMesh = function()
 	}
 	
 	var vertexPositionData = [];
+	// TODO adaptative generation
 	for (var latNumber = 0; latNumber <= latitudeBands; latNumber++) {
-	
-// 	var posX3d = renderContext.get3DFromPixel( this.globe.renderContext.canvas.width / 2. , this.globe.renderContext.canvas.height / 2. );
-// 	var posXgeo = [];
-// 	GlobWeb.CoordinateSystem.from3DToGeo( posX3d, posXgeo );
-// 	
-// 	lon2 = longStep * (posXgeo[0] / longStep+0.5);
-//         lat2 = latStep * (posXgeo[1] / latStep+0.5);
-//         Vec3d firstPoint;
-//         StelUtils::spheToRect(lon2, lat2, firstPoint);
-	
+		
 // 	for (var theta = geoBound.south; theta <= geoBound.north; theta+=latStep) {
 		var theta = latNumber * Math.PI / latitudeBands;
 		var sinTheta = Math.sin(theta);
@@ -405,7 +400,7 @@ GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 	// Difference is larger than hemisphere
 	if ( (east - west) > 180. )
 	{
-		// pole in the viewport
+		// pole in the viewport => generate all longitude bands
 // 		phiStart = east - 360;
 // 		phiStop = west;
 		phiStart = 0;
