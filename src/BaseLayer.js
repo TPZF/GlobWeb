@@ -79,7 +79,7 @@ GlobWeb.BaseLayer.prototype.visible = function( arg )
  */
 GlobWeb.BaseLayer.prototype.opacity = function( arg )
 {
-	if ( typeof arg == "boolean" )
+	if ( typeof arg == "number" )
 		this._opacity = arg;
 	return this._opacity;
 }
