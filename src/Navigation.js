@@ -197,6 +197,7 @@ GlobWeb.Navigation.prototype.computeInverseViewMatrix = function()
  */
 GlobWeb.Navigation.prototype.zoom = function(delta)
 {
+	this.globe.publish("startNavigation");
 	var previousDistance = this.distance;
 	
 	this.distance *= (1 + delta * 0.1);
@@ -217,6 +218,8 @@ GlobWeb.Navigation.prototype.zoom = function(delta)
 		this.distance = previousDistance;
 		this.computeViewMatrix();
 	}
+	
+	this.globe.publish("endNavigation");
 }
 
 /**************************************************************************************************************/

@@ -58,7 +58,7 @@ GlobWeb.inherits( GlobWeb.BaseNavigation,GlobWeb.AstroNavigation );
 	@param {Int} fov Final zooming fov in degrees
 	@param {Int} duration Duration of animation in milliseconds
  */
-GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration )
+GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, mFov )
 {
 	var navigator = this;
 	
@@ -68,7 +68,7 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration )
 	
 	// Create a single animation to animate center3d and fov
 	var geoStart = [];
-	var middleFov = 45.0;	// arbitrary middle fov value which determines if the animation needs two segments
+	var middleFov = mFov || 45.0;	// arbitrary middle fov value which determines if the animation needs two segments
 	
 	GlobWeb.CoordinateSystem.from3DToGeo(this.center3d, geoStart);
 	var startValue = [geoStart[0], geoStart[1], this.globe.renderContext.fov];
@@ -170,6 +170,7 @@ GlobWeb.AstroNavigation.prototype.computeViewMatrix = function()
  */
 GlobWeb.AstroNavigation.prototype.zoom = function(delta)
 {
+	this.globe.publish("startNavigation");
 	// Arbitrary value for smooth zooming
 	delta = 1 + delta * 0.1;
 	
@@ -187,10 +188,12 @@ GlobWeb.AstroNavigation.prototype.zoom = function(delta)
 	
 	this.computeViewMatrix();
 	
-	this.globe.renderContext.requestFrame();
-		
+// 	this.globe.renderContext.requestFrame();
+	
+	this.globe.publish("endNavigation");
+	
 	// Return false to stop mouse wheel to be propagated when using onmousewheel
-	return false;
+// 	return false;
 }
 
 /**************************************************************************************************************/
