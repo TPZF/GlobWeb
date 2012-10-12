@@ -67,6 +67,21 @@ GlobWeb.VectorLayer.prototype._attach = function( g )
 
 /**************************************************************************************************************/
 
+/** 
+  Detach the vector layer from the globe
+ */
+GlobWeb.VectorLayer.prototype._detach = function( g )
+{
+	for ( var i=0; i < this.features.length; i++ )
+	{
+		this._removeFeatureFromRenderers( this.features[i] );
+	}
+	
+	GlobWeb.BaseLayer.prototype._detach.call( this, g );
+}
+
+/**************************************************************************************************************/
+
 /** @export
   Adds a feature collection, in GeoJSON format
  */
@@ -258,12 +273,17 @@ GlobWeb.VectorLayer.prototype.visible = function( arg )
   @param arg Argument of opacity defined in the interval [0, 1]
  */
 GlobWeb.VectorLayer.prototype.opacity = function( arg )
-{
-	this.style.opacity = arg;
-	for ( var i=0; i<this.features.length; i++ )
+{	
+	if( typeof arg == "number" )
 	{
-		this._removeFeatureFromRenderers( this.features[i] );
-		this._addFeatureToRenderers( this.features[i] );
+		this.style.opacity = arg;
+		for ( var i=0; i<this.features.length; i++ )
+		{
+			this._removeFeatureFromRenderers( this.features[i] );
+			this._addFeatureToRenderers( this.features[i] );
+		}
 	}
+	
+	return this._opacity;
 }
 

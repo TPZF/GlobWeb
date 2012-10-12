@@ -30,6 +30,8 @@ GlobWeb.BaseLayer = function(options)
 	this.globe = null;
 	this.name = options && options.hasOwnProperty('name') ? options['name'] : "";
 	this.attribution = options && options.hasOwnProperty('attribution') ? options['attribution'] : "";
+	this.icon = options && options.hasOwnProperty('icon') ? options['icon'] : "";
+	this.description = options && options.hasOwnProperty('description') ? options['description'] : "";
 	this._visible = options && options.hasOwnProperty('visible') ? options['visible'] : true;
 	this._opacity = options && options.hasOwnProperty('opacity') ? options['opacity'] : 1.0;
 }

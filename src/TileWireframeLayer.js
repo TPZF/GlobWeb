@@ -40,7 +40,7 @@ GlobWeb.inherits( GlobWeb.BaseLayer,GlobWeb.TileWireframeLayer );
  */
 GlobWeb.TileWireframeLayer.prototype._attach = function( g )
 {
-	this.globe = g;
+	GlobWeb.BaseLayer.prototype._attach.call( this, g );
 	
 	if ( this._visible )
 	{
@@ -81,7 +81,7 @@ GlobWeb.TileWireframeLayer.prototype._attach = function( g )
 GlobWeb.TileWireframeLayer.prototype._detach = function()
 {
 	this.globe.tileManager.removePostRenderer(this);
-	this.globe = null;
+	GlobWeb.BaseLayer.prototype._detach.call( this, g );
 }
 
 /**************************************************************************************************************/
@@ -143,7 +143,8 @@ GlobWeb.TileWireframeLayer.prototype.render = function( tiles )
  */
 GlobWeb.TileWireframeLayer.prototype.visible = function( arg )
 {
-	if ( this._visible != arg ){
+	if ( typeof arg == "boolean" && this._visible != arg )
+	{
 		this._visible = arg;
 		
 		if ( arg ){
@@ -154,6 +155,8 @@ GlobWeb.TileWireframeLayer.prototype.visible = function( arg )
 			this.globe.tileManager.removePostRenderer(this);
 		}
 	}
+	
+	return this._visible;
 }
 
 /**************************************************************************************************************/
@@ -163,5 +166,5 @@ GlobWeb.TileWireframeLayer.prototype.visible = function( arg )
  */
 GlobWeb.TileWireframeLayer.prototype.opacity = function( arg )
 {
-	this._opacity = arg;
+	return GlobWeb.BaseLayer.prototype.opacity.call( this, arg );
 }

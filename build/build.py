@@ -173,6 +173,6 @@ print "Writing to %s." % outputFilename
 licence = file(buildPath+"licence.txt","r+").read()
 if not os.path.exists(buildPath+"generated"):
     os.mkdir(buildPath+"generated")
-file("generated/" + outputFilename,"w").write(licence+minimized)
+file(buildPath+"generated/" + outputFilename,"w").write(licence+minimized)
 
 raw_input("Press a key to finish.")
