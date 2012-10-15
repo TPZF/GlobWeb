@@ -78,7 +78,7 @@ GlobWeb.TileWireframeLayer.prototype._attach = function( g )
 /** 
   Detach the layer from the globe
  */
-GlobWeb.TileWireframeLayer.prototype._detach = function()
+GlobWeb.TileWireframeLayer.prototype._detach = function( g )
 {
 	this.globe.tileManager.removePostRenderer(this);
 	GlobWeb.BaseLayer.prototype._detach.call( this, g );
