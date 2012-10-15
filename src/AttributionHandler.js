@@ -41,25 +41,26 @@ GlobWeb.AttributionHandler = function(options, style)
 		this[x] = options[x];
 	}
 	
-	// CSS initialisation
-	var sheet = document.createElement('style');
-	sheet.innerHTML = "#" + this.id + " {text-align: right; position: absolute; right: 0px; bottom: 2px; }\
-				#"+this.id+" img {background-color: white; border-radius: 10px;}\
-				#"+this.id+" div {color: white}";
-	
-	// Copy style parameters
-	for (var x in style)
-	{
-		sheet[x] = options[x];
-	}
-	document.body.appendChild(sheet);
-	
 	// HTML initialisation
 	this.attributionDiv = document.createElement("div");
 	this.attributionDiv.id = this.id;
 	
 	var body = document.getElementsByTagName("body")[0];
 	body.appendChild(this.attributionDiv);
+	
+	// CSS initialisation
+	var sheet = document.createElement('style');
+	sheet.innerHTML = "#" + this.id + " {text-align: right; position: absolute; right: 0px; bottom: 2px; }\
+				#"+this.id+" img {background-color: white; border-radius: 10px;}\
+				#"+this.id+" div {color: white}";
+				
+	document.body.appendChild(sheet);
+	
+	// Apply style parameters
+	for (var x in style)
+	{
+		$('#'+ this.id).css(x, style[x]);
+	}
 }
 
 /**************************************************************************************************************/
