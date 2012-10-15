@@ -58,7 +58,7 @@ GlobWeb.inherits( GlobWeb.BaseNavigation,GlobWeb.AstroNavigation );
 	@param {Int} fov Final zooming fov in degrees
 	@param {Int} duration Duration of animation in milliseconds
  */
-GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, mFov )
+GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 {
 	var navigator = this;
 	
@@ -68,7 +68,7 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, mFov 
 	
 	// Create a single animation to animate center3d and fov
 	var geoStart = [];
-	var middleFov = mFov || 45.0;	// arbitrary middle fov value which determines if the animation needs two segments
+	var middleFov = 45.0;	// arbitrary middle fov value which determines if the animation needs two segments
 	
 	GlobWeb.CoordinateSystem.from3DToGeo(this.center3d, geoStart);
 	var startValue = [geoStart[0], geoStart[1], this.globe.renderContext.fov];
@@ -122,7 +122,7 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, mFov 
 	{
 		// One step animation, 'falling' only
 		
-		// Add only one segments
+		// Add only one segment
 		animation.addSegment(
 			0.0, startValue,
 			1.0, endValue,
@@ -134,6 +134,71 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, mFov 
 					Numeric.lerp(dt, a[2], b[2])];  // fov
 		});
 	}
+
+	animation.onstop = function() {
+		navigator.globe.publish("endNavigation");
+	}
+	
+	this.globe.addAnimation(animation);
+	animation.start();
+	
+	this.globe.publish("startNavigation");
+}
+
+/**************************************************************************************************************/
+
+/** @export
+	Zoom to a 3d position
+	@param {Float[]} geoPos Array of two floats corresponding to final Longitude and Latitude(in this order) to zoom
+	@param {Int} duration Duration of animation in milliseconds
+ */
+GlobWeb.AstroNavigation.prototype.moveTo = function(geoPos, duration )
+{
+	var navigator = this;
+	
+	duration = duration || 5000;
+	
+	// Create a single animation to animate center3d and fov
+	var geoStart = [];
+	GlobWeb.CoordinateSystem.from3DToGeo(this.center3d, geoStart);
+	
+	var startValue = [geoStart[0], geoStart[1], this.globe.renderContext.fov];
+	var endValue = [geoPos[0], geoPos[1], this.globe.renderContext.fov];
+	
+	// Compute the shortest path if needed
+	if (Math.abs(geoPos[0] - geoStart[0]) > 180. )
+	{
+		if (geoStart[0] < geoPos[0])
+			startValue[0] += 360;
+		else
+			endValue[0] +=360;
+	}
+	
+	var animation = new GlobWeb.SegmentedAnimation(
+		duration,
+		// Value setter
+		function(value) {
+			var position3d = GlobWeb.CoordinateSystem.fromGeoTo3D( [ value[0], value[1] ] );
+			navigator.center3d[0] = position3d[0];
+			navigator.center3d[1] = position3d[1];
+			navigator.center3d[2] = position3d[2];
+			this.globe.renderContext.fov = value[2];
+			navigator.computeViewMatrix();
+			
+		}
+	);
+	
+	animation.addSegment(
+		0.0, startValue,
+		1.0, endValue,
+		function(t, a, b) {
+			var pt = Numeric.easeOutQuad(t);
+			var dt = Numeric.easeInQuad(t);
+			return [Numeric.lerp(pt, a[0], b[0]),  // geoPos.long
+				Numeric.lerp(pt, a[1], b[1]),  // geoPos.lat
+				Numeric.lerp(dt, a[2], b[2])];  // fov
+		}
+	);
 
 	animation.onstop = function() {
 		navigator.globe.publish("endNavigation");
