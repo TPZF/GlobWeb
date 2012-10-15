@@ -134,7 +134,7 @@ GlobWeb.EquatorialGridLayer.prototype._attach = function( g )
 /** 
 	Detach the layer from the globe
  */
-GlobWeb.EquatorialGridLayer.prototype._detach = function()
+GlobWeb.EquatorialGridLayer.prototype._detach = function( g )
 {
 	this.globe.tileManager.removePostRenderer(this);
 	GlobWeb.BaseLayer.prototype._detach.call( this, g );
@@ -419,13 +419,15 @@ GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 	
 	for (var phi = phiStart; phi <= phiStop; phi+=this.longitudeSample) {
 // 	for (var phi = 0; phi < 360; phi+=this.longitudeSample) {
-		var posGeo = [ phi, posXgeo[1] ];
-
-		var stringPhi = GlobWeb.CoordinateSystem.fromDegreesToHMS( phi );
-		var imageData = GlobWeb.Text.generateImageData( stringPhi );
+		
+		// convert to RA [0..360]
+		var RA = (phi < 0) ? phi+360 : phi;
+		var stringRA = GlobWeb.CoordinateSystem.fromDegreesToHMS( RA );
+		var imageData = GlobWeb.Text.generateImageData( stringRA );
 		var text = {};
 		this._buildTextureFromImage(text,imageData);
 		
+		var posGeo = [ phi, posXgeo[1] ];
 		var pos3d = GlobWeb.CoordinateSystem.fromGeoTo3D( posGeo );
 		var vertical = vec3.create();
 		vec3.normalize(pos3d, vertical);
