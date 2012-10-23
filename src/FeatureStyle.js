@@ -28,6 +28,7 @@ GlobWeb.FeatureStyle = function(style)
 	this.strokeColor = [1.0, 0.0, 0.0, 1.0];
 	// Color used to full polygon
 	this.fillColor = [1.0, 0.0, 0.0, 1.0];
+	this.fillTextureUrl = null;
 	this.strokeWidth = 1;
 	this.iconUrl = "hotspot.png";
 	this.icon = null;

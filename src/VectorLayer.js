@@ -70,14 +70,14 @@ GlobWeb.VectorLayer.prototype._attach = function( g )
 /** 
   Detach the vector layer from the globe
  */
-GlobWeb.VectorLayer.prototype._detach = function( g )
+GlobWeb.VectorLayer.prototype._detach = function()
 {
 	for ( var i=0; i < this.features.length; i++ )
 	{
 		this._removeFeatureFromRenderers( this.features[i] );
 	}
 	
-	GlobWeb.BaseLayer.prototype._detach.call( this, g );
+	GlobWeb.BaseLayer.prototype._detach.call(this);
 }
 
 /**************************************************************************************************************/
@@ -132,9 +132,16 @@ GlobWeb.VectorLayer.prototype._addFeatureToRenderers = function( feature )
 	{
 		style = props['style'];
 		props['style'].opacity = this.style.opacity;
-		props['style'].rendererHint = this.style.rendererHint;
+		props['style']['rendererHint'] = this.style['rendererHint'];
 	}
-
+	
+	// TODO refactor ?
+	if ( props['quicklook'] )
+	{
+		// Uncomment for test with texture
+		style.fillTextureUrl = props['quicklook'];
+	}
+	
 	// Manage geometry collection
 	if ( geometry.type == "GeometryCollection" )
 	{
@@ -167,7 +174,6 @@ GlobWeb.VectorLayer.prototype._removeFeatureFromRenderers = function( feature )
 	{
 		style = props['style'];
 	}
-
 
 	// Manage geometry collection
 	if ( geometry.type == "GeometryCollection" )
