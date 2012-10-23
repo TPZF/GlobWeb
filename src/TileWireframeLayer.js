@@ -78,10 +78,10 @@ GlobWeb.TileWireframeLayer.prototype._attach = function( g )
 /** 
   Detach the layer from the globe
  */
-GlobWeb.TileWireframeLayer.prototype._detach = function( g )
+GlobWeb.TileWireframeLayer.prototype._detach = function()
 {
 	this.globe.tileManager.removePostRenderer(this);
-	GlobWeb.BaseLayer.prototype._detach.call( this, g );
+	GlobWeb.BaseLayer.prototype._detach.call(this);
 }
 
 /**************************************************************************************************************/
@@ -114,7 +114,7 @@ GlobWeb.TileWireframeLayer.prototype.render = function( tiles )
 		// Update uniforms for modelview matrix
 		mat4.multiply( rc.viewMatrix, tile.matrix, rc.modelViewMatrix );
 		gl.uniformMatrix4fv(this.program.uniforms["modelViewMatrix"], false, rc.modelViewMatrix);
-		gl.uniform1f(this.program.uniforms["alpha"], this._opacity );
+		gl.uniform1f(this.program.uniforms["alpha"], this.opacity() );
 			
 		// Bind the vertex buffer
 		gl.bindBuffer(gl.ARRAY_BUFFER, tile.vertexBuffer);

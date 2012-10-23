@@ -134,10 +134,10 @@ GlobWeb.EquatorialGridLayer.prototype._attach = function( g )
 /** 
 	Detach the layer from the globe
  */
-GlobWeb.EquatorialGridLayer.prototype._detach = function( g )
+GlobWeb.EquatorialGridLayer.prototype._detach = function()
 {
 	this.globe.tileManager.removePostRenderer(this);
-	GlobWeb.BaseLayer.prototype._detach.call( this, g );
+	GlobWeb.BaseLayer.prototype._detach.call(this);
 }
 
 /**************************************************************************************************************/

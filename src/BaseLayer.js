@@ -52,7 +52,7 @@ GlobWeb.BaseLayer.prototype._attach = function( g )
 /** 
   Detach the vector layer from the globe
  */
-GlobWeb.BaseLayer.prototype._detach = function( g )
+GlobWeb.BaseLayer.prototype._detach = function()
 {
 	if ( this.attribution )
 	{

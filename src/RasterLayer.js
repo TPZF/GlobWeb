@@ -81,7 +81,7 @@ GlobWeb.RasterLayer.prototype._attach = function( g )
 /** 
   Detach the raster layer from the globe
  */
-GlobWeb.RasterLayer.prototype._detach = function( g )
+GlobWeb.RasterLayer.prototype._detach = function()
 {
 	// Remove raster from overlay renderer if needed
 	if ( this.overlay && this.globe.rasterOverlayRenderer )
@@ -89,7 +89,7 @@ GlobWeb.RasterLayer.prototype._detach = function( g )
 		this.globe.rasterOverlayRenderer.removeOverlay(this);
 	}
 	
-	GlobWeb.BaseLayer.prototype._detach.call( this, g );
+	GlobWeb.BaseLayer.prototype._detach.call(this);
 }
 
 /**************************************************************************************************************/
