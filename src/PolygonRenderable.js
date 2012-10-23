@@ -369,13 +369,13 @@ GlobWeb.PolygonRenderable.prototype.buildVerticesAndIndices = function( tile, co
 
 // Register the renderer
 GlobWeb.VectorRendererManager.registerRenderer({
-									creator: function(globe) { 
-											var polygonRenderer = new GlobWeb.TiledVectorRenderer(globe.tileManager);
-											polygonRenderer.id = "polygon";
-											polygonRenderer.styleEquals = function(s1,s2) { return s1.isEqualForPoly(s2); };
-											polygonRenderer.renderableConstuctor = GlobWeb.PolygonRenderable;
-											return polygonRenderer;
-									},
-									canApply: function(type,style) {return type == "Polygon" && style.fill; }
-								});
+	creator: function(globe) { 
+			var polygonRenderer = new GlobWeb.TiledVectorRenderer(globe.tileManager);
+			polygonRenderer.id = "polygon";
+			polygonRenderer.styleEquals = function(s1,s2) { return s1.isEqualForPoly(s2); };
+			polygonRenderer.renderableConstuctor = GlobWeb.PolygonRenderable;
+			return polygonRenderer;
+	},
+	canApply: function(type,style) {return style.rendererHint == "Tiled" && type == "Polygon" && style.fill; }
+});
 										
