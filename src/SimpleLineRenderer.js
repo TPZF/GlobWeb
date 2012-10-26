@@ -204,5 +204,5 @@ GlobWeb.VectorRendererManager.registerRenderer({
 	creator: function(globe) { 
 			return new GlobWeb.SimpleLineRenderer(globe.tileManager);
 		},
-	canApply: function(type,style) {return (style.rendererHint == "Basic") && (type == "Polygon" || type == "LineString") && (style.fill == false); }
+	canApply: function(type,style) {return (style.rendererHint == "Basic") && (type == "Polygon" || type == "LineString"); }
 });
