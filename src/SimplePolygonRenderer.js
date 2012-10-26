@@ -21,6 +21,8 @@
 
 /** @constructor
  *	SimplePolygonRenderer constructor
+ *
+ *	Renderer of textured or not quadrilaterals
  */
 
 GlobWeb.SimplePolygonRenderer = function(tileManager)
@@ -70,6 +72,23 @@ GlobWeb.SimplePolygonRenderer = function(tileManager)
 	
 	this.program = new GlobWeb.Program(this.renderContext);
 	this.program.createFromSource(vertexShader, fragmentShader);
+
+	// Shared buffer
+	// Create texCoord buffer
+	this.tcoordBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.tcoordBuffer);
+	
+	var textureCoords = [
+		0.0, 0.0,
+		1.0, 0.0,
+		1.0, 1.0,
+		0.0, 1.0,
+		0.0, 0.0
+	];
+	
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
+	this.tcoordBuffer.itemSize = 2;
+	this.tcoordBuffer.numItems = 5;
 }
 
 /**************************************************************************************************************/
@@ -87,7 +106,6 @@ GlobWeb.SimplePolygonRenderer.prototype.addGeometry = function(geometry, style){
 		style : style,
 		vertexBuffer : gl.createBuffer(),
 		indexBuffer : gl.createBuffer(),
-		tcoordBuffer : gl.createBuffer(),
 		texture : null,
 		textured: false
 	}
@@ -97,37 +115,21 @@ GlobWeb.SimplePolygonRenderer.prototype.addGeometry = function(geometry, style){
 	
 	if ( style.fillTextureUrl )
 	{
-		var quicklookImage = new Image();
-		quicklookImage.crossOrigin = '';
-		quicklookImage.onload = function () 
+		var image = new Image();
+		image.crossOrigin = '';
+		image.onload = function () 
 		{
-			renderable.texture = self.renderContext.createNonPowerOfTwoTextureFromImage(quicklookImage);
+			renderable.texture = self.renderContext.createNonPowerOfTwoTextureFromImage(image);
 		}
 		
-		quicklookImage.onerror = function(event)
+		image.onerror = function(event)
 		{
-			console.log("Cannot load " + quicklookImage.src );
+			console.log("Cannot load " + image.src );
 		}
 		
-		quicklookImage.src = style.fillTextureUrl;
+		image.src = style.fillTextureUrl;
 		renderable.textured = true;
 	}
-	
-	// Create texCoord buffer
-	// TODO share buffers
-	gl.bindBuffer(gl.ARRAY_BUFFER, renderable.tcoordBuffer);
-	
-	var textureCoords = [
-		0.0, 0.0,
-		1.0, 0.0,
-		1.0, 1.0,
-		0.0, 1.0,
-		0.0, 0.0
-	];
-	
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
-	renderable.tcoordBuffer.itemSize = 2;
-	renderable.tcoordBuffer.numItems = 5;
 	
 	// Create vertex buffer
 	gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
@@ -143,11 +145,11 @@ GlobWeb.SimplePolygonRenderer.prototype.addGeometry = function(geometry, style){
 		points.push(pos3d);
 	}
 
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-        renderable.vertexBuffer.itemSize = 3;
-        renderable.vertexBuffer.numItems = vertices.length/3;
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+	renderable.vertexBuffer.itemSize = 3;
+	renderable.vertexBuffer.numItems = vertices.length/3;
 
-	// Create index buffer
+	// Create index buffer(make shared ?)
 	var indices = [];
 	indices = GlobWeb.Triangulator.process( points );
 	
@@ -158,8 +160,8 @@ GlobWeb.SimplePolygonRenderer.prototype.addGeometry = function(geometry, style){
 	}
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.indexBuffer);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-        renderable.indexBuffer.itemSize = 1;
-        renderable.indexBuffer.numItems = indices.length;
+	renderable.indexBuffer.itemSize = 1;
+	renderable.indexBuffer.numItems = indices.length;
 	
 	this.renderables.push(renderable);
 
@@ -176,6 +178,22 @@ GlobWeb.SimplePolygonRenderer.prototype.removeGeometry = function(geometry,style
 	{
 		var currentRenderable = this.renderables[i];
 		if ( currentRenderable.geometry == geometry){
+
+			// Dispose resources
+			var gl = this.renderContext.gl;
+	
+			if ( currentRenderable.indexBuffer )
+				gl.deleteBuffer(currentRenderable.indexBuffer);
+			if ( currentRenderable.vertexBuffer )
+				gl.deleteBuffer(currentRenderable.vertexBuffer);
+			if ( currentRenderable.texture )
+				gl.deleteTexture( currentRenderable.texture );
+
+			currentRenderable.indexBuffer = null;
+			currentRenderable.vertexBuffer = null;
+			currentRenderable.texture = null;
+
+			// Remove from array
 			this.renderables.splice(i, 1);
 		}
 	}
@@ -203,6 +221,9 @@ GlobWeb.SimplePolygonRenderer.prototype.render = function(){
 	gl.uniform1i(this.program.uniforms["texture"], 0);
 	gl.activeTexture(gl.TEXTURE0);
 	
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.tcoordBuffer);
+	gl.vertexAttribPointer(this.program.attributes['tcoord'], 2, gl.FLOAT, false, 0, 0);
+
 	for ( var n = 0; n < this.renderables.length; n++ )
 	{
 		if ( this.renderables[n].textured )
@@ -219,9 +240,6 @@ GlobWeb.SimplePolygonRenderer.prototype.render = function(){
 		}
 		
 		gl.uniform1f(this.program.uniforms["alpha"], this.renderables[n].style.opacity);
-		
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.renderables[n].tcoordBuffer);
-		gl.vertexAttribPointer(this.program.attributes['tcoord'], 2, gl.FLOAT, false, 0, 0);
 		
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.renderables[n].vertexBuffer);
 		gl.vertexAttribPointer(this.program.attributes['vertex'], this.renderables[n].vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
