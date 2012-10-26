@@ -74,6 +74,14 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 	var startValue = [geoStart[0], geoStart[1], this.globe.renderContext.fov];
 	var endValue = [geoPos[0], geoPos[1], destFov];
 	
+	// Compute the shortest path if needed
+	if (Math.abs(geoPos[0] - geoStart[0]) > 180. )
+	{
+		if (geoStart[0] < geoPos[0])
+			startValue[0] += 360;
+		else
+			endValue[0] +=360;
+	}
 	var animation = new GlobWeb.SegmentedAnimation(
 		duration,
 		// Value setter
