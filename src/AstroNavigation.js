@@ -308,13 +308,13 @@ GlobWeb.AstroNavigation.prototype.rotate = function(dx,dy)
 	var u = this.center3d[0];
 	var v = this.center3d[1];
 	var w = this.center3d[2];
-	// constant little angle
-	var angle = dx * 0.1 * Math.PI/180.;
+	// constant tiny angle 
+	var angle = dx * 0.5 * Math.PI/180.;
 
 	// Rotation matrix around look(center3d - origin) vector ... simplier solution required..
 	var rotationMatrix = mat4.create(
-		[ u*u + ( 1-u*u )*Math.cos(angle), u*v*(1 - Math.cos(angle)) - w * Math.sin(angle), u*w*(1-Math.cos(angle)) + u*Math.sin(angle), 0,
-		u*v*(1 - Math.cos(angle)) + w*Math.sin(angle), v*v+(1 - v*v)*Math.cos(angle), v*w*(1 - Math.cos(angle)) - v*Math.sin(angle), 0,
+		[ u*u + ( 1-u*u )*Math.cos(angle), u*v*(1 - Math.cos(angle)) - w * Math.sin(angle), u*w*(1-Math.cos(angle)) + v*Math.sin(angle), 0,
+		u*v*(1 - Math.cos(angle)) + w*Math.sin(angle), v*v+(1 - v*v)*Math.cos(angle), v*w*(1 - Math.cos(angle)) - u*Math.sin(angle), 0,
 		u*w*(1 - Math.cos(angle)) - v*Math.sin(angle), v*w*(1 - Math.cos(angle)) + u*Math.sin(angle), w*w + (1-w*w)*Math.cos(angle) , 0,
 		0, 0, 0, 1 ]
 		);
