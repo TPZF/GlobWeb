@@ -1,0 +1,26 @@
+{
+   "features": [
+      {
+         "geometry": {
+            "coordinates": [[
+		[85.93599,-68.83499],
+		[83.02315,-68.8411],
+		[82.94728,-69.88261],
+		[86.00521,-69.88369],
+		[85.93599,-68.83499]
+	      ]],
+            "referencesystem": "ICRS",
+            "type": "Polygon"
+         },
+         "properties": {       
+	    "identifier":"30doradus",    
+            "object": "30 doradus",                    	  
+            "title": "30doradus",
+	    "quicklook": "upload/ADP_WFI_30DOR_RGB_V1.0_degraded.jpg"
+         },
+         "type": "Feature"
+      }
+   ],
+   "totalResults": 1,
+   "type": "FeatureCollection"
+}
