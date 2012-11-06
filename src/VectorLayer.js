@@ -136,7 +136,7 @@ GlobWeb.VectorLayer.prototype._addFeatureToRenderers = function( feature )
 	}
 	
 	// TODO refactor ?
-	if ( props['quicklook'] )
+	if ( props && props['quicklook'] )
 	{
 		// Uncomment for test with texture
 		style.fillTextureUrl = props['quicklook'];
