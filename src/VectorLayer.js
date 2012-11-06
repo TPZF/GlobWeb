@@ -134,14 +134,7 @@ GlobWeb.VectorLayer.prototype._addFeatureToRenderers = function( feature )
 		props['style'].opacity = this.style.opacity;
 		props['style']['rendererHint'] = this.style['rendererHint'];
 	}
-	
-	// TODO refactor ?
-	if ( props && props['quicklook'] )
-	{
-		// Uncomment for test with texture
-		style.fillTextureUrl = props['quicklook'];
-	}
-	
+
 	// Manage geometry collection
 	if ( geometry.type == "GeometryCollection" )
 	{
@@ -237,6 +230,26 @@ GlobWeb.VectorLayer.prototype.modifyFeatureStyle = function( feature, style )
 	this._removeFeatureFromRenderers( feature );
 	feature['properties']['style'] = style;
 	this._addFeatureToRenderers( feature );
+}
+
+/**************************************************************************************************************/
+
+/** @export
+  Modify the vector layer style
+*/
+GlobWeb.VectorLayer.prototype.modifyStyle = function(style)
+{
+	for ( var i=0; i<this.features.length; i++ )
+	{
+		this._removeFeatureFromRenderers( this.features[i] );
+	}
+	
+	this.style = style;
+	
+	for ( var i=0; i<this.features.length; i++ )
+	{
+		this._addFeatureToRenderers( this.features[i] );
+	}
 }
 
 /**************************************************************************************************************/
