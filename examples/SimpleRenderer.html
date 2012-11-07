@@ -46,6 +46,18 @@
 			{
 				vectorLayer.modifyStyle(wireframeStyle);
 			}
+			else if ( key == 'v' )
+			{
+				vectorLayer.visible( !vectorLayer.visible() );
+			}
+			else if ( key == 'a' )
+			{
+				vectorLayer.opacity( vectorLayer.opacity() - 0.1 );
+			}
+			else if ( key == 'z' )
+			{
+				vectorLayer.opacity( vectorLayer.opacity() + 0.1 );
+			}
 		});
 		
 		$.ajax({

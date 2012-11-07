@@ -124,6 +124,28 @@ li.poi:hover
 			var lat = parseFloat($(this).attr('data-lat'));
 			nav.zoomTo( [lon, lat], 50000, 5000 );
 		});
+		
+		$('#GlobWebCanvas').keypress( function(event)
+		{
+			var key = String.fromCharCode(event.which);
+			if ( key == 'a' )
+			{
+				poiLayer.opacity( poiLayer.opacity() - 0.1 );
+			}
+			else if ( key == 'z' )
+			{
+				poiLayer.opacity( poiLayer.opacity() + 0.1 );
+			}
+			else if ( key == 's' )
+			{
+				poiLayer.visible( true );
+			}
+			else if ( key == 'h' )
+			{
+				poiLayer.visible( false );
+			}
+		});
+
     }
 
 

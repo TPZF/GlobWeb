@@ -27,7 +27,7 @@
 			
 		var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble,esat" });
 		globe.setBaseImagery( blueMarbleLayer );
-		var elevationLayer = new GlobWeb.BasicElevationLayer({ baseUrl:"http://demonstrator.vegaspace.com/json_elevations/get.php"});
+		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.vegaspace.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
 		globe.setBaseElevation( elevationLayer );
 		
 /*		var osmLayer = new GlobWeb.OSMLayer( {baseUrl:"http://tile.openstreetmap.org"} );
@@ -36,11 +36,6 @@
 		var vectorLayer = new GlobWeb.VectorLayer();
 		globe.addLayer( vectorLayer );
 		
-		$(document).keypress( function(event) { 
-				if (event.which == 115) 
-					vectorLayer.visible(false);
-					//globe.tileManager.freeze = !globe.tileManager.freeze; 
-		});
 		
 	
 		var feature = { type: "Feature",
@@ -74,7 +69,24 @@
 				vectorLayer.addFeatureCollection( data );
 			  }
 		});
-   }
+		
+ 		$('#GlobWebCanvas').keypress( function(event) { 
+			var key = String.fromCharCode(event.which);
+			if ( key == 'v' )
+			{
+				vectorLayer.visible( !vectorLayer.visible() );
+			}
+			else if ( key == 'a' )
+			{
+				vectorLayer.opacity( vectorLayer.opacity() - 0.1 );
+			}
+			else if ( key == 'z' )
+			{
+				vectorLayer.opacity( vectorLayer.opacity() + 0.1 );
+			}
+					//globe.tileManager.freeze = !globe.tileManager.freeze; 
+		});
+  }
 
 
 </script>
