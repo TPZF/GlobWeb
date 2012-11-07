@@ -96,7 +96,7 @@ GlobWeb.SimplePolygonRenderer = function(tileManager)
 /**
  *	Add polygon to renderer
  */
-GlobWeb.SimplePolygonRenderer.prototype.addGeometry = function(geometry, style){
+GlobWeb.SimplePolygonRenderer.prototype.addGeometry = function(geometry, layer, style){
 	
 	var gl = this.renderContext.gl;
 	
@@ -104,6 +104,7 @@ GlobWeb.SimplePolygonRenderer.prototype.addGeometry = function(geometry, style){
 	var renderable = {
 		geometry : geometry,
 		style : style,
+		layer: layer,
 		vertexBuffer : gl.createBuffer(),
 		indexBuffer : gl.createBuffer(),
 		texture : null,
@@ -226,27 +227,33 @@ GlobWeb.SimplePolygonRenderer.prototype.render = function(){
 
 	for ( var n = 0; n < this.renderables.length; n++ )
 	{
-		if ( this.renderables[n].textured )
+		var renderable = this.renderables[n];
+		
+		if ( !renderable.layer._visible
+			|| renderable.layer._opacity <= 0.0 )
+			continue;
+			
+		if ( renderable.textured )
 		{
-			if ( this.renderables[n].texture == null )
+			if ( renderable.texture == null )
 				continue;
 			gl.uniform4f(this.program.uniforms["u_color"], this.whiteColor[0], this.whiteColor[1], this.whiteColor[2], this.whiteColor[3]);  // use whiteColor
-			gl.bindTexture(gl.TEXTURE_2D, this.renderables[n].texture); // use texture of renderable
+			gl.bindTexture(gl.TEXTURE_2D, renderable.texture); // use texture of renderable
 		}
 		else
 		{
-			gl.uniform4f(this.program.uniforms["u_color"], this.renderables[n].style.fillColor[0], this.renderables[n].style.fillColor[1], this.renderables[n].style.fillColor[2], this.renderables[n].style.fillColor[3]);  // use fillColor
+			gl.uniform4f(this.program.uniforms["u_color"], renderable.style.fillColor[0], renderable.style.fillColor[1], renderable.style.fillColor[2], renderable.style.fillColor[3]);  // use fillColor
 			gl.bindTexture(gl.TEXTURE_2D, this.whiteTexture);  // use white texture
 		}
 		
-		gl.uniform1f(this.program.uniforms["alpha"], this.renderables[n].style.opacity);
+		gl.uniform1f(this.program.uniforms["alpha"], renderable.layer._opacity);
 		
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.renderables[n].vertexBuffer);
-		gl.vertexAttribPointer(this.program.attributes['vertex'], this.renderables[n].vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
+		gl.vertexAttribPointer(this.program.attributes['vertex'], renderable.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 		
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.renderables[n].indexBuffer);
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.indexBuffer);
 		
-		gl.drawElements( gl.TRIANGLES, this.renderables[n].indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+		gl.drawElements( gl.TRIANGLES, renderable.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 	}
 	
 	gl.enable(gl.DEPTH_TEST);

@@ -24,9 +24,9 @@
  *  @extends GlobWeb.TiledVectorRenderable
  *	LineStringRenderable manages lineString data to be rendered on a tile.
  */
-GlobWeb.LineStringRenderable = function( style, gl )
+GlobWeb.LineStringRenderable = function( bucket, gl )
 {
-	GlobWeb.TiledVectorRenderable.prototype.constructor.call(this,style,gl);
+	GlobWeb.TiledVectorRenderable.prototype.constructor.call(this,bucket,gl);
 	this.glMode = gl.LINES;
 }
 

@@ -128,9 +128,9 @@ GlobWeb.TileManager.prototype.removePostRenderer = function(renderer)
 	var rendererIndex = this.postRenderers.indexOf(renderer);
 	if ( rendererIndex != -1 )
 	{
-		// Remove the renderer from the tile
-		if ( renderer.cleanup )
-			this.visitTiles( function(tile) { renderer.cleanup(tile); } );
+		// Remove the renderer from all the tiles if it has a cleanupTile method
+		if ( renderer.cleanupTile )
+			this.visitTiles( function(tile) { renderer.cleanupTile(tile); } );
 			
 		// Remove renderer from the list
 		this.postRenderers.splice( rendererIndex, 1 );

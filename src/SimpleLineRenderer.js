@@ -60,7 +60,7 @@ GlobWeb.SimpleLineRenderer = function(tileManager)
 /**
  *	Add line shape to renderer
  */
-GlobWeb.SimpleLineRenderer.prototype.addGeometry = function(geometry, style){
+GlobWeb.SimpleLineRenderer.prototype.addGeometry = function(geometry, layer, style){
 	
 	var gl = this.renderContext.gl;
 	
@@ -69,7 +69,8 @@ GlobWeb.SimpleLineRenderer.prototype.addGeometry = function(geometry, style){
 		geometry : geometry,
 		vertexBuffer : gl.createBuffer(),
 		indexBuffer : gl.createBuffer(),
-		style : style
+		style : style,
+		layer: layer
 	}
 	
 	switch ( geometry.type )
@@ -148,7 +149,7 @@ GlobWeb.SimpleLineRenderer.prototype.buildVertices = function( renderable, coord
 /**
  * 	Remove line shape from renderer
  */
-GlobWeb.SimpleLineRenderer.prototype.removeGeometry = function(geometry,style){
+GlobWeb.SimpleLineRenderer.prototype.removeGeometry = function(geometry){
 	
 	for ( var i = 0; i<this.renderables.length; i++ )
 	{
@@ -181,15 +182,21 @@ GlobWeb.SimpleLineRenderer.prototype.render = function(){
 	
 	for ( var n = 0; n < this.renderables.length; n++ )
 	{
+		var renderable = this.renderables[n];
+		
+		if ( !renderable.layer._visible
+			|| renderable.layer._opacity <= 0.0 )
+			continue;
+			
 		// opacity HACK
-		gl.uniform4f(this.program.uniforms["color"], this.renderables[n].style.strokeColor[0] , this.renderables[n].style.strokeColor[1], this.renderables[n].style.strokeColor[2], this.renderables[n].style.opacity / 2.);
+		gl.uniform4f(this.program.uniforms["color"], renderable.style.strokeColor[0] , renderable.style.strokeColor[1], renderable.style.strokeColor[2], renderable.layer._opacity / 2.);
 		
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.renderables[n].vertexBuffer);
-		gl.vertexAttribPointer(this.program.attributes['vertex'], this.renderables[n].vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
+		gl.vertexAttribPointer(this.program.attributes['vertex'], renderable.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 		
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.renderables[n].indexBuffer);
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.indexBuffer);
 		
-		gl.drawElements( gl.LINES, this.renderables[n].indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+		gl.drawElements( gl.LINES, renderable.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 	}
 	
 	gl.enable(gl.DEPTH_TEST);

@@ -41,7 +41,7 @@ GlobWeb.VectorRendererManager = function(globe)
 
 /** 
 	A global array that contains a factory for each vector renderer
-	A factory is just two function.
+	A factory is just two function :
 	@see GlobWeb.VectorRendererManager.registerRenderer
  */
 GlobWeb.VectorRendererManager.globalFactories = [];
@@ -63,9 +63,9 @@ GlobWeb.VectorRendererManager.registerRenderer = function(factory)
 /**************************************************************************************************************/
 
 /** 
-	Add a feature to renderers
+	Add a geometry to renderers
  */
-GlobWeb.VectorRendererManager.prototype.addGeometry = function(geometry,style)
+GlobWeb.VectorRendererManager.prototype.addGeometry = function(geometry,layer,style)
 {
 	var type = geometry['type'];
 	for ( var i = 0; i < this.factories.length; i++ )
@@ -78,7 +78,7 @@ GlobWeb.VectorRendererManager.prototype.addGeometry = function(geometry,style)
 				factory.instance = factory.creator(this.globe);
 				this.globe.tileManager.addPostRenderer(factory.instance);
 			}
-			factory.instance.addGeometry(geometry,style);
+			factory.instance.addGeometry(geometry,layer,style);
 		}
 	}
 }
@@ -86,17 +86,16 @@ GlobWeb.VectorRendererManager.prototype.addGeometry = function(geometry,style)
 /**************************************************************************************************************/
 
 /** 
-	Remove a feature from renderers
+	Remove a geometry from renderers
  */
-GlobWeb.VectorRendererManager.prototype.removeGeometry = function(geometry,style)
+GlobWeb.VectorRendererManager.prototype.removeGeometry = function(geometry,layer)
 {
-	var type = geometry['type'];
 	for ( var i = 0; i < this.factories.length; i++ )
 	{
 		var factory = this.factories[i];
-		if ( factory.instance && factory.canApply(type,style) )
+		if ( factory.instance )
 		{
-			factory.instance.removeGeometry(geometry,style);
+			factory.instance.removeGeometry(geometry,layer);
 		}
 	}
 }

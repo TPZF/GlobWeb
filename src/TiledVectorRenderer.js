@@ -69,17 +69,17 @@ GlobWeb.TiledVectorRenderer = function(tileManager)
 /**
 	Get or create a bucket to store a feature with the given style
  */
-GlobWeb.TiledVectorRenderer.prototype.getOrCreateBucket = function( style )
+GlobWeb.TiledVectorRenderer.prototype.getOrCreateBucket = function( layer, style )
 {
 	for ( var i = 0; i < this.buckets.length; i++ )
 	{
-		if ( this.styleEquals(style, this.buckets[i].style ) )
+		if ( this.buckets[i].layer == layer && this.styleEquals(style, this.buckets[i].style ) )
 		{
 			return this.buckets[i];
 		}
 	}
 	
-	var bucket = { style: style, geometries: [] };
+	var bucket = { layer: layer, style: style, geometries: [] };
 	this.buckets.push( bucket );
 	return bucket;
 }
@@ -89,14 +89,14 @@ GlobWeb.TiledVectorRenderer.prototype.getOrCreateBucket = function( style )
 /**
 	Get or create a renderable for a tile
  */
-GlobWeb.TiledVectorRenderer.prototype.findRenderable = function( style, tile )
+GlobWeb.TiledVectorRenderer.prototype.findRenderable = function( bucket, tile )
 {
 	if ( tile.extension[this.id] )
 	{
 		var renderables = tile.extension[this.id].renderables;
 		for ( var i = 0; i < renderables.length; i++ )
 		{
-			if ( renderables[i].style == style )
+			if ( renderables[i].bucket == bucket )
 			{
 				return renderables[i];
 			}
@@ -111,26 +111,17 @@ GlobWeb.TiledVectorRenderer.prototype.findRenderable = function( style, tile )
 /**
 	Remove a geometry from the tile
  */
-GlobWeb.TiledVectorRenderer.prototype.removeGeometryFromTile = function( style, geometry, tile )
+GlobWeb.TiledVectorRenderer.prototype.removeGeometryFromTile = function( bucket, geometry, tile )
 {
-	if ( tile.extension[this.id] )
+	var renderable = this.findRenderable( bucket, tile );
+	if ( renderable && renderable.removeGeometry( geometry ) && tile.children )
 	{
-		var renderables = tile.extension[this.id].renderables;
-		for ( var i = 0; i < renderables.length; i++ )
+		// Remove the geometry from loaded children
+		for ( var i = 0; i < 4; i++ )
 		{
-			if ( renderables[i].style == style )
+			if ( tile.children[i].state == GlobWeb.Tile.State.LOADED )
 			{
-				if ( renderables[i].removeGeometry( geometry ) && tile.children )
-				{
-					// Remove the geometry from loaded children
-					for ( var i = 0; i < 4; i++ )
-					{
-						if ( tile.children[i].state == GlobWeb.Tile.State.LOADED )
-						{
-							this.removeGeometryFromTile( style, geometry, tile.children[i] );
-						}
-					}
-				}
+				this.removeGeometryFromTile( bucket, geometry, tile.children[i] );
 			}
 		}
 	}
@@ -141,27 +132,32 @@ GlobWeb.TiledVectorRenderer.prototype.removeGeometryFromTile = function( style, 
 /**
 	Remove a geometry from the renderer
  */
-GlobWeb.TiledVectorRenderer.prototype.removeGeometry = function( geometry, style )
+GlobWeb.TiledVectorRenderer.prototype.removeGeometry = function( geometry, layer )
 {
-	var rendererStyle = null;
+	var foundBucket = null;
 	
 	// Remove geometry from buckets
-	for ( var i = 0; i < this.buckets.length; i++ )
+	for ( var i = 0; i < this.buckets.length && !foundBucket; i++ )
 	{
-		var index = this.buckets[i].geometries.indexOf( geometry );
-		if ( index != -1 )
+		var bucket = this.buckets[i];
+		if ( bucket.layer == layer ) 
 		{
-			rendererStyle = this.buckets[i].style;
-			this.buckets[i].geometries.splice( index, 1 );
+			var index = bucket.geometries.indexOf( geometry );
+			if ( index != -1 )
+			{
+				bucket = this.buckets[i];
+				bucket.geometries.splice( index, 1 );
+				foundBucket = bucket;
+			}
 		}
 	}
 	
-	// Remove geometry using style
-	if ( rendererStyle )
+	// Remove geometry 
+	if ( foundBucket )
 	{
 		for ( var i = 0; i < this.tileManager.level0Tiles.length; i++ )
 		{
-			this.removeGeometryFromTile( rendererStyle, geometry, this.tileManager.level0Tiles[i] );
+			this.removeGeometryFromTile( foundBucket, geometry, this.tileManager.level0Tiles[i] );
 		}
 	}
 }
@@ -169,9 +165,10 @@ GlobWeb.TiledVectorRenderer.prototype.removeGeometry = function( geometry, style
 /**************************************************************************************************************/
 
 /**
-	Get or create a style
+	Clean-up a tile
+	TODO : the method is only used by TileManager.removePostRenderer, maybe remove it, TileManager can use directly the extension id.
  */
-GlobWeb.TiledVectorRenderer.prototype.cleanup = function( tile )
+GlobWeb.TiledVectorRenderer.prototype.cleanupTile = function( tile )
 {
 	if ( tile.extension[this.id] )
 	{
@@ -186,16 +183,16 @@ GlobWeb.TiledVectorRenderer.prototype.cleanup = function( tile )
 	Add a geometry to the renderer.
 	Public method to add geometry to the renderer
  */
-GlobWeb.TiledVectorRenderer.prototype.addGeometry = function( geometry, style )
+GlobWeb.TiledVectorRenderer.prototype.addGeometry = function( geometry, layer, style )
 {
-	var bucket = this.getOrCreateBucket( style );
+	var bucket = this.getOrCreateBucket( layer, style );
 	bucket.geometries.push( geometry );
 	
 	for ( var i = 0; i < this.tileManager.level0Tiles.length; i++ )
 	{
 		var tile = this.tileManager.level0Tiles[i];
 		if ( tile.state == GlobWeb.Tile.State.LOADED )
-			this.addGeometryToTile( bucket.style, geometry, tile );
+			this.addGeometryToTile( bucket, geometry, tile );
 	}
 }
 
@@ -205,17 +202,17 @@ GlobWeb.TiledVectorRenderer.prototype.addGeometry = function( geometry, style )
 	Add a geometry to the given tile.
 	The method is recursive, it will also add the geometry to children if exists
  */
-GlobWeb.TiledVectorRenderer.prototype.addGeometryToTile = function( style, geometry, tile )
+GlobWeb.TiledVectorRenderer.prototype.addGeometryToTile = function( bucket, geometry, tile )
 {
 	var isNewRenderable = false;
 	
 	// Try to find an existing renderable on the tile
-	var renderable = this.findRenderable( style, tile );
+	var renderable = this.findRenderable( bucket, tile );
 	
 	// If no renderable on the tile, create a new renderable (or reuse an existing one)
 	if ( !renderable )
 	{
-		renderable = new this.renderableConstuctor(style,this.tileManager.renderContext.gl);
+		renderable = new this.renderableConstuctor(bucket,this.tileManager.renderContext.gl);
 		isNewRenderable = true;
 	}
 	
@@ -226,7 +223,7 @@ GlobWeb.TiledVectorRenderer.prototype.addGeometryToTile = function( style, geome
 		{
 			if ( tile.children[i].state == GlobWeb.Tile.State.LOADED )
 			{
-				this.addGeometryToTile( style, geometry, tile.children[i] );
+				this.addGeometryToTile( bucket, geometry, tile.children[i] );
 			}
 		}
 	}
@@ -293,7 +290,7 @@ GlobWeb.TiledVectorRenderer.prototype.generate = function( tile )
 		for ( var i = 0; i < ll; i++ )
 		{
 			var parentRenderable = ls.renderables[i];
-			var renderable = new this.renderableConstuctor(parentRenderable.style,this.tileManager.renderContext.gl);
+			var renderable = new this.renderableConstuctor(parentRenderable.bucket,this.tileManager.renderContext.gl);
 			
 			var parentGeometryInfos = parentRenderable.geometryInfos;
 			for ( var j = 0; j < parentGeometryInfos.length; j++ )
@@ -310,7 +307,7 @@ GlobWeb.TiledVectorRenderer.prototype.generate = function( tile )
 		for ( var i = 0; i < this.buckets.length; i++ )
 		{
 			var bucket = this.buckets[i];
-			var renderable = new this.renderableConstuctor(bucket.style,this.tileManager.renderContext.gl);
+			var renderable = new this.renderableConstuctor(bucket,this.tileManager.renderContext.gl);
 			
 			for ( var j = 0; j < bucket.geometries.length; j++ )
 			{
@@ -357,14 +354,21 @@ GlobWeb.TiledVectorRenderer.prototype.render = function( visibleTiles )
 			for (var j=0; j < renderables.length; j++)
 			{
 				var renderable = renderables[j];
-				if ( renderable.style != currentStyle )
-				{
-					currentStyle = renderable.style;
-					gl.lineWidth( currentStyle.strokeWidth );
-					gl.uniform4f( this.program.uniforms["color"], currentStyle.strokeColor[0], currentStyle.strokeColor[1], currentStyle.strokeColor[2], currentStyle.strokeColor[3] );
- 				}
 				
-				renderables[j].render( this.program.attributes );
+				if ( renderable.bucket.layer._visible )
+				{
+					if ( renderable.bucket.style != currentStyle )
+					{
+						currentStyle = renderable.bucket.style;
+						gl.lineWidth( currentStyle.strokeWidth );
+						gl.uniform4f( this.program.uniforms["color"], currentStyle.strokeColor[0], currentStyle.strokeColor[1], currentStyle.strokeColor[2], 
+							currentStyle.strokeColor[3] * renderable.bucket.layer._opacity );
+							
+						// TODO : manage opacity
+					}
+					
+					renderables[j].render( this.program.attributes );
+				}
 			}
 		}
 		// If the tile is not loaded, but its parent contains some renderable, render them 'clipped' to the child tile to avoid 'glitch' when zooming
@@ -378,14 +382,20 @@ GlobWeb.TiledVectorRenderer.prototype.render = function( visibleTiles )
 			for (var j=0; j < renderables.length; j++)
 			{
 				var renderable = renderables[j];
-				if ( renderable.style != currentStyle )
+				if ( renderable.bucket.layer._visible )
 				{
-					currentStyle = renderable.style;
-					gl.lineWidth( currentStyle.strokeWidth );
-					gl.uniform4f( this.program.uniforms["color"], currentStyle.strokeColor[0], currentStyle.strokeColor[1], currentStyle.strokeColor[2], currentStyle.strokeColor[3] );
- 				}
-				
-				renderables[j].renderChild( this.program.attributes, tile.parentIndex );
+					if ( renderable.bucket.style != currentStyle )
+					{
+						currentStyle = renderable.bucket.style;
+						gl.lineWidth( currentStyle.strokeWidth );
+						gl.uniform4f( this.program.uniforms["color"], currentStyle.strokeColor[0], currentStyle.strokeColor[1], currentStyle.strokeColor[2], 
+							currentStyle.strokeColor[3] * renderable.bucket.layer._opacity );
+							
+						// TODO : manage opacity
+					}
+					
+					renderables[j].renderChild( this.program.attributes, tile.parentIndex );
+				}
 			}
 		
 		}

@@ -155,11 +155,11 @@ GlobWeb.PointRenderer.prototype._buildTextureFromImage = function(bucket,image)
 /*
 	Add a point to the renderer
  */
-GlobWeb.PointRenderer.prototype.addGeometry = function(geometry,style)
+GlobWeb.PointRenderer.prototype.addGeometry = function(geometry,layer,style)
 {
 	if ( style )
 	{
-		var bucket = this.getOrCreateBucket( style );
+		var bucket = this.getOrCreateBucket( layer,style );
 		
 		var posGeo = geometry['coordinates'];
 		var pos3d = GlobWeb.CoordinateSystem.fromGeoTo3D( posGeo );
@@ -179,22 +179,25 @@ GlobWeb.PointRenderer.prototype.addGeometry = function(geometry,style)
 /*
 	Remove a point from renderer
  */
-GlobWeb.PointRenderer.prototype.removeGeometry = function(geometry)
+GlobWeb.PointRenderer.prototype.removeGeometry = function(geometry,layer)
 {
 	for ( var i = 0; i < this.buckets.length; i++ )
 	{
 		var bucket = this.buckets[i];
-		for ( var j = 0; j < bucket.points.length; j++ )
+		if ( bucket.layer == layer )
 		{
-			if ( bucket.points[j].geometry == geometry )
+			for ( var j = 0; j < bucket.points.length; j++ )
 			{
-				bucket.points.splice( j, 1 );
-				
-				if ( bucket.points.length == 0 )
+				if ( bucket.points[j].geometry == geometry )
 				{
-					this.buckets.splice( i, 1 );
+					bucket.points.splice( j, 1 );
+					
+					if ( bucket.points.length == 0 )
+					{
+						this.buckets.splice( i, 1 );
+					}
+					return;
 				}
-				return;
 			}
 		}
 	}
@@ -205,13 +208,13 @@ GlobWeb.PointRenderer.prototype.removeGeometry = function(geometry)
 /*
 	Get or create bucket to render a point
  */
-GlobWeb.PointRenderer.prototype.getOrCreateBucket = function(style)
+GlobWeb.PointRenderer.prototype.getOrCreateBucket = function(layer,style)
 {
 	// Find an existing bucket for the given style, except if label is set, always create a new one
 	for ( var i = 0; i < this.buckets.length; i++ )
 	{
 		var bucket = this.buckets[i];
-		if ( bucket.style.isEqualForPoint(style) )
+		if ( bucket.layer == layer && bucket.style.isEqualForPoint(style) )
 		{
 			return bucket;
 		}
@@ -222,7 +225,8 @@ GlobWeb.PointRenderer.prototype.getOrCreateBucket = function(style)
 	var bucket = {
 		texture: null,
 		points: [],
-		style: style
+		style: style,
+		layer: layer
 	};
 		
 	// Initialize bucket : create the texture	
@@ -296,7 +300,8 @@ GlobWeb.PointRenderer.prototype.render = function()
 	{
 		var bucket = this.buckets[n];
 		
-		if ( bucket.texture == null || bucket.points.length == 0 )
+		if ( bucket.texture == null || bucket.points.length == 0
+			|| !bucket.layer._visible || bucket.layer._opactiy <= 0.0 )
 			continue;
 		
 		// Bind point texture
@@ -328,7 +333,7 @@ GlobWeb.PointRenderer.prototype.render = function()
 				var z = poiVec[2] * scale + worldPoi[2];
 				
 				gl.uniform3f(this.program.uniforms["poiPosition"], x, y, z);
-				gl.uniform1f(this.program.uniforms["alpha"], bucket.style.opacity);
+				gl.uniform1f(this.program.uniforms["alpha"], bucket.layer._opacity);
 				
 				gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 				

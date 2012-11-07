@@ -23,10 +23,10 @@
 /** @constructor
  *	TiledVectorRenderable constructor
  */
-GlobWeb.TiledVectorRenderable = function( style, gl )
+GlobWeb.TiledVectorRenderable = function( bucket, gl )
 {
 	this.gl = gl;
-	this.style = style;
+	this.bucket = bucket;
  	this.vertexBuffer = null;
  	this.indexBuffer = null;
 	this.vertices = [];

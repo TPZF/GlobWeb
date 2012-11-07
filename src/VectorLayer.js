@@ -55,14 +55,11 @@ GlobWeb.VectorLayer.prototype._attach = function( g )
 		this.globe.attributionHandler.addAttribution(this);
 	}
 	
-	if ( this._visible )
+	// Add the feature to renderers
+	for ( var i=0; i < this.features.length; i++ )
 	{
-		for ( var i=0; i < this.features.length; i++ )
-		{
-			this._addFeatureToRenderers( this.features[i] );
-		}
+		this._addFeatureToRenderers( this.features[i] );
 	}
-	
 }
 
 /**************************************************************************************************************/
@@ -72,6 +69,7 @@ GlobWeb.VectorLayer.prototype._attach = function( g )
  */
 GlobWeb.VectorLayer.prototype._detach = function()
 {
+	// Remove feature from renderers
 	for ( var i=0; i < this.features.length; i++ )
 	{
 		this._removeFeatureFromRenderers( this.features[i] );
@@ -131,8 +129,8 @@ GlobWeb.VectorLayer.prototype._addFeatureToRenderers = function( feature )
 	if ( props && props['style'] )
 	{
 		style = props['style'];
-		props['style'].opacity = this.style.opacity;
-		props['style']['rendererHint'] = this.style['rendererHint'];
+		// Renderer hint always taken from the layer
+		style['rendererHint'] = this.style['rendererHint'];
 	}
 
 	// Manage geometry collection
@@ -141,13 +139,13 @@ GlobWeb.VectorLayer.prototype._addFeatureToRenderers = function( feature )
 		var geoms = geometry["geometries"];
 		for ( var i = 0; i < geoms.length; i++ )
 		{
-			this.globe.vectorRendererManager.addGeometry( geoms[i], style );
+			this.globe.vectorRendererManager.addGeometry( geoms[i], this, style );
 		}
 	}
 	else
 	{
 		// Add geometry to renderers
-		this.globe.vectorRendererManager.addGeometry( geometry, style );
+		this.globe.vectorRendererManager.addGeometry( geometry, this, style );
 	}
 }
 
@@ -160,26 +158,18 @@ GlobWeb.VectorLayer.prototype._removeFeatureFromRenderers = function( feature )
 {
 	var geometry = feature['geometry']
 	
-	// Manage style, if undefined try with properties, otherwise use defaultStyle
-	var style = this.style;
-	var props = feature['properties'];
-	if ( props && props['style'] )
-	{
-		style = props['style'];
-	}
-
 	// Manage geometry collection
 	if ( geometry.type == "GeometryCollection" )
 	{
 		var geoms = geometry["geometries"];
 		for ( var i = 0; i < geoms.length; i++ )
 		{
-			this.globe.vectorRendererManager.removeGeometry( geoms[i], style );
+			this.globe.vectorRendererManager.removeGeometry( geoms[i], this );
 		}
 	}
 	else
 	{
-		this.globe.vectorRendererManager.removeGeometry( geometry, style );
+		this.globe.vectorRendererManager.removeGeometry( geometry, this );
 	}
 }
 
@@ -196,11 +186,11 @@ GlobWeb.VectorLayer.prototype.addFeature = function( feature )
 		return;
 	this.features.push( feature );
 	
-	// Add features to renderer if attached to globe and visible
-	if ( this.globe && this._visible )
+	// Add features to renderer if layer is attached to globe
+	if ( this.globe )
 	{			
 		this._addFeatureToRenderers(feature);
-		this.globe.renderContext.requestFrame();
+		if (this._visible) this.globe.renderContext.requestFrame();
 	}
 }
 
@@ -216,7 +206,7 @@ GlobWeb.VectorLayer.prototype.removeFeature = function( feature )
 	if ( this.globe )
 	{
 		this._removeFeatureFromRenderers( feature );
-		this.globe.renderContext.requestFrame();
+		if (this._visible) this.globe.renderContext.requestFrame();
 	}
 }
 
@@ -250,59 +240,5 @@ GlobWeb.VectorLayer.prototype.modifyStyle = function(style)
 	{
 		this._addFeatureToRenderers( this.features[i] );
 	}
-}
-
-/**************************************************************************************************************/
-
-/**
-  Set the layer visible
- */
-GlobWeb.VectorLayer.prototype.visible = function( arg )
-{
-	if ( typeof arg == "boolean" && this._visible != arg )
-	{
-		this._visible = arg;
-		if ( this.globe )
-		{
-			if ( arg )
-			{
-				for ( var i=0; i < this.features.length; i++ )
-				{
-					this._addFeatureToRenderers( this.features[i] );
-				}
-			}
-			else
-			{
-				for ( var i=0; i < this.features.length; i++ )
-				{
-					this._removeFeatureFromRenderers( this.features[i] );
-				}
-			}
-			this.globe.renderContext.requestFrame();
-		}
-	}
-	
-	return this._visible;
-}
-
-/**************************************************************************************************************/
-
-/**
-  Set the opacity of the vector layer
-  @param arg Argument of opacity defined in the interval [0, 1]
- */
-GlobWeb.VectorLayer.prototype.opacity = function( arg )
-{	
-	if( typeof arg == "number" )
-	{
-		this.style.opacity = arg;
-		for ( var i=0; i<this.features.length; i++ )
-		{
-			this._removeFeatureFromRenderers( this.features[i] );
-			this._addFeatureToRenderers( this.features[i] );
-		}
-	}
-	
-	return this._opacity;
 }
 
