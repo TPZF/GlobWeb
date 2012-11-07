@@ -32,8 +32,12 @@ GlobWeb.SimplePolygonRenderer = function(tileManager)
 	
 	this.renderables = [];
 	
+	// Texture cache management : avoid flickering when modifiying style
+	// TODO : maybe put this in GlobWeb, can be used by other renderers
+	this.textureCache = {};
+	this.texturesToPurge = [];
+	
 	// Parameters used to implement ONE shader for color xor texture rendering
-	this.whiteColor = new Float32Array([1.,1.,1.,1.]);
 	this.whiteTexture = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, this.whiteTexture);
 	var whitePixel = new Uint8Array([255, 255, 255, 255]);
@@ -55,18 +59,12 @@ GlobWeb.SimplePolygonRenderer = function(tileManager)
 
 	var fragmentShader = "\
 	precision highp float; \n\
-	\n\
 	uniform vec4 u_color;\n\
-	uniform float alpha;\n\
-	\n\
 	varying vec2 vTextureCoord;\n\
-	\n\
 	uniform sampler2D texture; \n\
-	\n\
 	void main(void)\n\
 	{\n\
-		vec4 color = texture2D(texture, vTextureCoord) * u_color;\n\
-		gl_FragColor = vec4( color.rgb, color.a * alpha );\n\
+		gl_FragColor = texture2D(texture, vTextureCoord) * u_color;\n\
 	}\n\
 	";
 	
@@ -108,7 +106,7 @@ GlobWeb.SimplePolygonRenderer.prototype.addGeometry = function(geometry, layer, 
 		vertexBuffer : gl.createBuffer(),
 		indexBuffer : gl.createBuffer(),
 		texture : null,
-		textured: false
+		textureUrl: ""
 	}
 	
 	// Create texture
@@ -116,20 +114,30 @@ GlobWeb.SimplePolygonRenderer.prototype.addGeometry = function(geometry, layer, 
 	
 	if ( style.fillTextureUrl )
 	{
-		var image = new Image();
-		image.crossOrigin = '';
-		image.onload = function () 
+		var cacheTexture = this.textureCache[style.fillTextureUrl];
+		if ( cacheTexture )
 		{
-			renderable.texture = self.renderContext.createNonPowerOfTwoTextureFromImage(image);
+			renderable.texture = cacheTexture.texture;
+			cacheTexture.count++;
 		}
-		
-		image.onerror = function(event)
+		else
 		{
-			console.log("Cannot load " + image.src );
+			var image = new Image();
+			image.crossOrigin = '';
+			image.onload = function () 
+			{
+				renderable.texture = self.renderContext.createNonPowerOfTwoTextureFromImage(image);
+				self.textureCache[style.fillTextureUrl] = { texture: renderable.texture, count: 1 };
+			}
+			
+			image.onerror = function(event)
+			{
+				console.log("Cannot load " + image.src );
+			}
+			
+			image.src = style.fillTextureUrl;
 		}
-		
-		image.src = style.fillTextureUrl;
-		renderable.textured = true;
+		renderable.textureUrl = style.fillTextureUrl;
 	}
 	
 	// Create vertex buffer
@@ -187,8 +195,17 @@ GlobWeb.SimplePolygonRenderer.prototype.removeGeometry = function(geometry,style
 				gl.deleteBuffer(currentRenderable.indexBuffer);
 			if ( currentRenderable.vertexBuffer )
 				gl.deleteBuffer(currentRenderable.vertexBuffer);
+				
+			// The texture is managed in a cache, so do not remove it right now
 			if ( currentRenderable.texture )
-				gl.deleteTexture( currentRenderable.texture );
+			{
+				var cacheTexture = this.textureCache[currentRenderable.textureUrl];
+				cacheTexture.count--;
+				if ( cacheTexture.count <= 0 )
+				{
+					this.texturesToPurge.push(currentRenderable.textureUrl);
+				}
+			}
 
 			currentRenderable.indexBuffer = null;
 			currentRenderable.vertexBuffer = null;
@@ -196,6 +213,7 @@ GlobWeb.SimplePolygonRenderer.prototype.removeGeometry = function(geometry,style
 
 			// Remove from array
 			this.renderables.splice(i, 1);
+			break;
 		}
 	}
 }
@@ -205,9 +223,22 @@ GlobWeb.SimplePolygonRenderer.prototype.removeGeometry = function(geometry,style
 /**
  * 	Render all the polygons
  */
-GlobWeb.SimplePolygonRenderer.prototype.render = function(){
+GlobWeb.SimplePolygonRenderer.prototype.render = function()
+{
 	var renderContext = this.renderContext;
 	var gl = renderContext.gl;
+	
+	// Purge textures from the cache if nay
+	for ( var i = 0; i < this.texturesToPurge.length; i++ )
+	{
+		var cacheTexture = this.textureCache[ this.texturesToPurge[i] ];
+		if ( cacheTexture.count <= 0 )
+		{
+			gl.deleteTexture(cacheTexture.texture);
+			delete this.textureCache[ this.texturesToPurge[i] ];
+		}
+	}
+	this.texturesToPurge.length = 0;
 
 	gl.disable(gl.DEPTH_TEST);
 	gl.enable(gl.BLEND);
@@ -233,21 +264,21 @@ GlobWeb.SimplePolygonRenderer.prototype.render = function(){
 			|| renderable.layer._opacity <= 0.0 )
 			continue;
 			
-		if ( renderable.textured )
+		if ( renderable.textureUrl )
 		{
-			if ( renderable.texture == null )
-				continue;
-			gl.uniform4f(this.program.uniforms["u_color"], this.whiteColor[0], this.whiteColor[1], this.whiteColor[2], this.whiteColor[3]);  // use whiteColor
-			gl.bindTexture(gl.TEXTURE_2D, renderable.texture); // use texture of renderable
+			gl.uniform4f(this.program.uniforms["u_color"], 1.0, 1.0, 1.0, renderable.layer._opacity);  // use whiteColor
 		}
 		else
 		{
-			gl.uniform4f(this.program.uniforms["u_color"], renderable.style.fillColor[0], renderable.style.fillColor[1], renderable.style.fillColor[2], renderable.style.fillColor[3]);  // use fillColor
-			gl.bindTexture(gl.TEXTURE_2D, this.whiteTexture);  // use white texture
+			gl.uniform4fv(this.program.uniforms["u_color"], renderable.style.fillColor[0], renderable.style.fillColor[1], renderable.style.fillColor[2], 
+				renderable.style.fillColor[3] * renderable.layer._opacity);  // use fillColor
 		}
 		
-		gl.uniform1f(this.program.uniforms["alpha"], renderable.layer._opacity);
-		
+		if ( renderable.texture ) 
+			gl.bindTexture(gl.TEXTURE_2D, renderable.texture); // use texture of renderable
+		else
+			gl.bindTexture(gl.TEXTURE_2D, this.whiteTexture);  // use white texture
+				
 		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
 		gl.vertexAttribPointer(this.program.attributes['vertex'], renderable.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 		
