@@ -202,7 +202,7 @@ GlobWeb.TileManager.prototype.visitTiles = function( callback )
 	// Store the tiles to process in an array, first copy level0 tiles
 	var tilesToProcess = this.level0Tiles.concat([]);
 	
-	for (var i = 0; i < tilesToProcess.length; i++)
+	while( tilesToProcess.length > 0 )
 	{
 		// Retreive the first tile and remove it from the array
 		var tile = tilesToProcess.shift();
