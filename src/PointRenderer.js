@@ -115,11 +115,12 @@ GlobWeb.PointRenderer = function(tileManager)
 	varying vec2 texCoord; \n\
 	uniform sampler2D texture; \n\
 	uniform float alpha; \n\
+	uniform vec3 color; \n\
 	\n\
 	void main(void) \n\
 	{ \n\
 		vec4 textureColor = texture2D(texture, texCoord); \n\
-		gl_FragColor = vec4(textureColor.rgb, textureColor.a * alpha); \n\
+		gl_FragColor = vec4(textureColor.rgb * color, textureColor.a * alpha); \n\
 		if (gl_FragColor.a <= 0.0) discard; \n\
 	} \n\
 	";
@@ -168,7 +169,8 @@ GlobWeb.PointRenderer.prototype.addGeometry = function(geometry,layer,style)
 		
 		var pointRenderData = { pos3d: pos3d,
 							vertical: vertical,
-							geometry: geometry };
+							geometry: geometry,
+							color: style.fillColor };
 
 		bucket.points.push( pointRenderData );
 	}
@@ -334,6 +336,7 @@ GlobWeb.PointRenderer.prototype.render = function()
 				
 				gl.uniform3f(this.program.uniforms["poiPosition"], x, y, z);
 				gl.uniform1f(this.program.uniforms["alpha"], bucket.layer._opacity);
+				gl.uniform3f(this.program.uniforms["color"], bucket.points[i].color[0], bucket.points[i].color[1], bucket.points[i].color[2] );
 				
 				gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 				
