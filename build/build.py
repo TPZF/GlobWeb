@@ -3,7 +3,7 @@ import os
 import os.path
 import sys
 
-advanced = True
+advanced = False
 
 commonFiles= [
 		"glMatrix.js",
@@ -20,7 +20,7 @@ commonFiles= [
 		"CoordinateSystem.js",
 		"Frustum.js",
 		"RenderContext.js",
-		"Mesh.js",
+		#"Mesh.js",
 		"Program.js",
 		"TileIndexBuffer.js",
 		"Tile.js",
@@ -38,17 +38,17 @@ commonFiles= [
 	]
 		
 globFiles = [
-		"PositionAttitudeAnimation.js", 
+		#"PositionAttitudeAnimation.js", 
 		"Navigation.js", 
 		"AtmosphereLayer.js",
 		"GeoTiling.js", 
 		"MercatorTiling.js",
 		"WMSLayer.js",
-		"WMSElevationLayer.js",
+		#"WMSElevationLayer.js",
 		"WCSElevationLayer.js",
 		"BingLayer.js",
 		"OSMLayer.js", 
-		"BasicElevationLayer.js", 
+		#"BasicElevationLayer.js", 
 	]
 
 vectorFiles = [

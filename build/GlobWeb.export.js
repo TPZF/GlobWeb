@@ -3,14 +3,15 @@ window['GlobWeb']['Globe'] = GlobWeb.Globe;
 window['GlobWeb']['Navigation'] = GlobWeb.Navigation;
 window['GlobWeb']['Stats'] = GlobWeb.Stats;
 window['GlobWeb']['KMLParser'] = GlobWeb.KMLParser;
+window['GlobWeb']['FeatureStyle'] = GlobWeb.FeatureStyle;
 
 // Layers
 window['GlobWeb']['WMSLayer'] = GlobWeb.WMSLayer;
-window['GlobWeb']['WMSElevationLayer'] = GlobWeb.WMSElevationLayer;
+//window['GlobWeb']['WMSElevationLayer'] = GlobWeb.WMSElevationLayer;
 window['GlobWeb']['WCSElevationLayer'] = GlobWeb.WCSElevationLayer;
 window['GlobWeb']['OSMLayer'] = GlobWeb.OSMLayer;
 window['GlobWeb']['BingLayer'] = GlobWeb.BingLayer;
-window['GlobWeb']['BasicElevationLayer'] = GlobWeb.BasicElevationLayer;
+//window['GlobWeb']['BasicElevationLayer'] = GlobWeb.BasicElevationLayer;
 window['GlobWeb']['VectorLayer'] = GlobWeb.VectorLayer;
 window['GlobWeb']['GroundOverlayLayer'] = GlobWeb.GroundOverlayLayer;
 
@@ -27,17 +28,22 @@ GlobWeb.Globe.prototype['getViewportGeoBound'] = GlobWeb.Globe.prototype.getView
 GlobWeb.Globe.prototype['setBaseImagery'] = GlobWeb.Globe.prototype.setBaseImagery;
 GlobWeb.Globe.prototype['setBaseElevation'] = GlobWeb.Globe.prototype.setBaseElevation;
 GlobWeb.Globe.prototype['refresh'] = GlobWeb.Globe.prototype.refresh;
+GlobWeb.Globe.prototype['subscribe'] = GlobWeb.Globe.prototype.subscribe;
+GlobWeb.Globe.prototype['unsubscribe'] = GlobWeb.Globe.prototype.unsubscribe;
+
+// Layer exports
+GlobWeb.BaseLayer.prototype['visible'] = GlobWeb.BaseLayer.prototype.visible;
+GlobWeb.BaseLayer.prototype['opacity'] = GlobWeb.BaseLayer.prototype.opacity;
 
 // VectorLayer exports
 GlobWeb.VectorLayer.prototype['addFeatureCollection'] = GlobWeb.VectorLayer.prototype.addFeatureCollection;
 GlobWeb.VectorLayer.prototype['addFeature'] = GlobWeb.VectorLayer.prototype.addFeature;
 GlobWeb.VectorLayer.prototype['modifyFeatureStyle'] = GlobWeb.VectorLayer.prototype.modifyFeatureStyle;
 GlobWeb.VectorLayer.prototype['removeFeature'] = GlobWeb.VectorLayer.prototype.removeFeature;
+GlobWeb.VectorLayer.prototype['removeAllFeatures'] = GlobWeb.VectorLayer.prototype.removeAllFeatures;
 
 // Navigation exports
 GlobWeb.Navigation.prototype['zoomTo'] = GlobWeb.Navigation.prototype.zoomTo;
-GlobWeb.Navigation.prototype['subscribe'] = GlobWeb.Navigation.prototype.subscribe;
-GlobWeb.Navigation.prototype['unsubscribe'] = GlobWeb.Navigation.prototype.unsubscribe;
 
 // Path animation exports
 window['GlobWeb']['PathAnimation'] = GlobWeb.PathAnimation;
