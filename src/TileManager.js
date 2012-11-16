@@ -298,7 +298,10 @@ GlobWeb.TileManager.prototype.launchRequest = function(tile)
 				}
 			}
 		}
-		this.globe.publish("level0TilesLoaded");
+		if ( this.level0TilesLoaded )
+		{
+			this.globe.publish("level0TilesLoaded");
+		}
 	}
 	
 	// Traverse tiles
