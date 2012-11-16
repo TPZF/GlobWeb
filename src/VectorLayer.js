@@ -213,6 +213,30 @@ GlobWeb.VectorLayer.prototype.removeFeature = function( feature )
 /**************************************************************************************************************/
 
 /** @export
+  Remove all feature from the layer
+*/
+GlobWeb.VectorLayer.prototype.removeAllFeatures = function()
+{
+	// Remove feature from renderers
+	if ( this.globe )
+	{
+		for ( var i = 0; i < this.features.length; i++ )
+		{
+			this._removeFeatureFromRenderers( feature );
+		}
+	}
+	this.features.length = 0;
+	
+	// Refresh rendering if needed
+	if ( this.globe && this._visible )
+	{
+		this.globe.renderContext.requestFrame();
+	}
+}
+
+/**************************************************************************************************************/
+
+/** @export
   Modify feature style
 */
 GlobWeb.VectorLayer.prototype.modifyFeatureStyle = function( feature, style )
