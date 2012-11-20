@@ -47,8 +47,8 @@ GlobWeb.GeoTiling.prototype.generateLevelZeroTiles = function(config)
 	{
 		for (var i = 0; i < this.level0NumTilesX; i++)
 		{
-			var geoBound = new GlobWeb.GeoBound( -180 + i * lonStep, -90 + j * latStep, -180 + (i+1) * lonStep, -90 + (j+1) * latStep  );
-			var tile = new GlobWeb.GeoTile(geoBound)
+			var geoBound = new GlobWeb.GeoBound( -180 + i * lonStep, 90 - (j+1) * latStep, -180 + (i+1) * lonStep, 90 - j * latStep  );
+			var tile = new GlobWeb.GeoTile(geoBound, 0, i, j)
 			tile.config = config;
 			level0Tiles.push( tile );
 		}
@@ -65,7 +65,7 @@ GlobWeb.GeoTiling.prototype.generateLevelZeroTiles = function(config)
 GlobWeb.GeoTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 {	
 	var i = Math.floor( (lon + 180) * this.level0NumTilesX / 360 );
- 	var j = Math.floor( (lat + 90) * this.level0NumTilesY / 180 );
+ 	var j = Math.floor( (90 - lat) * this.level0NumTilesY / 180 );
 	return j * this.level0NumTilesX + i;
 
 }
@@ -75,12 +75,15 @@ GlobWeb.GeoTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 /** @constructor
 	Tile constructor
  */
-GlobWeb.GeoTile = function( geoBound )
+GlobWeb.GeoTile = function( geoBound, level, x, y )
 {
     // Call ancestor constructor
     GlobWeb.Tile.prototype.constructor.call(this);
 	
 	this.geoBound = geoBound;
+	this.level = level;
+	this.x = x;
+	this.y = y;
 }
 
 /**************************************************************************************************************/
@@ -126,10 +129,12 @@ GlobWeb.GeoTile.prototype.createChildren = function()
 	var lonCenter = ( this.geoBound.east + this.geoBound.west ) * 0.5;
 	var latCenter = ( this.geoBound.north + this.geoBound.south ) * 0.5;
 	
-	var tile00 = new GlobWeb.GeoTile( new GlobWeb.GeoBound( this.geoBound.west, latCenter, lonCenter, this.geoBound.north ) );
-	var tile10 = new GlobWeb.GeoTile( new GlobWeb.GeoBound( lonCenter, latCenter,  this.geoBound.east, this.geoBound.north ) );
-	var tile01 = new GlobWeb.GeoTile( new GlobWeb.GeoBound( this.geoBound.west, this.geoBound.south, lonCenter, latCenter ) );
-	var tile11 = new GlobWeb.GeoTile( new GlobWeb.GeoBound( lonCenter, this.geoBound.south, this.geoBound.east, latCenter ) );
+	var level = this.level+1;
+	
+	var tile00 = new GlobWeb.GeoTile( new GlobWeb.GeoBound( this.geoBound.west, latCenter, lonCenter, this.geoBound.north), level, 2*this.x, 2*this.y );
+	var tile10 = new GlobWeb.GeoTile( new GlobWeb.GeoBound( lonCenter, latCenter,  this.geoBound.east, this.geoBound.north), level, 2*this.x+1, 2*this.y );
+	var tile01 = new GlobWeb.GeoTile( new GlobWeb.GeoBound( this.geoBound.west, this.geoBound.south, lonCenter, latCenter), level, 2*this.x, 2*this.y+1 );
+	var tile11 = new GlobWeb.GeoTile( new GlobWeb.GeoBound( lonCenter, this.geoBound.south, this.geoBound.east, latCenter), level, 2*this.x+1, 2*this.y+1  );
 	
 	tile00.initFromParent( this, 0, 0 );
 	tile10.initFromParent( this, 1, 0 );

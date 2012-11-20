@@ -85,6 +85,7 @@ var GlobWeb = GlobWeb || {};
 		"TileManager.js",
 		"RasterLayer.js",
 		"WMSLayer.js",
+		"WMTSLayer.js",
 		"WCSElevationLayer.js",
 		"OSMLayer.js",
 		//"BasicElevationLayer.js",

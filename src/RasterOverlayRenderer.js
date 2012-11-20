@@ -66,6 +66,8 @@ GlobWeb.RasterOverlayRenderer = function(tileManager)
 	this.imageRequests = [];
 	this.frameNumber = 0;
 	
+	
+	var self = this;
 	for ( var i = 0; i < 2; i++ ) {
 		var image = new Image();
 		image.renderable = null;
@@ -78,6 +80,7 @@ GlobWeb.RasterOverlayRenderer = function(tileManager)
 			this.renderable.request = null;
 			this.renderable.requestFinished = true;
 			this.renderable = null;
+			self.tileManager.renderContext.requestFrame();
 		};
 		image.onerror = function()
 		{

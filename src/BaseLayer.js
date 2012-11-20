@@ -70,7 +70,10 @@ GlobWeb.BaseLayer.prototype._detach = function()
 GlobWeb.BaseLayer.prototype.visible = function( arg )
 {
 	if ( typeof arg == "boolean" )
+	{
 		this._visible = arg;
+		if ( this.globe ) this.globe.renderContext.requestFrame();
+	}
 	return this._visible;
 }
 
@@ -82,6 +85,9 @@ GlobWeb.BaseLayer.prototype.visible = function( arg )
 GlobWeb.BaseLayer.prototype.opacity = function( arg )
 {
 	if ( typeof arg == "number" )
+	{
 		this._opacity = arg;
+		if ( this.globe ) this.globe.renderContext.requestFrame();
+	}
 	return this._opacity;
 }

@@ -44,6 +44,7 @@ globFiles = [
 		"GeoTiling.js", 
 		"MercatorTiling.js",
 		"WMSLayer.js",
+		"WMTSLayer.js",
 		#"WMSElevationLayer.js",
 		"WCSElevationLayer.js",
 		"BingLayer.js",
