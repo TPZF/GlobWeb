@@ -375,13 +375,14 @@ GlobWeb.Globe.prototype.unsubscribe = function(name,callback)
 	Publish a navigation event
 	
 	@param name Event name
+	@param context Context
 */
-GlobWeb.Globe.prototype.publish = function(name)
+GlobWeb.Globe.prototype.publish = function(name,context)
 {
 	if ( this.callbacks[name] ) {
 		var cbs = this.callbacks[name];
 		for ( var i = 0; i < cbs.length; i++ ) {
-			cbs[i]();
+			cbs[i](context);
 		}
 	}
 }
