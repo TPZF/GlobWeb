@@ -208,7 +208,7 @@ GlobWeb.KMLParser = (function()
 			switch ( child.nodeName )
 			{
 			case "color":
-				style.strokeColor = GlobWeb.FeatureStyle.hexToColor( child.childNodes[0].nodeValue );
+				style.strokeColor = GlobWeb.FeatureStyle.fromStringToColor( child.childNodes[0].nodeValue );
 				break;
 			case "width":
 				style.strokeWidth = parseFloat( child.childNodes[0].nodeValue );
@@ -229,7 +229,7 @@ GlobWeb.KMLParser = (function()
 			switch ( child.nodeName )
 			{
 			case "color":
-				//style.strokeColor = GlobWeb.FeatureStyle.hexToColor( child.childNodes[0].nodeValue );
+				//style.strokeColor = GlobWeb.FeatureStyle.fromStringToColor( child.childNodes[0].nodeValue );
 				break;
 			case "Icon":
 				if ( child.firstElementChild )
@@ -253,7 +253,7 @@ GlobWeb.KMLParser = (function()
 			switch ( child.nodeName )
 			{
 			case "color":
-				var labelColor = GlobWeb.FeatureStyle.hexToColor( child.textContent.trim() );
+				var labelColor = GlobWeb.FeatureStyle.fromStringToColor( child.textContent.trim() );
 				if ( labelColor[3] == 0 )
 				{
 					style.label = null;

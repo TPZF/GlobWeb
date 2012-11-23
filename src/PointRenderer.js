@@ -44,7 +44,7 @@ GlobWeb.Text = (function()
 		if (!fillColor)
 			fillColor = '#fff';
 		else if ( fillColor instanceof Array )
-			fillColor = GlobWeb.FeatureStyle.colorToHex(textColor);
+			fillColor = GlobWeb.FeatureStyle.fromColorToString(textColor);
 		
 		var ctx = canvas2d.getContext("2d");
 		ctx.clearRect(0,0,canvas2d.width,canvas2d.height);
