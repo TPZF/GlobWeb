@@ -1,0 +1,97 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/***************************************
+<span class='line'>  2</span>  * Copyright 2011, 2012 GlobWeb contributors.
+<span class='line'>  3</span>  *
+<span class='line'>  4</span>  * This file is part of GlobWeb.
+<span class='line'>  5</span>  *
+<span class='line'>  6</span>  * GlobWeb is free software: you can redistribute it and/or modify
+<span class='line'>  7</span>  * it under the terms of the GNU Lesser General Public License as published by
+<span class='line'>  8</span>  * the Free Software Foundation, version 3 of the License, or
+<span class='line'>  9</span>  * (at your option) any later version.
+<span class='line'> 10</span>  *
+<span class='line'> 11</span>  * GlobWeb is distributed in the hope that it will be useful,
+<span class='line'> 12</span>  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class='line'> 13</span>  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+<span class='line'> 14</span>  * GNU Lesser General Public License for more details.
+<span class='line'> 15</span>  *
+<span class='line'> 16</span>  * You should have received a copy of the GNU General Public License
+<span class='line'> 17</span>  * along with GlobWeb. If not, see &lt;http://www.gnu.org/licenses/>.
+<span class='line'> 18</span>  ***************************************/</span><span class="WHIT">
+<span class='line'> 19</span> 
+<span class='line'> 20</span> </span><span class="COMM">/**************************************************************************************************************/</span><span class="WHIT">
+<span class='line'> 21</span> 
+<span class='line'> 22</span> 
+<span class='line'> 23</span> </span><span class="COMM">/** @constructor
+<span class='line'> 24</span> 	FeatureOverlayManager constructor
+<span class='line'> 25</span>  */</span><span class="WHIT">
+<span class='line'> 26</span> </span><span class="NAME">GlobWeb.FeatureOverlayManager</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'> 27</span> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 28</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">gl</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">GlobWeb.RenderContext.gl</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 29</span> </span><span class="WHIT">	</span><span class="WHIT">
+<span class='line'> 30</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">rttFramebuffer</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">gl.createFramebuffer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 31</span> </span><span class="WHIT">    </span><span class="NAME">gl.bindFramebuffer</span><span class="PUNC">(</span><span class="NAME">gl.FRAMEBUFFER</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">rttFramebuffer</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 32</span> </span><span class="WHIT">	</span><span class="NAME">rttFramebuffer.width</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">512</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 33</span> </span><span class="WHIT">    </span><span class="NAME">rttFramebuffer.height</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NUMB">512</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 34</span> </span><span class="WHIT">	</span><span class="WHIT">
+<span class='line'> 35</span> </span><span class="WHIT">    </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">renderbuffer</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">gl.createRenderbuffer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 36</span> </span><span class="WHIT">    </span><span class="NAME">gl.bindRenderbuffer</span><span class="PUNC">(</span><span class="NAME">gl.RENDERBUFFER</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">renderbuffer</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 37</span> </span><span class="WHIT">    </span><span class="NAME">gl.renderbufferStorage</span><span class="PUNC">(</span><span class="NAME">gl.RENDERBUFFER</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">gl.RGB5_A1</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">rttFramebuffer.width</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">rttFramebuffer.height</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 38</span> </span><span class="WHIT">		</span><span class="WHIT">
+<span class='line'> 39</span> </span><span class="WHIT">	</span><span class="NAME">gl.framebufferRenderbuffer</span><span class="PUNC">(</span><span class="NAME">gl.FRAMEBUFFER</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">gl.COLOR_ATTACHMENT0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">gl.RENDERBUFFER</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">renderbuffer</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 40</span> 
+<span class='line'> 41</span> </span><span class="WHIT">	</span><span class="NAME">gl.bindFramebuffer</span><span class="PUNC">(</span><span class="NAME">gl.FRAMEBUFFER</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 42</span> </span><span class="WHIT">	</span><span class="WHIT">
+<span class='line'> 43</span> </span><span class="WHIT">	</span><span class="NAME">this.frameBuffer</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">rttFramebuffer</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 44</span> </span><span class="WHIT">	</span><span class="WHIT">
+<span class='line'> 45</span> </span><span class="WHIT">	</span><span class="NAME">this.lineStringRenderer</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">GlobWeb.LineStringRenderer</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 46</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 47</span> 
+<span class='line'> 48</span> </span><span class="COMM">/**************************************************************************************************************/</span><span class="WHIT">
+<span class='line'> 49</span> 
+<span class='line'> 50</span> </span><span class="COMM">/*
+<span class='line'> 51</span> 	Create an overlay texture
+<span class='line'> 52</span>  */</span><span class="WHIT">
+<span class='line'> 53</span> </span><span class="WHIT"> </span><span class="NAME">GlobWeb.FeatureOverlayManager.prototype.createOverlayTexture</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">extent</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'> 54</span> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 55</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">gl</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">GlobWeb.RenderContext.gl</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 56</span> 
+<span class='line'> 57</span> </span><span class="WHIT">	</span><span class="NAME">gl.bindFramebuffer</span><span class="PUNC">(</span><span class="NAME">gl.FRAMEBUFFER</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.frameBuffer</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 58</span> </span><span class="WHIT">	</span><span class="NAME">gl.clear</span><span class="PUNC">(</span><span class="NAME">gl.COLOR_BUFFER_BIT</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 59</span> </span><span class="WHIT">	</span><span class="WHIT">
+<span class='line'> 60</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">projectionMatrix</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">mat4.create</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 61</span> </span><span class="WHIT">	</span><span class="NAME">mat4.ortho</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">extent</span><span class="PUNC">[</span><span class="NUMB">0</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">extent</span><span class="PUNC">[</span><span class="NUMB">1</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">extent</span><span class="PUNC">[</span><span class="NUMB">2</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">extent</span><span class="PUNC">[</span><span class="NUMB">3</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="PUNC">-</span><span class="NUMB">10</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">10</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">projectionMatrix</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 62</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">viewMatrix</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">mat4.create</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 63</span> </span><span class="WHIT">	</span><span class="NAME">mat4.identity</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">viewMatrix</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 64</span> </span><span class="WHIT">	</span><span class="WHIT">
+<span class='line'> 65</span> </span><span class="WHIT">	</span><span class="NAME">this.lineStringRenderer.render</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">viewMatrix</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">projectionMatrix</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 66</span> 
+<span class='line'> 67</span> </span><span class="WHIT">	</span><span class="COMM">// Create the texture, and upload the image</span><span class="WHIT">
+<span class='line'> 68</span> </span><span class="WHIT">	</span><span class="COMM">//this.texture = GlobWeb.TilePool.createGLTexture(this.image);</span><span class="WHIT">
+<span class='line'> 69</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">texture</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">gl.createTexture</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 70</span> </span><span class="COMM">/*	var image = new Uint8Array(4);
+<span class='line'> 71</span> 	image[0] = 0;
+<span class='line'> 72</span> 	image[1] = 255;
+<span class='line'> 73</span> 	image[2] = 0;
+<span class='line'> 74</span> 	image[3] = 45;*/</span><span class="WHIT">
+<span class='line'> 75</span> </span><span class="WHIT">	</span><span class="NAME">gl.bindTexture</span><span class="PUNC">(</span><span class="NAME">gl.TEXTURE_2D</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">texture</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 76</span> </span><span class="WHIT">	</span><span class="NAME">gl.copyTexImage2D</span><span class="PUNC">(</span><span class="NAME">gl.TEXTURE_2D</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">gl.RGBA</span><span class="PUNC">,</span><span class="NUMB">0</span><span class="PUNC">,</span><span class="NUMB">0</span><span class="PUNC">,</span><span class="NUMB">512</span><span class="PUNC">,</span><span class="NUMB">512</span><span class="PUNC">,</span><span class="NUMB">0</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 77</span> </span><span class="WHIT">	</span><span class="COMM">//gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, image);</span><span class="WHIT">
+<span class='line'> 78</span> </span><span class="WHIT">	</span><span class="NAME">gl.texParameteri</span><span class="PUNC">(</span><span class="NAME">gl.TEXTURE_2D</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">gl.TEXTURE_MAG_FILTER</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">gl.LINEAR</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 79</span> </span><span class="WHIT">	</span><span class="NAME">gl.texParameteri</span><span class="PUNC">(</span><span class="NAME">gl.TEXTURE_2D</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">gl.TEXTURE_MIN_FILTER</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">gl.LINEAR_MIPMAP_LINEAR</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 80</span> </span><span class="WHIT">	</span><span class="NAME">gl.texParameteri</span><span class="PUNC">(</span><span class="NAME">gl.TEXTURE_2D</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">gl.TEXTURE_WRAP_S</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">gl.CLAMP_TO_EDGE</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 81</span> </span><span class="WHIT">	</span><span class="NAME">gl.texParameteri</span><span class="PUNC">(</span><span class="NAME">gl.TEXTURE_2D</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">gl.TEXTURE_WRAP_T</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">gl.CLAMP_TO_EDGE</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 82</span> </span><span class="WHIT">	</span><span class="NAME">gl.generateMipmap</span><span class="PUNC">(</span><span class="NAME">gl.TEXTURE_2D</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 83</span> 
+<span class='line'> 84</span> </span><span class="WHIT">	</span><span class="NAME">gl.bindFramebuffer</span><span class="PUNC">(</span><span class="NAME">gl.FRAMEBUFFER</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="KEYW">null</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 85</span> </span><span class="WHIT">	</span><span class="WHIT">
+<span class='line'> 86</span> </span><span class="WHIT">	</span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">texture</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 87</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 88</span> 
+<span class='line'> 89</span> </span><span class="COMM">/**************************************************************************************************************/</span><span class="WHIT">
+<span class='line'> 90</span> </span></pre></body></html>

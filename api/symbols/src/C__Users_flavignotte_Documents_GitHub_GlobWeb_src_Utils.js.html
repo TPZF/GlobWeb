@@ -1,0 +1,37 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/***************************************
+<span class='line'>  2</span>  * Copyright 2011, 2012 GlobWeb contributors.
+<span class='line'>  3</span>  *
+<span class='line'>  4</span>  * This file is part of GlobWeb.
+<span class='line'>  5</span>  *
+<span class='line'>  6</span>  * GlobWeb is free software: you can redistribute it and/or modify
+<span class='line'>  7</span>  * it under the terms of the GNU Lesser General Public License as published by
+<span class='line'>  8</span>  * the Free Software Foundation, version 3 of the License, or
+<span class='line'>  9</span>  * (at your option) any later version.
+<span class='line'> 10</span>  *
+<span class='line'> 11</span>  * GlobWeb is distributed in the hope that it will be useful,
+<span class='line'> 12</span>  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class='line'> 13</span>  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+<span class='line'> 14</span>  * GNU Lesser General Public License for more details.
+<span class='line'> 15</span>  *
+<span class='line'> 16</span>  * You should have received a copy of the GNU General Public License
+<span class='line'> 17</span>  * along with GlobWeb. If not, see &lt;http://www.gnu.org/licenses/>.
+<span class='line'> 18</span>  ***************************************/</span><span class="WHIT">
+<span class='line'> 19</span> </span><span class="WHIT"> </span><span class="WHIT">
+<span class='line'> 20</span> </span><span class="WHIT"> </span><span class="COMM">/** 
+<span class='line'> 21</span>   * Inherits from an object
+<span class='line'> 22</span>   */</span><span class="WHIT">
+<span class='line'> 23</span> </span><span class="NAME">GlobWeb.inherits</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">base</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">sub</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="WHIT">
+<span class='line'> 24</span> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 25</span> </span><span class="WHIT">	</span><span class="KEYW">function</span><span class="WHIT"> </span><span class="NAME">tempCtor</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 26</span> </span><span class="WHIT">	</span><span class="NAME">tempCtor.prototype</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">base.prototype</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 27</span> </span><span class="WHIT">	</span><span class="NAME">sub.prototype</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">new</span><span class="WHIT"> </span><span class="NAME">tempCtor</span><span class="PUNC">(</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 28</span> </span><span class="WHIT">	</span><span class="NAME">sub.prototype.constructor</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">sub</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 29</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 30</span> </span></pre></body></html>
