@@ -18,6 +18,9 @@ GlobWeb supports the following features:
 <a href="http://demonstrator.telespazio.com/AstroWeb/">Demonstration with astronomic data</a>  
 <a href="http://demonstrator.telespazio.com/EoliWebGL/">Prototype done for ESA</a>  
 
+### Documentation ###
+<a href="http://tpzf.github.com/GlobWeb/api/index.html">API Documentation</a>  
+
 ### Getting started ###
 
 See the examples to show basic usage.
