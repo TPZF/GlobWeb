@@ -19,11 +19,15 @@
 
 /**************************************************************************************************************/
 
+/**
+	Declare namespace for Numeric functions.
+	TODO : Should be put into GlobWeb
+ */
 var Numeric = {};
 
 /**************************************************************************************************************/
 
-/*
+/**
   Linear interpolation between [a, b], t must be [0, 1]
 */
 Numeric.lerp = function(t, a, b)
@@ -33,7 +37,7 @@ Numeric.lerp = function(t, a, b)
 
 /**************************************************************************************************************/
 
-/*
+/**
  Cubic interpolation between [a, b], t must be [0, 1]
 */
 Numeric.cubicInterpolation = function(t, startPos, startVel, endPos, endVel)
@@ -61,7 +65,7 @@ Numeric.cubicInterpolation = function(t, startPos, startVel, endPos, endVel)
 
 /**************************************************************************************************************/
 
-/*
+/**
  Cubic interpolation between [a, b], t must be [0, 1]
 */
 Numeric.cubicInterpolationDerivative = function(t, startPos, startVel, endPos, endVel)
@@ -88,7 +92,7 @@ Numeric.cubicInterpolationDerivative = function(t, startPos, startVel, endPos, e
 
 /**************************************************************************************************************/
 
-/*
+/**
   Map x between [xMin, xMax] to [0, 1]
 */
 Numeric.map01 = function(x, xMin, xMax)
@@ -124,7 +128,7 @@ Numeric.easeOutQuad = function(t)
 
 /**************************************************************************************************************/
 
-/*
+/**
   Remap input t ([0, 1]) to a curve starting slowly
   and accelerating till 0.5 an decelerating till 1
 */
@@ -172,7 +176,7 @@ Numeric.easeOutInQuad = function(t)
 
 /**************************************************************************************************************/
 
-/*
+/**
   Convert the given degree value in radian
 */
 Numeric.toRadian = function(degree)
@@ -182,7 +186,7 @@ Numeric.toRadian = function(degree)
 
 /**************************************************************************************************************/
 
-/*
+/**
   Convert the given radian value in degree
 */
 Numeric.toDegree = function(radian)
@@ -192,7 +196,7 @@ Numeric.toDegree = function(radian)
 
 /**************************************************************************************************************/
 
-/*
+/**
   Computes point on a ray
 */
 Numeric.pointOnRay = function(rayOrigin, rayDirection, t, dest)
@@ -207,7 +211,7 @@ Numeric.pointOnRay = function(rayOrigin, rayDirection, t, dest)
 
 /**************************************************************************************************************/
 
-/*
+/**
   Line-line intersection
   rayDirection must be normalized.
   Returns t at which intersection occurs or -1 if no intersection.
@@ -233,7 +237,7 @@ Numeric.lineIntersection = function( x1, y1, x2, y2, x3, y3, x4, y4 )
 
 /**************************************************************************************************************/
 
-/*
+/**
   Ray sphere intersection
   rayDirection must be normalized.
   Returns t at which intersection occurs or -1 if no intersection.
@@ -291,7 +295,7 @@ Numeric.roundNumber = function (num, dec)
 
 /**************************************************************************************************************/
 
-/*
+/**
   Project a vec3
 */
 mat4.project = function(mat, vec, dest)
@@ -305,7 +309,7 @@ mat4.project = function(mat, vec, dest)
 	return dest;
 }
 
-/*
+/**
  * mat4.rotateVec3
  * Rotate a vec3 with the given matrix
  *
@@ -331,7 +335,7 @@ mat4.rotateVec3 = function(mat, vec, dest) {
 
 /**************************************************************************************************************/
 
-/*
+/**
   Update a matrix with the given position, attitude parameters
 */
 mat4.fromPositionAttitude = function(position, attitude, dest)
@@ -350,7 +354,7 @@ mat4.fromPositionAttitude = function(position, attitude, dest)
 
 /**************************************************************************************************************/
 
-/*
+/**
   Create a rotation quaternion from the given rotation matrix
 */
 mat3.toQuat4 = function(mat, dest)
@@ -389,7 +393,7 @@ mat3.toQuat4 = function(mat, dest)
 
 /**************************************************************************************************************/
 
-/*
+/**
   Create a rotation quaternion from the upper 3x3 elements of the given matrix
 */
 mat4.toQuat4 = function(mat, dest)
@@ -428,7 +432,7 @@ mat4.toQuat4 = function(mat, dest)
 
 /**************************************************************************************************************/
 
-/*
+/**
   Fixed quaternion to rotation matrix function
 */
 quat4.trueToMat4 = function(quat, dest) {
@@ -477,7 +481,7 @@ quat4.trueToMat4 = function(quat, dest) {
 
 /**************************************************************************************************************/
 
-/*
+/**
   Fixed quaternion to rotation matrix function
 */
 quat4.trueToMat3 = function(quat, dest) {
@@ -518,7 +522,7 @@ quat4.trueToMat3 = function(quat, dest) {
 
 /**************************************************************************************************************/
 
-/*
+/**
   Fixed slerp quaternion function (taken from Ogre3D sources)
 */
 quat4.trueSlerp = function(q1, q2, t, dest)

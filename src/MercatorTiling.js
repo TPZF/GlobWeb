@@ -112,7 +112,7 @@ GlobWeb.MercatorTile.prototype.getElevation = function(lon,lat)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Create the children
  */
 GlobWeb.MercatorTile.prototype.createChildren = function()
@@ -133,7 +133,7 @@ GlobWeb.MercatorTile.prototype.createChildren = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Convert coordinates in longitude,latitude to coordinate in "tile space"
 	Tile space means coordinates are between [0,tesselation-1] if inside the tile
 	Used by renderers algorithm to clamp coordinates on the tile
@@ -158,7 +158,7 @@ GlobWeb.MercatorTile.prototype.lonlat2tile = function(coordinates)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Generate vertices for tile
  */
 GlobWeb.MercatorTile.prototype.generateVertices = function(elevations)

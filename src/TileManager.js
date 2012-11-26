@@ -169,7 +169,7 @@ GlobWeb.TileManager.prototype.setElevationProvider = function(tp)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Reset the tile manager : remove all the tiles
  */
 GlobWeb.TileManager.prototype.reset = function()
@@ -226,7 +226,7 @@ GlobWeb.TileManager.prototype.visitTiles = function( callback )
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Launch the HTTP request for a tile
  */
 GlobWeb.TileManager.prototype.launchRequest = function(tile)
@@ -264,7 +264,7 @@ GlobWeb.TileManager.prototype.launchRequest = function(tile)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Traverse tiless tiles
  */
  GlobWeb.TileManager.prototype.traverseTiles = function()
@@ -338,7 +338,7 @@ GlobWeb.TileManager.prototype.launchRequest = function(tile)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Process a tile
  */
 GlobWeb.TileManager.prototype.processTile = function(tile,level)
@@ -387,7 +387,7 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Generate tiles
  */
  GlobWeb.TileManager.prototype.generateReceivedTiles = function()
@@ -435,7 +435,7 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Render tiles
  */
  GlobWeb.TileManager.prototype.renderTiles = function()
@@ -538,7 +538,7 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Request tiles
  */
  GlobWeb.TileManager.prototype.launchRequests = function()
@@ -563,7 +563,7 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Render the tiles
  */
 GlobWeb.TileManager.prototype.render = function()
@@ -610,7 +610,7 @@ GlobWeb.TileManager.prototype.render = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Build shared texture coordinate buffer
  */
 GlobWeb.TileManager.prototype.buildSharedTexCoordBuffer = function()

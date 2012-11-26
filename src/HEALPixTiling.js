@@ -104,7 +104,7 @@ GlobWeb.HEALPixTile.prototype = new GlobWeb.Tile;
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Create the children
  */
 GlobWeb.HEALPixTile.prototype.createChildren = function()
@@ -127,6 +127,9 @@ GlobWeb.HEALPixTile.prototype.createChildren = function()
 
 /**************************************************************************************************************/
 
+/**
+	Compute the local matrix for the tile
+ */
 GlobWeb.HEALPixTile.prototype.computeLocalMatrix = function(vertices){
 	var matrix = mat4.create();
 	
@@ -179,7 +182,7 @@ GlobWeb.HEALPixTile.prototype.computeLocalMatrix = function(vertices){
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Generate vertices for tile
  */
 GlobWeb.HEALPixTile.prototype.generateVertices = function()

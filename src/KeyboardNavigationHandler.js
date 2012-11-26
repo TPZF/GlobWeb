@@ -54,7 +54,7 @@ GlobWeb.KeyboardNavigationHandler.prototype.install = function(navigation)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Event handler for key down
 */
 GlobWeb.KeyboardNavigationHandler.prototype.handleKeyDown = function(event)

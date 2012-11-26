@@ -30,7 +30,7 @@ GlobWeb.Plane = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Plane init from 3 points
  */
 GlobWeb.Plane.prototype.init = function( v1, v2, v3 )
@@ -47,7 +47,7 @@ GlobWeb.Plane.prototype.init = function( v1, v2, v3 )
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Transform the plane with the given matrix
  */
 GlobWeb.Plane.prototype.transform = function(matrix)
@@ -62,7 +62,7 @@ GlobWeb.Plane.prototype.transform = function(matrix)
 
 /**************************************************************************************************************/
 
- /*
+/**
  Intersection test between plane and bounding sphere.
            return 1 if the bs is completely above plane,
             return 0 if the bs intersects the plane,
@@ -78,7 +78,7 @@ GlobWeb.Plane.prototype.intersectSphere = function( center, radius )
 
 /**************************************************************************************************************/
 
- /*
+/**
 	Return the distance between a point and the plane
 */
 GlobWeb.Plane.prototype.distance = function( point )
@@ -89,7 +89,7 @@ GlobWeb.Plane.prototype.distance = function( point )
 
 /**************************************************************************************************************/
 
- /*
+/**
  Intersection test between plane and bounding box.
            return 1 if the bbox is completely above plane,
             return 0 if the bbox intersects the plane,
@@ -129,7 +129,7 @@ GlobWeb.Frustum = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Compute the frustum from the given projection matrix
  */
 GlobWeb.Frustum.prototype.compute = function(projectionMatrix)
@@ -153,7 +153,7 @@ GlobWeb.Frustum.prototype.compute = function(projectionMatrix)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Transform the frustum with the given matrix
  */
 GlobWeb.Frustum.prototype.transform = function(frustum,matrix)
@@ -165,7 +165,7 @@ GlobWeb.Frustum.prototype.transform = function(frustum,matrix)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Inverse transform the frustum with the given matrix
  */
 GlobWeb.Frustum.prototype.inverseTransform = function(frustum,matrix)
@@ -191,7 +191,7 @@ GlobWeb.Frustum.prototype.inverseTransform = function(frustum,matrix)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Intersection test between frustum and bounding sphere.
 	   return 1 if the bs is completely outside the frustum,
 		return 0 if the bs intersects the frustum,
@@ -222,7 +222,7 @@ GlobWeb.Frustum.prototype.containsSphere = function( center, radius )
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Test if the frustum contains the given bounding box
  */
 GlobWeb.Frustum.prototype.containsBoundingBox = function( bbox )

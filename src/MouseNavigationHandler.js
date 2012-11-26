@@ -75,7 +75,7 @@ GlobWeb.MouseNavigationHandler.prototype.uninstall = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Event handler for mouse wheel
  */
 GlobWeb.MouseNavigationHandler.prototype.handleMouseWheel = function(event)
@@ -109,7 +109,7 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseWheel = function(event)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Event handler for mouse down
 */
 GlobWeb.MouseNavigationHandler.prototype.handleMouseDown = function(event)
@@ -136,7 +136,7 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseDown = function(event)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Event handler for mouse up
  */
 GlobWeb.MouseNavigationHandler.prototype.handleMouseUp = function(event)
@@ -157,7 +157,7 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseUp = function(event)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Event handler for mouse move
 */
 GlobWeb.MouseNavigationHandler.prototype.handleMouseMove = function(event)
@@ -193,7 +193,7 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseMove = function(event)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Event handler for mouse double click
  */
 GlobWeb.MouseNavigationHandler.prototype.handleMouseDblClick = function(event)

@@ -157,7 +157,7 @@ GlobWeb.Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt 
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Compute the inverse view matrix
  */
 GlobWeb.Navigation.prototype.applyLocalRotation = function(matrix)
@@ -168,7 +168,7 @@ GlobWeb.Navigation.prototype.applyLocalRotation = function(matrix)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Compute the view matrix
  */
 GlobWeb.Navigation.prototype.computeViewMatrix = function()
@@ -179,7 +179,7 @@ GlobWeb.Navigation.prototype.computeViewMatrix = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Compute the inverse view matrix
  */
 GlobWeb.Navigation.prototype.computeInverseViewMatrix = function()
@@ -191,7 +191,7 @@ GlobWeb.Navigation.prototype.computeInverseViewMatrix = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Event handler for mouse wheel
 	@param delta Delta zoom
  */
@@ -224,7 +224,7 @@ GlobWeb.Navigation.prototype.zoom = function(delta)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Check for collision
  */
 GlobWeb.Navigation.prototype.hasCollision = function()
@@ -239,8 +239,8 @@ GlobWeb.Navigation.prototype.hasCollision = function()
 
 /**************************************************************************************************************/
 
-/*
-*	Pan the navigation
+/**
+	Pan the navigation
 	@param dx Window delta x
 	@param dy Window delta y
 */
@@ -314,7 +314,7 @@ GlobWeb.Navigation.prototype.pan = function(dx, dy)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Rotate the navigation
 	@param dx Window delta x
 	@param dy Window delta y

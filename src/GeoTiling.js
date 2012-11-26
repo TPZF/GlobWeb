@@ -120,7 +120,7 @@ GlobWeb.GeoTile.prototype.getElevation = function(lon,lat)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Create the children
  */
 GlobWeb.GeoTile.prototype.createChildren = function()
@@ -146,7 +146,7 @@ GlobWeb.GeoTile.prototype.createChildren = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Convert coordinates in longitude,latitude to coordinate in "tile space"
 	Tile space means coordinates are between [0,tesselation-1] if inside the tile
 	Used by renderers algorithm to clamp coordinates on the tile
@@ -170,7 +170,7 @@ GlobWeb.GeoTile.prototype.lonlat2tile = function(coordinates)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Generate vertices for tile
  */
 GlobWeb.GeoTile.prototype.generateVertices = function(elevations)

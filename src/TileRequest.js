@@ -55,7 +55,7 @@ GlobWeb.TileRequest = function(cb)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Handle when image is loaded
  */
 GlobWeb.TileRequest.prototype.handleLoadedImage = function() 
@@ -70,7 +70,7 @@ GlobWeb.TileRequest.prototype.handleLoadedImage = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Handle when loading image failed
  */
 GlobWeb.TileRequest.prototype.handleErrorImage = function() 
@@ -81,7 +81,7 @@ GlobWeb.TileRequest.prototype.handleErrorImage = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Handle when elevation is loaded
  */
 GlobWeb.TileRequest.prototype.handleLoadedElevation = function() 
@@ -99,7 +99,7 @@ GlobWeb.TileRequest.prototype.handleLoadedElevation = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Handle when loading elevation failed
  */
 GlobWeb.TileRequest.prototype.handleErrorElevation = function() 
@@ -116,7 +116,7 @@ GlobWeb.TileRequest.prototype.handleErrorElevation = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Launch the HTTP request for a tile
  */
 GlobWeb.TileRequest.prototype.launch = function(imageUrl,elevationUrl)

@@ -33,7 +33,7 @@ GlobWeb.Animation = function()
 
 /**************************************************************************************************************/
 
-/*!
+/**
   Unregister as active animation
 */
 GlobWeb.Animation.prototype._unregisterActive = function()
@@ -44,7 +44,7 @@ GlobWeb.Animation.prototype._unregisterActive = function()
 
 /**************************************************************************************************************/
 
-/*!
+/**
   Get animation status
 */
 GlobWeb.Animation.prototype.getStatus = function()

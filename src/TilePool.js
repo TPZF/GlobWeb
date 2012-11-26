@@ -39,7 +39,7 @@ GlobWeb.TilePool = function(rc)
 
 	/**************************************************************************************************************/
 
-	/*
+	/**
 		Create a new GL texture
 	 */
 	var createNewGLTexture = function(image)
@@ -60,7 +60,7 @@ GlobWeb.TilePool = function(rc)
 
 	/**************************************************************************************************************/
 
-	/*
+	/**
 		Reuse a GL texture
 	 */
 	var reuseGLTexture = function(image)
@@ -80,7 +80,7 @@ GlobWeb.TilePool = function(rc)
 	
 	/**************************************************************************************************************/
 
-	/*
+	/**
 		Create a GL texture to be used by a tile
 	 */
 	this.createGLTexture = function(image)
@@ -97,7 +97,7 @@ GlobWeb.TilePool = function(rc)
 
 	/**************************************************************************************************************/
 
-	/*
+	/**
 		Create a GL texture to be used by a tile
 	 */
 	this.createGLBuffer = function(vertices)
@@ -119,7 +119,7 @@ GlobWeb.TilePool = function(rc)
 
 	/**************************************************************************************************************/
 
-	/*
+	/**
 		Dispose a texture
 	 */
 	this.disposeGLTexture = function(texture)
@@ -129,7 +129,7 @@ GlobWeb.TilePool = function(rc)
 
 	/**************************************************************************************************************/
 
-	/*
+	/**
 		Dispose a texture
 	 */
 	this.disposeGLBuffer = function(buffer)
@@ -139,7 +139,7 @@ GlobWeb.TilePool = function(rc)
 
 	/**************************************************************************************************************/
 
-	/*
+	/**
 		Dispose all
 	 */
 	this.disposeAll = function()

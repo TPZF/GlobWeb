@@ -59,8 +59,8 @@ GlobWeb.Tile = function()
 
 /**************************************************************************************************************/
 
-/*
-	Tile state enumerations
+/**
+ *	Tile state enumerations
  */
 GlobWeb.Tile.State = 
 {
@@ -140,8 +140,8 @@ GlobWeb.Tile.prototype.initFromParent = function(parent,i,j)
 
 /**************************************************************************************************************/
 
-/*
-	Test if the tile needs to be refined
+/**
+ *	Test if the tile needs to be refined
  */
 GlobWeb.Tile.prototype.needsToBeRefined = function(renderContext)
 {
@@ -169,8 +169,8 @@ GlobWeb.Tile.prototype.needsToBeRefined = function(renderContext)
 
 /**************************************************************************************************************/
 
-/*
-	Test if the tile is culled given the current view parameters
+/**
+ *	Test if the tile is culled given the current view parameters
  */
 GlobWeb.Tile.prototype.isCulled = function(renderContext)
 {	
@@ -257,8 +257,9 @@ GlobWeb.Tile.prototype.isCulled = function(renderContext)
 }
 
 /**************************************************************************************************************/
-/*
-	Dispose the tile
+
+/**
+ *	Dispose the tile
  */
 GlobWeb.Tile.prototype.dispose = function(renderContext,tilePool)
 {		
@@ -283,8 +284,8 @@ GlobWeb.Tile.prototype.dispose = function(renderContext,tilePool)
 
 /**************************************************************************************************************/
 
-/*
-	Delete the children
+/**
+ *	Delete the children
  */
 GlobWeb.Tile.prototype.deleteChildren = function(renderContext,tilePool)
 {
@@ -304,8 +305,8 @@ GlobWeb.Tile.prototype.deleteChildren = function(renderContext,tilePool)
 
 /**************************************************************************************************************/
 
-/*
-	Build skirt vertices
+/**
+ *	Build skirt vertices
  */
 GlobWeb.Tile.prototype.buildSkirtVertices = function(center,srcOffset,srcStep,dstOffset)
 {
@@ -347,8 +348,8 @@ GlobWeb.Tile.prototype.buildSkirtVertices = function(center,srcOffset,srcStep,ds
 
 /**************************************************************************************************************/
 
-/*
-	Generate normals for a tile
+/**
+ *	Generate normals for a tile
  */
 GlobWeb.Tile.prototype.generateNormals = function()
 {	
@@ -389,8 +390,8 @@ GlobWeb.Tile.prototype.generateNormals = function()
 
 /**************************************************************************************************************/
 
-/*
-	Generate the tile
+/**
+ *	Generate the tile
  */
 GlobWeb.Tile.prototype.generate = function(tilePool,image,elevations)
 {

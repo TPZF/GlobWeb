@@ -36,7 +36,7 @@ GlobWeb.BoundingBox = function(min,max)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Extent the bounding box with the given point
  */
 GlobWeb.BoundingBox.prototype.extend = function( x, y, z)
@@ -83,7 +83,7 @@ GlobWeb.BoundingBox.prototype.extend = function( x, y, z)
 }
 /**************************************************************************************************************/
 
-/*
+/**
 	Compute the bounding box from an array of vertices
  */
 GlobWeb.BoundingBox.prototype.compute = function(vertices,length,stride)
@@ -122,7 +122,7 @@ GlobWeb.BoundingBox.prototype.compute = function(vertices,length,stride)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Get the corner of a bounding box
  */
 GlobWeb.BoundingBox.prototype.getCorner = function(pos)
@@ -134,7 +134,7 @@ GlobWeb.BoundingBox.prototype.getCorner = function(pos)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Get the center of a bounding box
  */
 GlobWeb.BoundingBox.prototype.getCenter = function()
@@ -146,7 +146,7 @@ GlobWeb.BoundingBox.prototype.getCenter = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Get the radius of a bounding box
  */
 GlobWeb.BoundingBox.prototype.getRadius = function()

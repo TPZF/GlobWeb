@@ -83,7 +83,7 @@ GlobWeb.GeoBound.prototype.getEast = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Compute the geo bound from coordinates
  */
 GlobWeb.GeoBound.prototype.computeFromCoordinates = function( coordinates )
@@ -104,7 +104,7 @@ GlobWeb.GeoBound.prototype.computeFromCoordinates = function( coordinates )
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Intersects this geo bound with another one
  */
 GlobWeb.GeoBound.prototype.intersects = function( geoBound )

@@ -37,6 +37,9 @@
 } else {
 	glMatrixArrayType = Array;
 } */
+/**
+	Matrix array type
+ */
 var glMatrixArrayType = Array;
 
 /*

@@ -220,7 +220,7 @@ GlobWeb.AstroNavigation.prototype.moveTo = function(geoPos, duration )
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Compute the view matrix
  */
 GlobWeb.AstroNavigation.prototype.computeViewMatrix = function()
@@ -241,7 +241,7 @@ GlobWeb.AstroNavigation.prototype.computeViewMatrix = function()
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Event handler for mouse wheel
 	@param delta Delta zoom
  */
@@ -298,7 +298,7 @@ GlobWeb.AstroNavigation.prototype.pan = function(dx, dy)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Rotate the navigator
 	@param dx Window delta x
 	@param dy Window delta y

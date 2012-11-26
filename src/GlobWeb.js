@@ -16,7 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
-// Declare GlobWeb namespace
+ 
+/**
+ Declare GlobWeb namespace
+ */
 var GlobWeb = GlobWeb || {};
 
 // Declare function to load all javascript files for GlobWeb
