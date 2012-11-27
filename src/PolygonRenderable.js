@@ -23,10 +23,10 @@
 /** @constructor
  *	PolygonRenderable constructor
  */
-GlobWeb.PolygonRenderable = function( style )
+GlobWeb.PolygonRenderable = function( bucket, gl )
 {
-	GlobWeb.PolygonRenderable.base.constructor.call(this,style);
-	this.glMode = GlobWeb.RenderContext.gl.TRIANGLES;
+	GlobWeb.TiledVectorRenderable.prototype.constructor.call(this,bucket,gl);
+	this.glMode = gl.TRIANGLES;
 }
 
 /**************************************************************************************************************/
