@@ -296,11 +296,16 @@ GlobWeb.TileManager.prototype.launchRequest = function(tile)
 					tile.state = GlobWeb.Tile.State.REQUESTED;
 					this.tilesToRequest.push(tile);
 				}
+				else if ( tile.state == GlobWeb.Tile.State.ERROR )
+				{
+					this.globe.publish("baseLayersError");
+					this.imageryProvider.ready = false;
+				}
 			}
 		}
 		if ( this.level0TilesLoaded )
 		{
-			this.globe.publish("level0TilesLoaded");
+			this.globe.publish("baseLayersReady");
 		}
 	}
 	
@@ -578,7 +583,7 @@ GlobWeb.TileManager.prototype.render = function()
 	if ( this.levelZeroTexture == null && this.imageryProvider.levelZeroImage )
 	{
 		this.levelZeroTexture = this.renderContext.createNonPowerOfTwoTextureFromImage(this.imageryProvider.levelZeroImage);
-		this.globe.publish("levelZeroTextureLoaded");
+		this.globe.publish("baseLayersReady");
 	}
 
 	var stats = this.renderContext.stats;

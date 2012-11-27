@@ -277,6 +277,8 @@ GlobWeb.Globe.prototype.getLonLatFromPixel = function(x,y)
 
 /**
 	Render the globe
+	TODO : private for now because it is automatically called in requestAnimationFrame.
+	
 	@private
  */
 GlobWeb.Globe.prototype.render = function()
@@ -324,15 +326,15 @@ GlobWeb.Globe.prototype.render = function()
 
 /**************************************************************************************************************/
 
-/** @export
+/** 
 	Subscribe to an event
 	
 	@param name Event name
 		<ul>
-			<li>startAnimation : navigation animation start event</li>
-			<li>endAnimation : navigation animation end event</li>
-			<li>level0TilesLoaded : level zero loaded event</li>
-			<li>levelZeroTextureLoaded : level zero texture loaded event</li>
+			<li>startAnimation : called when navigation is started (by the user or through animation)</li>
+			<li>endAnimation : called when navigation is ended (by the user or through animation)t</li>
+			<li>baseLayersReady : called when the base layers are ready to be displayed</li>
+			<li>baseLayersError : called when the base layers are not valid, or not accessible, in that case nothing is displayed so this event is useful to provide an error message to the user</li>
 		</ul>
 	@param callback Callback function
 */
@@ -347,16 +349,10 @@ GlobWeb.Globe.prototype.subscribe = function(name,callback)
 
 /**************************************************************************************************************/
 
-/** @export
+/** 
 	Unsubscribe to an event 
 	
-	@param name Event name
-		<ul>
-			<li>startNavigation : navigation start event</li>
-			<li>endNavigation : navigation end event</li>
-			<li>level0TilesLoaded : level zero tiles loaded event</li>
-			<li>levelZeroTextureLoaded : level zero texture loaded event</li>
-		</ul>
+	@param name Event name {@link GlobWeb.Globe#subscribe}
 	@param callback Callback function
 */
 GlobWeb.Globe.prototype.unsubscribe = function(name,callback)
@@ -371,11 +367,13 @@ GlobWeb.Globe.prototype.unsubscribe = function(name,callback)
 
 /**************************************************************************************************************/
 
-/** @export
-	Publish a navigation event
+/**
+	Publish an event
 	
 	@param name Event name
 	@param context Context
+	
+	@private
 */
 GlobWeb.Globe.prototype.publish = function(name,context)
 {
