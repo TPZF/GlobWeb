@@ -1,0 +1,156 @@
+<html>
+
+<head>
+<title>GlobWeb example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+
+<script type="text/javascript" src="../src/GlobWeb.js"></script>
+
+<script type="text/javascript">
+
+	var FrustumRenderer = function(rc)
+	{
+		this.renderContext = rc;
+		
+		var vertexShader = "\
+		attribute vec3 vertex;\n\
+		uniform mat4 modelViewMatrix;\n\
+		uniform mat4 projectionMatrix;\n\
+		void main(void) \n\
+		{\n\
+			gl_Position = projectionMatrix * modelViewMatrix * vec4(vertex, 1.0);\n\
+		}\n\
+		";
+
+		var fragmentShader = "\
+		precision highp float; \n\
+		void main(void)\n\
+		{\n\
+				gl_FragColor = vec4(1.0,0.0,0.0,1.0);\n\
+		}\n\
+		";
+		
+		this.program = new GlobWeb.Program(rc);
+		this.program.createFromSource( vertexShader, fragmentShader );
+	};
+	
+	FrustumRenderer.prototype.compute = function()
+	{
+		var rc = this.renderContext;
+		var gl = rc.gl;
+		
+		var inverseProjectionMatrix = mat4.create();
+		mat4.inverse( rc.projectionMatrix, inverseProjectionMatrix )
+			
+		var inverseViewMatrix = mat4.create();
+		mat4.inverse( rc.viewMatrix, inverseViewMatrix );
+		
+		var points = [ [ 0.0, 0.0, 0.0 ],
+			mat4.project( inverseProjectionMatrix, [-1.0,-1.0,1.0,1.0] ),
+			mat4.project( inverseProjectionMatrix, [-1.0,1.0,1.0,1.0] ),
+			mat4.project( inverseProjectionMatrix, [1.0,1.0,1.0,1.0] ),
+			mat4.project( inverseProjectionMatrix, [1.0,-1.0,1.0,1.0] )
+		];
+		
+		var vertices = [];
+		for ( var i = 0; i < points.length; i++ )
+		{
+			mat4.multiplyVec3( inverseViewMatrix, points[i] );
+			vertices.push( points[i][0] );
+			vertices.push( points[i][1] );
+			vertices.push( points[i][2] );
+		}
+		
+		var indices = [ 0, 1, 0, 2, 0, 3, 0, 4 ];
+		
+		this.vertexBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+		
+		this.indexBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+	};
+	
+	FrustumRenderer.prototype.render = function()
+	{
+		var rc = this.renderContext;
+		var gl = rc.gl;
+		
+		this.program.apply();
+		gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
+		gl.uniformMatrix4fv(this.program.uniforms["modelViewMatrix"], false, rc.viewMatrix);
+		
+		// Bind the vertex buffer
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+		gl.vertexAttribPointer(this.program.attributes['vertex'], 3, gl.FLOAT, false, 12, 0);
+		
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+		
+		// Draw the tiles in wireframe mode
+		gl.drawElements(gl.LINES, 8, gl.UNSIGNED_SHORT, 0);
+	};
+
+	
+    function webGLStart() 
+	{	
+		var cvs = document.getElementById("GlobWebCanvas");
+		cvs.width = window.innerWidth;
+		cvs.height = window.innerHeight;
+		
+		// Create the globe
+		var globe = new GlobWeb.Globe( { canvas: cvs, 
+				lighting: false,
+				tileErrorTreshold: 3, 
+				continuousRendering: true } );
+
+		// Add mouse navigation
+		var navigation = new GlobWeb.Navigation(globe);
+		
+		// Add stats
+		var stats = new GlobWeb.Stats( globe, {element: 'fps', verbose: false} );
+	
+		var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble" });
+		globe.setBaseImagery( blueMarbleLayer );
+		
+		/*var elevationLayer = new GlobWeb.BasicElevationLayer({ baseUrl:"http://demonstrator.vegaspace.com/json_elevations/get.php"});
+		globe.setBaseElevation( elevationLayer );*/
+		
+		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.vegaspace.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
+		globe.setBaseElevation( elevationLayer );
+		
+		/*var osmLayer = new GlobWeb.OSMLayer( {baseUrl:"http://tile.openstreetmap.org"} );
+		globe.setBaseImagery( osmLayer );*/
+		
+		globe.addLayer( new GlobWeb.TileWireframeLayer({outline: true}) );
+		/*var atmosphere = new GlobWeb.AtmosphereLayer({ visible: false, exposure: 1.4 });
+		globe.addLayer( atmosphere );*/
+		
+		var frustumRenderer = null;
+ 		cvs.onkeypress = function(event)
+		{
+			//atmosphere.visible( !atmosphere.visible() );
+			globe.tileManager.freeze = !globe.tileManager.freeze;
+			if (!frustumRenderer)
+			{
+				frustumRenderer = new FrustumRenderer(globe.tileManager.renderContext);
+				globe.tileManager.addPostRenderer(frustumRenderer);
+			}
+			frustumRenderer.compute();
+		}
+   }
+
+
+</script>
+
+</head>
+
+
+<body onload="webGLStart();" style="margin: 0; padding: 0;">
+    <canvas id="GlobWebCanvas" style="border: none; margin: 0; padding: 0;" width="800" height="600"></canvas> 
+ 	<div id="fps"></div>
+</body>
+
+</html>
+

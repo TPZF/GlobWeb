@@ -29,8 +29,6 @@ GlobWeb.TileIndexBuffer = function( renderContext, config )
 	this.config = config;
 	this.solidIndexBuffer = null;
 	this.subSolidIndexBuffer = [ null, null, null, null ];
-	this.wireframeIndexBuffer = null;
-	this.subWireframeIndexBuffer = [ null, null, null, null ];
 	this.subIndices = [ null, null, null, null ];
 }
 
@@ -54,19 +52,6 @@ GlobWeb.TileIndexBuffer.prototype.reset = function()
 	{
 		gl.deleteBuffer( this.solidIndexBuffer );
 		this.solidIndexBuffer = null;
-	}
-	for ( var i=0; i < 4; i++ )
-	{
-		if ( this.subWireframeIndexBuffer[i] )
-		{
-			gl.deleteBuffer( this.subWireframeIndexBuffer[i] );
-			this.subWireframeIndexBuffer[i] = null;
-		}
-	}
-	if ( this.wireframeIndexBuffer )
-	{
-		gl.deleteBuffer( this.wireframeIndexBuffer );
-		this.wireframeIndexBuffer = null;
 	}
 }
 
@@ -176,51 +161,6 @@ GlobWeb.TileIndexBuffer.prototype.getSubSolid = function(ii)
 
 /**************************************************************************************************************/
 
-/**
- *	Get index buffer for sub wireframe
- */
-GlobWeb.TileIndexBuffer.prototype.getSubWireframe = function(ii)
-{
-	if ( this.subWireframeIndexBuffer[ii] == null )
-	{
-		var i = ii % 2;
-		var j = Math.floor( ii / 2 );
-		
-		var size = this.config.tesselation;
-		var halfTesselation = (size-1) / 2;
-		
-		// Build the sub grid for 'inside' tile
-		var indices = [];
-		for ( var n=halfTesselation*j; n < halfTesselation*(j+1)+1; n++)
-		{
-			for ( var k=halfTesselation*i; k < halfTesselation*(i+1); k++)
-			{
-				indices.push( n * size + k );
-				indices.push( n * size + k + 1 );
-			}
-		}
-		for ( var n=halfTesselation*i; n < halfTesselation*(i+1)+1; n++)
-		{
-			for ( var k=halfTesselation*j; k < halfTesselation*(j+1); k++)
-			{
-				indices.push( k * size + n );
-				indices.push( (k+1) * size + n );
-			}
-		}
-	
-		var gl = this.renderContext.gl;
-		var ib = gl.createBuffer();
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-		ib.numIndices = indices.length;
-		this.subWireframeIndexBuffer[ii] = ib;
-	}
-	
-	return this.subWireframeIndexBuffer[ii];
-}
-
-/**************************************************************************************************************/
-
 /*
 	Build index buffer
  */
@@ -311,52 +251,6 @@ GlobWeb.TileIndexBuffer.prototype.getSolid = function()
 	}
 	
 	return this.solidIndexBuffer;
-}
-
-/**************************************************************************************************************/
-
-/*
-	Build index buffer
- */
-GlobWeb.TileIndexBuffer.prototype.getWireframe = function()
-{
-	if ( this.wireframeIndexBuffer == null )
-	{
-		var size = this.config.tesselation;
-		var indices = [];
-		
-		// Build horizontal lines
-		for ( var j=0; j < size; j++)
-		{
-			for ( var i=0; i < size-1; i++)
-			{
-				indices.push( j * size + i );
-				indices.push( j * size + i + 1 );
-			}
-		}
-
-		// Build vertical lines
-		for ( var j=0; j < size; j++)
-		{
-			for ( var i=0; i < size-1; i++)
-			{
-				indices.push( i * size + j );
-				indices.push( (i+1) * size + j );
-			}
-		}
-
-		
-		var gl = this.renderContext.gl;
-		var ib = gl.createBuffer();
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-		this.numIndices = indices.length;
-		
-		ib.numIndices = indices.length;
-		this.wireframeIndexBuffer = ib;
-	}
-	
-	return this.wireframeIndexBuffer;
 }
 
 /**************************************************************************************************************/

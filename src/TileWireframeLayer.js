@@ -26,12 +26,91 @@
 GlobWeb.TileWireframeLayer = function( options )
 {
 	GlobWeb.BaseLayer.prototype.constructor.call( this, options );
+	this.outline = (options && options['outline']) ? options['outline'] : false;
 	this.globe = null;
+	this.program = null;
+	this.indexBuffer = null;
+	this.subIndexBuffer = [ null, null, null, null ];
 }
 
 /**************************************************************************************************************/
 
 GlobWeb.inherits( GlobWeb.BaseLayer,GlobWeb.TileWireframeLayer );
+
+/**************************************************************************************************************/
+
+/** 
+  Build the index buffer
+ */
+GlobWeb.TileWireframeLayer.prototype.buildIndexBuffer = function()
+{
+	var gl = this.globe.renderContext.gl;
+	var size = this.globe.tileManager.tileConfig.tesselation;
+	var indices = [];
+	
+	var step = this.outline ? size-1 : 1;
+	
+	// Build horizontal lines
+	for ( var j=0; j < size; j += step)
+	{
+		for ( var i=0; i < size-1; i++)
+		{
+			indices.push( j * size + i );
+			indices.push( j * size + i + 1 );
+		}
+	}
+
+	// Build vertical lines
+	for ( var j=0; j < size; j += step)
+	{
+		for ( var i=0; i < size-1; i++)
+		{
+			indices.push( i * size + j );
+			indices.push( (i+1) * size + j );
+		}
+	}
+
+	
+	var ib = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+	
+	ib.numIndices = indices.length;
+	this.indexBuffer = ib;
+	
+	var halfTesselation = (size-1) / 2;
+	step = this.outline ? halfTesselation : 1;
+	for ( var ii = 0; ii < 4; ii++ )
+	{
+		var i = ii % 2;
+		var j = Math.floor( ii / 2 );
+		
+		// Build the sub grid for 'inside' tile
+		var indices = [];
+		for ( var n=halfTesselation*j; n < halfTesselation*(j+1)+1; n+= step)
+		{
+			for ( var k=halfTesselation*i; k < halfTesselation*(i+1); k++)
+			{
+				indices.push( n * size + k );
+				indices.push( n * size + k + 1 );
+			}
+		}
+		for ( var n=halfTesselation*i; n < halfTesselation*(i+1)+1; n+= step)
+		{
+			for ( var k=halfTesselation*j; k < halfTesselation*(j+1); k++)
+			{
+				indices.push( k * size + n );
+				indices.push( (k+1) * size + n );
+			}
+		}
+	
+		var ib = gl.createBuffer();
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+		ib.numIndices = indices.length;
+		this.subIndexBuffer[ii] = ib;
+	}
+}
 
 /**************************************************************************************************************/
 
@@ -70,6 +149,8 @@ GlobWeb.TileWireframeLayer.prototype._attach = function( g )
 		
 		this.program = new GlobWeb.Program(this.globe.renderContext);
 		this.program.createFromSource( vertexShader, fragmentShader );
+		
+		this.buildIndexBuffer();
 	}
 }
 
@@ -101,7 +182,6 @@ GlobWeb.TileWireframeLayer.prototype.render = function( tiles )
 	gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
 	
 	var vertexAttribute = this.program.attributes['vertex'];
-	var tileIndexBuffer = this.globe.tileManager.tileIndexBuffer;
 	var currentIB = null;	
 	
 	for ( var i = 0; i < tiles.length; i++ )
@@ -120,7 +200,7 @@ GlobWeb.TileWireframeLayer.prototype.render = function( tiles )
 		gl.bindBuffer(gl.ARRAY_BUFFER, tile.vertexBuffer);
 		gl.vertexAttribPointer(vertexAttribute, 3, gl.FLOAT, false, 4*tile.config.vertexSize, 0);
 		
-		var indexBuffer = ( isLoaded || isLevelZero ) ? tileIndexBuffer.getWireframe() : tileIndexBuffer.getSubWireframe(tile.parentIndex);
+		var indexBuffer = ( isLoaded || isLevelZero ) ? this.indexBuffer : this.subIndexBuffer[tile.parentIndex];
 		// Bind the index buffer only if different (index buffer is shared between tiles)
 		if ( currentIB != indexBuffer )
 		{
@@ -157,14 +237,4 @@ GlobWeb.TileWireframeLayer.prototype.visible = function( arg )
 	}
 	
 	return this._visible;
-}
-
-/**************************************************************************************************************/
-
-/**
- * 	Set opacity of the layer
- */
-GlobWeb.TileWireframeLayer.prototype.opacity = function( arg )
-{
-	return GlobWeb.BaseLayer.prototype.opacity.call( this, arg );
 }
