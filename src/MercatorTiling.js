@@ -214,4 +214,52 @@ GlobWeb.MercatorTile.prototype.generateVertices = function(elevations)
 	return vertices;
 }
 
+
+/**************************************************************************************************************/
+
+/**
+	Override buildSkirtVertices for mercator.
+	Use skirt to "fill" the pole
+ */
+ GlobWeb.MercatorTile.prototype.buildSkirtVertices = function(center,srcOffset,srcStep,dstOffset)
+{
+	var size = this.config.tesselation;
+	var vertexSize = this.config.vertexSize;
+	var numTilesY = Math.pow(2,this.level);
+	
+	// Check if the tile is at the north (isTop) or south (isBottom) pole
+	var isTop = this.y == 0 && dstOffset == vertexSize * (size * size);
+	var isBottom = this.y == numTilesY-1 && dstOffset == vertexSize * ((size+1) * size);
+		
+	if ( isTop || isBottom )
+	{
+		var vertices = this.vertices;
+		
+		var pt = GlobWeb.CoordinateSystem.fromGeoTo3D( isTop ? [ 0.0, 90.0, 0.0 ] : [ 0.0, -90.0, 0.0 ] );
+		mat4.multiplyVec3( this.inverseMatrix, pt );
+		
+		for ( var i = 0; i < size; i++)
+		{			
+			vertices[ dstOffset ] = pt[0];
+			vertices[ dstOffset+1 ] = pt[1];
+			vertices[ dstOffset+2 ] = pt[2];
+			
+			for (var n = 3; n < vertexSize; n++)
+			{
+				vertices[ dstOffset+n ] = vertices[srcOffset+n];
+			}
+			
+			dstOffset += vertexSize;
+		}	
+		
+		// Recompute the bbox to have correct culling
+		//this.bbox.compute(this.vertices,dstOffset + vertexSize*size,vertexSize);
+		//this.radius = this.bbox.getRadius();
+	}
+	else
+	{
+		GlobWeb.Tile.prototype.buildSkirtVertices.call(this,center,srcOffset,srcStep,dstOffset);
+	}
+}
+
 /**************************************************************************************************************/
