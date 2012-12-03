@@ -164,7 +164,7 @@ GlobWeb.SimplePolygonRenderer.prototype.addGeometry = function(geometry, layer, 
 	
 	if ( indices == null )
 	{
-		console.err("Triangulation error ! Check if your GeoJSON geometry is valid");
+		console.error("Triangulation error ! Check if your GeoJSON geometry is valid");
 		return false;
 	}
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.indexBuffer);
@@ -270,7 +270,7 @@ GlobWeb.SimplePolygonRenderer.prototype.render = function()
 		}
 		else
 		{
-			gl.uniform4fv(this.program.uniforms["u_color"], renderable.style.fillColor[0], renderable.style.fillColor[1], renderable.style.fillColor[2], 
+			gl.uniform4f(this.program.uniforms["u_color"], renderable.style.fillColor[0], renderable.style.fillColor[1], renderable.style.fillColor[2], 
 				renderable.style.fillColor[3] * renderable.layer._opacity);  // use fillColor
 		}
 		
