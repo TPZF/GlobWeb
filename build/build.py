@@ -163,8 +163,9 @@ if advanced:
 	# To Debug
 	#compilerFlags.extend([ "--formatting", "pretty_print"])
 else:
-	compilerFlags.extend(["--compilation_level", "SIMPLE_OPTIMIZATIONS",
-        "--formatting", "pretty_print"])
+	compilerFlags.extend(["--compilation_level", "SIMPLE_OPTIMIZATIONS"])
+	# To Debug
+	#compilerFlags.extend([ "--formatting", "pretty_print"])
 
 print "Building minized file."
 minimized, error = jscompiler.Compile(buildPath + 'compiler.jar',sourceFiles,compilerFlags)
