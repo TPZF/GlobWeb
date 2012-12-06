@@ -16,6 +16,8 @@ GlobWeb.MouseNavigationHandler = function(options){
 	this.pressY = -1;
 	this.lastMouseX = -1;
 	this.lastMouseY = -1;
+	this.needsStartEvent = false;
+	this.needsEndEvent = false;
 	
 	// Copy options
 	for (var x in options)
@@ -125,7 +127,7 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseDown = function(event)
 		this.lastMouseX = event.clientX;
 		this.lastMouseY = event.clientY;
 		
-		this.navigation.globe.publish("startNavigation");
+		this.needsStartEvent = true;
 		
 		// Return false to stop mouse down to be propagated when using onmousedown
 		return false;
@@ -146,7 +148,13 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseUp = function(event)
 
 	if ( event.button == 0 || event.button == 1 )
 	{
-		this.navigation.globe.publish("endNavigation");
+
+		if (this.needsEndEvent ) {
+			this.navigation.globe.publish("endNavigation");
+		}
+
+		this.needsStartEvent = false;
+		this.needsEndEvent = false;
 		
 		// Stop mouse up event
 		return false;
@@ -173,6 +181,11 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseMove = function(event)
 	// Pan
 	if ( this.pressedButton == 0 )
 	{
+		if ( this.needsStartEvent ) { 
+			this.navigation.globe.publish("startNavigation");
+			this.needsStartEvent  = false;
+			this.needsEndEvent = true;
+		}
 		this.navigation.pan( dx, dy );
 		this.navigation.globe.renderContext.requestFrame();
 		ret = true;
