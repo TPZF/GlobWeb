@@ -68,7 +68,7 @@ GlobWeb.RasterOverlayRenderer = function(tileManager)
 	
 	
 	var self = this;
-	for ( var i = 0; i < 2; i++ ) {
+	for ( var i = 0; i < 4; i++ ) {
 		var image = new Image();
 		image.renderable = null;
 		image.frameNumber = -1;
