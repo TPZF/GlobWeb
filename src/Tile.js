@@ -149,7 +149,9 @@ GlobWeb.Tile.prototype.needsToBeRefined = function(renderContext)
 		return true;
 
 	// Approximate the radius of one texel : the radius of the tile divided by the image size
-	var radius = this.radius / this.config.imageSize; 
+	// The radius is taken as the average of the bbox width and length, rather than the actual radius because at the pole, there is a large difference betwen width and length
+	// and the radius (ie maximum width/length) is too pessimistic
+	var radius = 0.25 * ( (this.bbox.max[0] - this.bbox.min[0]) + (this.bbox.max[1] - this.bbox.min[1]) )  / this.config.imageSize; 
 	
 	// Transform the closest point from the eye in world coordinates
 	var mat = this.matrix;
