@@ -46,20 +46,20 @@ GlobWeb.WMTSLayer = function( options )
 		url += '&service=wmts';
 	}
 	url += "&version="
-	url += options.hasOwnProperty('version') ? options['version'] : '1.0.0';
+	url += options['version'] || '1.0.0';
 	url += "&request=GetTile";
 	url += "&layer=" + options['layer'];
 	url += "&tilematrixset=" + options['matrixSet'];
-	if ( options.hasOwnProperty('style') )
+	if ( options['style'] )
 	{
 		url += "&style=" + options.style;
 	}
 	url += "&format=";
-	url += options.hasOwnProperty('format') ? options['format'] : 'image/png';
-/*	if ( options.hasOwnProperty('time') )
+	url += options['format'] || 'image/png';
+	if ( options['time'] )
 	{
 		url += "&time=" + options.time;
-	}*/
+	}
 	
 	this.getTileBaseUrl = url;
 }
