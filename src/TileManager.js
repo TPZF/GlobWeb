@@ -272,8 +272,6 @@ GlobWeb.TileManager.prototype.launchRequest = function(tile)
 	this.tilesToRender.length = 0;
 	this.tilesToRequest.length = 0;
 	this.numTraversedTiles = 0;
-	this.renderContext.near = 10e9;
-	this.renderContext.far = -1.0;
 	
 	// First load level 0 tiles if needed
 	if ( !this.level0TilesLoaded && !this.levelZeroTexture )
@@ -335,10 +333,6 @@ GlobWeb.TileManager.prototype.launchRequest = function(tile)
 			}
 		}
 	}
-
-//	console.log( "Near : " + this.renderContext.near );
-//	console.log( "Far : " + this.renderContext.far );
-
 }
 
 /**************************************************************************************************************/
@@ -457,7 +451,30 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
     this.program.apply();
 	
 	var attributes = this.program.attributes;
-
+	
+	// Compute near/far from tiles
+	if ( this.tileConfig.cullSign < 0 )
+	{
+		// When in "Astro" mode, do not compute near/far from tiles not really needed
+		// And the code used for "Earth" does not works really well, when the earth is seen from inside...
+		rc.near = 0.6 * GlobWeb.CoordinateSystem.radius;
+		rc.far = 1.1 * GlobWeb.CoordinateSystem.radius;
+	}
+	else
+	{
+		var nr = 1e9;
+		var fr = 0.0;
+		for ( var i = 0; i < this.tilesToRender.length; i++ )
+		{
+			var tile = this.tilesToRender[i];
+			// Update near/far to take into account the tile
+			nr = Math.max( rc.minNear, Math.min( nr, tile.distance - 2.0 * tile.radius ) );
+			fr = Math.max( fr, tile.distance + 2.0 * tile.radius );
+		}
+		rc.near = nr;
+		rc.far = fr;
+	}
+	
 	// Update projection matrix with new near and far values
 	mat4.perspective(rc.fov, rc.canvas.width / rc.canvas.height, rc.near, rc.far, rc.projectionMatrix);
 

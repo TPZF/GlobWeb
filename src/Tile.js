@@ -166,6 +166,7 @@ GlobWeb.Tile.prototype.needsToBeRefined = function(renderContext)
 						+ pz * pixelSizeVector[2] + pixelSizeVector[3] );
 	
 	// Check if pixel radius of a texel is superior to the treshold
+//	return Math.abs(pixelSize) > renderContext.tileErrorTreshold;
 	return pixelSize > renderContext.tileErrorTreshold;
 }
 
@@ -184,12 +185,10 @@ GlobWeb.Tile.prototype.isCulled = function(renderContext)
 	var ez = mat[2]*c[0] + mat[6]*c[1] + mat[10]*c[2] + mat[14];
 			
 	// If the eye is in the radius of the tile, consider the tile is not culled
-	var distance = Math.sqrt( ex * ex + ey * ey + ez * ez );
-	if ( distance < this.radius )
+	this.distance = Math.sqrt( ex * ex + ey * ey + ez * ez );
+	if ( this.distance < this.radius )
 	{
 		this.distance = 0.0;
-		renderContext.near = renderContext.minNear;
-		renderContext.far = Math.max( renderContext.far, 2.0 * this.radius );
 		return false;
 	}
 	else
@@ -200,61 +199,41 @@ GlobWeb.Tile.prototype.isCulled = function(renderContext)
 		pt[0] = Math.min( Math.max( ex, this.bbox.min[0] ), this.bbox.max[0] );
 		pt[1] = Math.min( Math.max( ey, this.bbox.min[1] ), this.bbox.max[1] );
 		pt[2] = Math.min( Math.max( ez, this.bbox.min[2] ), this.bbox.max[2] );
-				
-		/*// Compute eye direction at the closest point
-		var edx = ex - pt[0];
-		var edy = ey - pt[1];
-		var edz = ez - pt[2];*/
 		
-		// Transform eye direction in tile local space
-		var ed = renderContext.eyeDirection;
-		var edx = -(mat[0]*ed[0] + mat[4]*ed[1] + mat[8]*ed[2]);
-		var edy = -(mat[1]*ed[0] + mat[5]*ed[1] + mat[9]*ed[2]);
-		var edz = -(mat[2]*ed[0] + mat[6]*ed[1] + mat[10]*ed[2]);
-		
-		// Compute vertical at the closest point. The earth center is [0, 0, -radius] in tile local space.
-		var vx = pt[0];
-		var vy = pt[1];
-		var vz = pt[2] + GlobWeb.CoordinateSystem.radius;
-		
-		// Compute dot product between eye direction and the vertical at the point
-		//var el = Math.sqrt( edx * edx + edy * edy  + edz * edz );
-		var vl = Math.sqrt( vx * vx + vy * vy + vz * vz );
-		//var eDv = (edx * vx + edy * vy  + edz * vz) / ( vl * el );
-		var eDv = (edx * vx + edy * vy  + edz * vz) / vl;
-		
-		// Update distance, distance is used when requesting a tile, closer tile are loaded first
-		//this.distance = el;
-		this.distance = distance;
-		
-		eDv *= this.config.cullSign;
-		
-		if ( eDv < -0.05 )
+		// Compute horizontal culling only if the eye is "behind" the tile
+		if ( ez < 0.0 )
 		{
-			return true;
-		}
-		else
-		{
-			// Compute local frustum
-			var localFrustum = renderContext.localFrustum;
-			localFrustum.inverseTransform( renderContext.worldFrustum, this.matrix );
+			// Compute vertical at the closest point. The earth center is [0, 0, -radius] in tile local space.
+			var vx = pt[0];
+			var vy = pt[1];
+			var vz = pt[2] + GlobWeb.CoordinateSystem.radius;
+			var vl = Math.sqrt( vx * vx + vy * vy + vz * vz );
+			vx /= vl; vy /= vl; vz /= vl;
 			
-			// Check if the tile is inside the frustum
-			if ( localFrustum.containsBoundingBox(this.bbox) )			
-			{
-				// Update near/far to take into account the tile
-				//renderContext.near = Math.max( renderContext.minNear, Math.min( renderContext.near, distance - 2.0 * this.radius ) );
-				//renderContext.far = Math.max( renderContext.far, distance + 2.0 * this.radius );
-				var closestDistance = -(edx * pt[0] + edy * pt[1] + edz * pt[2] - (edx * ex + edy * ey + edz * ez));
-				renderContext.near = Math.max( renderContext.minNear, Math.min( renderContext.near, closestDistance ) );
-				renderContext.far = Math.max( renderContext.far, closestDistance + 2.0 * this.radius );
-				return false;
-			}
-			else
+			// Compute eye direction at the closest point (clampled on earth to avoid problem with mountains)
+			// The position clamp to earth is Vertical * Radius + EarthCenter. The EarthCenter being 0,0,-radius a lot of simplification is done.
+			var edx = ex - vx * GlobWeb.CoordinateSystem.radius;
+			var edy = ey - vy * GlobWeb.CoordinateSystem.radius;
+			var edz = ez - (vz - 1.0) * GlobWeb.CoordinateSystem.radius;
+			
+			// Compute dot product between eye direction and the vertical at the point
+			var el = Math.sqrt( edx * edx + edy * edy  + edz * edz );
+			var eDv = (edx * vx + edy * vy  + edz * vz) / el;
+						
+			eDv *= this.config.cullSign;
+			
+			if ( eDv < -0.05 )
 			{
 				return true;
 			}
 		}
+		
+		// Compute local frustum
+		var localFrustum = renderContext.localFrustum;
+		localFrustum.inverseTransform( renderContext.worldFrustum, this.matrix );
+		
+		// Check if the tile is inside the frustum
+		return !localFrustum.containsBoundingBox(this.bbox);
 	}
 }
 
