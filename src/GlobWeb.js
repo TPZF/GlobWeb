@@ -100,7 +100,8 @@ var GlobWeb = GlobWeb || {};
 		"AstroNavigation.js",
 		"HEALPixTables.js",
 		"HEALPixBase.js",
-		"Long.js"
+		"Long.js",
+		"InertiaAnimation.js"
 		];
 
 	// use "parser-inserted scripts" for guaranteed execution order

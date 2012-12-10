@@ -6,6 +6,7 @@
 	@param options Configuration properties for the MouseNavigationHandler :
 			<ul>
 				<li>zoomOnDblClick : if true defines animation on double click</li>
+				<li>inertia: boolean value of inertia effect</li>
 			</ul>
  */
 GlobWeb.MouseNavigationHandler = function(options){
@@ -19,6 +20,8 @@ GlobWeb.MouseNavigationHandler = function(options){
 	this.needsStartEvent = false;
 	this.needsEndEvent = false;
 	
+	this.startTime = -1;
+	this.endTime = -1;
 	// Copy options
 	for (var x in options)
 	{
@@ -63,7 +66,7 @@ GlobWeb.MouseNavigationHandler.prototype.uninstall = function()
 	// Setup the mouse event handlers
 	var canvas = this.navigation.globe.renderContext.canvas;
 
-	canvas.removeEventListener("mousedown",function(e) { self.handleMouseDown(e||window.event); },false);
+	canvas.removeEventListener("mousedown",function(e) { e.preventDefault(); self.handleMouseDown(e||window.event); },false);
 	document.removeEventListener("mouseup",function(e) { self.handleMouseUp(e||window.event); },false);
 	canvas.removeEventListener("mousemove",function(e) { self.handleMouseMove(e||window.event); },false);
 	
@@ -84,16 +87,25 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseWheel = function(event)
 {
 	this.navigation.globe.publish("startNavigation");
 	
-	// Check differences between firefox and the rest of the world 
+	var factor;
+
+	// Check differences between firefox and the rest of the world
 	if ( event.wheelDelta === undefined)
 	{
-		this.navigation.zoom(event.detail);
+		factor = event.detail;
 	}
 	else
 	{
-		this.navigation.zoom(-event.wheelDelta / 120.0);
+		factor = -event.wheelDelta / 120.0;	
 	}
+	this.navigation.zoom(factor);
 	
+	if ( this.navigation.inertia )
+	{
+		this.navigation.inertia.stop();
+		this.navigation.inertia.launch("zoom", factor/2 );
+	}
+
 	// Stop mouse wheel to be propagated, because default is to scroll the page
 	// This is need when using Firefox event listener on DOMMouseScroll
 	if ( event.preventDefault )
@@ -117,7 +129,13 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseWheel = function(event)
 GlobWeb.MouseNavigationHandler.prototype.handleMouseDown = function(event)
 {
 	this.pressedButton = event.button;
-	
+	this.startTime = Date.now();
+
+	if( this.navigation.inertia )
+	{
+		this.navigation.inertia.stop();
+	}
+
 	if ( event.button == 0 || event.button == 1 )
 	{
 		
@@ -145,6 +163,31 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseUp = function(event)
 {
 	// No button pressed anymore
 	this.pressedButton = -1;
+	this.endTime = Date.now();
+
+	if ( this.navigation.inertia )
+	{
+		var speedVector = [ event.clientX - this.pressX, event.clientY - this.pressY ];
+		var s = Math.sqrt( Math.pow(speedVector[0], 2) + Math.pow(speedVector[1], 2) );
+		var deltaT = this.endTime - this.startTime;
+		var speed = s/(2 * deltaT);
+
+		var inertiaVector  = [ event.clientX - this.lastMouseX, event.clientY - this.lastMouseY ];
+
+		if ( event.button == 0 )
+		{
+			this.navigation.inertia.launch("pan", speed, inertiaVector );
+			// As alternative..
+			// this.navigation.inertia.launch("pan", speed, speedVector );
+		
+		}
+		if ( event.button == 1 )
+		{
+			this.navigation.inertia.launch("rotate", speed, inertiaVector );
+			// As alternative..
+			// this.navigation.inertia.launch("rotate", speed, speedVector );
+		}
+	}
 
 	if ( event.button == 0 || event.button == 1 )
 	{

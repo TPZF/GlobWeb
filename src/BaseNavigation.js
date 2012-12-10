@@ -3,6 +3,14 @@
 /** @export
 	@constructor
 	BaseNavigation constructor
+
+	@param globe Globe
+	@param options Configuration options
+		<ul>
+			<li>handlers : Array of objects defining navigation events for different supports(mouse, keyboard..)</li>
+			<li>inertia : Boolean for inertia effect</li>
+		</ul>
+
  */
 GlobWeb.BaseNavigation = function(globe, options)
 {
@@ -18,6 +26,12 @@ GlobWeb.BaseNavigation = function(globe, options)
 	if ( !this.handlers ) 
 	{
 		this.handlers = [new GlobWeb.MouseNavigationHandler({ zoomOnDblClick : true }), new GlobWeb.KeyboardNavigationHandler()];
+	}
+	
+	// Inertia effect
+	if( options.inertia )
+	{
+		this.inertia = new GlobWeb.InertiaAnimation(this);
 	}
 
 	// Install handlers
