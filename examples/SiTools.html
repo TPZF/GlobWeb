@@ -70,7 +70,7 @@ li.poi:hover
 
 		// Define rendering options for OpenSearch layer
 		// - fillColor: Color of features
-		// - iconUrl: Image for texture
+		// - iconUrl: Url of image for texture
 		var layerStyle = new GlobWeb.FeatureStyle({ 
 			fillColor: [255, 204, 0,06, 1.],
 			iconUrl: "star.png"
@@ -78,7 +78,7 @@ li.poi:hover
 
 		// OpenSearch options
 		// - serviceUrl: Url of the service providing OpenSearch data(necessary option)
-		// - minOrder: Starting order for OpenSearch requests
+		// - minOrder: Starting HEALPix order for OpenSearch requests
 		// - visible: Visibility of layer
 		// - style: Rendering style of layer
 		var options = {
@@ -98,12 +98,12 @@ li.poi:hover
 		$('li.poi').click( function(event) {
 			var ra = parseFloat($(this).attr('data-ra'));
 			var dec = parseFloat($(this).attr('data-dec'));
-			// Call zoomTo function
-			// with arguments in order: geoPosition
+			// Call zoomTo animation function
+			// with arguments: equatorialPosition in degrees, zooming field of view in degrees, duration in ms
 			astroNavigator.zoomTo( [ra, dec], 2., 3000 );
 		});
 
-		// OpenSearch visibility event
+		// OpenSearch layer visibility checkbox event
 		$('#openSearchLayer').click( function(event) {
 			openSearchLayer.visible( $(this).is(':checked') );
 		});
