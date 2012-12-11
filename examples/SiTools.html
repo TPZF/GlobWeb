@@ -1,0 +1,136 @@
+<html>
+
+<head>
+<title>GlobWeb example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+
+<script type="text/javascript" src="../src/GlobWeb.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+<style>
+
+div#options
+{
+	display: inline-block;
+	vertical-align: top;
+	width: 15%;
+	text-align: center;
+}
+
+#poiMenu
+{
+	padding: 0px 0px;
+}
+
+li.poi
+{
+	text-align: center;
+	border: 1px solid grey;
+	border-radius: 5px;
+	margin: 2px;
+	padding: 2px;
+	background: white;
+	list-style: none;
+}
+li.poi:hover
+{
+	background: grey;
+	cursor: pointer;
+}
+
+</style>
+
+<script type="text/javascript">
+	
+    function webGLStart() 
+	{	
+		// Init globe
+		// - canvas: Id of canvas HTML element
+		// - continuousRendering: Boolean defining that rendering will be done continuously
+		var globe = new GlobWeb.Globe({
+			canvas: "GlobWebCanvas",
+			continuousRendering: true
+		});
+		
+		// Create the navigation object to contol the camera
+		var astroNavigator = new GlobWeb.AstroNavigation(globe);
+		
+		// Create the object to show the statistic of GlobWeb
+		// - element: Id of statistic HTML element
+		// - verbose: If true, detailed information will be shown
+		new GlobWeb.Stats(globe,{element: "fps", verbose: true});
+	
+		// Set background layer
+		// - baseUrl: Url to background images provider in HEALPix format
+		//		Note: must pass by proxy due to Cross-domain resource sharing issue
+		//			  For more details see: https://developer.mozilla.org/en-US/docs/HTTP_access_control
+		var cdsLayer = new GlobWeb.HEALPixLayer( { baseUrl: "/Alasky/DssColor/"} );
+		globe.setBaseImagery( cdsLayer );
+
+		// Define rendering options for OpenSearch layer
+		// - fillColor: Color of features
+		// - iconUrl: Image for texture
+		var layerStyle = new GlobWeb.FeatureStyle({ 
+			fillColor: [255, 204, 0,06, 1.],
+			iconUrl: "star.png"
+		});
+
+		// OpenSearch options
+		// - serviceUrl: Url of the service providing OpenSearch data(necessary option)
+		// - minOrder: Starting order for OpenSearch requests
+		// - visible: Visibility of layer
+		// - style: Rendering style of layer
+		var options = {
+			serviceUrl: "/sitools/ofuse/search?",
+			minOrder: 3,
+			visible: false,
+			style: layerStyle
+		};
+
+		// Create OpenSearch layer with choosen options
+		var openSearchLayer = new GlobWeb.OpenSearchLayer( options );
+
+		// Add layer to the globe
+		globe.addLayer( openSearchLayer );
+
+		// Zoom to point of interest event
+		$('li.poi').click( function(event) {
+			var ra = parseFloat($(this).attr('data-ra'));
+			var dec = parseFloat($(this).attr('data-dec'));
+			// Call zoomTo function
+			// with arguments in order: geoPosition
+			astroNavigator.zoomTo( [ra, dec], 2., 3000 );
+		});
+
+		// OpenSearch visibility event
+		$('#openSearchLayer').click( function(event) {
+			openSearchLayer.visible( $(this).is(':checked') );
+		});
+   }
+
+
+</script>
+
+</head>
+
+
+<body onload="webGLStart();">
+	<div id="options">
+		<ul id="poiMenu">
+			<li class="poi" data-ra="57.290594102" data-dec="24.053416748">Atlas</li>
+			<li class="poi" data-ra="37.95456067" data-dec="89.26410897">Polaris</li>
+			<li class="poi" data-ra="279.234734787" data-dec="38.783688956">Vega</li>
+			<li class="poi" data-ra="10.6847083" data-dec="41.26875">m31</li>
+			<li class="poi" data-ra="83.82208" data-dec="-5.39111">m42</li>
+			<li class="poi" data-ra="84.67665" data-dec="-69.1009333">Doradus</li>
+		</ul>
+		<label for="openSearchLayer">Fuse visibility</label><input id="openSearchLayer" type="checkbox" />
+	</div>
+    <canvas style="display: inline-block" id="GlobWebCanvas" style="border: none;" width="800" height="600"></canvas> 
+  	<br/>
+	<div id="fps" style="font-weight:bold"></div>
+</body>
+
+</html>
+
