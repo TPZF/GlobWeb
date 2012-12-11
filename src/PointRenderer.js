@@ -137,6 +137,29 @@ GlobWeb.PointRenderer = function(tileManager)
 	this.vertexBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+	this.defaultTexture = null;
+}
+
+/**************************************************************************************************************/
+
+/*
+	Build a default texture
+ */
+GlobWeb.PointRenderer.prototype._buildDefaultTexture = function(bucket)
+{  	
+	if ( !this.defaultTexture )
+	{
+		var gl = this.renderContext.gl;
+		this.defaultTexture = gl.createTexture();
+		gl.bindTexture(gl.TEXTURE_2D, this.defaultTexture);
+		var whitePixel = new Uint8Array([255, 255, 255, 255]);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, whitePixel);
+	}
+
+	bucket.texture = this.defaultTexture;
+	bucket.textureWidth = 10;
+	bucket.textureHeight = 10;
 }
 
 /**************************************************************************************************************/
@@ -242,11 +265,16 @@ GlobWeb.PointRenderer.prototype.getOrCreateBucket = function(layer,style)
 		var image = new Image();
 		var self = this;
 		image.onload = function() {self._buildTextureFromImage(bucket,image); self.renderContext.requestFrame(); }
+		image.onerror = function() { self._buildDefaultTexture(bucket); }
 		image.src = style.iconUrl;
 	}
 	else if ( style['icon'] )
 	{
 		this._buildTextureFromImage(bucket,style.icon);
+	}
+	else
+	{
+		this._buildDefaultTexture(bucket);
 	}
 	
 	this.buckets.push( bucket );
