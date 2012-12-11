@@ -29,7 +29,7 @@ GlobWeb.BaseNavigation = function(globe, options)
 	}
 	
 	// Inertia effect
-	if( options.inertia )
+	if( options && options.inertia )
 	{
 		this.inertia = new GlobWeb.InertiaAnimation(this);
 	}
