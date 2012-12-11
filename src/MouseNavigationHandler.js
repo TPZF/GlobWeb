@@ -13,15 +13,13 @@ GlobWeb.MouseNavigationHandler = function(options){
 	
 	this.navigation = null;
 	this.pressedButton = -1;
-	this.pressX = -1;
-	this.pressY = -1;
 	this.lastMouseX = -1;
 	this.lastMouseY = -1;
 	this.needsStartEvent = false;
 	this.needsEndEvent = false;
+	this.dx = 0;
+	this.dy = 0;
 	
-	this.startTime = -1;
-	this.endTime = -1;
 	// Copy options
 	for (var x in options)
 	{
@@ -103,7 +101,7 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseWheel = function(event)
 	if ( this.navigation.inertia )
 	{
 		this.navigation.inertia.stop();
-		this.navigation.inertia.launch("zoom", factor/2 );
+		this.navigation.inertia.launch("zoom", factor < 0 ? -1 : 1 );
 	}
 
 	// Stop mouse wheel to be propagated, because default is to scroll the page
@@ -129,7 +127,6 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseWheel = function(event)
 GlobWeb.MouseNavigationHandler.prototype.handleMouseDown = function(event)
 {
 	this.pressedButton = event.button;
-	this.startTime = Date.now();
 
 	if( this.navigation.inertia )
 	{
@@ -137,13 +134,11 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseDown = function(event)
 	}
 
 	if ( event.button == 0 || event.button == 1 )
-	{
-		
-		this.pressX = event.clientX;
-		this.pressY = event.clientY;
-		
+	{		
 		this.lastMouseX = event.clientX;
 		this.lastMouseY = event.clientY;
+		this.dx = 0;
+		this.dy = 0;
 		
 		this.needsStartEvent = true;
 		
@@ -163,29 +158,17 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseUp = function(event)
 {
 	// No button pressed anymore
 	this.pressedButton = -1;
-	this.endTime = Date.now();
 
 	if ( this.navigation.inertia )
-	{
-		var speedVector = [ event.clientX - this.pressX, event.clientY - this.pressY ];
-		var s = Math.sqrt( Math.pow(speedVector[0], 2) + Math.pow(speedVector[1], 2) );
-		var deltaT = this.endTime - this.startTime;
-		var speed = s/(2 * deltaT);
-
-		var inertiaVector  = [ event.clientX - this.lastMouseX, event.clientY - this.lastMouseY ];
-
+	{	
 		if ( event.button == 0 )
 		{
-			this.navigation.inertia.launch("pan", speed, inertiaVector );
-			// As alternative..
-			// this.navigation.inertia.launch("pan", speed, speedVector );
+			this.navigation.inertia.launch("pan", this.dx, this.dy );
 		
 		}
 		if ( event.button == 1 )
 		{
-			this.navigation.inertia.launch("rotate", speed, inertiaVector );
-			// As alternative..
-			// this.navigation.inertia.launch("rotate", speed, speedVector );
+			this.navigation.inertia.launch("rotate", this.dx, this.dy );
 		}
 	}
 
@@ -217,8 +200,8 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseMove = function(event)
 	if (this.pressedButton < 0)
 		return;
 	
-	var dx = (event.clientX - this.lastMouseX);
-	var dy = (event.clientY - this.lastMouseY);
+	this.dx = (event.clientX - this.lastMouseX);
+	this.dy = (event.clientY - this.lastMouseY);
 	
 	var ret = false;
 	// Pan
@@ -229,14 +212,14 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseMove = function(event)
 			this.needsStartEvent  = false;
 			this.needsEndEvent = true;
 		}
-		this.navigation.pan( dx, dy );
+		this.navigation.pan( this.dx, this.dy );
 		this.navigation.globe.renderContext.requestFrame();
 		ret = true;
 	}
 	// Rotate
 	else if ( this.pressedButton == 1 )
 	{
-		this.navigation.rotate(dx,dy);
+		this.navigation.rotate(this.dx,this.dy);
 		this.navigation.globe.renderContext.requestFrame();
 		ret = true;
 	}

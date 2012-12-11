@@ -22,7 +22,7 @@
 				continuousRendering: true } );
 
 		// Add mouse navigation
-		var navigation = new GlobWeb.Navigation(globe);
+		var navigation = new GlobWeb.Navigation(globe, { inertia: true });
 		
 		// Add stats
 		var stats = new GlobWeb.Stats( globe, {element: 'fps', verbose: false} );

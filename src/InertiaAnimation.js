@@ -28,10 +28,10 @@ GlobWeb.InertiaAnimation = function(nav)
 {
     GlobWeb.Animation.prototype.constructor.call(this);
 
-	this.factor = 1;
+	this.factor = 0.95;
 	this.type = null;
-	this.speed = -1;
-	this.inertiaVector = null;
+	this.dx = 0;
+	this.dy = 0;
 	this.navigation = nav;
 	this.navigation.globe.addAnimation(this);
 }
@@ -45,21 +45,22 @@ GlobWeb.inherits(GlobWeb.Animation,GlobWeb.InertiaAnimation);
 GlobWeb.InertiaAnimation.prototype.update = function(now)
 {
 	if ( this.factor > 0 )
-	{
+	{		
 		switch(this.type)
 		{
 			case "pan":
-				this.navigation.pan(this.inertiaVector[0]*this.speed*this.factor, this.inertiaVector[1]*this.speed*this.factor);
+				this.navigation.pan(this.dx,this.dy);
 				break;
 			case "rotate":
-				this.navigation.rotate(this.inertiaVector[0]*this.speed*this.factor, this.inertiaVector[1]*this.speed*this.factor);
+				this.navigation.rotate(this.dx,this.dy);
 				break;
 			case "zoom":
-				this.navigation.zoom(this.speed*this.factor);
+				this.navigation.zoom(this.dx);
 				break;
 			default:
 		}
-		this.factor*=0.9;
+		this.dx *= this.factor;
+		if (this.dy) this.dy *= this.factor;
 		this.navigation.globe.renderContext.requestFrame();
 	}
 	else
@@ -81,13 +82,12 @@ GlobWeb.InertiaAnimation.prototype.update = function(now)
  *	@param speed Starting speed
  *	@param {Int[]} inertiaVector Vector of mouvement in window coordinates(for pan and rotate inertias)
  */
-GlobWeb.InertiaAnimation.prototype.launch = function(type, speed, inertiaVector)
+GlobWeb.InertiaAnimation.prototype.launch = function(type, dx, dy)
 {
 	// Set first value
-    this.factor = 1;
-	this.type = type;
-	this.speed = speed;
-	this.inertiaVector = inertiaVector;
+ 	this.type = type;
+	this.dx = dx;
+	this.dy = dy;
 
 	this.start();
 }
