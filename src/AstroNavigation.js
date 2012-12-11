@@ -25,7 +25,6 @@
 	@param globe Globe
 	@param options Configuration properties for the AstroNavigation :
 		<ul>
-			<li>handlers : Array of objects defining navigation events</li>
 			<li>minFov : The minimum field of view in degrees</li>
 			<li>maxFov : The maximum field of view in degrees</li>
 		</ul>
@@ -156,7 +155,7 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 /**************************************************************************************************************/
 
 /** @export
-	Zoom to a 3d position
+	Move to a 3d position
 	@param {Float[]} geoPos Array of two floats corresponding to final Longitude and Latitude(in this order) to zoom
 	@param {Int} duration Duration of animation in milliseconds
  */
@@ -166,12 +165,12 @@ GlobWeb.AstroNavigation.prototype.moveTo = function(geoPos, duration )
 	
 	duration = duration || 5000;
 	
-	// Create a single animation to animate center3d and fov
+	// Create a single animation to animate center3d
 	var geoStart = [];
 	GlobWeb.CoordinateSystem.from3DToGeo(this.center3d, geoStart);
 	
-	var startValue = [geoStart[0], geoStart[1], this.globe.renderContext.fov];
-	var endValue = [geoPos[0], geoPos[1], this.globe.renderContext.fov];
+	var startValue = [geoStart[0], geoStart[1]];
+	var endValue = [geoPos[0], geoPos[1]];
 	
 	// Compute the shortest path if needed
 	if (Math.abs(geoPos[0] - geoStart[0]) > 180. )
@@ -190,9 +189,7 @@ GlobWeb.AstroNavigation.prototype.moveTo = function(geoPos, duration )
 			navigator.center3d[0] = position3d[0];
 			navigator.center3d[1] = position3d[1];
 			navigator.center3d[2] = position3d[2];
-			this.globe.renderContext.fov = value[2];
 			navigator.computeViewMatrix();
-			
 		}
 	);
 	
@@ -201,10 +198,8 @@ GlobWeb.AstroNavigation.prototype.moveTo = function(geoPos, duration )
 		1.0, endValue,
 		function(t, a, b) {
 			var pt = Numeric.easeOutQuad(t);
-			var dt = Numeric.easeInQuad(t);
 			return [Numeric.lerp(pt, a[0], b[0]),  // geoPos.long
-				Numeric.lerp(pt, a[1], b[1]),  // geoPos.lat
-				Numeric.lerp(dt, a[2], b[2])];  // fov
+				Numeric.lerp(pt, a[1], b[1])];  // geoPos.lat
 		}
 	);
 
@@ -265,12 +260,7 @@ GlobWeb.AstroNavigation.prototype.zoom = function(delta)
 	
 	this.computeViewMatrix();
 	
-// 	this.globe.renderContext.requestFrame();
-	
 	this.globe.publish("endNavigation");
-	
-	// Return false to stop mouse wheel to be propagated when using onmousewheel
-// 	return false;
 }
 
 /**************************************************************************************************************/
