@@ -457,7 +457,7 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 	{
 		// When in "Astro" mode, do not compute near/far from tiles not really needed
 		// And the code used for "Earth" does not works really well, when the earth is seen from inside...
-		rc.near = 0.6 * GlobWeb.CoordinateSystem.radius;
+		rc.near = 0.2 * GlobWeb.CoordinateSystem.radius;
 		rc.far = 1.1 * GlobWeb.CoordinateSystem.radius;
 	}
 	else

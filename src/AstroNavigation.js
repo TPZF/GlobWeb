@@ -272,18 +272,11 @@ GlobWeb.AstroNavigation.prototype.zoom = function(delta)
  */
 GlobWeb.AstroNavigation.prototype.pan = function(dx, dy)
 {
-	var pixelSource = [this.globe.renderContext.canvas.width / 2., this.globe.renderContext.canvas.height / 2.];
-	var dest3d = this.globe.renderContext.get3DFromPixel(pixelSource[0] + dx, pixelSource[1] + dy);
-	
-	// Compute direction vector
-	var dir = [];
-	vec3.subtract(dest3d, this.center3d, dir);
-	
-	// Translate center3d by direction
-	vec3.subtract(this.center3d, dir, this.center3d);
-	
+	var x = this.globe.renderContext.canvas.width / 2.;
+	var y = this.globe.renderContext.canvas.height / 2.;
+	this.center3d = this.globe.renderContext.get3DFromPixel(x - dx, y - dy);
+		
 	this.computeViewMatrix();
-	
 }
 
 /**************************************************************************************************************/
@@ -295,22 +288,11 @@ GlobWeb.AstroNavigation.prototype.pan = function(dx, dy)
  */
 GlobWeb.AstroNavigation.prototype.rotate = function(dx,dy)
 {
-	var u = this.center3d[0];
-	var v = this.center3d[1];
-	var w = this.center3d[2];
 	// constant tiny angle 
-	var angle = dx * 0.5 * Math.PI/180.;
-
-	// Rotation matrix around look(center3d - origin) vector ... simplier solution required..
-	var rotationMatrix = mat4.create(
-		[ u*u + ( 1-u*u )*Math.cos(angle), u*v*(1 - Math.cos(angle)) - w * Math.sin(angle), u*w*(1-Math.cos(angle)) + v*Math.sin(angle), 0,
-		u*v*(1 - Math.cos(angle)) + w*Math.sin(angle), v*v+(1 - v*v)*Math.cos(angle), v*w*(1 - Math.cos(angle)) - u*Math.sin(angle), 0,
-		u*w*(1 - Math.cos(angle)) - v*Math.sin(angle), v*w*(1 - Math.cos(angle)) + u*Math.sin(angle), w*w + (1-w*w)*Math.cos(angle) , 0,
-		0, 0, 0, 1 ]
-		);
-
-	// Recompute up vector
-	mat4.multiplyVec3( rotationMatrix, this.up );
+	var angle = dx * 0.1 * Math.PI/180.;
+	
+	var rot = quat4.fromAngleAxis(angle,this.center3d);
+	quat4.multiplyVec3( rot, this.up );
 
 	this.computeViewMatrix();
 }
