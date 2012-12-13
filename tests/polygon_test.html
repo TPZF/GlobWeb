@@ -1,0 +1,131 @@
+<html>
+
+<head>
+<title>Add/Remove feature tests</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+
+<script type="text/javascript">
+var GlobWeb = {};			
+</script>
+<script src="../src/Triangulator.js"></script>
+<script src="../src/Utils.js"></script>
+<script src="../src/VectorRendererManager.js"></script>
+<script src="../src/TiledVectorRenderable.js"></script>
+<script src="../src/PolygonRenderable.js"></script>
+
+<script type="text/javascript">
+
+
+function cleanupPoints( points )
+{
+	var len = points.length;
+	var i = 1;
+	while ( i < len )
+	{
+		if ( points[i][0] == points[i-1][0]
+		 && points[i][1] == points[i-1][1] )
+		{
+			points.splice(i,1);
+			len--;
+		}
+		else
+		{
+			i++;
+		}
+	}
+}
+
+	$( function() {
+	 /*   function testIntersection() 
+		{
+			assert( lineIntersection( -5, 0, 5, 0, 0, 5, 0, -5 ) );
+			assert( lineIntersection( 1, 1, 2, 3, 0, 3, 2, 0 ) );
+			assert( lineIntersection( 1, 1, 2, 3, 0, 3, 0.5, 0 ) == false );
+		}*/
+		
+		var canvas = $("canvas").get(0);
+		var context = canvas.getContext("2d");
+		var level = 3;
+		function drawGrid()
+		{
+			var startX = 100;
+			var startY = 100;
+			var step = 32;
+			var size = Math.pow(2,3) + 1;
+			
+			context.beginPath();
+			for ( var j = 0; j < size; j ++ )
+			{
+				context.moveTo( startX, startY + j * step);
+				context.lineTo( startX + (size-1)*step, startY + j * step );
+			}
+			for ( var j = 0; j < size; j ++ )
+			{
+				context.moveTo( startX + j * step, startY);
+				context.lineTo( startX + j * step, startY + (size-1) * step );
+			}
+			context.stroke(); 
+		}
+		function drawBackground()
+		{
+			context.fillStyle = "#eee";
+			context.fillRect(0,0,canvas.width,canvas.height);
+			context.strokeStyle = "#f00";
+			drawGrid();
+		}
+		function drawPolyline( points, style )
+		{
+			context.strokeStyle = style;
+			context.beginPath();
+			context.moveTo( points[0][0], points[0][1] );
+			for ( var n = 1; n < points.length; n++ )
+			{
+				context.lineTo( points[n][0], points[n][1] );
+			}
+			context.stroke(); 
+		}
+		
+		drawBackground();
+		
+		var points = [];
+		
+		$(canvas).click( function(event) {
+			points.push( [event.pageX, event.pageY] );
+			drawBackground();
+			drawPolyline(points, "#0f0");
+		});
+		
+		$(canvas).dblclick( function() {
+			points.push( points[0] );
+			drawBackground();
+			drawPolyline(points, "#0f0");
+			
+			cleanupPoints( points );
+			
+			var polys = clipPolygonToTriGridStartUp( points, [100,100,356,356], 3 );
+			
+			for ( var i = 0; i < polys.length; i++ )
+			{
+				var pt = [];
+				for ( var n = 0; n < polys[i].length; n++ )
+					pt.push( points[ polys[i][n] ] );
+				if ( pt.length > 0 )
+					drawPolyline( pt, "#00f");
+			}			
+		});
+	} );
+
+</script>
+</head>
+
+<body style="margin: 0" >
+
+<canvas width="1024" height="768"></canvas>
+
+
+</body>
+
+</html>
+
