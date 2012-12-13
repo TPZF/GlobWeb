@@ -57,8 +57,9 @@ GlobWeb.SceneGraph.Texture = function(url)
 	this.glTexture = null;
 	this.wrap = [ WebGLRenderingContext.REPEAT, WebGLRenderingContext.REPEAT ];
 	this.image = new Image();
-	this.image.onload = function()
+	this.image.onerror = function()
 	{
+		console.log("Cannot load texture " + url);
 	}
 	this.image.src = url;
 }
@@ -151,7 +152,8 @@ GlobWeb.SceneGraphRenderer.prototype.bindTexture = function(texture)
 	{
 		gl.bindTexture(gl.TEXTURE_2D, texture.glTexture);
 	}
-	else
+	else if ( texture.image.complete 
+		&& texture.image.width > 0 && texture.image.height > 0 )
 	{
 		texture.glTexture = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, texture.glTexture);
@@ -203,7 +205,7 @@ GlobWeb.SceneGraphRenderer.prototype.renderNode = function(node)
 	{
 		var geom = node.geometries[i];
 		gl.uniform4fv( this.program.uniforms["diffuse"], geom.material.diffuse );
-		if ( geom.material.texture && geom.material.texture.image.complete )
+		if ( geom.material.texture )
 			this.bindTexture( geom.material.texture );
 		if (!geom.mesh.glMesh)
 		{
