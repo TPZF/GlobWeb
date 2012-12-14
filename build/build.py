@@ -34,7 +34,8 @@ commonFiles= [
 		"MouseNavigationHandler.js",
 		"KeyboardNavigationHandler.js",
 		"BaseNavigation.js",
-		"RasterOverlayRenderer.js"
+		"RasterOverlayRenderer.js",
+		"InertiaAnimation.js"
 	]
 		
 globFiles = [
@@ -67,6 +68,7 @@ astroFiles = [
 		"HEALPixLayer.js",
 		"HEALPixTiling.js",
 		"SimpleLineRenderer.js",
+		"SimplePolygonRenderer.js",
 		"AstroNavigation.js",
 		"HEALPixTables.js",
 		"HEALPixBase.js",
