@@ -207,19 +207,15 @@ GlobWeb.TileManager.prototype.visitTiles = function( callback )
 		// Retreive the first tile and remove it from the array
 		var tile = tilesToProcess.shift();
 		
-		// Only process tile if loaded
-		if ( tile.state == GlobWeb.Tile.State.LOADED )
+		callback( tile );
+		
+		// Add tile children to array to be processed later
+		if ( tile.children )
 		{
-			callback( tile );
-			
-			// Add tile children to array to be processed later
-			if ( tile.children )
-			{
-				tilesToProcess.push( tile.children[0] );
-				tilesToProcess.push( tile.children[1] );
-				tilesToProcess.push( tile.children[2] );
-				tilesToProcess.push( tile.children[3] );
-			}
+			tilesToProcess.push( tile.children[0] );
+			tilesToProcess.push( tile.children[1] );
+			tilesToProcess.push( tile.children[2] );
+			tilesToProcess.push( tile.children[3] );
 		}
 	}
 }
