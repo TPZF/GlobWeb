@@ -95,6 +95,8 @@ GlobWeb.HEALPixTile = function( order, pix, face )
 	var width = 1728/64;
 	var height = 1856/64;
 	this.texTransform = [64/1728, 64/1856, ((this.pixelIndex % width))/width, ((Math.floor(this.pixelIndex/width))/height)];
+
+	this.geoBound = null;
 }
 
 /**************************************************************************************************************/
@@ -197,15 +199,25 @@ GlobWeb.HEALPixTile.prototype.generateVertices = function()
 	var pix=this.pixelIndex&(this.nside*this.nside-1);
 	var ix = GlobWeb.HEALPixBase.compress_bits(pix);
 	var iy = GlobWeb.HEALPixBase.compress_bits(pix>>>1);
-	var face = (this.pixelIndex>>>(2*this.order));
 	
 	// Compute array of worldspace coordinates
 	for(var u = 0; u < size; u++){
 		for(var v = 0; v < size; v++){
-			worldSpaceVertices[u*size + v] = GlobWeb.HEALPixBase.fxyf((ix+u*step)/this.nside, (iy+v*step)/this.nside, face);
+			worldSpaceVertices[u*size + v] = GlobWeb.HEALPixBase.fxyf((ix+u*step)/this.nside, (iy+v*step)/this.nside, this.face);
 		}
 	}
 	
+	// Compute geoBound using corners of tile
+	this.geoBound = new GlobWeb.GeoBound();
+
+	var corners = [];
+	corners.push( GlobWeb.CoordinateSystem.from3DToGeo( worldSpaceVertices[0] ) );
+	corners.push( GlobWeb.CoordinateSystem.from3DToGeo( worldSpaceVertices[size-1] ) );
+	corners.push( GlobWeb.CoordinateSystem.from3DToGeo( worldSpaceVertices[size*(size-1)] ) );
+	corners.push( GlobWeb.CoordinateSystem.from3DToGeo( worldSpaceVertices[size*size-1] ) );
+
+	this.geoBound.computeFromCoordinates( corners );
+
 	// Compute tile matrix
 	this.matrix = this.computeLocalMatrix(worldSpaceVertices);	
 	var invMatrix = mat4.create();
