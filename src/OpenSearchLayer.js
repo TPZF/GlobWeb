@@ -1,4 +1,4 @@
-/***************************************
+/**************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
  * This file is part of GlobWeb.
@@ -56,7 +56,7 @@ GlobWeb.OpenSearchLayer = function(options){
 	// Used for picking management
 	this.features = [];
 	// Counter set, indicates how many times the feature has been requested
-	this.featuresSet = new Set();
+	this.featuresSet = {};
 
 	// Maximum two requests for now
 	this.requests = [ null, null ];
@@ -148,13 +148,13 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile)
 				{
 					self.addFeature( response.features[i], tile );
 				}
-
-				self.requests[index] = null;
-				self.globe.publish("endLoad",self.id);
 			},
 			error: function (xhr, ajaxOptions, thrownError) {
-				self.requests[index] = null;
 				console.error( xhr.responseText );
+			},
+			complete: function(xhr) {
+				self.requests[index] = null;
+				self.globe.publish("endLoad",self.id);
 			}
 		});
 	}
@@ -207,7 +207,7 @@ GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
 	{
 		this.features.push( feature );
 		renderable = this.createRenderable( feature.geometry );
-		this.featuresSet.add( feature.properties.identifier, { counter: 1, renderable: renderable } );
+		this.featuresSet[feature.properties.identifier] =  { counter: 1, renderable: renderable };
 	}
 	else
 	{
@@ -244,7 +244,7 @@ GlobWeb.OpenSearchLayer.prototype.removeFeature = function( geometry, identifier
 	if ( this.featuresSet[identifier].counter == 1 )
 	{
 		// Last feature
-		this.featuresSet.remove( identifier );
+		delete this.featuresSet[identifier];
 		for ( var i = 0; i<this.features.length; i++ )
 		{
 			var currentFeature = this.features[i];
@@ -460,45 +460,4 @@ GlobWeb.OpenSearchLayer.prototype.recomputeFeaturesGeometry = function( features
 	}
 }
 
-/**************************************************************************************************************/
-
-/**
- *	@constructor
- *
- *	To add the multiple features only once
- */
-Set = function()
-{
-	this.length = 0;
-}
-
-/**
- *	Add the element to the set
- *
- *	@param k Key
- *	@param v Value
- */
-Set.prototype.add = function(k,v)
-{
-	if (typeof this[k] === 'undefined')
-		{
-			this.length++;
-			this[k] = v;
-		}
-}
-
-/**
- *	Remove the element from the set
- *
- *	@param k Key
- */
-Set.prototype.remove = function(k)
-{
-	if ( this[k])
-	{
-		this.length--;
-		delete this[k];
-	}
-}
-
-/**************************************************************************************************************/
+/*************************************************************************************************************/
