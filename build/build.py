@@ -73,7 +73,8 @@ astroFiles = [
 		"HEALPixTables.js",
 		"HEALPixBase.js",
 		"EquatorialGridLayer.js",
-		"Long.js"
+		"Long.js",
+		"OpenSearchLayer.js"
     ]
 
 experimentalFiles = [
