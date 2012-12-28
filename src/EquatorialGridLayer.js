@@ -21,22 +21,57 @@
 
 /** 
 	@constructor
-	Function constructor for TileWireframeLayer
+	Function constructor for EquatorialGridLayer
  */
 GlobWeb.EquatorialGridLayer = function( options )
 {
 	GlobWeb.BaseLayer.prototype.constructor.call( this, options );
 	this.globe = null;
-	this.mesh = null;
-	this.texts = [];
+
+	// Equatorial coordinates label renderables
+	this.labels = {};
+
+	// WebGL textures
+	this.texturePool = null;
 	
-	this.longitudeSample = 15; // *24 = 360
-	this.latitudeSample = 10; // *18 = 180
+	this.longitudeSample = options.longitudeSample || 15; // *24 = 360
+	this.latitudeSample = options.latitudeSample || 10; // *18 = 180
+
+	// Canvas for generation of equatorial coordinate labels
+	this.canvas2d = document.createElement("canvas");
+	this.canvas2d.width = 100;
+	this.canvas2d.height = 20;
+
+	// Grid buffers
+	this.vertexBuffer = null;
+	this.indexBuffer = null;
 }
 
 /**************************************************************************************************************/
 
 GlobWeb.inherits( GlobWeb.BaseLayer,GlobWeb.EquatorialGridLayer );
+
+/**************************************************************************************************************/
+
+/**
+ *	Generate image data from text
+ *
+ *	@param {String} text Text generated in canvas
+ */
+GlobWeb.EquatorialGridLayer.prototype.generateImageData = function(text)
+{
+	var ctx = this.canvas2d.getContext("2d");
+	ctx.clearRect(0,0, this.canvas2d.width, this.canvas2d.height);
+	ctx.fillStyle = '#fff';
+	ctx.font = '18px sans-serif';
+	ctx.textBaseline = 'top';
+	ctx.textAlign = 'center';
+	var x = this.canvas2d.width / 2;
+
+	ctx.fillText(text, x, 0);
+
+	return ctx.getImageData(0,0, this.canvas2d.width,this.canvas2d.height);
+}
 
 /**************************************************************************************************************/
 
@@ -52,7 +87,7 @@ GlobWeb.EquatorialGridLayer.prototype._attach = function( g )
 		this.globe.tileManager.addPostRenderer(this);
 	}
 
-	if (!this.program)
+	if (!this.gridProgram)
 	{
 		var vertexShader = "\
 		attribute vec3 vertex;\n\
@@ -110,9 +145,9 @@ GlobWeb.EquatorialGridLayer.prototype._attach = function( g )
 		} \n\
 		";
 		
-		this.program = new GlobWeb.Program(this.globe.renderContext);
+		this.gridProgram = new GlobWeb.Program(this.globe.renderContext);
 		this.textProgram = new GlobWeb.Program(this.globe.renderContext);
-		this.program.createFromSource( vertexShader, fragmentShader );
+		this.gridProgram.createFromSource( vertexShader, fragmentShader );
 		this.textProgram.createFromSource( vertexTextShader, fragmentTextShader );
 	}
 	
@@ -125,8 +160,14 @@ GlobWeb.EquatorialGridLayer.prototype._attach = function( g )
 	var indices = [0, 3, 1, 1, 3, 2];
 	this.textMesh.setVertices(vertices);
 	this.textMesh.setIndices(indices);
-	
-	this.generateMesh();
+
+	// Init grid buffers	
+	var gl = this.globe.renderContext.gl;
+	this.vertexBuffer = gl.createBuffer();
+	this.indexBuffer = gl.createBuffer();
+
+	// Init texture pool
+	this.texturePool = new GlobWeb.EquatorialGridLayer.TexturePool(gl);
 }
 
 /**************************************************************************************************************/
@@ -136,8 +177,13 @@ GlobWeb.EquatorialGridLayer.prototype._attach = function( g )
  */
 GlobWeb.EquatorialGridLayer.prototype._detach = function()
 {
+	var gl = this.globe.renderContext.gl;
+	gl.deleteBuffer( this.vertexBuffer );
+	gl.deleteBuffer( this.indexBuffer );
+
 	this.globe.tileManager.removePostRenderer(this);
 	GlobWeb.BaseLayer.prototype._detach.call(this);
+
 }
 
 /**************************************************************************************************************/
@@ -150,57 +196,55 @@ GlobWeb.EquatorialGridLayer.prototype.render = function( tiles )
 	var renderContext = this.globe.renderContext;
 	var gl = renderContext.gl;
 	
-	/*** Render grid ***/
 	gl.disable(gl.DEPTH_TEST);
-	
 	gl.enable(gl.BLEND);
 	gl.blendEquation(gl.FUNC_ADD);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-	
+
+	/*** Render grid ***/
 	var geoBound = this.globe.getViewportGeoBound();
-	this.needToBeComputed(geoBound)
-	this.generateMesh();
+	this.computeSamples(geoBound)
+	this.generateGridBuffers(geoBound);
 	
-	this.program.apply();
-	
-	// The shader only needs the viewProjection matrix, use GlobWeb.modelViewMatrix as a temporary storage
+	this.gridProgram.apply();
 	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
-	gl.uniformMatrix4fv(this.program.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
-	gl.uniform1f(this.program.uniforms["alpha"], this._opacity );
+	gl.uniformMatrix4fv(this.gridProgram.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
+	gl.uniform1f(this.gridProgram.uniforms["alpha"], this._opacity );
 	
-	this.mesh.render(this.program.attributes);
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+	gl.vertexAttribPointer(this.gridProgram.attributes['vertex'], this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 	
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+	gl.drawElements( gl.LINES, this.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 	
-	/*** Render text ***/
-	
+	/*** Render label ***/
 	this.generateText(geoBound);
-	
 	this.textProgram.apply();
 	
-	// The shader only needs the viewProjection matrix, use GlobWeb.modelViewMatrix as a temporary storage
 	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
 	gl.uniformMatrix4fv(this.textProgram.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
 	gl.uniform1i(this.textProgram.uniforms["texture"], 0);
 	
 	var pixelSizeVector = renderContext.computePixelSizeVector();
-	for ( var n = 0; n < this.texts.length; n++ )
+	// for ( var n = 0; n < this.labels.length; n++ )
+	for ( var n in this.labels )
 	{
-		var text = this.texts[n];
+		var label = this.labels[n];
 		// Bind point texture
 		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, text.texture.texture);
+		gl.bindTexture(gl.TEXTURE_2D, label.texture);
 
 		// 2.0 * because normalized device coordinates goes from -1 to 1
-		var scale = [2.0 * text.texture.textureWidth / renderContext.canvas.width,
-					 2.0 * text.texture.textureHeight / renderContext.canvas.height];
+		var scale = [2.0 * label.textureWidth / renderContext.canvas.width,
+					 2.0 * label.textureHeight / renderContext.canvas.height];
 					 
 		gl.uniform2fv(this.textProgram.uniforms["poiScale"], scale);
-		gl.uniform2fv(this.textProgram.uniforms["tst"], [ 0.5 / (text.texture.textureWidth), 0.5 / (text.texture.textureHeight)  ]);
+		gl.uniform2fv(this.textProgram.uniforms["tst"], [ 0.5 / (label.textureWidth), 0.5 / (label.textureHeight)  ]);
 		
 		// Poi culling
-		var worldPoi = text.pos3d;
-		var poiVec = text.vertical;
-		scale = text.texture.textureHeight * ( pixelSizeVector[0] * worldPoi[0] + pixelSizeVector[1] * worldPoi[1] + pixelSizeVector[2] * worldPoi[2] + pixelSizeVector[3] );
+		var worldPoi = label.pos3d;
+		var poiVec = label.vertical;
+		scale = label.textureHeight * ( pixelSizeVector[0] * worldPoi[0] + pixelSizeVector[1] * worldPoi[1] + pixelSizeVector[2] * worldPoi[2] + pixelSizeVector[3] );
 
 		var x = poiVec[0] * scale + worldPoi[0];
 		var y = poiVec[1] * scale + worldPoi[1];
@@ -210,6 +254,7 @@ GlobWeb.EquatorialGridLayer.prototype.render = function( tiles )
 		gl.uniform1f(this.textProgram.uniforms["alpha"], 1.);
 			
 		this.textMesh.render(this.textProgram.attributes);
+		label.needed = false;	
 	}
 	gl.enable(gl.DEPTH_TEST);
 	gl.disable(gl.BLEND);
@@ -226,7 +271,8 @@ GlobWeb.EquatorialGridLayer.prototype.visible = function( arg )
 	{
 		this._visible = arg;
 		
-		if ( arg ){
+		if ( arg )
+		{
 			this.globe.tileManager.addPostRenderer(this);
 		}
 		else
@@ -251,20 +297,18 @@ GlobWeb.EquatorialGridLayer.prototype.opacity = function( arg )
 /**************************************************************************************************************/
 
 /**
- * 	Test if the grid needs to be computed
+ * 	Compute samples depending on geoBound
  */
-GlobWeb.EquatorialGridLayer.prototype.needToBeComputed = function(geoBound)
+GlobWeb.EquatorialGridLayer.prototype.computeSamples = function(geoBound)
 {
 	var dlong = geoBound.east - geoBound.west;
 	var dlat = geoBound.north - geoBound.south;
-	var rep = false;
 	
 	// if under-sampled and not divergent
 	if ( dlong / this.longitudeSample < 3. && this.longitudeSample > 1. )
 	{
 		this.longitudeSample /= 2;
 		this.latitudeSample /= 2;
-		rep = true;
 	}
 	
 	// if over-sampled and not exceed the initial value
@@ -272,40 +316,22 @@ GlobWeb.EquatorialGridLayer.prototype.needToBeComputed = function(geoBound)
 	{
 		this.longitudeSample *= 2;
 		this.latitudeSample *= 2;
-		rep = true;
 	}
-	
-	return rep;
 }
 
 /**************************************************************************************************************/
 
 /**
- * 	Generate mesh object of the grid
+ * 	Generate buffers object of the grid
  */
-GlobWeb.EquatorialGridLayer.prototype.generateMesh = function()
+GlobWeb.EquatorialGridLayer.prototype.generateGridBuffers = function(geoBound)
 {
-	var rc = this.globe.tileManager.renderContext;
-	var geoBound = this.globe.getViewportGeoBound();
-	
-	// Adaptative rendering... not implemented yet
-	//  TODO calculate bands mathematically
-// 	var latitudeBands = Math.floor((geoBound.north - geoBound.south)/this.latitudeSample);
-// 	var longitudeBandsBis = Math.floor((geoBound.east - geoBound.west)/this.longitudeSample);
-	
-	var latitudeBands = 180. / this.latitudeSample;
-// 	var longitudeBands = 360. / this.longitudeSample;
-	longitudeBands = 0;
-
-	var latStep = this.latitudeSample * Math.PI / 180;
-	var longStep = this.longitudeSample * Math.PI / 180;
-	
+	// Clamp min/max longitudes to sample
 	var west = (Math.floor(geoBound.west / this.longitudeSample))*this.longitudeSample;
 	var east = (Math.ceil(geoBound.east / this.longitudeSample))*this.longitudeSample;
 
-	// Adaptative rendering... not implemented yet
-	phiStart = Math.min( west, east );
-	phiStop = Math.max( west, east );
+	var phiStart = Math.min( west, east );
+	var phiStop = Math.max( west, east );
 	
 	// Difference is larger than hemisphere
 	if ( (east - west) > 180. )
@@ -319,21 +345,20 @@ GlobWeb.EquatorialGridLayer.prototype.generateMesh = function()
 		phiStart = west;
 		phiStop = east;
 	}
-	
+
+
+	// TODO adaptative generation of theta value
+	// for (var theta = geoBound.south; theta <= geoBound.north; theta+=latStep) {
+
 	var vertexPositionData = [];
-	// TODO adaptative generation
+	var latitudeBands = 180. / this.latitudeSample;
+
 	for (var latNumber = 0; latNumber <= latitudeBands; latNumber++) {
-		
-// 	for (var theta = geoBound.south; theta <= geoBound.north; theta+=latStep) {
 		var theta = latNumber * Math.PI / latitudeBands;
 		var sinTheta = Math.sin(theta);
 		var cosTheta = Math.cos(theta);
 		
-		longitudeBands = 0;
 		for (var phi = phiStart; phi <= phiStop ; phi+=this.longitudeSample) {
-// 		for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
-// 		for (var phi = geoBound.west; phi <= geoBound.east; phi+=longStep) {
-// 			var phi = longNumber * 2 * Math.PI / longitudeBands;
 			var radPhi = phi * Math.PI / 180;
 			
 			var sinPhi = Math.sin(radPhi);
@@ -347,19 +372,23 @@ GlobWeb.EquatorialGridLayer.prototype.generateMesh = function()
 			vertexPositionData.push(x);
 			vertexPositionData.push(y);
 			vertexPositionData.push(z);
-			
-			longitudeBands++;
 		}
 	}
+
+	var gl = this.globe.renderContext.gl;
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositionData), gl.STATIC_DRAW);
+	this.vertexBuffer.itemSize = 3;
+	this.vertexBuffer.numItems = vertexPositionData.length/3;
+
 	
 	var indexData = [];
-	var longNumber = 0;
+	var longitudeBands = (phiStop - phiStart)/this.longitudeSample + 1;
+
 	for (var latNumber = 0; latNumber < latitudeBands; latNumber++) {
-// 		for (var longNumber = 0; longNumber < longitudeBands; longNumber++) {
-		for (var phi = phiStart; phi < phiStop ; phi+=this.longitudeSample, longNumber++) {
-// 			var first = (latNumber * (longitudeBands + 1)) + longNumber;
+		for (var phi = phiStart, longNumber = 0; phi < phiStop ; phi+=this.longitudeSample, longNumber++) {
+
 			var first = (latNumber * (longitudeBands)) + longNumber % (longitudeBands - 1);
-// 			var second = first + longitudeBands + 1;
 			var second = first + longitudeBands;
 			indexData.push(first);
 			indexData.push(first + 1);
@@ -374,12 +403,11 @@ GlobWeb.EquatorialGridLayer.prototype.generateMesh = function()
 			indexData.push(first);
 		}
 	}
-	
-	this.mesh = new GlobWeb.Mesh(rc);
-	
-	this.mesh.setVertices(vertexPositionData);
-	this.mesh.setIndices(indexData);
-	this.mesh.mode = rc.gl.LINES;
+
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexData), gl.STATIC_DRAW);
+	this.indexBuffer.itemSize = 1;
+	this.indexBuffer.numItems = indexData.length;
 }
 
 /**************************************************************************************************************/
@@ -389,11 +417,10 @@ GlobWeb.EquatorialGridLayer.prototype.generateMesh = function()
  */
 GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 {
-	this.texts = [];
+	// Clamp min/max longitudes to sample
 	var west = (Math.floor(geoBound.west / this.longitudeSample))*this.longitudeSample;
 	var east = (Math.ceil(geoBound.east / this.longitudeSample))*this.longitudeSample;
 
-	// Adaptative rendering... not implemented yet
 	phiStart = Math.min( west, east );
 	phiStop = Math.max( west, east );
 	
@@ -412,76 +439,147 @@ GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 		phiStop = east;
 	}
 
-	
+	// Compute geographic position of center of canvas
 	var posX3d = this.globe.renderContext.get3DFromPixel( this.globe.renderContext.canvas.width / 2. , this.globe.renderContext.canvas.height / 2. );
 	var posXgeo = [];
 	GlobWeb.CoordinateSystem.from3DToGeo( posX3d, posXgeo );
-	
+
 	for (var phi = phiStart; phi <= phiStop; phi+=this.longitudeSample) {
-// 	for (var phi = 0; phi < 360; phi+=this.longitudeSample) {
-		
 		// convert to RA [0..360]
 		var RA = (phi < 0) ? phi+360 : phi;
 		var stringRA = GlobWeb.CoordinateSystem.fromDegreesToHMS( RA );
-		var imageData = GlobWeb.Text.generateImageData( stringRA );
-		var text = {};
-		this._buildTextureFromImage(text,imageData);
+
+		if ( !this.labels[stringRA] )
+		{
+			this.labels[stringRA] = {};
+			var imageData = this.generateImageData( stringRA );
+			this._buildTextureFromImage(this.labels[stringRA],imageData);
+		}
 		
+		// Compute position of label
 		var posGeo = [ phi, posXgeo[1] ];
 		var pos3d = GlobWeb.CoordinateSystem.fromGeoTo3D( posGeo );
 		var vertical = vec3.create();
 		vec3.normalize(pos3d, vertical);
 		
-		var pointRenderData = { pos3d: pos3d,
-				vertical: vertical,
-				texture: text
-		};
-
-		this.texts.push( pointRenderData );
+		this.labels[stringRA].pos3d = pos3d;
+		this.labels[stringRA].vertical = vertical;
+		this.labels[stringRA].needed = true;
 	}
 	
+	// TODO <!> Adaptative rendering isn't totally implemented for theta due to difficulty to compute extrem latitude using geoBound <!>
 	var north = (Math.ceil(geoBound.north / this.latitudeSample))*this.latitudeSample;
 	var south = (Math.floor(geoBound.south / this.latitudeSample))*this.latitudeSample;
 	
-	// Adaptative rendering... not implemented yet
 	thetaStart = Math.min( north, south );
 	thetaStop = Math.max( north, south );
 	
 	for (var theta = thetaStart; theta <= thetaStop; theta+=this.latitudeSample) {
 // 	for (var theta = -90; theta < 90; theta+=this.latitudeSample) {
-		var posGeo = [ posXgeo[0], theta ];
-		
-		var posEquat = [];
+
 		var stringTheta = GlobWeb.CoordinateSystem.fromDegreesToDMS( theta );
-		var imageData = GlobWeb.Text.generateImageData( stringTheta );
+		if ( !this.labels[stringTheta] )
+		{
+			this.labels[stringTheta] = {};
+			var imageData = this.generateImageData( stringTheta );
+			this._buildTextureFromImage(this.labels[stringTheta], imageData);
+		}
 		
-		var text = {};
-		this._buildTextureFromImage(text,imageData);
-		
+		// Compute position of label
+		var posGeo = [ posXgeo[0], theta ];
 		var pos3d = GlobWeb.CoordinateSystem.fromGeoTo3D( posGeo );
 		var vertical = vec3.create();
 		vec3.normalize(pos3d, vertical);
 		
-		var pointRenderData = { pos3d: pos3d,
-				vertical: vertical,
-				texture: text
-		};
-
-		this.texts.push( pointRenderData );
+		this.labels[stringTheta].pos3d = pos3d;
+		this.labels[stringTheta].vertical = vertical;
+		this.labels[stringTheta].needed = true;
 	}
-	
-	
+
+	// Dispose texture if not needed
+	for ( var x in this.labels )
+	{
+		if( !this.labels[x].needed )
+		{
+			this.texturePool.disposeGLTexture(this.labels[x].texture);
+			delete this.labels[x];
+		}
+	}
 	
 }
 
 /**************************************************************************************************************/
 
 /*
-	Build a texture from an image and store in a bucket
+	Build a texture from an image and store in a renderable
  */
-GlobWeb.EquatorialGridLayer.prototype._buildTextureFromImage = function(bucket,image)
+GlobWeb.EquatorialGridLayer.prototype._buildTextureFromImage = function(renderable,image)
 {  	
-	bucket.texture = this.globe.renderContext.createNonPowerOfTwoTextureFromImage(image);
-	bucket.textureWidth = image.width;
-	bucket.textureHeight = image.height;
+	renderable.texture = this.texturePool.createGLTexture(image);
+	renderable.textureWidth = image.width;
+	renderable.textureHeight = image.height;
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	@constructor
+ *	GL Textures pool
+ */
+GlobWeb.EquatorialGridLayer.TexturePool = function(gl)
+{
+	var gl = gl;
+	var glTextures = [];
+
+	/**
+		Create a GL texture
+	 */
+	this.createGLTexture = function(image)
+	{
+		if ( glTextures.length > 0 )
+		{
+			return reuseGLTexture(image);
+		}
+		else
+		{
+			return createNewGLTexture(image);
+		}
+	};
+
+
+	/**
+	 	Dispose a GL texture
+	 */
+	this.disposeGLTexture = function( texture )
+	{
+		glTextures.push(texture);
+	}
+
+	/** 
+		Create a non power of two texture from an image
+	*/
+	var createNewGLTexture = function(image)
+	{	
+		var tex = gl.createTexture();
+		gl.bindTexture(gl.TEXTURE_2D, tex);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		return tex;
+	}
+
+
+	/**
+		Reuse a GL texture
+	 */
+	var reuseGLTexture = function(image)
+	{
+		var glTexture = glTextures.pop();
+		gl.bindTexture(gl.TEXTURE_2D, glTexture);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);	
+		return glTexture;
+	}
+
 }
