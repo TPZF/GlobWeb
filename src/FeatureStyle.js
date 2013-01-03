@@ -30,7 +30,7 @@ GlobWeb.FeatureStyle = function(style)
 	this.fillColor = [1.0, 0.0, 0.0, 1.0];
 	this.fillTextureUrl = null;
 	this.strokeWidth = 1;
-	this.iconUrl = "hotspot.png";
+	this.iconUrl = null;
 	this.icon = null;
 	this.label = null;
 	this.textColor = [1.0, 1.0, 1.0, 1.0];
@@ -270,11 +270,14 @@ return parseColorString;
  */
 GlobWeb.FeatureStyle.fromColorToString = function(color)
 {		
-	var rr = parseInt( color[0] * 255.0 ).toString(16);
-	var gg = parseInt( color[1] * 255.0 ).toString(16);
-	var bb = parseInt( color[2] * 255.0 ).toString(16);
+   var hashColor = '#';
+   for ( var i=0; i<3; i++ )
+   {
+      var component = parseInt( color[i] * 255.0 ).toString(16)
+      hashColor += (component < 10) ? '0'+component : component;
+   }
 
-	return '#' + rr + gg + bb;
+	return hashColor;
 }
 
 /**************************************************************************************************************/
