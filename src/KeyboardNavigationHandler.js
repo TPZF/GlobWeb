@@ -70,7 +70,14 @@ GlobWeb.KeyboardNavigationHandler.prototype.handleKeyDown = function(event)
 			break;
 		case 37 :
 			// Left arrow
-			this.navigation.pan( this.panFactor, 0 );
+			if ( event.ctrlKey )
+			{
+				this.navigation.rotate( -this.panFactor, 0 );
+			}
+			else
+			{
+				this.navigation.pan( this.panFactor, 0 );
+			}
 			break;
 		case 38 :
 			// Up arrow
@@ -78,13 +85,19 @@ GlobWeb.KeyboardNavigationHandler.prototype.handleKeyDown = function(event)
 			break;
 		case 39 :
 			// Right arrow
-			this.navigation.pan( -this.panFactor, 0 );
+			if ( event.ctrlKey )
+			{
+				this.navigation.rotate( this.panFactor, 0 );
+			}
+			else
+			{
+				this.navigation.pan( -this.panFactor, 0 );
+			}
 			break;
 		case 40 :
 			// Down arrow
 			this.navigation.pan( 0, -this.panFactor );
 			break;
-		
 	}
 	this.navigation.globe.renderContext.requestFrame();
 }
