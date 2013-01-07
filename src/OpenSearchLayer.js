@@ -36,7 +36,7 @@ GlobWeb.OpenSearchLayer = function(options){
 	
 	this.serviceUrl = options.serviceUrl;
 	this.minOrder = options.minOrder || 5;
-	this.proxyUrl = options.proxyUrl || "/sitools/proxy?external_url=";
+	this.proxyUrl = options.proxyUrl || "";
 
 	// Set style
 	if ( options && options['style'] )
@@ -45,9 +45,7 @@ GlobWeb.OpenSearchLayer = function(options){
 	}
 	else
 	{
-		this.style = new GlobWeb.FeatureStyle({
-			iconUrl: "star.png",
-		});
+		this.style = new GlobWeb.FeatureStyle();
 	}
 	
 	// TODO "os" is overriden by BaseLayer id when attached by globe
@@ -256,7 +254,7 @@ GlobWeb.OpenSearchLayer.prototype.removeFeature = function( geometry, identifier
 	else
 	{
 		// Decrease
-		this.featuresSet[identifier]--;
+		this.featuresSet[identifier].counter--;
 	}
 }
 
