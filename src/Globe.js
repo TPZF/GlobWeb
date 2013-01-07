@@ -256,21 +256,42 @@ GlobWeb.Globe.prototype.getViewportGeoBound = function()
 /**************************************************************************************************************/
 
 /** 
-	Get the lon-lat from a pixel
+	Get the lon-lat from a pixel.
+	The pixel is expressed in the canvas frame, i.e. (0,0) corresponds to the lower-left corner of the pixel
+	
+	@param 	x the pixel x coordinate
+	@param 	y the pixel y coordinate
+	@return	an array of two numbers [lon,lat] or null if the pixel is not on the globe
  */
 GlobWeb.Globe.prototype.getLonLatFromPixel = function(x,y)
 {	
 	var pos3d = this.renderContext.get3DFromPixel(x,y);
-	if( pos3d == null )
+	if ( pos3d )
 	{
-		return null;
+		return GlobWeb.CoordinateSystem.from3DToGeo(pos3d);
 	}
 	else
 	{
-		var geoPick = [];
-		GlobWeb.CoordinateSystem.from3DToGeo(pos3d, geoPick);
-		return geoPick;
+		return null;
 	}
+}
+
+/**************************************************************************************************************/
+
+/** 
+	Get pixel from lon-lat
+	The pixel is expressed in the canvas frame, i.e. (0,0) corresponds to the lower-left corner of the pixel
+	
+	@param lon	the longitude
+	@param lat	the latitude
+	@return	an array of two numbers [x,y] or null if the pixel is not on the globe
+ */
+GlobWeb.Globe.prototype.getPixelFromLonLat = function(lon,lat)
+{	
+	var pos3d = vec3.create();
+	GlobWeb.CoordinateSystem.fromGeoTo3D([lon,lat], pos3d);
+	var pixel = this.renderContext.getPixelFrom3D(pos3d[0],pos3d[1],pos3d[2]);
+	return pixel
 }
 
 /**************************************************************************************************************/

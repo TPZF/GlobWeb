@@ -261,8 +261,7 @@ GlobWeb.RenderContext.prototype.get3DFromPixel = function(x,y)
 	mat4.multiply(this.projectionMatrix, this.viewMatrix, tmpMat);
 	mat4.inverse(tmpMat);
 	// Transform pos to world using inverse viewProjection matrix
-	var worldPick = [];
-	mat4.multiplyVec4(tmpMat, [ nx, ny, 0, 1], worldPick);
+	var worldPick = mat4.multiplyVec4(tmpMat, [ nx, ny, -1, 1]);
 	worldPick[0] /= worldPick[3];
 	worldPick[1] /= worldPick[3];
 	worldPick[2] /= worldPick[3];
@@ -297,15 +296,15 @@ GlobWeb.RenderContext.prototype.getPixelFrom3D = function(x,y,z)
 	mat4.multiply(this.projectionMatrix, this.viewMatrix, viewProjectionMatrix);
 	
 	// transform world to clipping coordinates
-	point3D = [];
-	mat4.multiply(viewProjectionMatrix, [x,y,z,0], point3D);
+	var point3D = [x,y,z,1];
+	mat4.project(viewProjectionMatrix, point3D);
 	
 	// transform clipping to window coordinates
-	var winX = Math.round((( 1 + point3D[0] ) / 2.0) * this.canvas.width );
+	var winX = Math.round( ( 1 + point3D[0] ) * 0.5 * this.canvas.width );
 	
 	// reverse y because (0,0) is top left but opengl's normalized
 	// device coordinate (-1,-1) is bottom left
-	var winY = Math.round((( 1 - point3D[1] ) / 2.0) * this.canvas.height );
+	var winY = Math.round( ( 1 - point3D[1] ) * 0.5 * this.canvas.height );
 
 	return [winX, winY];
 }
