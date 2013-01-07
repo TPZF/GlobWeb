@@ -112,14 +112,13 @@ GlobWeb.EquatorialGridLayer.prototype._attach = function( g )
 		uniform mat4 viewProjectionMatrix; \n\
 		uniform vec3 poiPosition; // world position \n\
 		uniform vec2 poiScale; // x,y scale \n\
-		uniform vec2 tst; \n\
 		\n\
 		varying vec2 texCoord; \n\
 		\n\
 		void main(void)  \n\
 		{ \n\
 			// Generate texture coordinates, input vertex goes from -0.5 to 0.5 (on x,y) \n\
-			texCoord = vertex.xy + vec2(0.5) + tst; \n\
+			texCoord = vertex.xy + vec2(0.5); \n\
 			// Invert y \n\
 			texCoord.y = 1.0 - texCoord.y; \n\
 			\n\
@@ -167,7 +166,8 @@ GlobWeb.EquatorialGridLayer.prototype._attach = function( g )
 	this.indexBuffer = gl.createBuffer();
 
 	// Init texture pool
-	this.texturePool = new GlobWeb.EquatorialGridLayer.TexturePool(gl);
+	if ( !this.texturePool )
+		this.texturePool = new GlobWeb.EquatorialGridLayer.TexturePool(gl);
 }
 
 /**************************************************************************************************************/
@@ -180,6 +180,12 @@ GlobWeb.EquatorialGridLayer.prototype._detach = function()
 	var gl = this.globe.renderContext.gl;
 	gl.deleteBuffer( this.vertexBuffer );
 	gl.deleteBuffer( this.indexBuffer );
+
+	this.texturePool.disposeAll();
+	for ( var i in this.labels )
+	{
+		delete this.labels[i];
+	}
 
 	this.globe.tileManager.removePostRenderer(this);
 	GlobWeb.BaseLayer.prototype._detach.call(this);
@@ -239,7 +245,7 @@ GlobWeb.EquatorialGridLayer.prototype.render = function( tiles )
 					 2.0 * label.textureHeight / renderContext.canvas.height];
 					 
 		gl.uniform2fv(this.textProgram.uniforms["poiScale"], scale);
-		gl.uniform2fv(this.textProgram.uniforms["tst"], [ 0.5 / (label.textureWidth), 0.5 / (label.textureHeight)  ]);
+		// gl.uniform2fv(this.textProgram.uniforms["tst"], [ 0.5 / (label.textureWidth), 0.5 / (label.textureHeight)  ]);
 		
 		// Poi culling
 		var worldPoi = label.pos3d;
@@ -353,12 +359,14 @@ GlobWeb.EquatorialGridLayer.prototype.generateGridBuffers = function(geoBound)
 	var vertexPositionData = [];
 	var latitudeBands = 180. / this.latitudeSample;
 
-	for (var latNumber = 0; latNumber <= latitudeBands; latNumber++) {
+	for ( var latNumber = 0; latNumber <= latitudeBands; latNumber++ )
+	{
 		var theta = latNumber * Math.PI / latitudeBands;
 		var sinTheta = Math.sin(theta);
 		var cosTheta = Math.cos(theta);
 		
-		for (var phi = phiStart; phi <= phiStop ; phi+=this.longitudeSample) {
+		for ( var phi = phiStart; phi <= phiStop ; phi+=this.longitudeSample )
+		{
 			var radPhi = phi * Math.PI / 180;
 			
 			var sinPhi = Math.sin(radPhi);
@@ -385,9 +393,10 @@ GlobWeb.EquatorialGridLayer.prototype.generateGridBuffers = function(geoBound)
 	var indexData = [];
 	var longitudeBands = (phiStop - phiStart)/this.longitudeSample + 1;
 
-	for (var latNumber = 0; latNumber < latitudeBands; latNumber++) {
-		for (var phi = phiStart, longNumber = 0; phi < phiStop ; phi+=this.longitudeSample, longNumber++) {
-
+	for ( var latNumber = 0; latNumber < latitudeBands; latNumber++ )
+	{
+		for ( var phi = phiStart, longNumber = 0; phi < phiStop ; phi+=this.longitudeSample, longNumber++ )
+		{
 			var first = (latNumber * (longitudeBands)) + longNumber % (longitudeBands - 1);
 			var second = first + longitudeBands;
 			indexData.push(first);
@@ -444,7 +453,8 @@ GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 	var posXgeo = [];
 	GlobWeb.CoordinateSystem.from3DToGeo( posX3d, posXgeo );
 
-	for (var phi = phiStart; phi <= phiStop; phi+=this.longitudeSample) {
+	for ( var phi = phiStart; phi <= phiStop; phi+=this.longitudeSample )
+	{
 		// convert to RA [0..360]
 		var RA = (phi < 0) ? phi+360 : phi;
 		var stringRA = GlobWeb.CoordinateSystem.fromDegreesToHMS( RA );
@@ -474,7 +484,8 @@ GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 	thetaStart = Math.min( north, south );
 	thetaStop = Math.max( north, south );
 	
-	for (var theta = thetaStart; theta <= thetaStop; theta+=this.latitudeSample) {
+	for ( var theta = thetaStart; theta <= thetaStop; theta+=this.latitudeSample )
+	{
 // 	for (var theta = -90; theta < 90; theta+=this.latitudeSample) {
 
 		var stringTheta = GlobWeb.CoordinateSystem.fromDegreesToDMS( theta );
@@ -553,6 +564,15 @@ GlobWeb.EquatorialGridLayer.TexturePool = function(gl)
 	this.disposeGLTexture = function( texture )
 	{
 		glTextures.push(texture);
+	}
+
+	this.disposeAll = function()
+	{
+		for ( var i=0; i<glTextures.length; i++ )
+		{
+			gl.deleteTexture(glTextures[i]);
+		}
+		glTextures.length = 0;
 	}
 
 	/** 
