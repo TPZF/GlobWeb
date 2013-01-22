@@ -53,6 +53,7 @@ GlobWeb.SimplePolygonRenderer = function(tileManager)
 	void main(void) \n\
 	{\n\
 		vTextureCoord = tcoord;\n\
+		vTextureCoord.y = 1.0 - vTextureCoord.y; \n\
 		gl_Position = viewProjectionMatrix * vec4(vertex, 1.0);\n\
 	}\n\
 	";
@@ -62,9 +63,23 @@ GlobWeb.SimplePolygonRenderer = function(tileManager)
 	uniform vec4 u_color;\n\
 	varying vec2 vTextureCoord;\n\
 	uniform sampler2D texture; \n\
+	uniform int logOn; \n\
+	uniform int maxmin; \n\
+	uniform float min; \n\
+	uniform float max; \n\
 	void main(void)\n\
 	{\n\
-		gl_FragColor = texture2D(texture, vTextureCoord) * u_color;\n\
+		float color = texture2D(texture, vTextureCoord).r;\n\
+		if ( logOn == 1 )\n\
+		{\n\
+			color = log(10000.0*(color/255.) + 1.)/log(10000.);\n\
+		}\n\
+		else if ( maxmin == 1 ) \n\
+		{\n\
+			color = ((color - min) / (max - min));\n\
+			//color = 255.0 * color;\n\
+		}\n\
+		gl_FragColor = vec4(color,color,color,1.) * u_color;\n\
 	}\n\
 	";
 	
@@ -138,6 +153,10 @@ GlobWeb.SimplePolygonRenderer.prototype.addGeometry = function(geometry, layer, 
 			image.src = style.fillTextureUrl;
 		}
 		renderable.textureUrl = style.fillTextureUrl;
+	}
+	else if ( style.texture )
+	{
+		renderable.texture = style.texture;
 	}
 	
 	// Create vertex buffer
@@ -250,6 +269,7 @@ GlobWeb.SimplePolygonRenderer.prototype.render = function()
 	// The shader only needs the viewProjection matrix, use GlobWeb.modelViewMatrix as a temporary storage
 	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
 	gl.uniformMatrix4fv(this.program.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
+	gl.uniform1i(this.program.uniforms["logOn"], 0);
 	gl.uniform1i(this.program.uniforms["texture"], 0);
 	gl.activeTexture(gl.TEXTURE0);
 	
@@ -264,6 +284,8 @@ GlobWeb.SimplePolygonRenderer.prototype.render = function()
 			|| renderable.layer._opacity <= 0.0 )
 			continue;
 			
+		gl.uniform1i(this.program.uniforms["maxmin"], (renderable.layer.minmax) ? renderable.layer.minmax : 0);
+		gl.uniform1i(this.program.uniforms["logOn"], (renderable.layer.logOn) ? renderable.layer.logOn : 0);
 		if ( renderable.textureUrl )
 		{
 			gl.uniform4f(this.program.uniforms["u_color"], 1.0, 1.0, 1.0, renderable.layer._opacity);  // use whiteColor
@@ -275,10 +297,20 @@ GlobWeb.SimplePolygonRenderer.prototype.render = function()
 		}
 		
 		if ( renderable.texture ) 
+		{
 			gl.bindTexture(gl.TEXTURE_2D, renderable.texture); // use texture of renderable
+			gl.uniform1f(this.program.uniforms["max"], (renderable.texture.max) ? renderable.texture.max : 255.);
+			gl.uniform1f(this.program.uniforms["min"], (renderable.texture.min) ? renderable.texture.min : 0.);
+		}
 		else
+		{
 			gl.bindTexture(gl.TEXTURE_2D, this.whiteTexture);  // use white texture
-				
+			gl.uniform1f(this.program.uniforms["max"], 255.);
+			gl.uniform1f(this.program.uniforms["min"], 0.);
+		}
+		
+		
+
 		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
 		gl.vertexAttribPointer(this.program.attributes['vertex'], renderable.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 		
