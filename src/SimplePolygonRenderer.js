@@ -286,7 +286,7 @@ GlobWeb.SimplePolygonRenderer.prototype.render = function()
 			
 		gl.uniform1i(this.program.uniforms["maxmin"], (renderable.layer.minmax) ? renderable.layer.minmax : 0);
 		gl.uniform1i(this.program.uniforms["logOn"], (renderable.layer.logOn) ? renderable.layer.logOn : 0);
-		if ( renderable.textureUrl )
+		if ( renderable.texture )
 		{
 			gl.uniform4f(this.program.uniforms["u_color"], 1.0, 1.0, 1.0, renderable.layer._opacity);  // use whiteColor
 		}
