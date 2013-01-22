@@ -74,6 +74,7 @@ var GlobWeb = GlobWeb || {};
 		"BaseLayer.js",
 		"AtmosphereLayer.js",
 		"VectorLayer.js",
+		"EquatorialCoordinateSystem.js",
 		"EquatorialGridLayer.js",
 		"Triangulator.js",
 		"GroundOverlayLayer.js",

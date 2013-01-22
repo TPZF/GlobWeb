@@ -65,6 +65,7 @@ vectorFiles = [
    ]
 
 astroFiles = [
+		"EquatorialCoordinateSystem.js",
 		"HEALPixLayer.js",
 		"HEALPixTiling.js",
 		"SimpleLineRenderer.js",
