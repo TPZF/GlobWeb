@@ -43,7 +43,7 @@ GlobWeb.Navigation = function(globe,options)
 	this.heading = 0.0;
 	this.tilt = 90.0;
 	this.distance = 3.0 * GlobWeb.CoordinateSystem.radius;
-	
+		
 	// Scale min and max distance from meter to internal ratio
 	this.minDistance *= GlobWeb.CoordinateSystem.heightScale;
 	this.maxDistance *= GlobWeb.CoordinateSystem.heightScale;
@@ -78,7 +78,7 @@ GlobWeb.Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt 
 	// Create a single animation to animate geoCenter, distance and tilt
 	var startValue = [this.geoCenter[0], this.geoCenter[1], this.distance, this.tilt];
 	var endValue = [geoPos[0], geoPos[1], destDistance * GlobWeb.CoordinateSystem.heightScale, destTilt];
-	var animation = new GlobWeb.SegmentedAnimation(
+	this.zoomToAnimation = new GlobWeb.SegmentedAnimation(
 		duration,
 		// Value setter
 		function(value) {
@@ -106,7 +106,7 @@ GlobWeb.Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt 
 				maxAltitude, destTilt];
 
 		// Add two segments
-		animation.addSegment(
+		this.zoomToAnimation.addSegment(
 		0.0, startValue,
 		0.5, midValue,
 		function(t, a, b) {
@@ -118,7 +118,7 @@ GlobWeb.Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt 
 				Numeric.lerp(t, a[3], b[3])]; // tilt
 		});
 
-		animation.addSegment(
+		this.zoomToAnimation.addSegment(
 		0.5, midValue,
 		1.0, endValue,
 		function(t, a, b) {
@@ -133,7 +133,7 @@ GlobWeb.Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt 
 	else
 	{
 		// Add only one segments
-		animation.addSegment(
+		this.zoomToAnimation.addSegment(
 		0.0, startValue,
 		1.0, endValue,
 		function(t, a, b) {
@@ -146,11 +146,11 @@ GlobWeb.Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt 
 		});
 	}
 
-	animation.onstop = function() {
+	this.zoomToAnimation.onstop = function() {
 		navigation.globe.publish("endNavigation");
 	}
-	this.globe.addAnimation(animation);
-	animation.start();
+	this.globe.addAnimation(this.zoomToAnimation);
+	this.zoomToAnimation.start();
 	
 	this.globe.publish("startNavigation");
 }

@@ -67,7 +67,7 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 	
 	// Create a single animation to animate center3d and fov
 	var geoStart = [];
-	var middleFov = 45.0;	// arbitrary middle fov value which determines if the animation needs two segments
+	var middleFov = 25.0;	// arbitrary middle fov value which determines if the animation needs two segments
 	
 	GlobWeb.CoordinateSystem.from3DToGeo(this.center3d, geoStart);
 	var startValue = [geoStart[0], geoStart[1], this.globe.renderContext.fov];
@@ -93,7 +93,8 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 			navigator.computeViewMatrix();
 		});
 	
-	if (middleFov > this.globe.renderContext.fov)
+	// TODO : removed two steps animation ? Not very good with astro
+	if (false) //middleFov > this.globe.renderContext.fov)
 	{
 		// Two steps animation, 'rising' & 'falling'
 		
@@ -148,6 +149,7 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 	
 	this.globe.addAnimation(animation);
 	animation.start();
+	this.zoomToAnimation = animation;
 	
 	this.globe.publish("startNavigation");
 }

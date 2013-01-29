@@ -33,6 +33,8 @@ GlobWeb.BaseNavigation = function(globe, options)
 	{
 		this.inertia = new GlobWeb.InertiaAnimation(this);
 	}
+	// ZoomTo animation
+	this.zoomToAnimation = null;
 
 	// Install handlers
 	for (var i=0; i<this.handlers.length; i++)
@@ -44,11 +46,28 @@ GlobWeb.BaseNavigation = function(globe, options)
 /**************************************************************************************************************/
 
 /** @export
+	Stop the animations running on the navigation
+*/
+GlobWeb.BaseNavigation.prototype.stopAnimations = function()
+{
+	if ( this.inertia )
+	{
+		this.inertia.stop();
+	}
+	if( this.zoomToAnimation )
+	{
+		this.zoomToAnimation.stop();
+		this.zoomToAnimation = null;
+	}
+}
+
+/**************************************************************************************************************/
+
+/** @export
 	Get the field of view used by the navigation
 	
 	@return {Float[]} Fovx and fovy in degrees
 */
-
 GlobWeb.BaseNavigation.prototype.getFov = function()
 {
 	var aspect = this.globe.renderContext.canvas.width / this.globe.renderContext.canvas.height;

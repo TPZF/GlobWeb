@@ -75,25 +75,6 @@ GlobWeb.SegmentedAnimation.prototype.addSegment = function(start, startValue, en
 
 /**************************************************************************************************************/
 
-GlobWeb.SegmentedAnimation.prototype.start = function()
-{
-    GlobWeb.Animation.prototype.start.call(this);
-    // Set first value
-    this.valueSetter(this.segments[0].startValue);
-}
-
-/**************************************************************************************************************/
-
-GlobWeb.SegmentedAnimation.prototype.stop = function()
-{
-    GlobWeb.Animation.prototype.stop.call(this);
-    // Set last value
-    var lastIndex = this.segments.length - 1;
-    this.valueSetter(this.segments[lastIndex].endValue);
-}
-
-/**************************************************************************************************************/
-
 /*
 	Animation update method
 */
@@ -102,22 +83,26 @@ GlobWeb.SegmentedAnimation.prototype.update = function(now)
     var t = Numeric.map01(now, this.startTime, this.startTime + this.duration);
     if (t >= 1)
     {
-        this.stop();
-        return;
+		 // Set last value
+		var lastIndex = this.segments.length - 1;
+		this.valueSetter(this.segments[lastIndex].endValue);
+		this.stop();
     }
-
-    // Find current segment
-    var count = this.segments.length;
-    var index = 0;
-    while (index < count && this.segments[index].end < t) index++;
-    index = Math.min(index, count-1);
-    
-    // Remap t between segment bounds
-    t = Numeric.map01(t, this.segments[index].start, this.segments[index].end);
-	// Interpolate value
-    var value = this.segments[index].interpolator(t, this.segments[index].startValue, this.segments[index].endValue);
-	// Use value
-    this.valueSetter(value);
+	else
+	{
+		// Find current segment
+		var count = this.segments.length;
+		var index = 0;
+		while (index < count && this.segments[index].end < t) index++;
+		index = Math.min(index, count-1);
+		
+		// Remap t between segment bounds
+		t = Numeric.map01(t, this.segments[index].start, this.segments[index].end);
+		// Interpolate value
+		var value = this.segments[index].interpolator(t, this.segments[index].startValue, this.segments[index].endValue);
+		// Use value
+		this.valueSetter(value);
+	}
 }
 
 /**************************************************************************************************************/

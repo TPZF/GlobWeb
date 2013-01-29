@@ -35,7 +35,6 @@ GlobWeb.MouseNavigationHandler = function(options){
  */
 GlobWeb.MouseNavigationHandler.prototype.install = function(navigation)
 {
-	
 	this.navigation = navigation;
 	
 	var canvas = this.navigation.globe.renderContext.canvas;
@@ -98,9 +97,12 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseWheel = function(event)
 	}
 	this.navigation.zoom(factor);
 	
+	// Stop all animations when an event is received
+	this.navigation.stopAnimations();
+	
+	// Launch inertia if needed
 	if ( this.navigation.inertia )
 	{
-		this.navigation.inertia.stop();
 		this.navigation.inertia.launch("zoom", factor < 0 ? -1 : 1 );
 	}
 
@@ -127,11 +129,9 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseWheel = function(event)
 GlobWeb.MouseNavigationHandler.prototype.handleMouseDown = function(event)
 {
 	this.pressedButton = event.button;
-
-	if( this.navigation.inertia )
-	{
-		this.navigation.inertia.stop();
-	}
+	
+	// Stop all animations when an event is received
+	this.navigation.stopAnimations();
 
 	if ( event.button == 0 || event.button == 1 )
 	{		
@@ -159,7 +159,7 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseUp = function(event)
 	// No button pressed anymore
 	this.pressedButton = -1;
 
-	if ( this.navigation.inertia )
+	if ( this.navigation.inertia && (this.dx != 0 || this.dy != 0)  )
 	{	
 		if ( event.button == 0 )
 		{
@@ -202,6 +202,9 @@ GlobWeb.MouseNavigationHandler.prototype.handleMouseMove = function(event)
 	
 	this.dx = (event.clientX - this.lastMouseX);
 	this.dy = (event.clientY - this.lastMouseY);
+	
+	if ( this.dx == 0 && this.dy == 0 )
+		return;
 	
 	var ret = false;
 	// Pan
