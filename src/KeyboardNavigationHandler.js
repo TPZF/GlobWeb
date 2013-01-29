@@ -12,92 +12,135 @@
  */
 GlobWeb.KeyboardNavigationHandler = function(options){
 	
-	this.navigation = null;
+	/**************************************************************************************************************/
 	
-	// Default options
-	this.panFactor = 10.;
-	this.zoomFactor = 1.;
-	this.installOnDocument = false;
-	
-	// Override options
-	for (var x in options)
-	{
-		this[x] = options[x];
-	}
-}
-
-/**************************************************************************************************************/
-
-/** 
-	Setup the default event handlers for the navigation
- */
-GlobWeb.KeyboardNavigationHandler.prototype.install = function(navigation)
-{
-	// Setup the keyboard event handlers
-	this.navigation = navigation;
-	
+	/**
+ 	 * Private variables
+	 */
+	var _navigation = null;
 	var self = this;
 	
-	if ( this.installOnDocument )
+	/**
+	 * Public variables
+	 */
+	this.panFactor = 10.;
+	this.zoomFactor = 1.;
+	
+	// Setup options
+	if ( options )
 	{
-		document.addEventListener("keydown",function(e) { self.handleKeyDown(e||window.event); },false);
+		if ( options['panFactor'] && typeof options['panFactor'] == 'number' )
+			this.panFactor = options['panFactor'];
+		if ( options['zoomFactor'] && typeof options['zoomFactor'] == 'number' )
+			this.zoomFactor = options['zoomFactor'];
 	}
-	else
+	
+	/**************************************************************************************************************/
+	
+	/**
+ 	 * Private methods
+	 */
+
+	/**
+	 * Set focus
+	 */
+	var _setFocus = function(event)
 	{
-		var canvas = this.navigation.globe.renderContext.canvas;
-		canvas.addEventListener("keydown",function(e) { self.handleKeyDown(e||window.event); },false);
-		// Setup focus handling to receive keyboard event on canvas
-		canvas.tabIndex = "0";
-		canvas.addEventListener("mousedown", function(){ this.focus(); return false; });
-	}
-}
+		this.focus();
+		return false;
+	};
+	  
+	/**
+	 *	Event handler for key down
+	 */
+	var _handleKeyDown = function(event)
+	{
+		switch( event.keyCode ){
+			case 33 :
+				// Page Up
+				_navigation.zoom(-self.zoomFactor);
+				break;
+			case 34 :
+				// Page Down
+				_navigation.zoom(self.zoomFactor);
+				break;
+			case 37 :
+				// Left arrow
+				if ( event.ctrlKey )
+				{
+					_navigation.rotate( -self.panFactor, 0 );
+				}
+				else
+				{
+					_navigation.pan( self.panFactor, 0 );
+				}
+				break;
+			case 38 :
+				// Up arrow
+				_navigation.pan( 0, self.panFactor );
+				break;
+			case 39 :
+				// Right arrow
+				if ( event.ctrlKey )
+				{
+					_navigation.rotate( self.panFactor, 0 );
+				}
+				else
+				{
+					_navigation.pan( -self.panFactor, 0 );
+				}
+				break;
+			case 40 :
+				// Down arrow
+				_navigation.pan( 0, -self.panFactor );
+				break;
+		}
+		_navigation.globe.renderContext.requestFrame();
+	};
 
-/**************************************************************************************************************/
+	/**************************************************************************************************************/
+	
+	 /**
+	  * Public methods
+	  */
 
-/**
-	Event handler for key down
-*/
-GlobWeb.KeyboardNavigationHandler.prototype.handleKeyDown = function(event)
-{
-	switch( event.keyCode ){
-		case 33 :
-			// Page Up
-			this.navigation.zoom(-this.zoomFactor);
-			break;
-		case 34 :
-			// Page Down
-			this.navigation.zoom(this.zoomFactor);
-			break;
-		case 37 :
-			// Left arrow
-			if ( event.ctrlKey )
-			{
-				this.navigation.rotate( -this.panFactor, 0 );
-			}
-			else
-			{
-				this.navigation.pan( this.panFactor, 0 );
-			}
-			break;
-		case 38 :
-			// Up arrow
-			this.navigation.pan( 0, this.panFactor );
-			break;
-		case 39 :
-			// Right arrow
-			if ( event.ctrlKey )
-			{
-				this.navigation.rotate( this.panFactor, 0 );
-			}
-			else
-			{
-				this.navigation.pan( -this.panFactor, 0 );
-			}
-			break;
-		case 40 :
-			// Down arrow
-			this.navigation.pan( 0, -this.panFactor );
-			break;
-	}
-	this.navigation.globe.renderContext.requestFrame();
-}
+	/** 
+		Setup the default event handlers for the navigation
+	 */
+	this.install = function(navigation)
+	{
+		// Setup the keyboard event handlers
+		_navigation = navigation;
+		
+		if ( options && options.installOnDocument )
+		{
+			document.addEventListener("keydown", _handleKeyDown);
+		}
+		else
+		{
+			var canvas = _navigation.globe.renderContext.canvas;
+			canvas.addEventListener("keydown", _handleKeyDown);
+			// Setup focus handling to receive keyboard event on canvas
+			canvas.tabIndex = "0";
+			canvas.addEventListener("mousedown", _setFocus);
+		}
+	};
+
+	/** 
+		Remove the default event handlers for the navigation
+	 */
+	this.uninstall = function()
+	{	
+		if ( options && options.installOnDocument )
+		{
+			document.removeEventListener("keydown", _handleKeyDown);
+		}
+		else
+		{
+			var canvas = _navigation.globe.renderContext.canvas;
+			canvas.removeEventListener("keydown", _handleKeyDown);
+			canvas.removeEventListener("mousedown", _setFocus);
+		}
+	};
+	
+};

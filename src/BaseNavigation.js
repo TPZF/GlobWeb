@@ -36,10 +36,35 @@ GlobWeb.BaseNavigation = function(globe, options)
 	// ZoomTo animation
 	this.zoomToAnimation = null;
 
+	// Automatically start
+	this.start();
+}
+
+/**************************************************************************************************************/
+
+/** @export
+	Start the navigation
+*/
+GlobWeb.BaseNavigation.prototype.start = function()
+{
 	// Install handlers
 	for (var i=0; i<this.handlers.length; i++)
 	{
 		this.handlers[i].install(this);
+	}
+}
+
+/**************************************************************************************************************/
+
+/** @export
+	Stop the navigation
+*/
+GlobWeb.BaseNavigation.prototype.stop = function()
+{
+	// Uninstall handlers
+	for (var i=0; i<this.handlers.length; i++)
+	{
+		this.handlers[i].uninstall();
 	}
 }
 

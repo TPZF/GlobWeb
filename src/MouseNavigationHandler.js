@@ -2,8 +2,8 @@
 
 /** @export
 	@constructor
-	MouseNavigationHandler constructor
-	@param options Configuration properties for the MouseNavigationHandler :
+	Mouse_navigationHandler constructor
+	@param options Configuration properties for the Mouse_navigationHandler :
 			<ul>
 				<li>zoomOnDblClick : if true defines animation on double click</li>
 				<li>inertia: boolean value of inertia effect</li>
@@ -11,243 +11,239 @@
  */
 GlobWeb.MouseNavigationHandler = function(options){
 	
-	this.navigation = null;
-	this.pressedButton = -1;
-	this.lastMouseX = -1;
-	this.lastMouseY = -1;
-	this.needsStartEvent = false;
-	this.needsEndEvent = false;
-	this.dx = 0;
-	this.dy = 0;
+	/**************************************************************************************************************/
 	
-	// Copy options
-	for (var x in options)
+	/**
+ 	 * Private variables
+	 */
+	 
+	var _navigation = null;
+	var _pressedButton = -1;
+	var _lastMouseX = -1;
+	var _lastMouseY = -1;
+	var _needsStartEvent = false;
+	var _needsEndEvent = false;
+	var _dx = 0;
+	var _dy = 0;
+
+	/**************************************************************************************************************/
+	
+	/**
+ 	 * Private methods
+	 */
+
+	/**
+		Event handler for mouse wheel
+	 */
+	var _handleMouseWheel = function(event)
 	{
-		this[x] = options[x];
-	}
-	
-}
-
-/**************************************************************************************************************/
-
-/** 
-	Setup the default event handlers for the navigation
- */
-GlobWeb.MouseNavigationHandler.prototype.install = function(navigation)
-{
-	this.navigation = navigation;
-	
-	var canvas = this.navigation.globe.renderContext.canvas;
-	var self = this;
-	
-	// Setup the mouse event handlers
-	canvas.addEventListener("mousedown",function(e) { e.preventDefault(); self.handleMouseDown(e||window.event); },false);
-	document.addEventListener("mouseup",function(e) { self.handleMouseUp(e||window.event); },false);
-	canvas.addEventListener("mousemove",function(e) { self.handleMouseMove(e||window.event); },false);
-	
-	if ( this.zoomOnDblClick )
-		canvas.addEventListener("dblclick",function(e) { self.handleMouseDblClick(e||window.event); },false);
+		_navigation.globe.publish("start_navigation");
 		
-	// For Firefox
-	canvas.addEventListener("DOMMouseScroll",function(e) { e.preventDefault(); self.handleMouseWheel(e||window.event); },false);
-	canvas.addEventListener("mousewheel",function(e) { e.preventDefault(); self.handleMouseWheel(e||window.event); },false);
-}
+		var factor;
 
-/**************************************************************************************************************/
-
-/** 
-	Remove the default event handlers for the navigation
- */
-GlobWeb.MouseNavigationHandler.prototype.uninstall = function()
-{
-	// Setup the mouse event handlers
-	var canvas = this.navigation.globe.renderContext.canvas;
-
-	canvas.removeEventListener("mousedown",function(e) { e.preventDefault(); self.handleMouseDown(e||window.event); },false);
-	document.removeEventListener("mouseup",function(e) { self.handleMouseUp(e||window.event); },false);
-	canvas.removeEventListener("mousemove",function(e) { self.handleMouseMove(e||window.event); },false);
-	
-	if ( zoomOnDblClick )
-		canvas.removeEventListener("dblclick",function(e) { self.handleMouseDblClick(e||window.event); },false);
+		// Check differences between firefox and the rest of the world
+		if ( event.wheelDelta === undefined)
+		{
+			factor = event.detail;
+		}
+		else
+		{
+			factor = -event.wheelDelta / 120.0;	
+		}
+		_navigation.zoom(factor);
 		
-	// For Firefox
-	canvas.removeEventListener("DOMMouseScroll",function(e) { self.handleMouseWheel(e||window.event); },false);
-	canvas.removeEventListener("mousewheel",function(e) { self.handleMouseWheel(e||window.event); },false);
-}
-
-/**************************************************************************************************************/
-
-/**
-	Event handler for mouse wheel
- */
-GlobWeb.MouseNavigationHandler.prototype.handleMouseWheel = function(event)
-{
-	this.navigation.globe.publish("startNavigation");
-	
-	var factor;
-
-	// Check differences between firefox and the rest of the world
-	if ( event.wheelDelta === undefined)
-	{
-		factor = event.detail;
-	}
-	else
-	{
-		factor = -event.wheelDelta / 120.0;	
-	}
-	this.navigation.zoom(factor);
-	
-	// Stop all animations when an event is received
-	this.navigation.stopAnimations();
-	
-	// Launch inertia if needed
-	if ( this.navigation.inertia )
-	{
-		this.navigation.inertia.launch("zoom", factor < 0 ? -1 : 1 );
-	}
-
-	// Stop mouse wheel to be propagated, because default is to scroll the page
-	// This is need when using Firefox event listener on DOMMouseScroll
-	if ( event.preventDefault )
-	{
-		event.preventDefault();
-	}
-	event.returnValue = false;
-	
-	this.navigation.globe.publish("endNavigation");
-	this.navigation.globe.renderContext.requestFrame();
+		// Stop all animations when an event is received
+		_navigation.stopAnimations();
 		
-	// Return false to stop mouse wheel to be propagated when using onmousewheel
-	return false;
-}
+		// Launch inertia if needed
+		if ( _navigation.inertia )
+		{
+			_navigation.inertia.launch("zoom", factor < 0 ? -1 : 1 );
+		}
 
-/**************************************************************************************************************/
-
-/**
-	Event handler for mouse down
-*/
-GlobWeb.MouseNavigationHandler.prototype.handleMouseDown = function(event)
-{
-	this.pressedButton = event.button;
-	
-	// Stop all animations when an event is received
-	this.navigation.stopAnimations();
-
-	if ( event.button == 0 || event.button == 1 )
-	{		
-		this.lastMouseX = event.clientX;
-		this.lastMouseY = event.clientY;
-		this.dx = 0;
-		this.dy = 0;
+		// Stop mouse wheel to be propagated, because default is to scroll the page
+		// This is need when using Firefox event listener on DOMMouseScroll
+		if ( event.preventDefault )
+		{
+			event.preventDefault();
+		}
+		event.returnValue = false;
 		
-		this.needsStartEvent = true;
-		
-		// Return false to stop mouse down to be propagated when using onmousedown
+		_navigation.globe.publish("end_navigation");
+		_navigation.globe.renderContext.requestFrame();
+			
+		// Return false to stop mouse wheel to be propagated when using onmousewheel
 		return false;
-	}
-	
-	return true;
-}
+	};
 
-/**************************************************************************************************************/
-
-/**
-	Event handler for mouse up
- */
-GlobWeb.MouseNavigationHandler.prototype.handleMouseUp = function(event)
-{
-	// No button pressed anymore
-	this.pressedButton = -1;
-
-	if ( this.navigation.inertia && (this.dx != 0 || this.dy != 0)  )
-	{	
-		if ( event.button == 0 )
-		{
-			this.navigation.inertia.launch("pan", this.dx, this.dy );
+	/**
+	 * Event handler for mouse down
+	 */
+	var _handleMouseDown = function(event)
+	{
+		_pressedButton = event.button;
 		
-		}
-		if ( event.button == 1 )
-		{
-			this.navigation.inertia.launch("rotate", this.dx, this.dy );
-		}
-	}
+		// Stop all animations when an event is received
+		_navigation.stopAnimations();
 
-	if ( event.button == 0 || event.button == 1 )
-	{
-
-		if (this.needsEndEvent ) {
-			this.navigation.globe.publish("endNavigation");
+		if ( event.button == 0 || event.button == 1 )
+		{		
+			_lastMouseX = event.clientX;
+			_lastMouseY = event.clientY;
+			_dx = 0;
+			_dy = 0;
+			
+			_needsStartEvent = true;
+			
+			// Return false to stop mouse down to be propagated when using onmousedown
+			return false;
 		}
-
-		this.needsStartEvent = false;
-		this.needsEndEvent = false;
 		
-		// Stop mouse up event
-		return false;
-	}
+		return true;
+	};
 
-	return true;
-}
-
-/**************************************************************************************************************/
-
-/**
-	Event handler for mouse move
-*/
-GlobWeb.MouseNavigationHandler.prototype.handleMouseMove = function(event)
-{
-	// No button pressed
-	if (this.pressedButton < 0)
-		return;
-	
-	this.dx = (event.clientX - this.lastMouseX);
-	this.dy = (event.clientY - this.lastMouseY);
-	
-	if ( this.dx == 0 && this.dy == 0 )
-		return;
-	
-	var ret = false;
-	// Pan
-	if ( this.pressedButton == 0 )
+	/**
+	 * Event handler for mouse up
+	 */
+	var _handleMouseUp = function(event)
 	{
-		if ( this.needsStartEvent ) { 
-			this.navigation.globe.publish("startNavigation");
-			this.needsStartEvent  = false;
-			this.needsEndEvent = true;
+		// No button pressed anymore
+		_pressedButton = -1;
+
+		if ( _navigation.inertia && (_dx != 0 || _dy != 0)  )
+		{	
+			if ( event.button == 0 )
+			{
+				_navigation.inertia.launch("pan", _dx, _dy );
+			
+			}
+			if ( event.button == 1 )
+			{
+				_navigation.inertia.launch("rotate", _dx, _dy );
+			}
 		}
-		this.navigation.pan( this.dx, this.dy );
-		this.navigation.globe.renderContext.requestFrame();
-		ret = true;
-	}
-	// Rotate
-	else if ( this.pressedButton == 1 )
-	{
-		this.navigation.rotate(this.dx,this.dy);
-		this.navigation.globe.renderContext.requestFrame();
-		ret = true;
-	}
-	
-	this.lastMouseX = event.clientX;
-	this.lastMouseY = event.clientY;
-	
-	return ret;
-}
 
-/**************************************************************************************************************/
-
-/**
-	Event handler for mouse double click
- */
-GlobWeb.MouseNavigationHandler.prototype.handleMouseDblClick = function(event)
-{
-	if (event.button == 0)
-	{
-		var pos = this.navigation.globe.renderContext.getXYRelativeToCanvas(event);
-		var geo = this.navigation.globe.getLonLatFromPixel( pos[0], pos[1] );
-	
-		if (geo)
+		if ( event.button == 0 || event.button == 1 )
 		{
-			this.navigation.zoomTo(geo);
+
+			if (_needsEndEvent ) {
+				_navigation.globe.publish("end_navigation");
+			}
+
+			_needsStartEvent = false;
+			_needsEndEvent = false;
+			
+			// Stop mouse up event
+			return false;
 		}
-	}
-}
+
+		return true;
+	};
+
+	/**
+		Event handler for mouse move
+	*/
+	var _handleMouseMove = function(event)
+	{
+		// No button pressed
+		if (_pressedButton < 0)
+			return;
+		
+		_dx = (event.clientX - _lastMouseX);
+		_dy = (event.clientY - _lastMouseY);
+		
+		if ( _dx == 0 && _dy == 0 )
+			return;
+		
+		var ret = false;
+		// Pan
+		if ( _pressedButton == 0 )
+		{
+			if ( _needsStartEvent ) { 
+				_navigation.globe.publish("start_navigation");
+				_needsStartEvent  = false;
+				_needsEndEvent = true;
+			}
+			_navigation.pan( _dx, _dy );
+			_navigation.globe.renderContext.requestFrame();
+			ret = true;
+		}
+		// Rotate
+		else if ( _pressedButton == 1 )
+		{
+			_navigation.rotate(_dx,_dy);
+			_navigation.globe.renderContext.requestFrame();
+			ret = true;
+		}
+		
+		_lastMouseX = event.clientX;
+		_lastMouseY = event.clientY;
+		
+		return ret;
+	};
+
+	/**
+		Event handler for mouse double click
+	 */
+	var _handleMouseDblClick = function(event)
+	{
+		if (event.button == 0)
+		{
+			var pos = _navigation.globe.renderContext.getXYRelativeToCanvas(event);
+			var geo = _navigation.globe.getLonLatFromPixel( pos[0], pos[1] );
+		
+			if (geo)
+			{
+				_navigation.zoomTo(geo);
+			}
+		}
+	};
+
+	/**************************************************************************************************************/
+	
+	 /**
+	  * Public methods
+	  */
+			
+	/** 
+	 *	Setup the default event handlers for the _navigation
+	 */
+	this.install = function(nav)
+	{
+		_navigation = nav;
+		
+		var canvas = _navigation.globe.renderContext.canvas;
+		
+		// Setup the mouse event handlers
+		canvas.addEventListener("mousedown", _handleMouseDown);
+		document.addEventListener("mouseup", _handleMouseUp);
+		canvas.addEventListener("mousemove", _handleMouseMove);
+		
+		if ( options.zoomOnDblClick )
+			canvas.addEventListener("dblclick", _handleMouseDblClick);
+			
+		// For Firefox
+		canvas.addEventListener("DOMMouseScroll", _handleMouseWheel);
+		canvas.addEventListener("mousewheel", _handleMouseWheel);
+	};
+
+	/** 
+	 *	Remove the default event handlers for the _navigation
+	 */
+	this.uninstall = function()
+	{
+		// Setup the mouse event handlers
+		var canvas = _navigation.globe.renderContext.canvas;
+
+		canvas.removeEventListener("mousedown", _handleMouseDown);
+		document.removeEventListener("mouseup", _handleMouseUp);
+		canvas.removeEventListener("mousemove", _handleMouseMove);
+		
+		if ( options.zoomOnDblClick )
+			canvas.removeEventListener("dblclick", _handleMouseDblClick);
+			
+		// For Firefox
+		canvas.removeEventListener("DOMMouseScroll", _handleMouseWheel);
+		canvas.removeEventListener("mousewheel", _handleMouseWheel);
+	};
+};
