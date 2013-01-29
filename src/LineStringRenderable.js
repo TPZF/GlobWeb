@@ -78,6 +78,9 @@ GlobWeb.LineStringRenderable.prototype.buildChildrenIndices = function()
  */
 GlobWeb.LineStringRenderable.prototype.buildVerticesAndIndices = function( tile, coords )
 {
+	if ( coords.length == 0 )
+		return;
+
 	// Fix date line for coordinates first
 	var coordinates = this._fixDateLine( tile, coords );
 		

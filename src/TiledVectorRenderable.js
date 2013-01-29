@@ -120,7 +120,7 @@ GlobWeb.TiledVectorRenderable.prototype.removeGeometry = function( geometry )
   Check if a geometry crosses the date line
 */
 GlobWeb.TiledVectorRenderable.prototype._fixDateLine = function( tile, coords ) 
-{
+{		
 	var crossDateLine = false;
 	var startLon = coords[0][0];
 	for ( var i = 1; i < coords.length && !crossDateLine; i++) {
@@ -186,15 +186,17 @@ GlobWeb.TiledVectorRenderable.prototype.addGeometry = function( geometry, tile )
 			this.buildVerticesAndIndices( tile, coords );
 			break;
 		case "Polygon":
-			this.buildVerticesAndIndices( tile, coords[0] );
+			for ( var i = 0; i < coords.length; i++ )
+				this.buildVerticesAndIndices( tile, coords[i] );
 			break;
 		case "MultiLineString":
 			for ( var i = 0; i < coords.length; i++ )
 				this.buildVerticesAndIndices( tile, coords[i] );
 			break;
 		case "MultiPolygon":
-			for ( var i = 0; i < coords.length; i++ )
-				this.buildVerticesAndIndices( tile, coords[i][0] );
+			for ( var j = 0; j < coords.length; j++ )
+				for ( var i = 0; i < coords[j].length; i++ )
+					this.buildVerticesAndIndices( tile, coords[j][i] );
 			break;
 	}
 	
