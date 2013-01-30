@@ -25,7 +25,7 @@
  * 	
  * 	@param options Configuration options
  * 		<ul>
-			<li>serviceUrl : Url of the service providing the OpenSearch data(necessary option)</li>
+			<li>serviceUrl : Url of OpenSearch description XML file(necessary option)</li>
 			<li>minOrder : Starting order for OpenSearch requests</li>
 			<li>displayProperties : Properties which will be shown in priority</li>
 			<li>proxyUrl : Url of proxy for external pages(ex: "/sitools/proxy?external_url=")</li>
@@ -125,7 +125,7 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile)
 	var self = this;
 	if (index)
 	{	
-		var url = self.serviceUrl + "order=" + tile.order + "&healpix=" + tile.pixelIndex;
+		var url = self.serviceUrl + "/search?order=" + tile.order + "&healpix=" + tile.pixelIndex;
 		for (var key in this.requestProperties)
 		{
 			url+='&'+key+'="'+this.requestProperties[key]+'"';
@@ -429,8 +429,6 @@ GlobWeb.OpenSearchLayer.prototype.render = function( tiles )
  */
 GlobWeb.OpenSearchLayer.prototype.recomputeFeaturesGeometry = function( features )
 {
-	// var proxyUrl = "/sitools/proxy?external_url=";
-	
 	for ( var i=0; i<features.length; i++ )
 	{
 		var currentFeature = features[i];
