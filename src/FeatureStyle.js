@@ -29,6 +29,8 @@ GlobWeb.FeatureStyle = function(style)
 	// Color used to full polygon
 	this.fillColor = [1.0, 0.0, 0.0, 1.0];
 	this.fillTextureUrl = null;
+   this.fillTexture = null;
+   this.fillShader = null;
 	this.strokeWidth = 1;
 	this.iconUrl = null;
 	this.icon = null;

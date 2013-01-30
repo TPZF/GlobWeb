@@ -43,7 +43,7 @@ GlobWeb.SimplePolygonRenderer = function(tileManager)
 	var whitePixel = new Uint8Array([255, 255, 255, 255]);
 	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, whitePixel);
 	
-	var vertexShader = "\
+	this.vertexShader = "\
 	attribute vec3 vertex;\n\
 	attribute vec2 tcoord;\n\
 	uniform mat4 viewProjectionMatrix;\n\
@@ -58,33 +58,19 @@ GlobWeb.SimplePolygonRenderer = function(tileManager)
 	}\n\
 	";
 
-	var fragmentShader = "\
+var fragmentShader = "\
 	precision highp float; \n\
 	uniform vec4 u_color;\n\
 	varying vec2 vTextureCoord;\n\
 	uniform sampler2D texture; \n\
-	uniform int logOn; \n\
-	uniform int maxmin; \n\
-	uniform float min; \n\
-	uniform float max; \n\
 	void main(void)\n\
 	{\n\
-		float color = texture2D(texture, vTextureCoord).r;\n\
-		if ( logOn == 1 )\n\
-		{\n\
-			color = log(10000.0*(color/255.) + 1.)/log(10000.);\n\
-		}\n\
-		else if ( maxmin == 1 ) \n\
-		{\n\
-			color = ((color - min) / (max - min));\n\
-			//color = 255.0 * color;\n\
-		}\n\
-		gl_FragColor = vec4(color,color,color,1.) * u_color;\n\
+		gl_FragColor = texture2D(texture, vTextureCoord) * u_color;\n\
 	}\n\
 	";
 	
-	this.program = new GlobWeb.Program(this.renderContext);
-	this.program.createFromSource(vertexShader, fragmentShader);
+	this.defaultProgram = new GlobWeb.Program(this.renderContext);
+	this.defaultProgram.createFromSource(this.vertexShader, fragmentShader);
 
 	// Shared buffer
 	// Create texCoord buffer
@@ -121,6 +107,7 @@ GlobWeb.SimplePolygonRenderer.prototype.addGeometry = function(geometry, layer, 
 		vertexBuffer : gl.createBuffer(),
 		indexBuffer : gl.createBuffer(),
 		texture : null,
+		program: this.defaultProgram,
 		textureUrl: ""
 	}
 	
@@ -154,9 +141,15 @@ GlobWeb.SimplePolygonRenderer.prototype.addGeometry = function(geometry, layer, 
 		}
 		renderable.textureUrl = style.fillTextureUrl;
 	}
-	else if ( style.texture )
+	else if ( style.fillTexture )
 	{
-		renderable.texture = style.texture;
+		renderable.texture = style.fillTexture;
+	}
+
+	if ( style.fillShader && style.fillShader.fragmentCode )
+	{
+		renderable.program = new GlobWeb.Program(this.renderContext);
+		renderable.program.createFromSource(this.vertexShader, style.fillShader.fragmentCode);
 	}
 	
 	// Create vertex buffer
@@ -216,7 +209,7 @@ GlobWeb.SimplePolygonRenderer.prototype.removeGeometry = function(geometry,style
 				gl.deleteBuffer(currentRenderable.vertexBuffer);
 				
 			// The texture is managed in a cache, so do not remove it right now
-			if ( currentRenderable.texture )
+			if ( currentRenderable.textureUrl )
 			{
 				var cacheTexture = this.textureCache[currentRenderable.textureUrl];
 				cacheTexture.count--;
@@ -224,6 +217,10 @@ GlobWeb.SimplePolygonRenderer.prototype.removeGeometry = function(geometry,style
 				{
 					this.texturesToPurge.push(currentRenderable.textureUrl);
 				}
+			}
+			else if ( currentRenderable.texture )
+			{
+				gl.deleteTexture( currentRenderable.texture )
 			}
 
 			currentRenderable.indexBuffer = null;
@@ -235,6 +232,28 @@ GlobWeb.SimplePolygonRenderer.prototype.removeGeometry = function(geometry,style
 			break;
 		}
 	}
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Update shader default parameters(texture, viewProjectionMatrix, tcoord)
+ *
+ *	@param program Shader program
+ */
+GlobWeb.SimplePolygonRenderer.prototype.updateShaderDefaultParameters = function(program)
+{
+	var renderContext = this.renderContext;
+	var gl = renderContext.gl;
+
+	// The shader only needs the viewProjection matrix, use GlobWeb.modelViewMatrix as a temporary storage
+	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
+	gl.uniformMatrix4fv(program.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
+	gl.uniform1i(program.uniforms["texture"], 0);
+	gl.activeTexture(gl.TEXTURE0);
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.tcoordBuffer);
+	gl.vertexAttribPointer(program.attributes['tcoord'], 2, gl.FLOAT, false, 0, 0);
 }
 
 /**************************************************************************************************************/
@@ -264,18 +283,10 @@ GlobWeb.SimplePolygonRenderer.prototype.render = function()
 	gl.blendEquation(gl.FUNC_ADD);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 	
-	this.program.apply();
-
-	// The shader only needs the viewProjection matrix, use GlobWeb.modelViewMatrix as a temporary storage
-	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
-	gl.uniformMatrix4fv(this.program.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
-	gl.uniform1i(this.program.uniforms["logOn"], 0);
-	gl.uniform1i(this.program.uniforms["texture"], 0);
-	gl.activeTexture(gl.TEXTURE0);
+	this.defaultProgram.apply();
+	var currentProgram = this.defaultProgram;
+	this.updateShaderDefaultParameters(currentProgram);
 	
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.tcoordBuffer);
-	gl.vertexAttribPointer(this.program.attributes['tcoord'], 2, gl.FLOAT, false, 0, 0);
-
 	for ( var n = 0; n < this.renderables.length; n++ )
 	{
 		var renderable = this.renderables[n];
@@ -283,36 +294,31 @@ GlobWeb.SimplePolygonRenderer.prototype.render = function()
 		if ( !renderable.layer._visible
 			|| renderable.layer._opacity <= 0.0 )
 			continue;
-			
-		gl.uniform1i(this.program.uniforms["maxmin"], (renderable.layer.minmax) ? renderable.layer.minmax : 0);
-		gl.uniform1i(this.program.uniforms["logOn"], (renderable.layer.logOn) ? renderable.layer.logOn : 0);
-		if ( renderable.texture )
+		
+		if ( renderable.program && renderable.program != currentProgram )
 		{
-			gl.uniform4f(this.program.uniforms["u_color"], 1.0, 1.0, 1.0, renderable.layer._opacity);  // use whiteColor
+			currentProgram = renderable.program;
+			currentProgram.apply();
+			this.updateShaderDefaultParameters(currentProgram);
 		}
-		else
-		{
-			gl.uniform4f(this.program.uniforms["u_color"], renderable.style.fillColor[0], renderable.style.fillColor[1], renderable.style.fillColor[2], 
-				renderable.style.fillColor[3] * renderable.layer._opacity);  // use fillColor
-		}
+
+		if ( renderable.style.fillShader && renderable.style.fillShader.updateUniforms )
+			renderable.style.fillShader.updateUniforms(gl, renderable);
 		
 		if ( renderable.texture ) 
 		{
 			gl.bindTexture(gl.TEXTURE_2D, renderable.texture); // use texture of renderable
-			gl.uniform1f(this.program.uniforms["max"], (renderable.texture.max) ? renderable.texture.max : 255.);
-			gl.uniform1f(this.program.uniforms["min"], (renderable.texture.min) ? renderable.texture.min : 0.);
+			gl.uniform4f(currentProgram.uniforms["u_color"], 1.0, 1.0, 1.0, renderable.layer._opacity);  // use whiteColor
 		}
 		else
 		{
 			gl.bindTexture(gl.TEXTURE_2D, this.whiteTexture);  // use white texture
-			gl.uniform1f(this.program.uniforms["max"], 255.);
-			gl.uniform1f(this.program.uniforms["min"], 0.);
-		}
-		
-		
+			gl.uniform4f(currentProgram.uniforms["u_color"], renderable.style.fillColor[0], renderable.style.fillColor[1], renderable.style.fillColor[2], 
+				renderable.style.fillColor[3] * renderable.layer._opacity);  // use fillColor
+		}	
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
-		gl.vertexAttribPointer(this.program.attributes['vertex'], renderable.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
+		gl.vertexAttribPointer(currentProgram.attributes['vertex'], renderable.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 		
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.indexBuffer);
 		
