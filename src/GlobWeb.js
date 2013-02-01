@@ -65,6 +65,7 @@ var GlobWeb = GlobWeb || {};
 		"FeatureStyle.js",
 		"VectorRendererManager.js",
 		"PointRenderer.js",
+		"PointSpriteRenderer.js",
 		"TiledVectorRenderable.js",
 		"TiledVectorRenderer.js",
 		"PolygonRenderable.js",
