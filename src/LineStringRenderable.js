@@ -110,7 +110,7 @@ GlobWeb.LineStringRenderable.prototype.buildVerticesAndIndices = function( tile,
 		{
 			var u = n;
 			var res = Numeric.lineIntersection( u1, v1, u2, v2, u, 0.0, u, size-1 );
-			if ( res[0] > 0.0 && res[0] < 1.0 && res[1] > 0.0 && res[1] < 1.0 )
+			if ( res[0] > 0.0 && res[0] < 1.0 && res[1] >= 0.0 && res[1] <= 1.0 )
 			{
 				var v = res[1] * (size-1);
 				var vFloor = Math.floor( v );
@@ -131,7 +131,7 @@ GlobWeb.LineStringRenderable.prototype.buildVerticesAndIndices = function( tile,
 		{
 			var v = n;
 			var res = Numeric.lineIntersection( u1, v1, u2, v2, 0.0, v, size-1, v );
-			if ( res[0] > 0.0 && res[0] < 1.0 && res[1] > 0.0 && res[1] < 1.0 )
+			if ( res[0] > 0.0 && res[0] < 1.0 && res[1] >= 0.0 && res[1] <= 1.0 )
 			{
 				var u = res[1] * (size-1);
 				var uFloor = Math.floor( u );
@@ -168,7 +168,7 @@ GlobWeb.LineStringRenderable.prototype.buildVerticesAndIndices = function( tile,
 		// Build the vertices from the intersections found
 		var startIndex = this.vertices.length / 3;
 		
-		if ( u1 > 0.0 && u1 < size-1 &&  v1 > 0.0 && v1 < size-1 )
+		if ( u1 >= 0.0 && u1 <= size-1 &&  v1 >= 0.0 && v1 <= size-1 )
 		{
 			var vec = tile.computePosition(u1,v1);
 			this.vertices.push( vec[0] );
@@ -183,7 +183,7 @@ GlobWeb.LineStringRenderable.prototype.buildVerticesAndIndices = function( tile,
 			this.vertices.push( intersections[n][3] );
 		}
 		
-		if ( u2 > 0.0 && u2 < size-1 &&  v2 > 0.0 && v2 < size-1 )
+		if ( u2 >= 0.0 && u2 <= size-1 &&  v2 >= 0.0 && v2 <= size-1 )
 		{
 			var vec = tile.computePosition(u2,v2);
 			this.vertices.push( vec[0] );

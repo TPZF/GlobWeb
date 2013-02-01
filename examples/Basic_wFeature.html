@@ -53,6 +53,14 @@
 					};
 		vectorLayer.addFeature( feature );
 		
+		$.ajax({
+			  url: "error.geojson",
+			  dataType: "json",
+			  success: function(data)
+			  {
+				vectorLayer.addFeatureCollection( data );
+			  }
+		});
 		
 		$.ajax({
 			  url: "europe.json",
