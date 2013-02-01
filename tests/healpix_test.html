@@ -1,0 +1,328 @@
+<html>
+
+<head>
+<title>GroundOverlay tests</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
+<script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
+<script type="text/javascript" src="../src/GlobWeb.js"></script>
+
+</head>
+
+
+<body>
+
+<script type="text/javascript">
+
+	
+	var computeCorners = function(order,pixelIndex) {
+		// Compute vertices
+		var nside = Math.pow(2, order);
+		var pix = pixelIndex & (nside*nside-1);
+		var ix = GlobWeb.HEALPixBase.compress_bits(pix);
+		var iy = GlobWeb.HEALPixBase.compress_bits(pix>>>1);
+		var face = (pixelIndex>>>(2*order));
+
+		var corners = [];
+		var vert = GlobWeb.HEALPixBase.fxyf(ix/nside, iy/nside, face);
+		corners.push( vert );
+		vert =  GlobWeb.HEALPixBase.fxyf((ix + 1)/nside, iy/nside, face);
+		corners.push( vert );
+		vert =  GlobWeb.HEALPixBase.fxyf((ix + 1)/nside, (iy + 1)/nside, face);
+		corners.push( vert );
+		vert =  GlobWeb.HEALPixBase.fxyf(ix/nside, (iy + 1)/nside, face);
+		corners.push( vert );
+		
+		return corners;
+	};
+	
+		
+/*		if ( bits == 0 ) {
+			var pixelParent = pixelIndex >>> 2;
+			if ( order > 1 ) {
+				var leftPixelParent = findLeftNeighbour(order-1,pixelParent);
+				return leftPixelParent * 4 + 1;
+			} else {
+				return -1;
+			}
+		} else if ( bits == 1 ) {
+			return pixelIndex-1;
+		} else if ( bits == 2 ) {
+			var pixelParent = pixelIndex >>> 2;
+			if ( order > 1 ) {
+				var leftPixelParent = findLeftNeighbour(order-1,pixelParent);
+				return leftPixelParent * 4 + 3;
+			} else {
+				return -1;
+			}
+		} else if ( bits == 3 ) {
+			return pixelIndex-1;
+		}*/
+		
+	
+	var findLeftNeighbour = function(order,pixelIndex) {
+		var bit = pixelIndex & 1;
+		if ( bit == 0 ) {
+			var pixelParent = pixelIndex >>> 2;
+			if ( order > 1 ) {
+				var leftPixelParent = findLeftNeighbour(order-1,pixelParent);
+				return leftPixelParent * 4 + 1 + (pixelIndex & 2);
+			} else {
+				return -1;
+			}
+		} else {
+			return pixelIndex-1;
+		}
+	};
+	
+	var findRightNeighbour = function(order,pixelIndex) {
+		var bit = pixelIndex & 1;
+		if ( bit == 0 ) {
+			return pixelIndex + 1;
+		} else {
+			var pixelParent = pixelIndex >>> 2;
+			if ( order > 1 ) {
+				var rightPixelParent = findRightNeighbour(order-1,pixelParent);
+				return rightPixelParent * 4 + (pixelIndex & 2);
+			} else {
+				return -1;
+			}
+		}
+	};
+	
+	var findTopNeighbour = function(order,pixelIndex) {
+		var bit = pixelIndex & 2;
+		if ( bit == 0 ) {
+			var pixelParent = pixelIndex >>> 2;
+			if ( order > 1 ) {
+				var topPixelParent = findTopNeighbour(order-1,pixelParent);
+				return topPixelParent * 4 + 2 + (pixelIndex & 1);
+			} else {
+				return -1;
+			}
+		} else {
+			return pixelIndex - 2;
+		}
+	};
+
+	var findBottomNeighbour = function(order,pixelIndex) {
+		var bit = pixelIndex & 2;
+		if ( bit == 0 ) {
+			return pixelIndex + 2;
+		} else {
+			var pixelParent = pixelIndex >>> 2;
+			if ( order > 1 ) {
+				var bottomPixelParent = findBottomNeighbour(order-1,pixelParent);
+				return bottomPixelParent * 4 + (pixelIndex & 1);
+			} else {
+				return -1;
+			}
+		}
+	};
+	
+	var findNeighbour = function( order, pixelIndex, side ) {
+		var bit = ( side == 1 || side == 3 ) ? pixelIndex & 1 : pixelIndex & 2;
+			
+		var recursive = ( side == 1 || side == 2 ) ? bit != 0 : bit == 0;
+		
+		if ( recursive ) {
+		
+			var pixelParent = pixelIndex >>> 2;
+			if ( order > 1 ) {
+				var pixelParent = findNeighbour(order-1, pixelParent, side);
+				switch (side)
+				{
+				case 0:
+					return pixelParent * 4 + 2 + (pixelIndex & 1);
+				case 1:
+					return pixelParent * 4 + (pixelIndex & 2);
+				case 2:
+					return pixelParent * 4 + (pixelIndex & 1);
+				case 3:
+					return pixelParent * 4 + 1 + (pixelIndex & 2);
+				}
+			} else {
+				return -1;
+			}
+			
+		} else {
+			var diff = ( side == 1 || side == 3 ) ? 1 : 2;
+			var signDiff = ( side == 2 || side == 1 ) ? diff : -diff;
+			return pixelIndex + signDiff;
+			
+		}
+	};
+	
+	$(document).ready(function(){
+
+    test("Nested", function()
+	{
+		var cornerParent = computeCorners(0,1);
+		
+		var corner00 = computeCorners(1,4);
+		var corner10 = computeCorners(1,4+1);
+		var corner01 = computeCorners(1,4+2);
+		var corner11 = computeCorners(1,4+3);
+		
+		deepEqual( corner00[0], cornerParent[0] );
+		deepEqual( corner10[1], cornerParent[1] );
+		deepEqual( corner01[3], cornerParent[3] );
+		deepEqual( corner11[2], cornerParent[2] );
+		
+		deepEqual( corner00[2], corner10[3] );
+		deepEqual( corner00[2], corner11[0] );
+		deepEqual( corner00[2], corner01[1] );
+	});
+	
+	test("FindLeftNeighbour", function()
+	{
+		var pixels = [ 330, 511, 228, 229, 356, 227, 111 ];
+		for ( var i = 0; i < pixels.length; i++ ) {
+			var corner = computeCorners(3,pixels[i]);
+			
+			var leftPixel = findLeftNeighbour(3,pixels[i]);
+			if ( leftPixel >= 0 ) {
+				var leftCorner = computeCorners(3,leftPixel);
+				deepEqual( corner[0], leftCorner[1] );
+				deepEqual( corner[3], leftCorner[2] );
+			} else {
+				ok(true, "No left neighbour for " + pixels[i]);
+			}
+		}
+	});
+	
+	test("FindRightNeighbour", function()
+	{
+		var pixels = [ 330, 511, 228, 229, 356, 227, 111 ];
+		for ( var i = 0; i < pixels.length; i++ ) {
+			var corner = computeCorners(3,pixels[i]);
+			
+			var rightPixel = findRightNeighbour(3,pixels[i]);
+			if ( rightPixel >= 0 ) {
+				var rightCorner = computeCorners(3,rightPixel);
+				deepEqual( corner[1], rightCorner[0] );
+				deepEqual( corner[2], rightCorner[3] );
+			} else {
+				ok(true, "No right neighbour for " + pixels[i]);
+			}
+		}
+	});
+	
+	test("FindTopNeighbour", function()
+	{
+		var pixels = [ 330, 511, 228, 229, 356, 227, 111 ];
+		for ( var i = 0; i < pixels.length; i++ ) {
+			var corner = computeCorners(3,pixels[i]);
+			
+			var topPixel = findTopNeighbour(3,pixels[i]);
+			if ( topPixel >= 0 ) {
+				var topCorner = computeCorners(3,topPixel);
+				deepEqual( corner[0], topCorner[3] );
+				deepEqual( corner[1], topCorner[2] );
+			} else {
+				ok(true, "No top neighbour for " + pixels[i]);
+			}
+		}
+	});
+	
+	test("FindBottomNeighbour", function()
+	{
+		var pixels = [ 330, 511, 228, 229, 356, 227, 111 ];
+		for ( var i = 0; i < pixels.length; i++ ) {
+			var corner = computeCorners(3,pixels[i]);
+			
+			var bottomPixel = findBottomNeighbour(3,pixels[i]);
+			if ( bottomPixel >= 0 ) {
+				var bottomCorner = computeCorners(3,bottomPixel);
+				deepEqual( corner[3], bottomCorner[0] );
+				deepEqual( corner[2], bottomCorner[1] );
+			} else {
+				ok(true, "No top neighbour for " + pixels[i]);
+			}
+		}
+	});
+	test("FindLeftNeighbour2", function()
+	{
+		var pixels = [ 330, 511, 228, 229, 356, 227, 111 ];
+		for ( var i = 0; i < pixels.length; i++ ) {
+			var corner = computeCorners(3,pixels[i]);
+			
+			var leftPixel = findNeighbour(3,pixels[i],3);
+			if ( leftPixel >= 0 ) {
+				var leftCorner = computeCorners(3,leftPixel);
+				deepEqual( corner[0], leftCorner[1] );
+				deepEqual( corner[3], leftCorner[2] );
+			} else {
+				ok(true, "No left neighbour for " + pixels[i]);
+			}
+		}
+	});
+	
+	test("FindRightNeighbour2", function()
+	{
+		var pixels = [ 330, 511, 228, 229, 356, 227, 111 ];
+		for ( var i = 0; i < pixels.length; i++ ) {
+			var corner = computeCorners(3,pixels[i]);
+			
+			var rightPixel = findNeighbour(3,pixels[i],1);
+			if ( rightPixel >= 0 ) {
+				var rightCorner = computeCorners(3,rightPixel);
+				deepEqual( corner[1], rightCorner[0] );
+				deepEqual( corner[2], rightCorner[3] );
+			} else {
+				ok(true, "No right neighbour for " + pixels[i]);
+			}
+		}
+	});
+	
+	test("FindTopNeighbour2", function()
+	{
+		var pixels = [ 330, 511, 228, 229, 356, 227, 111 ];
+		for ( var i = 0; i < pixels.length; i++ ) {
+			var corner = computeCorners(3,pixels[i]);
+			
+			var topPixel = findNeighbour(3,pixels[i],0);
+			if ( topPixel >= 0 ) {
+				var topCorner = computeCorners(3,topPixel);
+				deepEqual( corner[0], topCorner[3] );
+				deepEqual( corner[1], topCorner[2] );
+			} else {
+				ok(true, "No top neighbour for " + pixels[i]);
+			}
+		}
+	});
+	
+	test("FindBottomNeighbour2", function()
+	{
+		var pixels = [ 330, 511, 228, 229, 356, 227, 111 ];
+		for ( var i = 0; i < pixels.length; i++ ) {
+			var corner = computeCorners(3,pixels[i]);
+			
+			var bottomPixel = findNeighbour(3,pixels[i],2);
+			if ( bottomPixel >= 0 ) {
+				var bottomCorner = computeCorners(3,bottomPixel);
+				deepEqual( corner[3], bottomCorner[0] );
+				deepEqual( corner[2], bottomCorner[1] );
+			} else {
+				ok(true, "No top neighbour for " + pixels[i]);
+			}
+		}
+	});		
+  });
+
+
+	
+</script>
+
+<h1 id="qunit-header">QUnit GlobWeb</h1>
+<h2 id="qunit-banner"></h2>
+<div id="qunit-testrunner-toolbar"></div>
+<h2 id="qunit-userAgent"></h2>
+<ol id="qunit-tests"></ol>
+
+</body>
+
+</html>
+
