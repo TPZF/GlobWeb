@@ -66,37 +66,27 @@ GlobWeb.PointSpriteRenderer = function(tileManager,style)
     this.program.createFromSource(vertexShader, fragmentShader);
 
 	this.defaultTexture = null;
-	
-	this.color = style.fillColor;
-	
-	var image = new Image();
-	var self = this;
-	image.onload = function() { 
-		self.texture = self.renderContext.createNonPowerOfTwoTextureFromImage(image);
-		self.textureWidth = image.width;
-		self.textureHeight = image.height;
-		self.renderContext.requestFrame(); }
-	image.src = style.iconUrl;
 }
 
-GlobWeb.PointSpriteRenderer.RenderData = function() 
+GlobWeb.PointSpriteRenderer.RenderData = function(bucket) 
 {
+	this.bucket = bucket;
 	this.feature2vb = {};
 	this.vertices = [];
 	this.vertexBuffer = null;
 	this.vertexBufferDirty = false;
 }
-GlobWeb.PointSpriteRenderer.RenderData.prototype.add = function(feature)
+GlobWeb.PointSpriteRenderer.RenderData.prototype.add = function(pt,id)
 {
-	this.feature2vb[ feature.properties.identifier ] = this.vertices.length;
+	this.feature2vb[ id ] = this.vertices.length;
 	this.vertices.push( pt[0], pt[1], pt[2] );
 	this.vertexBufferDirty = true;
 }
-GlobWeb.PointSpriteRenderer.RenderData.prototype.remove = function(feature)
+GlobWeb.PointSpriteRenderer.RenderData.prototype.remove = function(id)
 {
-	var vbIndex = this.feature2vb[ feature.properties.identifier ];
-	if ( vbIndex ) {
-		delete this.feature2vb[ feature.properties.identifier ];
+	if ( this.feature2vb.hasOwnProperty(id) ) {
+		var vbIndex = this.feature2vb[ id ];
+		delete this.feature2vb[ id ];
 		this.vertices.splice( vbIndex, 3 );
 		this.vertexBufferDirty = true;
 	}
@@ -199,7 +189,10 @@ GlobWeb.PointSpriteRenderer.prototype.getOrCreateBucket = function(layer,style)
 	for ( var i = 0; i < this.buckets.length; i++ )
 	{
 		var bucket = this.buckets[i];
-		if ( bucket.layer == layer && bucket.style.isEqualForPoint(style) )
+		if ( bucket.layer == layer && bucket.style.iconUrl == style.iconUrl
+			&& bucket.style.icon == style.icon
+			&& bucket.style.label == style.label
+			&& bucket.style.fillColor == style.fillColor )
 		{
 			return bucket;
 		}
@@ -274,8 +267,9 @@ GlobWeb.PointSpriteRenderer.prototype._render = function(renderDatas)
 	for ( var n = 0; n < renderDatas.length; n++ )
 	{
 		gl.uniform1f(this.program.uniforms["alpha"], 1.0);
-		gl.uniform3f(this.program.uniforms["color"], this.color[0], this.color[1], this.color[2] );
-		gl.uniform1f(this.program.uniforms["pointSize"], this.textureWidth);
+		var color = renderDatas[n].bucket.style.fillColor;
+		gl.uniform3f(this.program.uniforms["color"], color[0], color[1], color[2] );
+		gl.uniform1f(this.program.uniforms["pointSize"], renderDatas[n].bucket.textureWidth);
 			
 		// Warning : use quoted strings to access properties of the attributes, to work correclty in advanced mode with closure compiler
 		if ( !renderDatas[n].vertexBuffer )
@@ -295,7 +289,7 @@ GlobWeb.PointSpriteRenderer.prototype._render = function(renderDatas)
 		
 		// Bind point texture
 		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, this.texture);
+		gl.bindTexture(gl.TEXTURE_2D, renderDatas[n].bucket.texture);
 				
 		gl.drawArrays(gl.POINTS, 0, renderDatas[n].vertices.length/3);
 	}

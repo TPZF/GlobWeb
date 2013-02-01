@@ -161,79 +161,54 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile)
 
 /**************************************************************************************************************/
 
-/*
-	Create a renderable from the geometry
- */
-GlobWeb.OpenSearchLayer.prototype.createRenderable = function(geometry)
-{
-	if ( geometry['type'] == "Point" )
-	{
-/*		var pos3d = GlobWeb.CoordinateSystem.fromGeoTo3D( geometry['coordinates'] );
-		var vertical = vec3.create();
-		vec3.normalize(pos3d, vertical);
-		
-		var pointRenderData = {
-			geometry: geometry,
-			pos3d: pos3d,
-			vertical: vertical,
-			color: this.style.fillColor
-		};
-		return pointRenderData;*/
-	} 
-	else if ( geometry['type'] == "Polygon" )
-	{
-		this.lineRenderer.addGeometry(geometry,this,this.style);
-		var renderable = this.lineRenderer.renderables[ this.lineRenderer.renderables.length-1 ];
-		return {
-			line: renderable,
-			polygon: null,
-			style: renderable.style
-		};
-	}
-}
-
-/**************************************************************************************************************/
-
 /**
  *	Add feature to the layer and to the tile extension
  */
 GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
 {
-	var renderable;
+	var tileData = tile.extension[this.extId];
+	var featureData;
 	
 	// Add feature if it doesn't exist
 	if ( !this.featuresSet.hasOwnProperty(feature.properties.identifier) )
 	{
 		this.features.push( feature );
-		renderable = this.createRenderable( feature.geometry );
-		this.featuresSet[feature.properties.identifier] =  { counter: 1, renderable: renderable, index: this.features.length-1, pointsRenderDatas: [] };
+		featureData = { counter: 1, 
+			renderable: null,
+			index: this.features.length-1, 
+			tiles: []
+		};
+		this.featuresSet[feature.properties.identifier] = featureData;
 	}
 	else
 	{
+		featureData = this.featuresSet[feature.properties.identifier];
 		// Increment the number of requests for current feature
-		var featureData = this.featuresSet[feature.properties.identifier];
 		featureData.counter++;
-		renderable = featureData.renderable;
 	}
 
-	var tileData = tile.extension[this.extId];
 	
 	// Add feature id
 	tileData.featureIds.push( feature.properties.identifier );
+	featureData.tiles.push( tileData );
 	
 	// Add feature renderable
 	if ( feature.geometry['type'] == "Point" )
 	{
-		//tileData.points.push( renderable );
-		if (!tileData.pointsRenderData)
-			tileData.pointsRenderData = new GlobWeb.PointSpriteRenderer.RenderData;
-		var pos3d = GlobWeb.CoordinateSystem.fromGeoTo3D( feature.geometry['coordinates'] );
-		tileData.pointsRenderData.add( pos3d );
-		this.featuresSet[feature.properties.identifier].pointsRenderDatas.push( tileData.pointsRenderData );
+		tileData.addPoint(feature,this.bucket);
 	}
 	else if ( feature.geometry['type'] == "Polygon" )
 	{
-		tileData.polygons.push( renderable );
+		if (!featureData.renderable) {
+			this.lineRenderer.addGeometry(feature.geometry,this,this.style);
+			var line = this.lineRenderer.renderables[ this.lineRenderer.renderables.length-1 ];
+			featureData.renderable = {
+				line: line,
+				polygon: null,
+				style: line.style
+			};
+		}
+		tileData.polygons.push( featureData.renderable );
 	}
 }
 
@@ -295,10 +270,16 @@ GlobWeb.OpenSearchLayer.prototype.modifyFeatureStyle = function( feature, style 
 				renderable.style = style;
 				renderable.line.style = style;
 			}
-		}
-		
-		for ( var i = 0; i < featureData.pointsRenderDatas.length; i++ ) {
-			featureData.pointsRenderDatas[i].remove( feature );
+		} else {
+			
+			var bucket = this.pointRenderer.getOrCreateBucket(this,style);
+			for ( var i = 0; i < featureData.tiles.length; i++ ) {
+				var pointsRenderDatas = featureData.tiles[i].pointsRenderDatas;
+				for ( var j = 0; j < pointsRenderDatas.length; j++ ) {
+					pointsRenderDatas[j].remove( feature.properties.identifier );
+				}
+				featureData.tiles[i].addPoint( feature, bucket );
+			}
 		}
 	}
 }
@@ -316,8 +297,7 @@ GlobWeb.OpenSearchLayer.OSData = function(layer)
 {
 	this.layer = layer;
 	this.featureIds = []; // exclusive parameter to remove from layer
-	//this.points = [];
-	this.pointsRenderData = null;
+	this.pointsRenderDatas = [];
 	this.polygons = [];
 	this.complete = false;
 }
@@ -325,8 +305,28 @@ GlobWeb.OpenSearchLayer.OSData = function(layer)
 /**************************************************************************************************************/
 
 /**
+ * 	Helper method to add a point feature in the tile data
+ */
+GlobWeb.OpenSearchLayer.OSData.prototype.addPoint = function(feature,bucket) {
+	var pointsRenderData;
+	for ( var i = 0; i < this.pointsRenderDatas.length; i++ ) {
+		if ( this.pointsRenderDatas[i].bucket == bucket ) {
+			pointsRenderData = this.pointsRenderDatas[i];
+			break;
+		}
+	}
+	if (!pointsRenderData) {
+		pointsRenderData = new GlobWeb.PointSpriteRenderer.RenderData(bucket);
+		this.pointsRenderDatas.push(pointsRenderData);
+	}
+	var pos3d = GlobWeb.CoordinateSystem.fromGeoTo3D( feature.geometry['coordinates'] );
+	pointsRenderData.add( pos3d, feature.properties.identifier );
+}
+
+/**************************************************************************************************************/
+
+/**
  * 	Dispose renderable data from tile
- *	
  */
 GlobWeb.OpenSearchLayer.OSData.prototype.dispose = function( renderContext, tilePool )
 {	
@@ -409,8 +409,8 @@ GlobWeb.OpenSearchLayer.prototype.render = function( tiles )
 				//if ( tileData.points.length > 0 )
 					//points = points.concat( tileData.points );
 					
-				if ( tileData.pointsRenderData )
-					points.push( tileData.pointsRenderData );
+				if ( tileData.pointsRenderDatas.length > 0 )
+					points = points.concat( tileData.pointsRenderDatas );
 					
 				for ( var n = 0; n < tileData.polygons.length; n++ ) {
 					lines.push( tileData.polygons[n].line );
