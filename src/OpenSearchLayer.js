@@ -60,8 +60,9 @@ GlobWeb.OpenSearchLayer = function(options){
 	this.requests = [ null, null ];
 	
 	// For rendering
-	this.bucket = null;
-	this.lineRenderer = null;
+	this.pointBucket = null;
+	this.polygonBucket = null;
+	this.polygonRenderer = null;
 	this.pointRenderer = null;
 }
 
@@ -82,11 +83,6 @@ GlobWeb.OpenSearchLayer.prototype._attach = function( g )
 
 	this.extId += this.id;
 	
-	//this.pointRenderer = new GlobWeb.PointRenderer( g.tileManager );
-	this.pointRenderer = new GlobWeb.PointSpriteRenderer( g.tileManager, this.style );
-	this.lineRenderer = new GlobWeb.SimpleLineRenderer( g.tileManager );
-	this.polygonRenderer = new GlobWeb.SimplePolygonRenderer( g.tileManager );
-	this.bucket = this.pointRenderer.getOrCreateBucket( this, this.style );
 	g.tileManager.addPostRenderer(this);
 }
 
@@ -99,7 +95,9 @@ GlobWeb.OpenSearchLayer.prototype._detach = function()
 {
 	this.globe.tileManager.removePostRenderer(this);
 	this.pointRenderer = null;
-	this.bucket = null;
+	this.pointBucket = null;
+	this.polygonRenderer = null;
+	this.polygonBucket = null;
 	
 	GlobWeb.BaseLayer.prototype._detach.call(this);
 }
@@ -111,6 +109,7 @@ GlobWeb.OpenSearchLayer.prototype._detach = function()
  */
 GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile)
 {
+	var tileData = tile.extension[this.extId];
 	var index = null;
 
 	for ( var i = 0; i < this.requests.length; i++ )
@@ -126,6 +125,7 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile)
 	var self = this;
 	if (index)
 	{	
+		tileData.state = GlobWeb.OpenSearchLayer.TileState.LOADING;
 		var url = self.serviceUrl + "/search?order=" + tile.order + "&healpix=" + tile.pixelIndex;
 		for (var key in this.requestProperties)
 		{
@@ -133,13 +133,52 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile)
 		}
 		var requestProperties = this.requestProperties;
 		self.globe.publish("startLoad",self.id);
-		$.ajax({
+		
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function(e)
+		{
+			if ( xhr.readyState == 4 ) 
+			{
+				if ( xhr.status == 200 )
+				{
+					var response = JSON.parse(xhr.response);
+					// Request properties didn't change
+					tileData.state = GlobWeb.OpenSearchLayer.TileState.LOADED;
+					tileData.complete = (response.totalResults == response.features.length);
+					if ( !tileData.complete )
+					{
+						console.log('incomplete data');
+					}
+
+					self.recomputeFeaturesGeometry(response.features);
+					
+					for ( var i=0; i<response.features.length; i++ )
+					{
+						self.addFeature( response.features[i], tile );
+					}
+				}
+				else if ( xhr.status >= 400 )
+				{
+					console.error( xhr.responseText );
+				}
+				self.requests[index] = null;
+				self.globe.publish("endLoad",self.id);
+			}
+		};
+		xhr.open("GET", url );
+		xhr.send();
+		
+/*		$.ajax({
 			type: "GET",
 			url: url,
 			success: function(response){
 				// Request properties didn't change
-				tile.extension[self.extId] = new GlobWeb.OpenSearchLayer.OSData(self);
-				tile.extension[self.extId].complete = (response.totalResults == response.features.length);
+				tileData.state = GlobWeb.OpenSearchLayer.TileState.LOADED;
+				tileData.complete = (response.totalResults == response.features.length);
+				if ( !tileData.complete )
+				{
+					console.log('incomplete data');
+				}
 
 				self.recomputeFeaturesGeometry(response.features);
 				
@@ -155,7 +194,7 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile)
 				self.requests[index] = null;
 				self.globe.publish("endLoad",self.id);
 			}
-		});
+		});*/
 	}
 }
 
@@ -174,9 +213,8 @@ GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
 	{
 		this.features.push( feature );
 		featureData = { counter: 1, 
-			renderable: null,
 			index: this.features.length-1, 
-			tiles: []
+			tiles: [tile]
 		};
 		this.featuresSet[feature.properties.identifier] = featureData;
 	}
@@ -185,30 +223,30 @@ GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
 		featureData = this.featuresSet[feature.properties.identifier];
 		// Increment the number of requests for current feature
 		featureData.counter++;
+		// Store the tile
+		featureData.tiles.push(tile);
 	}
 
 	
 	// Add feature id
 	tileData.featureIds.push( feature.properties.identifier );
-	featureData.tiles.push( tileData );
 	
-	// Add feature renderable
+	// Add to renderer
 	if ( feature.geometry['type'] == "Point" )
 	{
-		tileData.addPoint(feature,this.bucket);
-	}
+		if (!this.pointRenderer) {
+			this.pointRenderer = this.globe.vectorRendererManager.getRenderer("PointSprite"); 
+			this.pointBucket = this.pointRenderer.getOrCreateBucket( this, this.style );
+		}
+		this.pointRenderer.addGeometryToTile( this.pointBucket, feature.geometry, tile );
+	} 
 	else if ( feature.geometry['type'] == "Polygon" )
 	{
-		if (!featureData.renderable) {
-			this.lineRenderer.addGeometry(feature.geometry,this,this.style);
-			var line = this.lineRenderer.renderables[ this.lineRenderer.renderables.length-1 ];
-			featureData.renderable = {
-				line: line,
-				polygon: null,
-				style: line.style
-			};
+		if (!this.polygonRenderer) {
+			this.polygonRenderer = this.globe.vectorRendererManager.getRenderer("ConvexPolygon"); 
+			this.polygonBucket = this.polygonRenderer.getOrCreateBucket( this, this.style );
 		}
-		tileData.polygons.push( featureData.renderable );
+		this.polygonRenderer.addGeometryToTile( this.polygonBucket, feature.geometry, tile );
 	}
 }
 
@@ -255,34 +293,56 @@ GlobWeb.OpenSearchLayer.prototype.modifyFeatureStyle = function( feature, style 
 	var featureData = this.featuresSet[feature.properties.identifier];
 	if ( featureData )
 	{
-		var renderable = featureData.renderable;
-		if ( renderable ) {
-		
-			// TODO : a little bit hackish, should try to merge renderable attributes in GlobWeb between PointRenderer and Simple'Line'Renderer
-			if ( renderable.color ) {
-				renderable.color = style.fillColor;
+		if ( feature.geometry.type == "Point" ) {
+			var newBucket = this.pointRenderer.getOrCreateBucket(this,style);
+			for ( var i = 0; i < featureData.tiles.length; i++ )
+			{
+				this.pointRenderer.removeGeometryFromTile(feature.geometry,featureData.tiles[i]);
+				this.pointRenderer.addGeometryToTile(newBucket,feature.geometry,featureData.tiles[i]);
 			}
-			else if ( renderable.style ) {
-				if ( style.fill ) {
-					this.polygonRenderer.addGeometry(feature.geometry,this,style);
-					renderable.polygon = this.polygonRenderer.renderables[ this.polygonRenderer.renderables.length-1 ];
-				}
-				renderable.style = style;
-				renderable.line.style = style;
-			}
-		} else {
-			
-			var bucket = this.pointRenderer.getOrCreateBucket(this,style);
-			for ( var i = 0; i < featureData.tiles.length; i++ ) {
-				var pointsRenderDatas = featureData.tiles[i].pointsRenderDatas;
-				for ( var j = 0; j < pointsRenderDatas.length; j++ ) {
-					pointsRenderDatas[j].remove( feature.properties.identifier );
-				}
-				featureData.tiles[i].addPoint( feature, bucket );
+		}
+		else if ( feature.geometry.type == "Polygon" ) {
+			var newBucket = this.polygonRenderer.getOrCreateBucket(this,style);
+			for ( var i = 0; i < featureData.tiles.length; i++ )
+			{
+				this.polygonRenderer.removeGeometryFromTile(feature.geometry,featureData.tiles[i]);
+				this.polygonRenderer.addGeometryToTile(newBucket,feature.geometry,featureData.tiles[i]);
 			}
 		}
 	}
 }
+
+GlobWeb.OpenSearchLayer.TileState = {
+	LOADING: 0,
+	LOADED: 1,
+	NOT_LOADED: 2
+};
+
+
+/**************************************************************************************************************/
+
+/**
+ *	Generate the tile data
+ */
+GlobWeb.OpenSearchLayer.prototype.generate = function(tile) 
+{
+	var osData;
+	if ( tile.parent )
+	{	
+		var parentOSData = tile.parent.extension[this.extId];
+		osData = new GlobWeb.OpenSearchLayer.OSData(this);
+		osData.state = parentOSData.complete ? GlobWeb.OpenSearchLayer.TileState.LOADED : GlobWeb.OpenSearchLayer.TileState.NOT_LOADED;
+		osData.complete = parentOSData.complete;
+	}
+	else
+	{
+		osData = new GlobWeb.OpenSearchLayer.OSData(this);
+	}
+	
+	// Store in on the tile
+	tile.extension[this.extId] = osData;
+	
+};
 
 /**************************************************************************************************************/
 
@@ -297,30 +357,8 @@ GlobWeb.OpenSearchLayer.OSData = function(layer)
 {
 	this.layer = layer;
 	this.featureIds = []; // exclusive parameter to remove from layer
-	this.pointsRenderDatas = [];
-	this.polygons = [];
+	this.state = GlobWeb.OpenSearchLayer.TileState.NOT_LOADED;
 	this.complete = false;
-}
-
-/**************************************************************************************************************/
-
-/**
- * 	Helper method to add a point feature in the tile data
- */
-GlobWeb.OpenSearchLayer.OSData.prototype.addPoint = function(feature,bucket) {
-	var pointsRenderData;
-	for ( var i = 0; i < this.pointsRenderDatas.length; i++ ) {
-		if ( this.pointsRenderDatas[i].bucket == bucket ) {
-			pointsRenderData = this.pointsRenderDatas[i];
-			break;
-		}
-	}
-	if (!pointsRenderData) {
-		pointsRenderData = new GlobWeb.PointSpriteRenderer.RenderData(bucket);
-		this.pointsRenderDatas.push(pointsRenderData);
-	}
-	var pos3d = GlobWeb.CoordinateSystem.fromGeoTo3D( feature.geometry['coordinates'] );
-	pointsRenderData.add( pos3d, feature.properties.identifier );
 }
 
 /**************************************************************************************************************/
@@ -333,10 +371,6 @@ GlobWeb.OpenSearchLayer.OSData.prototype.dispose = function( renderContext, tile
 	for( var i=0; i<this.featureIds.length; i++ )
 	{
 		this.layer.removeFeature( this.featureIds[i] );
-	}
-	if ( this.pointsRenderData ) 
-	{
-		this.pointsRenderData.dispose(renderContext);
 	}
 }
 
@@ -352,96 +386,25 @@ GlobWeb.OpenSearchLayer.prototype.render = function( tiles )
 	if (!this._visible)
 		return;
 		
-	// Traverse the tiles to find all available data, and request data for needed tiles
-	
-	var points = [];
-	var lines = [];
-	var polygons = [];
-	var visitedTiles = {};
-	
+	// Load data for the tiles if needed
 	for ( var i = 0; i < tiles.length; i++ )
 	{
 		var tile = tiles[i];
 		if ( tile.order >= this.minOrder )
 		{
-			var tileData = tile.extension[this.extId];
-			if( !tileData )
-			{				
-				// Search for available data on tile parent
-				var completeDataFound = false;
-				var prevVisitTile = tile;
-				var visitTile = tile.parent;
-				while ( visitTile && visitTile.order >= this.minOrder )
-				{
-					tileData = visitTile.extension[this.extId];
-					if ( tileData )
-					{
-						completeDataFound = tileData.complete;
-						var key = visitTile.order + "_" + visitTile.pixelIndex;
-						if ( visitedTiles.hasOwnProperty(key) )	
-						{
-							tileData = null;
-						}
-						else 
-						{
-							visitedTiles[key] = true;
-						}
-						visitTile = null;
-						
-					}
-					else 
-					{
-						prevVisitTile = visitTile;
-						visitTile = visitTile.parent;
-					}
-				}
-				
-				// Only request the file if needed, ie if a parent does not already contains all data
-				if ( !completeDataFound && (prevVisitTile.state != GlobWeb.Tile.State.NONE) )
-				{
-					this.launchRequest(prevVisitTile);
-				}
-			}
-			
-			// We have found some available tile data, add it to the current renderables
-			if ( tileData )
+			var osData = tile.extension[this.extId];
+			if ( osData && osData.state == GlobWeb.OpenSearchLayer.TileState.NOT_LOADED ) 
 			{
-				//if ( tileData.points.length > 0 )
-					//points = points.concat( tileData.points );
-					
-				if ( tileData.pointsRenderDatas.length > 0 )
-					points = points.concat( tileData.pointsRenderDatas );
-					
-				for ( var n = 0; n < tileData.polygons.length; n++ ) {
-					lines.push( tileData.polygons[n].line );
-					if ( tileData.polygons[n].style.fill ) {
-						polygons.push( tileData.polygons[n].polygon );							
-					}
+				// Check if the parent is loaded or not, in that case load the parent first
+				while ( tile.parent 
+					&& tile.parent.order >= this.minOrder 
+					&& tile.parent.extension[this.extId].state == GlobWeb.OpenSearchLayer.TileState.NOT_LOADED )
+				{
+					tile = tile.parent;
 				}
+				this.launchRequest(tile);
 			}
 		}
-	}
-	
-	
-	// Render the points
-	if ( points.length > 0 )
-	{
-		//this.bucket.points = points;
-		this.pointRenderer._render( points );
-	}
-	
-	// Render the lines
-	if ( lines.length > 0 )
-	{
-		this.lineRenderer.renderables = lines;
-		this.lineRenderer.render();
-	}
-	
-	// Render the polygons
-	if ( polygons.length > 0 )
-	{
-		this.polygonRenderer.renderables = polygons;
-		this.polygonRenderer.render();
 	}
 }
 

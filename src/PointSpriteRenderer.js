@@ -64,36 +64,42 @@ GlobWeb.PointSpriteRenderer = function(tileManager,style)
 
     this.program = new GlobWeb.Program(this.renderContext);
     this.program.createFromSource(vertexShader, fragmentShader);
+	
+	this.frameNumber = 0;
+	this.gid = 0;
 
 	this.defaultTexture = null;
 }
 
-GlobWeb.PointSpriteRenderer.RenderData = function(bucket) 
+GlobWeb.PointSpriteRenderer.Renderable = function(bucket) 
 {
 	this.bucket = bucket;
-	this.feature2vb = {};
+	this.geometry2vb = {};
 	this.vertices = [];
 	this.vertexBuffer = null;
 	this.vertexBufferDirty = false;
 }
-GlobWeb.PointSpriteRenderer.RenderData.prototype.add = function(pt,id)
+GlobWeb.PointSpriteRenderer.Renderable.prototype.add = function(geometry)
 {
-	this.feature2vb[ id ] = this.vertices.length;
+	this.geometry2vb[ geometry.gid ] = this.vertices.length;
+	var pt = GlobWeb.CoordinateSystem.fromGeoTo3D( geometry['coordinates'] );
 	this.vertices.push( pt[0], pt[1], pt[2] );
 	this.vertexBufferDirty = true;
 }
-GlobWeb.PointSpriteRenderer.RenderData.prototype.remove = function(id)
+GlobWeb.PointSpriteRenderer.Renderable.prototype.remove = function(geometry)
 {
-	if ( this.feature2vb.hasOwnProperty(id) ) {
-		var vbIndex = this.feature2vb[ id ];
-		delete this.feature2vb[ id ];
+	if ( this.geometry2vb.hasOwnProperty(geometry.gid) )
+	{
+		var vbIndex = this.geometry2vb[ geometry.gid ];
+		delete this.geometry2vb[ geometry.gid ];
 		this.vertices.splice( vbIndex, 3 );
 		this.vertexBufferDirty = true;
 	}
 }
-GlobWeb.PointSpriteRenderer.RenderData.prototype.dispose = function(renderContext)
+GlobWeb.PointSpriteRenderer.Renderable.prototype.dispose = function(renderContext)
 {
-	if ( this.vertexBuffer ) {
+	if ( this.vertexBuffer ) 
+	{
 		renderContext.gl.deleteBuffer( this.vertexBuffer );
 	}
 }
@@ -133,49 +139,88 @@ GlobWeb.PointSpriteRenderer.prototype._buildTextureFromImage = function(bucket,i
 
 /**************************************************************************************************************/
 
-/*
-	Add a point to the renderer
+/** @constructor
+	PointSpriteRenderer.TileData constructor
  */
-GlobWeb.PointSpriteRenderer.prototype.addGeometry = function(geometry,layer,style)
+GlobWeb.PointSpriteRenderer.TileData = function()
 {
-	if ( style )
-	{
-		var bucket = this.getOrCreateBucket( layer,style );
-		
-		var posGeo = geometry['coordinates'];
-		var pos3d = GlobWeb.CoordinateSystem.fromGeoTo3D( posGeo );
-		bucket.vertices.push( pos3d[0], pos3d[1], pos3d[2] );
-		bucket.vertexBufferDirty = true;
-	}
+	this.renderables = [];
+	this.frameNumber = -1;
 }
 
 /**************************************************************************************************************/
 
-/*
-	Remove a point from renderer
+/**
+	Get or create a renderable from the tile
  */
-GlobWeb.PointSpriteRenderer.prototype.removeGeometry = function(geometry,layer)
+GlobWeb.PointSpriteRenderer.TileData.prototype.getOrCreateRenderable = function(bucket)
 {
-/*	for ( var i = 0; i < this.buckets.length; i++ )
+	for ( var i=0; i < this.renderables.length; i++ )
 	{
-		var bucket = this.buckets[i];
-		if ( bucket.layer == layer )
+		if ( bucket == this.renderables[i].bucket )
 		{
-			for ( var j = 0; j < bucket.points.length; j++ )
-			{
-				if ( bucket.points[j].geometry == geometry )
-				{
-					bucket.points.splice( j, 1 );
-					
-					if ( bucket.points.length == 0 )
-					{
-						this.buckets.splice( i, 1 );
-					}
-					return;
-				}
-			}
+			return this.renderables[i];
 		}
-	}*/
+	}
+	var renderable = new GlobWeb.PointSpriteRenderer.Renderable(bucket);
+	this.renderables.push( renderable );
+	return renderable;
+}
+
+/**************************************************************************************************************/
+
+/**
+	Dispose renderable data from tile
+ */
+GlobWeb.PointSpriteRenderer.TileData.prototype.dispose = function(renderContext)
+{
+	for ( var i=0; i < this.renderables.length; i++ )
+	{
+		this.renderables[i].dispose(renderContext);
+	}
+	this.renderables.length = 0;
+}
+
+/**************************************************************************************************************/
+
+/**
+	Add a point to the renderer
+ */
+GlobWeb.PointSpriteRenderer.prototype.addGeometryToTile = function(bucket,geometry,tile)
+{
+	var tileData = tile.extension.pointSprite;
+	if (!tileData)
+	{
+		tileData = tile.extension.pointSprite = new GlobWeb.PointSpriteRenderer.TileData();
+	}
+	if (!geometry.gid)
+	{
+		geometry.gid = this.gid++;
+	}
+	var renderable = tileData.getOrCreateRenderable(bucket);
+	renderable.add(geometry);
+
+}
+
+/**************************************************************************************************************/
+
+/**
+	Remove a point from the renderer
+ */
+GlobWeb.PointSpriteRenderer.prototype.removeGeometryFromTile = function(geometry,tile)
+{
+	var tileData = tile.extension.pointSprite;
+	if (tileData)
+	{
+		for ( var i=0; i < tileData.renderables.length; i++ )
+		{
+			tileData.renderables[i].remove(geometry);
+		}
+	}
+}
+
+GlobWeb.PointSpriteRenderer.prototype.removeGeometry = function()
+{
 }
 
 /**************************************************************************************************************/
@@ -204,12 +249,8 @@ GlobWeb.PointSpriteRenderer.prototype.getOrCreateBucket = function(layer,style)
 
 	// Create a bucket
 	var bucket = {
-		vertices: [],
-		vertexBuffer: vb,
 		style: style,
-		layer: layer,
-		vertexBufferDirty: false
-		
+		layer: layer
 	};
 		
 	// Initialize bucket : create the texture	
@@ -245,7 +286,7 @@ GlobWeb.PointSpriteRenderer.prototype.getOrCreateBucket = function(layer,style)
 /*
 	Render all the POIs
  */
-GlobWeb.PointSpriteRenderer.prototype._render = function(renderDatas)
+GlobWeb.PointSpriteRenderer.prototype.render = function(tiles)
 {	
 	var renderContext = this.renderContext;
 	var gl = this.renderContext.gl;
@@ -264,38 +305,61 @@ GlobWeb.PointSpriteRenderer.prototype._render = function(renderDatas)
 	gl.uniformMatrix4fv(this.program.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
 	gl.uniform1i(this.program.uniforms["texture"], 0);
 	
-	for ( var n = 0; n < renderDatas.length; n++ )
+	for ( var n = 0; n < tiles.length; n++ )
 	{
-		gl.uniform1f(this.program.uniforms["alpha"], 1.0);
-		var color = renderDatas[n].bucket.style.fillColor;
-		gl.uniform3f(this.program.uniforms["color"], color[0], color[1], color[2] );
-		gl.uniform1f(this.program.uniforms["pointSize"], renderDatas[n].bucket.textureWidth);
-			
-		// Warning : use quoted strings to access properties of the attributes, to work correclty in advanced mode with closure compiler
-		if ( !renderDatas[n].vertexBuffer )
+		var tile = tiles[n];
+		var tileData = tile.extension.pointSprite;
+		while (tile.parent && !tileData)
 		{
-			renderDatas[n].vertexBuffer = gl.createBuffer();
+			tile = tile.parent;
+			tileData = tile.extension.pointSprite;
 		}
 		
-		gl.bindBuffer(gl.ARRAY_BUFFER, renderDatas[n].vertexBuffer);
-		gl.vertexAttribPointer(this.program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
+		if (!tileData || tileData.frameNumber == renderContext.frameNumber)
+			continue;
 		
-		if ( renderDatas[n].vertexBufferDirty )
+		tileData.frameNumber = this.frameNumber;
+		
+		for (var i=0; i < tileData.renderables.length; i++ ) 
 		{
-			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(renderDatas[n].vertices), gl.STATIC_DRAW);
-			renderDatas[n].vertexBufferDirty = false;
-		}
-
-		
-		// Bind point texture
-		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, renderDatas[n].bucket.texture);
+			var renderable = tileData.renderables[i];
+			if (!renderable.bucket.layer._visible)
+				continue;
+			gl.uniform1f(this.program.uniforms["alpha"], renderable.bucket.layer._opacity);
+			var color = renderable.bucket.style.fillColor;
+			gl.uniform3f(this.program.uniforms["color"], color[0], color[1], color[2] );
+			gl.uniform1f(this.program.uniforms["pointSize"], renderable.bucket.textureWidth);
 				
-		gl.drawArrays(gl.POINTS, 0, renderDatas[n].vertices.length/3);
+			// Warning : use quoted strings to access properties of the attributes, to work correclty in advanced mode with closure compiler
+			if ( !renderable.vertexBuffer )
+			{
+				renderable.vertexBuffer = gl.createBuffer();
+			}
+			
+			gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
+			gl.vertexAttribPointer(this.program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
+			
+			if ( renderable.vertexBufferDirty )
+			{
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(renderable.vertices), gl.STATIC_DRAW);
+				renderable.vertexBufferDirty = false;
+			}
+
+			
+			// Bind point texture
+			gl.activeTexture(gl.TEXTURE0);
+			gl.bindTexture(gl.TEXTURE_2D, renderable.bucket.texture);
+					
+			gl.drawArrays(gl.POINTS, 0, renderable.vertices.length/3);
+		}
+			
+		
 	}
 
     gl.enable(gl.DEPTH_TEST);
     gl.disable(gl.BLEND);
+	
+	this.frameNumber++;
 }
 
 /**************************************************************************************************************/
@@ -303,7 +367,7 @@ GlobWeb.PointSpriteRenderer.prototype._render = function(renderDatas)
 /*
 	Render all the POIs
  */
-GlobWeb.PointSpriteRenderer.prototype.render = function()
+/*GlobWeb.PointSpriteRenderer.prototype.render = function()
 {
 	if (this.buckets.length == 0)
 	{
@@ -361,12 +425,13 @@ GlobWeb.PointSpriteRenderer.prototype.render = function()
 
    // gl.enable(gl.DEPTH_TEST);
     gl.disable(gl.BLEND);
-}
+}*/
 
 /**************************************************************************************************************/
 
 // Register the renderer
 GlobWeb.VectorRendererManager.registerRenderer({
-										creator: function(globe) { return new GlobWeb.PointSpriteRenderer(globe.tileManager); },
-										canApply: function(type,style) {return style.renderHint == "PointSprite" && type == "Point"; }
-									});
+		id: "PointSprite",
+		creator: function(globe) { return new GlobWeb.PointSpriteRenderer(globe.tileManager); },
+		canApply: function(type,style) {return false; }
+	});
