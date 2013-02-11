@@ -76,14 +76,15 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.add = function(geometry)
 {
 	var coords = geometry['coordinates'][0];
 	var numPoints = coords.length-1;
-	this.geometry2vb[ geometry.gid ] = {
+	var data = {
 		vertexStart: this.vertices.length,
 		vertexCount: 3 * numPoints,
 		lineIndexStart: this.lineIndices.length,
 		lineIndexCount: 2 * numPoints,
-		triIndexStart: this.triangleIndices.length,
-		triIndexCount: 3 * (numPoints-2)
+		triIndexStart: 0,
+		triIndexCount: 0
 	};
+	this.geometry2vb[ geometry.gid ] = data;
 	
 	var startIndex = this.vertices.length / 3;
 	for ( var i = 0; i < numPoints; i++ ) 
@@ -95,6 +96,9 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.add = function(geometry)
 	
 	if ( this.bucket.style.fill ) 
 	{
+		data.triIndexStart = this.triangleIndices.length;
+		data.triIndexCount = 3 * (numPoints-2);
+		
 		for ( var i = 0; i < numPoints-2; i++ ) 
 		{
 			this.triangleIndices.push( 0, i+1, i+2 );
@@ -131,7 +135,8 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.remove = function(geometry)
 				if ( d.vertexStart > data.vertexStart ) 
 				{
 					d.vertexStart -= data.vertexCount;
-					d.indexStart -= data.indexCount;
+					d.lineIndexStart -= data.lineIdexCount;
+					d.triIndexStart -= data.triIdexCount;
 				}
 			}
 		}
@@ -353,6 +358,9 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 				{
 					gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(renderable.triangleIndices), gl.STATIC_DRAW);
 				}
+				
+				color = renderable.bucket.style.fillColor;
+				gl.uniform4f(this.program.uniforms["color"], color[0], color[1], color[2], renderable.bucket.layer._opacity );
 				
 				gl.drawElements( gl.TRIANGLES, renderable.triangleIndices.length, gl.UNSIGNED_SHORT, 0);
 			}
