@@ -57,7 +57,14 @@ GlobWeb.OpenSearchLayer = function(options){
 	this.featuresSet = {};
 
 	// Maximum two requests for now
-	this.requests = [ null, null ];
+	this.freeRequests = [];
+	
+	// Build the request objects
+	for ( var i =0; i < 2; i++ )
+	{
+		var xhr = new XMLHttpRequest();		
+		this.freeRequests.push( xhr );
+	}
 	
 	// For rendering
 	this.pointBucket = null;
@@ -111,91 +118,56 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile)
 {
 	var tileData = tile.extension[this.extId];
 	var index = null;
-
-	for ( var i = 0; i < this.requests.length; i++ )
+	
+	if ( this.freeRequests.length == 0 )
 	{
-		if ( !this.requests[i] )
-		{
-			this.requests[i] = tile;
-			index = i;
-			break;
-		}
+		return;
+	}
+
+	// Set that the tile is loading its data for OpenSearch
+	tileData.state = GlobWeb.OpenSearchLayer.TileState.LOADING;
+	
+	var xhr = this.freeRequests.pop();
+	
+	
+	// Build URL
+	var url = this.serviceUrl + "/search?order=" + tile.order + "&healpix=" + tile.pixelIndex;
+	// TODO : optimize it, not needed to rebuild it for each request
+	for (var key in this.requestProperties)
+	{
+		url+='&'+key+'="'+this.requestProperties[key]+'"';
 	}
 	
+	this.globe.publish("startLoad",this.id);
+	
 	var self = this;
-	if (index)
-	{	
-		tileData.state = GlobWeb.OpenSearchLayer.TileState.LOADING;
-		var url = self.serviceUrl + "/search?order=" + tile.order + "&healpix=" + tile.pixelIndex;
-		for (var key in this.requestProperties)
+	xhr.onreadystatechange = function(e)
+	{
+		if ( xhr.readyState == 4 ) 
 		{
-			url+='&'+key+'="'+this.requestProperties[key]+'"';
-		}
-		var requestProperties = this.requestProperties;
-		self.globe.publish("startLoad",self.id);
-		
-		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = function(e)
-		{
-			if ( xhr.readyState == 4 ) 
+			if ( xhr.status == 200 )
 			{
-				if ( xhr.status == 200 )
-				{
-					var response = JSON.parse(xhr.response);
-					// Request properties didn't change
-					tileData.state = GlobWeb.OpenSearchLayer.TileState.LOADED;
-					tileData.complete = (response.totalResults == response.features.length);
-					if ( !tileData.complete )
-					{
-						console.log('incomplete data');
-					}
-
-					self.recomputeFeaturesGeometry(response.features);
-					
-					for ( var i=0; i<response.features.length; i++ )
-					{
-						self.addFeature( response.features[i], tile );
-					}
-				}
-				else if ( xhr.status >= 400 )
-				{
-					console.error( xhr.responseText );
-				}
-				self.requests[index] = null;
-				self.globe.publish("endLoad",self.id);
-			}
-		};
-		xhr.open("GET", url );
-		xhr.send();
-		
-/*		$.ajax({
-			type: "GET",
-			url: url,
-			success: function(response){
-				// Request properties didn't change
-				tileData.state = GlobWeb.OpenSearchLayer.TileState.LOADED;
+				var response = JSON.parse(xhr.response);
 				tileData.complete = (response.totalResults == response.features.length);
-				if ( !tileData.complete )
-				{
-					console.log('incomplete data');
-				}
-
 				self.recomputeFeaturesGeometry(response.features);
 				
-				for ( var i=0; i<response.features.length; i++ )
+				for ( var i=0; i < response.features.length; i++ )
 				{
 					self.addFeature( response.features[i], tile );
 				}
-			},
-			error: function (xhr, ajaxOptions, thrownError) {
-				console.error( xhr.responseText );
-			},
-			complete: function(xhr) {
-				self.requests[index] = null;
-				self.globe.publish("endLoad",self.id);
 			}
-		});*/
-	}
+			else if ( xhr.status >= 400 )
+			{
+				console.error( xhr.responseText );
+			}
+			
+			tileData.state = GlobWeb.OpenSearchLayer.TileState.LOADED;
+			self.freeRequests.push( xhr );
+			self.globe.publish("endLoad",self.id);
+		}
+	};
+	xhr.open("GET", url );
+	xhr.send();
 }
 
 /**************************************************************************************************************/
@@ -221,7 +193,7 @@ GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
 	else
 	{
 		featureData = this.featuresSet[feature.properties.identifier];
-		// Increment the number of requests for current feature
+		// Increment the counter for current feature
 		featureData.counter++;
 		// Store the tile
 		featureData.tiles.push(tile);
@@ -234,7 +206,8 @@ GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
 	// Add to renderer
 	if ( feature.geometry['type'] == "Point" )
 	{
-		if (!this.pointRenderer) {
+		if (!this.pointRenderer) 
+		{
 			this.pointRenderer = this.globe.vectorRendererManager.getRenderer("PointSprite"); 
 			this.pointBucket = this.pointRenderer.getOrCreateBucket( this, this.style );
 		}
@@ -242,7 +215,8 @@ GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
 	} 
 	else if ( feature.geometry['type'] == "Polygon" )
 	{
-		if (!this.polygonRenderer) {
+		if (!this.polygonRenderer) 
+		{
 			this.polygonRenderer = this.globe.vectorRendererManager.getRenderer("ConvexPolygon"); 
 			this.polygonBucket = this.polygonRenderer.getOrCreateBucket( this, this.style );
 		}
@@ -265,19 +239,22 @@ GlobWeb.OpenSearchLayer.prototype.removeFeature = function( identifier )
 	
 	if ( featureIt.counter == 1 )
 	{
-		// Last feature
+		// Remove it from the set		
 		delete this.featuresSet[identifier];
 		
+		// Remove it from the array by swapping it with the last feature to optimize removal.
 		var lastFeature = this.features.pop();
-		
-		if ( featureIt.index < this.features.length ) {
+		if ( featureIt.index < this.features.length ) 
+		{
+			// Set the last feature at the position of the removed feature
 			this.features[ featureIt.index ] = lastFeature;
+			// Update its index in the Set.
 			this.featuresSet[ lastFeature.properties.identifier ].index = featureIt.index;
 		}
 	}
 	else
 	{
-		// Decrease
+		// Just decrease the counter
 		featureIt.counter--;
 	}
 }
@@ -293,22 +270,21 @@ GlobWeb.OpenSearchLayer.prototype.modifyFeatureStyle = function( feature, style 
 	var featureData = this.featuresSet[feature.properties.identifier];
 	if ( featureData )
 	{
+		var renderer;
 		if ( feature.geometry.type == "Point" ) {
-			var newBucket = this.pointRenderer.getOrCreateBucket(this,style);
-			for ( var i = 0; i < featureData.tiles.length; i++ )
-			{
-				this.pointRenderer.removeGeometryFromTile(feature.geometry,featureData.tiles[i]);
-				this.pointRenderer.addGeometryToTile(newBucket,feature.geometry,featureData.tiles[i]);
-			}
+			renderer = this.pointRenderer;
 		}
 		else if ( feature.geometry.type == "Polygon" ) {
-			var newBucket = this.polygonRenderer.getOrCreateBucket(this,style);
-			for ( var i = 0; i < featureData.tiles.length; i++ )
-			{
-				this.polygonRenderer.removeGeometryFromTile(feature.geometry,featureData.tiles[i]);
-				this.polygonRenderer.addGeometryToTile(newBucket,feature.geometry,featureData.tiles[i]);
-			}
+			renderer = this.polygonRenderer;
 		}
+		
+		var newBucket = renderer.getOrCreateBucket(this,style);
+		for ( var i = 0; i < featureData.tiles.length; i++ )
+		{
+			renderer.removeGeometryFromTile(feature.geometry,featureData.tiles[i]);
+			renderer.addGeometryToTile(newBucket,feature.geometry,featureData.tiles[i]);
+		}
+		
 	}
 }
 
@@ -376,7 +352,7 @@ GlobWeb.OpenSearchLayer.OSData.prototype.dispose = function( renderContext, tile
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Render function
 	
 	@param tiles The array of tiles to render
@@ -387,7 +363,7 @@ GlobWeb.OpenSearchLayer.prototype.render = function( tiles )
 		return;
 		
 	// Load data for the tiles if needed
-	for ( var i = 0; i < tiles.length; i++ )
+	for ( var i = 0; i < tiles.length && this.freeRequests.length > 0; i++ )
 	{
 		var tile = tiles[i];
 		if ( tile.order >= this.minOrder )
