@@ -15,8 +15,100 @@
 <body>
 
 <script type="text/javascript">
-
 	
+    var lonLat2ang = function(lon, lat)
+    {
+    	if ( lon < 0 )
+    		lon += 360;
+
+    	var phi = lon * Math.PI / 180.;
+    	
+    	var theta = ( -lat + 90 ) * Math.PI / 180;
+    	return [phi, theta];
+    }
+
+	/** Returns the remainder of the division {@code v1/v2}.
+      The result is non-negative.
+      @param v1 dividend; can be positive or negative
+      @param v2 divisor; must be positive
+      @return remainder of the division; positive and smaller than {@code v2} */
+	var fmodulo = function(v1, v2)
+	{
+		if (v1>=0)
+			return (v1<v2) ? v1 : v1%v2;
+		var tmp=v1%v2+v2;
+		return (tmp==v2) ? 0. : tmp;
+	}
+
+	var spread_bits = function(v)
+	{
+	return (GlobWeb.HealPixTables.utab[ v      &0xff])      | ((GlobWeb.HealPixTables.utab[(v>>> 8)&0xff])<<16)
+		| ((GlobWeb.HealPixTables.utab[(v>>>16)&0xff])<<32) | ((GlobWeb.HealPixTables.utab[(v>>>24)&0xff])<<48);
+	}
+
+	var xyf2nest = function(ix, iy, face_num, order)
+    {
+	    return ((face_num)<<(2*order)) +
+	     		 spread_bits(ix) + (spread_bits(iy)<<1);
+    }
+
+	var loc2pix = function(order, phi, theta)
+	{
+		var nside = Math.pow(2, order);
+
+		var z = Math.cos(theta);
+		var phi = phi;
+
+		var loc = {
+			phi: phi,
+			theta: theta,
+			z: z
+		}
+
+		if (Math.abs(z)>0.99)
+		{
+		  loc.sth = Math.sin(theta);
+		  loc.have_sth=true;
+		}
+
+		var inv_halfpi = 2/Math.PI;
+		var tt = fmodulo((phi*inv_halfpi),4.0);// in [0,4)
+
+		var za = Math.abs(z);
+		if (za<=2./3.) // Equatorial region
+		{
+			// Double
+			var temp1 = nside*(0.5+tt);
+			var temp2 = nside*(z*0.75);
+			// Long
+			var jp = (temp1-temp2); // index of  ascending edge line
+			var jm = (temp1+temp2); // index of descending edge line
+			var ifp = jp >>> order;  // in {0,4}
+			var ifm = jm >>> order;
+			var face_num = (ifp==ifm) ? (ifp|4) : ((ifp<ifm) ? ifp : (ifm+8));
+
+			var ix = jm & (nside-1),
+				iy = nside - (jp & (nside-1)) - 1;
+			return xyf2nest(ix,iy, face_num, order);
+		}
+			else // polar region, za > 2/3
+		{
+		var ntt = Math.min(3,tt); // int
+		var tp = tt-ntt; // double
+		var tmp = ((za<0.99)||(!loc.have_sth)) ? // double
+					nside*Math.sqrt(3*(1-za)) :
+					nside*loc.sth/Math.sqrt((1.+za)/3.);
+
+		var jp = (tp*tmp); // increasing edge line index (long)
+		var jm = ((1.0-tp)*tmp); // decreasing edge line index (long)
+		if (jp>=nside) jp = nside-1; // for points too close to the boundary
+		if (jm>=nside) jm = nside-1;
+		return (z>=0) ?
+		  xyf2nest((nside-jm -1),(nside-jp-1),ntt,order) :
+		  xyf2nest(jp,jm,ntt+8,order);
+		}
+	}
+
 	var computeCorners = function(order,pixelIndex) {
 		// Compute vertices
 		var nside = Math.pow(2, order);
@@ -156,6 +248,57 @@
 	};
 	
 	$(document).ready(function(){
+
+	test("loc2pix", function()
+	{
+		var almostNorthPole0 = lonLat2ang(0., 89.);
+		var almostNorthPole3 = lonLat2ang(-90., 89.);
+		var almostSouthPole8 = lonLat2ang(0., -89.);
+
+		// Find indices of four pixels(order 0) for northern hemisphere and one for south
+		var i0 = loc2pix(0, almostNorthPole0[0], almostNorthPole0[1]);
+		var i1 = loc2pix(0, Math.PI/2, 0.01);
+		var i2 = loc2pix(0, Math.PI, 0.01);
+		var i3 = loc2pix(0, almostNorthPole3[0], almostNorthPole3[1]);
+		var i8 = loc2pix(0, almostSouthPole8[0], almostSouthPole8[1]);
+		deepEqual( i0, 0 );
+		deepEqual( i1, 1 );
+		deepEqual( i2, 2 );
+		deepEqual( i3, 3 );
+		deepEqual( i8, 8 );
+
+		// Initial camera position on order3
+		var i304 = loc2pix(3, 0, (Math.PI / 2) - 0.01);
+		var i271 = loc2pix(3, 0, (Math.PI / 2) + 0.01);
+		var i293 = loc2pix(3, -0.01, (Math.PI / 2));
+		var i282 = loc2pix(3, 0.01, (Math.PI / 2));
+		deepEqual( i304, 304 ); // to N
+		deepEqual( i271, 271 ); // to S
+		deepEqual( i293, 293 ); // to E
+		deepEqual( i282, 282 ); // to W
+
+		// Order4
+		var i1216 = loc2pix(4, 0, (Math.PI / 2) - 0.01);
+		var i1087 = loc2pix(4, 0, (Math.PI / 2) + 0.01);
+		var i1173 = loc2pix(4, -0.01, (Math.PI / 2));
+		var i1130 = loc2pix(4, 0.01, (Math.PI / 2));
+		deepEqual( i1216, 1216 ); // to N
+		deepEqual( i1087, 1087 ); // to S
+		deepEqual( i1173, 1173 ); // to E
+		deepEqual( i1130, 1130 ); // to W
+
+	});
+
+	test("lonLat2ang", function(){
+		var northPole = lonLat2ang(0, 90);
+		var crossLine = lonLat2ang(180, 0);
+		var invCrossLine = lonLat2ang(-180, 0);
+		var southPole = lonLat2ang(0, -90);
+		deepEqual( northPole, [0, 0] );
+		deepEqual( crossLine, [Math.PI, Math.PI/2] );
+		deepEqual( invCrossLine, [Math.PI, Math.PI/2] );
+		deepEqual( southPole, [0, Math.PI] );
+	});
 
     test("Nested", function()
 	{
