@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
 /** @constructor
 	GlobWeb.HEALPixBase module
 	Module which contains all the maths stuff
@@ -50,7 +51,16 @@ GlobWeb.HEALPixBase = (function(){
 		
 		return GlobWeb.HealPixTables.ctab[raw1&0xff] | (GlobWeb.HealPixTables.ctab[raw1>>>8]<< 4) | (GlobWeb.HealPixTables.ctab[raw2&0xff]<<16) | (GlobWeb.HealPixTables.ctab[raw2>>>8]<<20);
 	}
-	
+
+	var spread_bits = function(v)
+	{
+		return (GlobWeb.HealPixTables.utab[ v      &0xff])      | ((GlobWeb.HealPixTables.utab[(v>>> 8)&0xff])<<16)
+			| ((GlobWeb.HealPixTables.utab[(v>>>16)&0xff])<<32) | ((GlobWeb.HealPixTables.utab[(v>>>24)&0xff])<<48);
+	}
+
+	/**
+	 *	Function describing a location on the sphere
+	*/
 	var fxyf = function(_fx,_fy,_face){
 		
 		var jr = GlobWeb.HealPixTables.jrll[_face] - _fx - _fy;
@@ -92,7 +102,6 @@ GlobWeb.HEALPixBase = (function(){
 	*	Static function
 	*	Convert nside to order
 	*	(ilog2(nside))
-	*	
 	*/
 	var nside2order = function(arg){
 		
@@ -105,10 +114,131 @@ GlobWeb.HEALPixBase = (function(){
 		return res;
 	
 	}
+
+	/**
+	 *	Returns pixel index of point on sphere
+	 *
+	 *	@param order Tile order
+	 *	@param lon Longitude
+	 *	@param lat Latitude
+	 */
+	var lonLat2pix = function(order, lon, lat)
+	{
+		var loc = lonLat2ang( lon, lat );
+		return loc2pix( order, loc[0], loc[1] );
+	}
+
+	/**
+	 *	Longitude/latitude to HEALPix coordinate system angle conversion
+	 *
+	 *	@param	lon Longitude
+	 *	@param 	lat Latitude
+	 *	@return	{Float[]} Returns[ phi, theta ], where:
+     *				Phi is the azimuth(or azimuthal angle) which belongs to interval [0;2*pi] (counterclockwise).
+	 *				Theta is the inclination(or polar angle) which belongs to interval [0;pi] (0 rad = north pole). 
+	 */
+	var lonLat2ang = function(lon, lat)
+    {
+    	if ( lon < 0 )
+    		lon += 360;
+
+    	var phi = lon * Math.PI / 180.;
+    	
+    	var theta = ( -lat + 90 ) * Math.PI / 180;
+    	return [phi, theta];
+    }
+
+	/**
+	 *	Returns the remainder of the division {@code v1/v2}.
+	 *  The result is non-negative.
+	 *
+	 *	@param 	v1 dividend; can be positive or negative
+	 *	@param 	v2 divisor; must be positive
+	 *	@return Remainder of the division; positive and smaller than {@code v2}
+	 */
+	var fmodulo = function(v1, v2)
+	{
+		if (v1>=0)
+			return (v1<v2) ? v1 : v1%v2;
+		var tmp=v1%v2+v2;
+		return (tmp==v2) ? 0. : tmp;
+	}
+
+	var xyf2nest = function(ix, iy, face_num, order)
+    {
+	    return ((face_num)<<(2*order)) +
+	     		 spread_bits(ix) + (spread_bits(iy)<<1);
+    }
+
+  	/**
+  	 *	Returns the pixel index of point on sphere
+  	 *	(TODO Maybe make conversation to Long for high orders(really high orders > 28))
+  	 *
+  	 *	@param 	order Tile order
+  	 *	@param	phi Azimuth(or azimuthal angle) in radians
+  	 *	@param  theta Inclination(or polar angle) in radians
+  	 *	@return The pixel index of pointing.
+	 */
+	var loc2pix = function(order, phi, theta)
+	{
+		var nside = Math.pow(2, order);
+		var z = Math.cos(theta);
+		var phi = phi;
+
+		var loc = {
+			phi: phi,
+			theta: theta,
+			z: z
+		}
+
+		if (Math.abs(z)>0.99)
+		{
+		  loc.sth = Math.sin(theta);
+		  loc.have_sth=true;
+		}
+
+		var inv_halfpi = 2/Math.PI;
+		var tt = fmodulo((phi*inv_halfpi),4.0);// in [0,4)
+
+		var za = Math.abs(z);
+		if (za<=2./3.) // Equatorial region
+		{
+			// Double
+			var temp1 = nside*(0.5+tt);
+			var temp2 = nside*(z*0.75);
+			// Long
+			var jp = (temp1-temp2); // index of  ascending edge line
+			var jm = (temp1+temp2); // index of descending edge line
+			var ifp = jp >>> order;  // in {0,4}
+			var ifm = jm >>> order;
+			var face_num = (ifp==ifm) ? (ifp|4) : ((ifp<ifm) ? ifp : (ifm+8));
+
+			var ix = jm & (nside-1),
+				iy = nside - (jp & (nside-1)) - 1;
+			return xyf2nest(ix,iy, face_num, order);
+		}
+			else // polar region, za > 2/3
+		{
+		var ntt = Math.min(3,tt); // int
+		var tp = tt-ntt; // double
+		var tmp = ((za<0.99)||(!loc.have_sth)) ? // double
+					nside*Math.sqrt(3*(1-za)) :
+					nside*loc.sth/Math.sqrt((1.+za)/3.);
+
+		var jp = (tp*tmp); // increasing edge line index (long)
+		var jm = ((1.0-tp)*tmp); // decreasing edge line index (long)
+		if (jp>=nside) jp = nside-1; // for points too close to the boundary
+		if (jm>=nside) jm = nside-1;
+		return (z>=0) ?
+		  xyf2nest((nside-jm -1),(nside-jp-1),ntt,order) :
+		  xyf2nest(jp,jm,ntt+8,order);
+		}
+	}
 	
 	return {
 			compress_bits: compress_bits,
 			fxyf: fxyf,
-			nside2order: nside2order
+			nside2order: nside2order,
+			lonLat2pix: lonLat2pix
 		};
 }());
