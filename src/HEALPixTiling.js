@@ -71,6 +71,23 @@ GlobWeb.HEALPixTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 
 /**************************************************************************************************************/
 
+/**
+ 	Return tile of given longitude/latitude from tiles array if exists, null otherwise
+ */
+GlobWeb.HEALPixTiling.prototype.findInsideTile = function(lon, lat, tiles)
+{
+	for ( var i=0; i<tiles.length; i++ )
+	{
+		var tile = tiles[i];
+		var index = GlobWeb.HEALPixBase.lonLat2pix( tile.order, lon, lat );
+		if ( index == tile.pixelIndex )
+			return tile;
+	}
+	return null;
+}
+
+/**************************************************************************************************************/
+
 /** @constructor
 	Tile constructor
 	
