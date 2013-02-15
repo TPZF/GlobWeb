@@ -629,6 +629,16 @@ GlobWeb.TileManager.prototype.render = function()
 /**************************************************************************************************************/
 
 /**
+	Returns visible tile for given longitude/latitude, null otherwise
+ */
+GlobWeb.TileManager.prototype.getVisibleTile = function(lon, lat)
+{
+	return this.imageryProvider.tiling.findInsideTile(lon, lat, this.tilesToRender);
+}
+
+/**************************************************************************************************************/
+
+/**
 	Build shared texture coordinate buffer
  */
 GlobWeb.TileManager.prototype.buildSharedTexCoordBuffer = function()
