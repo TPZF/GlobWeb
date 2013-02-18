@@ -215,11 +215,11 @@ GlobWeb.HEALPixBase = (function(){
 
 			var ix = jm & (nside-1),
 				iy = nside - (jp & (nside-1)) - 1;
-			return xyf2nest(ix,iy, face_num, order);
+			return xyf2nest(Math.floor(ix),Math.floor(iy), Math.floor(face_num), order);
 		}
 			else // polar region, za > 2/3
 		{
-		var ntt = Math.min(3,tt); // int
+		var ntt = Math.min(3,Math.floor(tt)); // int
 		var tp = tt-ntt; // double
 		var tmp = ((za<0.99)||(!loc.have_sth)) ? // double
 					nside*Math.sqrt(3*(1-za)) :
@@ -230,8 +230,8 @@ GlobWeb.HEALPixBase = (function(){
 		if (jp>=nside) jp = nside-1; // for points too close to the boundary
 		if (jm>=nside) jm = nside-1;
 		return (z>=0) ?
-		  xyf2nest((nside-jm -1),(nside-jp-1),ntt,order) :
-		  xyf2nest(jp,jm,ntt+8,order);
+		  xyf2nest(Math.floor(nside-jm -1),Math.floor(nside-jp-1),ntt,order) :
+		  xyf2nest(Math.floor(jp),Math.floor(jm),ntt+8,order);
 		}
 	}
 	
