@@ -135,8 +135,8 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.remove = function(geometry)
 				if ( d.vertexStart > data.vertexStart ) 
 				{
 					d.vertexStart -= data.vertexCount;
-					d.lineIndexStart -= data.lineIdexCount;
-					d.triIndexStart -= data.triIdexCount;
+					d.lineIndexStart -= data.lineIndexCount;
+					d.triIndexStart -= data.triIndexCount;
 				}
 			}
 		}
