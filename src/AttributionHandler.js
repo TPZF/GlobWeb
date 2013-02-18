@@ -59,7 +59,7 @@ GlobWeb.AttributionHandler = function(options, style)
 	// Apply style parameters
 	for (var x in style)
 	{
-		$('#'+ this.id).css(x, style[x]);
+		document.getElementById(this.id).style[x]=style[x];
 	}
 }
 
