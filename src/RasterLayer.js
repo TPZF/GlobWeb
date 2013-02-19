@@ -51,18 +51,14 @@ GlobWeb.inherits( GlobWeb.BaseLayer,GlobWeb.RasterLayer );
  */
 GlobWeb.RasterLayer.prototype._attach = function( g )
 {
-	GlobWeb.BaseLayer.prototype._attach.call( this, g );
-	
-	if ( this.attribution )
+	if ( !this.overlay )
 	{
-		if ( !this.overlay )
-		{
-			// Override id of background layer because of unicity of background not overlayed layer
-			this.id = 0;
-		}
-		this.globe.attributionHandler.addAttribution(this);
+		// Override id of background layer because of unicity of background not overlayed layer
+		this.id = 0;
 	}
-	
+
+	GlobWeb.BaseLayer.prototype._attach.call( this, g );
+		
 	if ( this.overlay )
 	{
 		// Create the renderer if needed

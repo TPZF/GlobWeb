@@ -44,7 +44,10 @@ GlobWeb.BaseLayer = function(options)
 GlobWeb.BaseLayer.prototype._attach = function( g )
 {
 	this.globe = g;
-	
+	if ( this.attribution )
+	{
+		this.globe.attributionHandler.addAttribution(this);
+	}
 }
 
 /**************************************************************************************************************/

@@ -50,11 +50,6 @@ GlobWeb.VectorLayer.prototype._attach = function( g )
 {
 	GlobWeb.BaseLayer.prototype._attach.call( this, g );
 	
-	if ( this.attribution )
-	{
-		this.globe.attributionHandler.addAttribution(this);
-	}
-	
 	// Add the feature to renderers
 	for ( var i=0; i < this.features.length; i++ )
 	{
