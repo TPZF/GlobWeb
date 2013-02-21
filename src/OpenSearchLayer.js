@@ -278,7 +278,7 @@ GlobWeb.OpenSearchLayer.prototype.addCluster = function(pixelIndex, order, face,
 			title: "Cluster("+pixelDistribution+")",
 			order: order,
 			pixelIndex: pixelIndex,
-			style: this.clusterStyle
+			style: new GlobWeb.FeatureStyle(this.clusterStyle)
 		},
 		cluster : true
 	};
@@ -347,6 +347,25 @@ GlobWeb.OpenSearchLayer.prototype.computeClusters = function(tile)
 /**************************************************************************************************************/
 
 /**
+ *	Update children state as inherited from parent
+ */
+GlobWeb.OpenSearchLayer.prototype.updateChildrenState = function(tile)
+{
+	if ( tile.children )
+	{
+		// Dispose children resources, and then delete its children
+		for (var i = 0; i < 4; i++)
+		{
+			if ( tile.children[i].extension[this.extId] )
+				tile.children[i].extension[this.extId].state = GlobWeb.OpenSearchLayer.TileState.INHERIT_PARENT;
+			this.updateChildrenState(tile.children[i]);
+		}
+	}
+}
+
+/**************************************************************************************************************/
+
+/**
  * 	Launch request to the OpenSearch service
  */
 GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile, childOrder, pixelIndicesToRequest)
@@ -398,7 +417,15 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile, childOrder, pix
 				var response = JSON.parse(xhr.response);
 
 				if ( !tileData.containsCluster )
+				{
 					tileData.complete = (response.totalResults == response.features.length);
+					
+					// Update children state
+					if ( tileData.complete )
+					{
+						self.updateChildrenState(tile);
+					}
+				}
 
 				self.recomputeFeaturesGeometry(response.features);
 				
@@ -675,6 +702,11 @@ GlobWeb.OpenSearchLayer.prototype.render = function( tiles )
 				{
 					tile = tile.parent;
 				}
+
+				// Skip loading parent
+				if ( tile.parent && tile.parent.extension[this.extId].state == GlobWeb.OpenSearchLayer.TileState.LOADING )
+					continue;
+
 				if ( this.useCluster )
 				{
 					this.computeClusters(tile);
