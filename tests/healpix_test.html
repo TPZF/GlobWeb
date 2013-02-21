@@ -55,7 +55,6 @@
 	var loc2pix = function(order, phi, theta)
 	{
 		var nside = Math.pow(2, order);
-
 		var z = Math.cos(theta);
 		var phi = phi;
 
@@ -64,48 +63,74 @@
 			theta: theta,
 			z: z
 		}
-
-		if (Math.abs(z)>0.99)
+		if (Math.abs(z)>(9./10.))
 		{
 		  loc.sth = Math.sin(theta);
 		  loc.have_sth=true;
 		}
 
-		var inv_halfpi = 2/Math.PI;
+		var inv_halfpi = 2./Math.PI;
 		var tt = fmodulo((phi*inv_halfpi),4.0);// in [0,4)
 
 		var za = Math.abs(z);
 		if (za<=2./3.) // Equatorial region
 		{
-			// Double
 			var temp1 = nside*(0.5+tt);
-			var temp2 = nside*(z*0.75);
-			// Long
-			var jp = (temp1-temp2); // index of  ascending edge line
-			var jm = (temp1+temp2); // index of descending edge line
-			var ifp = jp >>> order;  // in {0,4}
-			var ifm = jm >>> order;
-			var face_num = (ifp==ifm) ? (ifp|4) : ((ifp<ifm) ? ifp : (ifm+8));
+	        var temp2 = nside*(z*0.75);
 
-			var ix = jm & (nside-1),
-				iy = nside - (jp & (nside-1)) - 1;
-			return xyf2nest(ix,iy, face_num, order);
+	        var jp = GlobWeb.Long.fromNumber(temp1 - temp2); // index of  ascending edge line
+	        var jm = GlobWeb.Long.fromNumber(temp1 + temp2); // index of descending edge line
+	        var ifp = jp.shiftRightUnsigned(order);
+	        var ifm = jm.shiftRightUnsigned(order);
+	        var face_num;
+	        if ( ifp.equals(ifm) )
+	        {
+	        	face_num = ifp.or(GlobWeb.Long.fromNumber(4.));
+	        }
+	        else
+	        {
+	        	if ( ifp.lessThan(ifm) )
+	        	{
+	        		face_num = ifp;
+	        	}
+	        	else
+	        	{
+	        		face_num = ifp.add(GlobWeb.Long.fromNumber(8.));
+	        	}
+	        }
+
+	        var nSideMinusOne = GlobWeb.Long.fromNumber(nside-1);
+	        var ix = jm.and( nSideMinusOne );
+	        var iy = nSideMinusOne.subtract( jp.and(nSideMinusOne) );
+
+	        return xyf2nest(ix.toInt(),iy.toInt(),face_num.toInt(), order);
+
 		}
 			else // polar region, za > 2/3
 		{
-		var ntt = Math.min(3,tt); // int
-		var tp = tt-ntt; // double
-		var tmp = ((za<0.99)||(!loc.have_sth)) ? // double
-					nside*Math.sqrt(3*(1-za)) :
-					nside*loc.sth/Math.sqrt((1.+za)/3.);
+			var ntt = parseInt( Math.min( 3, parseInt(tt) ) );
+			var tp = tt-ntt;
+			var tmp = ( (za < (9./10.)) || (!loc.have_sth) ) ?
+							nside*Math.sqrt(3*(1-za)) :
+							nside*loc.sth/Math.sqrt((1.+za)/3.);
+			var jp = GlobWeb.Long.fromNumber(tp*tmp);
+			var jm = GlobWeb.Long.fromNumber((1.0-tp)*tmp);
+			var lNside = GlobWeb.Long.fromNumber(nside);
+			var nSideMinusOne = GlobWeb.Long.fromNumber(nside-1.);
+			var lOne = GlobWeb.Long.fromNumber(1.);
+			if ( jp.greaterThanOrEqual(lNside) )
+				jp = nSideMinusOne;
+			if ( jm.greaterThanOrEqual(lNside) )
+				jm = nSideMinusOne;
 
-		var jp = (tp*tmp); // increasing edge line index (long)
-		var jm = ((1.0-tp)*tmp); // decreasing edge line index (long)
-		if (jp>=nside) jp = nside-1; // for points too close to the boundary
-		if (jm>=nside) jm = nside-1;
-		return (z>=0) ?
-		  xyf2nest((nside-jm -1),(nside-jp-1),ntt,order) :
-		  xyf2nest(jp,jm,ntt+8,order);
+			if (z>=0)
+			{
+				return xyf2nest( lNside.subtract(jm).subtract(lOne).toInt(), lNside.subtract(jp).subtract(lOne).toInt(), ntt, order );
+			}
+			else
+			{
+				return xyf2nest( jp.toInt(), jm.toInt(), ntt+8, order );
+			}
 		}
 	}
 
@@ -287,6 +312,44 @@
 		deepEqual( i1173, 1173 ); // to E
 		deepEqual( i1130, 1130 ); // to W
 
+		/** More particular cases **/
+		// Different tiles
+		var coord212 = lonLat2ang( -9.15106295333194,33.06866442602146);
+		var falseCoord212 = lonLat2ang(-10.402895706364374, 43.787004928726105);
+
+		var i212 = loc2pix(3, coord212[0], coord212[1]);
+		var falsei212 = loc2pix(3, falseCoord212[0], falseCoord212[1]);
+		deepEqual( i212, 212 );
+		deepEqual( falsei212, 215 );
+
+		// Same tile (boundary between equatorial & polar regions)
+		var coord214 = lonLat2ang(-16.567542553830258, 38.05617753297474);
+		var trueCoord214 = lonLat2ang(-14.046879396338625, 45.7022677923393);
+		var i214 = loc2pix(3, coord214[0], coord214[1]);
+		var truei214 = loc2pix(3, trueCoord214[0], trueCoord214[1]);
+		deepEqual( i214, 214 );
+		deepEqual( truei214, 214 );
+
+		// Order 4 (polar tile)
+		var coord_o4i255 = lonLat2ang(49.20604294766314, 86.5722175480608);
+		var o4i255 = loc2pix(4, coord_o4i255[0], coord_o4i255[1]);
+		deepEqual( o4i255, 255 );
+
+		var coord_o4i253 = lonLat2ang(64.87203549209703, 84.28158147563086);
+		var o4i253 = loc2pix(4, coord_o4i253[0], coord_o4i253[1]);
+		deepEqual( o4i253, 253 );
+
+		var coord_o4i252 = lonLat2ang(42.938057585516454, 81.35861817586377);
+		var stillCoord_o4i252 = lonLat2ang(46.15592970216101, 83.25907640841453);
+		var o4i252 = loc2pix(4, coord_o4i252[0], coord_o4i252[1]);
+		var stillO4i252 = loc2pix(4, stillCoord_o4i252[0], stillCoord_o4i252[1]);
+		deepEqual( o4i252, 252 );
+		deepEqual( stillO4i252, 252 );
+
+
+		var coord_o4i254 = lonLat2ang(4.310217033803188, 84.11876549313016);
+		var o4i254 = loc2pix(4, coord_o4i254[0], coord_o4i254[1]);
+		deepEqual( o4i254, 254 );
 	});
 
 	test("lonLat2ang", function(){
