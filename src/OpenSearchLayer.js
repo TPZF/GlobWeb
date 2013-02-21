@@ -333,7 +333,7 @@ GlobWeb.OpenSearchLayer.prototype.computeClusters = function(tile)
 				// Empty tile
 				tile.extension[this.extId].complete = true;
 				// HACK to avoid multiple rendering of parent features
-				tile.extension.pointSprite = new GlobWeb.PointSpriteRenderer.TileData();
+				tile.extension.pointSprite = new GlobWeb.RendererTileData();
 			}
 			tile.extension[this.extId].state = GlobWeb.OpenSearchLayer.TileState.LOADED;
 		}
@@ -439,7 +439,7 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile, childOrder, pix
 				else
 				{
 					// HACK to avoid multiple rendering of parent features
-					tile.extension.pointSprite  = new GlobWeb.PointSpriteRenderer.TileData();
+					tile.extension.pointSprite  = new GlobWeb.RendererTileData();
 				}
 			}
 			else if ( xhr.status >= 400 )

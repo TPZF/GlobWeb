@@ -87,28 +87,6 @@ GlobWeb.TiledVectorRenderer.prototype.getOrCreateBucket = function( layer, style
 /**************************************************************************************************************/
 
 /**
-	Get or create a renderable for a tile
- */
-GlobWeb.TiledVectorRenderer.prototype.findRenderable = function( bucket, tile )
-{
-	if ( tile.extension[this.id] )
-	{
-		var renderables = tile.extension[this.id].renderables;
-		for ( var i = 0; i < renderables.length; i++ )
-		{
-			if ( renderables[i].bucket == bucket )
-			{
-				return renderables[i];
-			}
-		}
-	}
-
-	return null;
-}
-
-/**************************************************************************************************************/
-
-/**
 	Remove a geometry from the tile
  */
 GlobWeb.TiledVectorRenderer.prototype.removeGeometryFromTile = function( bucket, geometry, tile )
@@ -207,7 +185,11 @@ GlobWeb.TiledVectorRenderer.prototype.addGeometryToTile = function( bucket, geom
 	var isNewRenderable = false;
 	
 	// Try to find an existing renderable on the tile
-	var renderable = this.findRenderable( bucket, tile );
+	var renderable;
+	if ( tile.extension[this.id] )
+	{
+		renderable = tile.extension[this.id].getRenderable( bucket );
+	}
 	
 	// If no renderable on the tile, create a new renderable (or reuse an existing one)
 	if ( !renderable )
@@ -237,30 +219,6 @@ GlobWeb.TiledVectorRenderer.prototype.addGeometryToTile = function( bucket, geom
 
 /**************************************************************************************************************/
 
-/** @constructor
-	TiledVectorRenderer.TileData constructor
- */
-GlobWeb.TiledVectorRenderer.TileData = function()
-{
-	this.renderables = [];
-}
-
-/**************************************************************************************************************/
-
-/**
-	Dispose renderable data from tile
- */
-GlobWeb.TiledVectorRenderer.TileData.prototype.dispose = function()
-{
-	for ( var i=0; i < this.renderables.length; i++ )
-	{
-		this.renderables[i].dispose();
-	}
-	this.renderables.length = 0;
-}
-
-/**************************************************************************************************************/
-
 /**
 	Add a renderable to the tile
  */
@@ -269,7 +227,7 @@ GlobWeb.TiledVectorRenderer.prototype.addRenderableToTile = function( tile, rend
 	if ( renderable.vertices.length > 0 )
 	{
 		if ( !tile.extension[this.id] )
-			tile.extension[this.id] = new GlobWeb.TiledVectorRenderer.TileData();
+			tile.extension[this.id] = new GlobWeb.RendererTileData();
 		
 		tile.extension[this.id].renderables.push( renderable );
 	}

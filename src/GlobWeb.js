@@ -63,6 +63,7 @@ var GlobWeb = GlobWeb || {};
 		"Mesh.js",
 		"Program.js",
 		"FeatureStyle.js",
+		"RendererTileData.js",
 		"VectorRendererManager.js",
 		"PointRenderer.js",
 		"PointSpriteRenderer.js",

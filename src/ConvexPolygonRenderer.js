@@ -162,65 +162,26 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.dispose = function(renderCont
 
 /**************************************************************************************************************/
 
-/** @constructor
-	ConvexPolygonRenderer.TileData constructor
- */
-GlobWeb.ConvexPolygonRenderer.TileData = function()
-{
-	this.renderables = [];
-	this.frameNumber = -1;
-}
-
-/**************************************************************************************************************/
-
 /**
-	Get or create a renderable from the tile
- */
-GlobWeb.ConvexPolygonRenderer.TileData.prototype.getOrCreateRenderable = function(bucket)
-{
-	for ( var i=0; i < this.renderables.length; i++ )
-	{
-		if ( bucket == this.renderables[i].bucket )
-		{
-			return this.renderables[i];
-		}
-	}
-	var renderable = new GlobWeb.ConvexPolygonRenderer.Renderable(bucket);
-	this.renderables.push( renderable );
-	return renderable;
-}
-
-/**************************************************************************************************************/
-
-/**
-	Dispose renderable data from tile
- */
-GlobWeb.ConvexPolygonRenderer.TileData.prototype.dispose = function(renderContext)
-{
-	for ( var i=0; i < this.renderables.length; i++ )
-	{
-		this.renderables[i].dispose(renderContext);
-	}
-	this.renderables.length = 0;
-}
-
-/**************************************************************************************************************/
-
-/**
-	Add a point to the renderer
+	Add a geometry to the renderer
  */
 GlobWeb.ConvexPolygonRenderer.prototype.addGeometryToTile = function(bucket,geometry,tile)
 {
 	var tileData = tile.extension.polygon;
 	if (!tileData)
 	{
-		tileData = tile.extension.polygon = new GlobWeb.ConvexPolygonRenderer.TileData();
+		tileData = tile.extension.polygon = new GlobWeb.RendererTileData();
 	}
 	if (!geometry.gid)
 	{
 		geometry.gid = this.gid++;
 	}
-	var renderable = tileData.getOrCreateRenderable(bucket);
+	var renderable = tileData.getRenderable(bucket);
+	if (!renderable) 
+	{
+		renderable = new GlobWeb.ConvexPolygonRenderer.Renderable(bucket);
+		tileData.renderables.push(renderable);
+	}
 	renderable.add(geometry);
 
 }

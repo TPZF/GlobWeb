@@ -71,6 +71,11 @@ GlobWeb.PointSpriteRenderer = function(tileManager,style)
 	this.defaultTexture = null;
 }
 
+/**************************************************************************************************************/
+
+/**
+ * Renderable constructor for PointSprite
+ */
 GlobWeb.PointSpriteRenderer.Renderable = function(bucket) 
 {
 	this.bucket = bucket;
@@ -79,6 +84,12 @@ GlobWeb.PointSpriteRenderer.Renderable = function(bucket)
 	this.vertexBuffer = null;
 	this.vertexBufferDirty = false;
 }
+
+/**************************************************************************************************************/
+
+/**
+ * Add a geometry to the renderbale
+ */
 GlobWeb.PointSpriteRenderer.Renderable.prototype.add = function(geometry)
 {
 	this.geometry2vb[ geometry.gid ] = this.vertices.length;
@@ -86,6 +97,12 @@ GlobWeb.PointSpriteRenderer.Renderable.prototype.add = function(geometry)
 	this.vertices.push( pt[0], pt[1], pt[2] );
 	this.vertexBufferDirty = true;
 }
+
+/**************************************************************************************************************/
+
+/**
+ * Remove a geometry from the renderable
+ */
 GlobWeb.PointSpriteRenderer.Renderable.prototype.remove = function(geometry)
 {
 	if ( this.geometry2vb.hasOwnProperty(geometry.gid) )
@@ -96,6 +113,12 @@ GlobWeb.PointSpriteRenderer.Renderable.prototype.remove = function(geometry)
 		this.vertexBufferDirty = true;
 	}
 }
+
+/**************************************************************************************************************/
+
+/**
+ * Dispose the renderable
+ */
 GlobWeb.PointSpriteRenderer.Renderable.prototype.dispose = function(renderContext)
 {
 	if ( this.vertexBuffer ) 
@@ -137,49 +160,6 @@ GlobWeb.PointSpriteRenderer.prototype._buildTextureFromImage = function(bucket,i
 	bucket.textureHeight = image.height;
 }
 
-/**************************************************************************************************************/
-
-/** @constructor
-	PointSpriteRenderer.TileData constructor
- */
-GlobWeb.PointSpriteRenderer.TileData = function()
-{
-	this.renderables = [];
-	this.frameNumber = -1;
-}
-
-/**************************************************************************************************************/
-
-/**
-	Get or create a renderable from the tile
- */
-GlobWeb.PointSpriteRenderer.TileData.prototype.getOrCreateRenderable = function(bucket)
-{
-	for ( var i=0; i < this.renderables.length; i++ )
-	{
-		if ( bucket == this.renderables[i].bucket )
-		{
-			return this.renderables[i];
-		}
-	}
-	var renderable = new GlobWeb.PointSpriteRenderer.Renderable(bucket);
-	this.renderables.push( renderable );
-	return renderable;
-}
-
-/**************************************************************************************************************/
-
-/**
-	Dispose renderable data from tile
- */
-GlobWeb.PointSpriteRenderer.TileData.prototype.dispose = function(renderContext)
-{
-	for ( var i=0; i < this.renderables.length; i++ )
-	{
-		this.renderables[i].dispose(renderContext);
-	}
-	this.renderables.length = 0;
-}
 
 /**************************************************************************************************************/
 
@@ -191,13 +171,18 @@ GlobWeb.PointSpriteRenderer.prototype.addGeometryToTile = function(bucket,geomet
 	var tileData = tile.extension.pointSprite;
 	if (!tileData)
 	{
-		tileData = tile.extension.pointSprite = new GlobWeb.PointSpriteRenderer.TileData();
+		tileData = tile.extension.pointSprite = new GlobWeb.RendererTileData();
 	}
 	if (!geometry.gid)
 	{
 		geometry.gid = this.gid++;
 	}
-	var renderable = tileData.getOrCreateRenderable(bucket);
+	var renderable = tileData.getRenderable(bucket);
+	if (!renderable) 
+	{
+		renderable = new GlobWeb.PointSpriteRenderer.Renderable(bucket);
+		tileData.renderables.push(renderable);
+	}
 	renderable.add(geometry);
 
 }
