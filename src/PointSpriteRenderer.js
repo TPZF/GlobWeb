@@ -94,7 +94,8 @@ GlobWeb.PointSpriteRenderer.Renderable.prototype.add = function(geometry)
 {
 	this.geometry2vb[ geometry.gid ] = this.vertices.length;
 	var pt = GlobWeb.CoordinateSystem.fromGeoTo3D( geometry['coordinates'] );
-	this.vertices.push( pt[0], pt[1], pt[2] );
+	// Hack : push away the point, only works for AstroWeb, sufficient for now
+	this.vertices.push( 0.99 * pt[0], 0.99 * pt[1], 0.99 * pt[2] );
 	this.vertexBufferDirty = true;
 }
 
@@ -277,7 +278,6 @@ GlobWeb.PointSpriteRenderer.prototype.render = function(tiles)
 	var gl = this.renderContext.gl;
 	
 	// Setup states
-	gl.disable(gl.DEPTH_TEST);
 	gl.enable(gl.BLEND);
 	gl.blendEquation(gl.FUNC_ADD);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -341,8 +341,8 @@ GlobWeb.PointSpriteRenderer.prototype.render = function(tiles)
 		
 	}
 
-    gl.enable(gl.DEPTH_TEST);
     gl.disable(gl.BLEND);
+	gl.disable(gl.POLYGON_OFFSET_FILL);
 	
 	this.frameNumber++;
 }
