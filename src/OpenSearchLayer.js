@@ -353,11 +353,13 @@ GlobWeb.OpenSearchLayer.prototype.updateChildrenState = function(tile)
 {
 	if ( tile.children )
 	{
-		// Dispose children resources, and then delete its children
 		for (var i = 0; i < 4; i++)
 		{
 			if ( tile.children[i].extension[this.extId] )
+			{
 				tile.children[i].extension[this.extId].state = GlobWeb.OpenSearchLayer.TileState.INHERIT_PARENT;
+				tile.children[i].extension[this.extId].complete = true;
+			}
 			this.updateChildrenState(tile.children[i]);
 		}
 	}
