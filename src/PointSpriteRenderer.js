@@ -300,7 +300,7 @@ GlobWeb.PointSpriteRenderer.prototype.render = function(tiles)
 			tileData = tile.extension.pointSprite;
 		}
 		
-		if (!tileData || tileData.frameNumber == renderContext.frameNumber)
+		if (!tileData || tileData.frameNumber == this.frameNumber)
 			continue;
 		
 		tileData.frameNumber = this.frameNumber;
