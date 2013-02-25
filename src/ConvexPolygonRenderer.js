@@ -30,10 +30,17 @@ GlobWeb.ConvexPolygonRenderer = function(tileManager)
 	this.renderContext = tileManager.renderContext;
 	this.tileConfig = tileManager.tileConfig;
 	
+	this.programs = [];
+
 	// Bucket management for rendering : a bucket is a texture with its points
 	this.buckets = [];
-	 	
-	var vertexShader = "\
+
+	// Texture cache management : avoid flickering when modifiying style
+	// TODO : maybe put this in GlobWeb, can be used by other renderers
+	this.textureCache = {};
+	this.texturesToPurge = [];
+
+	this.lineVertexShader = "\
 	attribute vec3 vertex;\n\
 	uniform mat4 viewProjectionMatrix;\n\
 	\n\
@@ -43,8 +50,10 @@ GlobWeb.ConvexPolygonRenderer = function(tileManager)
 	}\n\
 	";
 	
-	var fragmentShader = "\
+	this.lineFragmentShader = "\
+	#ifdef GL_ES \n\
 	precision highp float; \n\
+	#endif \n\
 	uniform vec4 color; \n\
 	\n\
 	void main(void) \n\
@@ -53,11 +62,71 @@ GlobWeb.ConvexPolygonRenderer = function(tileManager)
 	} \n\
 	";
 	
-	this.program = new GlobWeb.Program(this.renderContext);
-	this.program.createFromSource(vertexShader, fragmentShader);
+	this.polygonVertexShader = "\
+	attribute vec3 vertex;\n\
+	attribute vec2 tcoord;\n\
+	uniform mat4 viewProjectionMatrix;\n\
+	\n\
+	varying vec2 vTextureCoord;\n\
+	\n\
+	void main(void) \n\
+	{\n\
+		vTextureCoord = tcoord;\n\
+		vTextureCoord.y = 1.0 - vTextureCoord.y; \n\
+		gl_Position = viewProjectionMatrix * vec4(vertex, 1.0);\n\
+	}\n\
+	";
+
+
+	this.polygonFragmentShader = "\
+		precision highp float; \n\
+		uniform vec4 color;\n\
+		varying vec2 vTextureCoord;\n\
+		uniform sampler2D texture; \n\
+		void main(void)\n\
+		{\n\
+			gl_FragColor = texture2D(texture, vTextureCoord) * color;\n\
+		}\n\
+		";
+
+	this.fillShader = {
+		fragmentCode: this.polygonFragmentShader,
+		updateUniforms: null
+	};
+
+	this.lineProgram = new GlobWeb.Program(this.renderContext);
+	this.lineProgram.createFromSource(this.lineVertexShader, this.lineFragmentShader);
+
+	this.polygonProgram = new GlobWeb.Program(this.renderContext);
+	this.polygonProgram = this.createProgram(this.fillShader);
 	
 	this.frameNumber = 0;
 	this.gid = 0;
+
+	var gl = this.renderContext.gl;
+	// Parameters used to implement ONE shader for color xor texture rendering
+	this.whiteTexture = gl.createTexture();
+	gl.bindTexture(gl.TEXTURE_2D, this.whiteTexture);
+	var whitePixel = new Uint8Array([255, 255, 255, 255]);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, whitePixel);
+
+	// Shared buffer
+	// Create texCoord buffer
+	this.tcoordBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.tcoordBuffer);
+	
+	var textureCoords = [
+		0.0, 0.0,
+		1.0, 0.0,
+		1.0, 1.0,
+		0.0, 1.0,
+		0.0, 0.0
+	];
+	
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
+	this.tcoordBuffer.itemSize = 2;
+	this.tcoordBuffer.numItems = 5;
+
 }
 
 GlobWeb.ConvexPolygonRenderer.Renderable = function(bucket) 
@@ -71,6 +140,7 @@ GlobWeb.ConvexPolygonRenderer.Renderable = function(bucket)
 	this.lineIndexBuffer = null;
 	this.triangleIndexBuffer = null;
 	this.bufferDirty = false;
+	this.triBufferDirty = false;
 }
 GlobWeb.ConvexPolygonRenderer.Renderable.prototype.add = function(geometry)
 {
@@ -106,6 +176,7 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.add = function(geometry)
 	}
 	
 	this.bufferDirty = true;
+	this.triBufferDirty = true;
 }
 GlobWeb.ConvexPolygonRenderer.Renderable.prototype.remove = function(geometry)
 {
@@ -142,6 +213,7 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.remove = function(geometry)
 		}
 		
 		this.bufferDirty = true;
+		this.triBufferDirty = true;
 	}
 }
 GlobWeb.ConvexPolygonRenderer.Renderable.prototype.dispose = function(renderContext)
@@ -199,12 +271,63 @@ GlobWeb.ConvexPolygonRenderer.prototype.removeGeometryFromTile = function(geomet
 		for ( var i=0; i < tileData.renderables.length; i++ )
 		{
 			tileData.renderables[i].remove(geometry);
+
+			// TODO dispose texture from bucket and bucket itself if no more renderable using it
+			if ( tileData.renderables[i].vertices.length == 0 )
+			{
+				tileData.renderables[i].dispose(this.renderContext);
+				tileData.renderables.splice(i, 1);
+			}
 		}
 	}
 }
 
 GlobWeb.ConvexPolygonRenderer.prototype.removeGeometry = function()
 {
+}
+
+/**************************************************************************************************************/
+
+/**
+ 	Create program from fillShader object	
+ */
+GlobWeb.ConvexPolygonRenderer.prototype.createProgram = function(fillShader)
+{
+	var program = new GlobWeb.Program(this.renderContext);
+	program.createFromSource(this.polygonVertexShader, fillShader.fragmentCode);
+	
+    // Add program
+    program.id = this.programs.length;
+    this.programs.push({ 
+    	fillShader: fillShader,
+    	program: program,
+    	renderables: []
+	});
+	return program;
+}
+
+/**************************************************************************************************************/
+
+/**
+ 	Get program if known by renderer, create otherwise
+ */
+GlobWeb.ConvexPolygonRenderer.prototype.getProgram = function(fillShader) {
+
+	var program;
+
+    for(var id=0; id<this.programs.length; id++)
+    {
+        if( this.programs[id].fillShader == fillShader )
+        {
+        	program = this.programs[id].program;
+        }
+    }
+
+    if ( !program )
+    {
+    	program = this.createProgram(fillShader);
+    }
+    return program;
 }
 
 /**************************************************************************************************************/
@@ -222,7 +345,9 @@ GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style
 			&& bucket.style.strokeColor[0] == style.strokeColor[0]
 			&& bucket.style.strokeColor[1] == style.strokeColor[1]
 			&& bucket.style.strokeColor[2] == style.strokeColor[2]
-			&& bucket.fill == style.fill )
+			&& bucket.style.fill == style.fill
+			&& bucket.style.fillTexture == style.fillTexture
+			&& bucket.style.fillShader == style.fillShader )
 		{
 			return bucket;
 		}
@@ -233,10 +358,59 @@ GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style
 
 
 	// Create a bucket
+	// TODO replace polygonProgram by id only maybe ?
 	var bucket = {
 		style: new GlobWeb.FeatureStyle(style),
-		layer: layer		
+		layer: layer,
+		polygonProgram: null
 	};
+
+	// Create texture
+	var self = this;
+	
+	if ( style.fillTextureUrl )
+	{
+		var cacheTexture = this.textureCache[style.fillTextureUrl];
+		if ( cacheTexture )
+		{
+			bucket.style.fillTexture = cacheTexture.texture;
+			cacheTexture.count++;
+		}
+		else
+		{
+			var image = new Image();
+			image.crossOrigin = '';
+			image.onload = function () 
+			{
+				bucket.style.fillTexture = self.renderContext.createNonPowerOfTwoTextureFromImage(image);
+				self.textureCache[style.fillTextureUrl] = { texture: bucket.style.fillTexture, count: 1 };
+			}
+			
+			image.onerror = function(event)
+			{
+				console.log("Cannot load " + image.src );
+			}
+			
+			image.src = style.fillTextureUrl;
+		}
+		bucket.style.textureUrl = style.fillTextureUrl;
+	}
+	else if ( style.fillTexture )
+	{
+		bucket.style.fillTexture = style.fillTexture;
+	}
+
+	if ( style.fill )
+	{
+		if ( style.fillShader && style.fillShader.fragmentCode )
+		{
+			bucket.polygonProgram = this.getProgram(style.fillShader);
+		}
+		else
+		{
+			bucket.polygonProgram = this.polygonProgram;
+		}
+	}
 		
 	this.buckets.push( bucket );
 	
@@ -252,6 +426,18 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 {	
 	var renderContext = this.renderContext;
 	var gl = this.renderContext.gl;
+
+	// Purge textures from the cache if nay
+	for ( var i = 0; i < this.texturesToPurge.length; i++ )
+	{
+		var cacheTexture = this.textureCache[ this.texturesToPurge[i] ];
+		if ( cacheTexture.count <= 0 )
+		{
+			gl.deleteTexture(cacheTexture.texture);
+			delete this.textureCache[ this.texturesToPurge[i] ];
+		}
+	}
+	this.texturesToPurge.length = 0;
 	
 	// Setup states
 	gl.disable(gl.DEPTH_TEST);
@@ -259,15 +445,10 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 	gl.blendEquation(gl.FUNC_ADD);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-	// Setup program
-	this.program.apply();
-	
-	// The shader only needs the viewProjection matrix, use GlobWeb.modelViewMatrix as a temporary storage
-	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
-	gl.uniformMatrix4fv(this.program.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
-	
+
 	for ( var n = 0; n < tiles.length; n++ )
 	{
+
 		var tile = tiles[n];
 		var tileData = tile.extension.polygon;
 		while (tile.parent && !tileData)
@@ -276,18 +457,26 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 			tileData = tile.extension.polygon;
 		}
 		
-		if (!tileData || tileData.frameNumber == renderContext.frameNumber)
+		if (!tileData || tileData.frameNumber == this.frameNumber)
 			continue;
 		
 		tileData.frameNumber = this.frameNumber;
+
+
+		// The shader only needs the viewProjection matrix, use GlobWeb.modelViewMatrix as a temporary storage
+		mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
 		
 		for (var i=0; i < tileData.renderables.length; i++ ) 
 		{
+			// Setup line program
+			this.lineProgram.apply();
+			gl.uniformMatrix4fv(this.lineProgram.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
+			
 			var renderable = tileData.renderables[i];
-			if (!renderable.bucket.layer._visible)
+			if (!renderable.bucket.layer.visible())
 				continue;
 			var color = renderable.bucket.style.strokeColor;
-			gl.uniform4f(this.program.uniforms["color"], color[0], color[1], color[2], renderable.bucket.layer._opacity );
+			gl.uniform4f(this.lineProgram.uniforms["color"], color[0], color[1], color[2], renderable.bucket.layer.opacity() );
 				
 			if ( !renderable.vertexBuffer )
 			{
@@ -296,7 +485,7 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 			}
 			
 			gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
-			gl.vertexAttribPointer(this.program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
+			gl.vertexAttribPointer(this.lineProgram.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
 		
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.lineIndexBuffer);
 			
@@ -304,32 +493,72 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 			{
 				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(renderable.vertices), gl.STATIC_DRAW);
 				gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(renderable.lineIndices), gl.STATIC_DRAW);
+				renderable.bufferDirty = false;
 			}
 
 			gl.drawElements( gl.LINES, renderable.lineIndices.length, gl.UNSIGNED_SHORT, 0);
 			
-			if ( renderable.bucket.style.fill ) 
-			{
-				if ( !renderable.triangleIndexBuffer )
-				{
-					renderable.triangleIndexBuffer = gl.createBuffer();
-				}
-				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.triangleIndexBuffer);
-				if ( renderable.bufferDirty )
-				{
-					gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(renderable.triangleIndices), gl.STATIC_DRAW);
-				}
-				
-				color = renderable.bucket.style.fillColor;
-				gl.uniform4f(this.program.uniforms["color"], color[0], color[1], color[2], renderable.bucket.layer._opacity );
-				
-				gl.drawElements( gl.TRIANGLES, renderable.triangleIndices.length, gl.UNSIGNED_SHORT, 0);
-			}
-			renderable.bufferDirty = false;
+
+			// Construct renderables for second pass with filled polygons
+			if ( renderable.bucket.polygonProgram )
+				this.programs[ renderable.bucket.polygonProgram.id ].renderables.push(renderable);
 		}
-			
-		
 	}
+
+
+	for ( var i=0; i<this.programs.length; i++ )
+	{
+		if ( this.programs[i].renderables.length == 0 )
+			continue;
+
+		var currentPolygonProgram = this.programs[i].program;
+		currentPolygonProgram.apply();
+		gl.uniformMatrix4fv(currentPolygonProgram.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
+
+		gl.uniform1i(currentPolygonProgram.uniforms["texture"], 0);
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindBuffer(gl.ARRAY_BUFFER, this.tcoordBuffer);
+		gl.vertexAttribPointer(currentPolygonProgram.attributes['tcoord'], 2, gl.FLOAT, false, 0, 0);
+
+		for ( var j=0; j<this.programs[i].renderables.length; j++ )
+		{
+			renderable = this.programs[i].renderables[j];
+
+			if ( this.programs[i].fillShader.updateUniforms )
+				this.programs[i].fillShader.updateUniforms(gl, renderable.bucket);
+
+			gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
+			gl.vertexAttribPointer(currentPolygonProgram.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
+
+			if ( !renderable.triangleIndexBuffer )
+			{
+				renderable.triangleIndexBuffer = gl.createBuffer();
+			}
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.triangleIndexBuffer);
+			if ( renderable.triBufferDirty )
+			{
+				gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(renderable.triangleIndices), gl.STATIC_DRAW);
+				renderable.triBufferDirty = false;
+			}
+			// Add texture
+			if ( renderable.bucket.style.fillTexture ) 
+			{
+				gl.bindTexture(gl.TEXTURE_2D, renderable.bucket.style.fillTexture); // use texture of renderable
+				gl.uniform4f(currentPolygonProgram.uniforms["color"], 1.0, 1.0, 1.0, renderable.bucket.layer.opacity());  // use whiteColor
+			}
+			else
+			{
+				gl.bindTexture(gl.TEXTURE_2D, this.whiteTexture);  // use white texture
+				color = renderable.bucket.style.fillColor;
+				gl.uniform4f(currentPolygonProgram.uniforms["color"], color[0], color[1], color[2], renderable.bucket.layer.opacity() );
+			}
+			
+			gl.drawElements( gl.TRIANGLES, renderable.triangleIndices.length, gl.UNSIGNED_SHORT, 0);
+
+		}
+		// Remove all renderables for current program
+		this.programs[i].renderables.length = 0;
+	}	
 
     gl.enable(gl.DEPTH_TEST);
     gl.disable(gl.BLEND);
