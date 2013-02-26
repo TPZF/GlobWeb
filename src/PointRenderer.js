@@ -382,5 +382,5 @@ GlobWeb.PointRenderer.prototype.render = function()
 // Register the renderer
 GlobWeb.VectorRendererManager.registerRenderer({
 										creator: function(globe) { return new GlobWeb.PointRenderer(globe.tileManager); },
-										canApply: function(type,style) {return style.renderHint != "PointSprite" && type == "Point"; }
+										canApply: function(type,style) {return type == "Point"; }
 									});
