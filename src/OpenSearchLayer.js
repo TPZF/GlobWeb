@@ -78,8 +78,8 @@ GlobWeb.OpenSearchLayer = function(options){
 		this.maxClusterOrder = options.maxClusterOrder || 8;
 
 		// Handle distributions
-		this.distributions;
-		this.clusterServiceUrl;
+		this.distributions = null;
+		this.clusterServiceUrl = null;
 
 		this.handleClusterService();
 

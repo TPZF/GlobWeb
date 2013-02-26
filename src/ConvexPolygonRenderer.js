@@ -35,11 +35,6 @@ GlobWeb.ConvexPolygonRenderer = function(tileManager)
 	// Bucket management for rendering : a bucket is a texture with its points
 	this.buckets = [];
 
-	// Texture cache management : avoid flickering when modifiying style
-	// TODO : maybe put this in GlobWeb, can be used by other renderers
-	this.textureCache = {};
-	this.texturesToPurge = [];
-
 	this.basicVertexShader = "\
 	attribute vec3 vertex;\n\
 	uniform mat4 viewProjectionMatrix;\n\
@@ -51,9 +46,7 @@ GlobWeb.ConvexPolygonRenderer = function(tileManager)
 	";
 	
 	this.basicFragmentShader = "\
-	#ifdef GL_ES \n\
-	precision highp float; \n\
-	#endif \n\
+	precision lowp float; \n\
 	uniform vec4 color; \n\
 	\n\
 	void main(void) \n\
@@ -79,7 +72,7 @@ GlobWeb.ConvexPolygonRenderer = function(tileManager)
 
 
 	this.texFragmentShader = "\
-		precision highp float; \n\
+		precision lowp float; \n\
 		uniform vec4 color;\n\
 		varying vec2 vTextureCoord;\n\
 		uniform sampler2D texture; \n\
@@ -134,6 +127,12 @@ GlobWeb.ConvexPolygonRenderer = function(tileManager)
 
 }
 
+/**************************************************************************************************************/
+
+/**
+	Renderable constructor
+	Attach to a bucket
+ */
 GlobWeb.ConvexPolygonRenderer.Renderable = function(bucket) 
 {
 	this.bucket = bucket;
@@ -147,10 +146,18 @@ GlobWeb.ConvexPolygonRenderer.Renderable = function(bucket)
 	this.bufferDirty = false;
 	this.triBufferDirty = false;
 }
+
+/**************************************************************************************************************/
+
+/**
+	Add the geometry to the renderable
+ */
 GlobWeb.ConvexPolygonRenderer.Renderable.prototype.add = function(geometry)
 {
 	var coords = geometry['coordinates'][0];
 	var numPoints = coords.length-1;
+	
+	// Store information for the geometry in the buffers used for rendering
 	var data = {
 		vertexStart: this.vertices.length,
 		vertexCount: 3 * numPoints,
@@ -161,6 +168,7 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.add = function(geometry)
 	};
 	this.geometry2vb[ geometry.gid ] = data;
 	
+	// Compute vertices and indices and store them in the buffers
 	var startIndex = this.vertices.length / 3;
 	for ( var i = 0; i < numPoints; i++ ) 
 	{
@@ -169,6 +177,7 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.add = function(geometry)
 		this.lineIndices.push( startIndex + i, startIndex + ((i+1) % numPoints) );
 	}
 	
+	// If fill, build the triangle indices
 	if ( this.bucket.style.fill ) 
 	{
 		data.triIndexStart = this.triangleIndices.length;
@@ -183,13 +192,24 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.add = function(geometry)
 	this.bufferDirty = true;
 	this.triBufferDirty = true;
 }
+
+/**************************************************************************************************************/
+
+/**
+	Remove the geometry from the renderable
+ */
 GlobWeb.ConvexPolygonRenderer.Renderable.prototype.remove = function(geometry)
 {
 	if ( this.geometry2vb.hasOwnProperty(geometry.gid) )
 	{
+		// retreive the render data for the geometry
 		var data = this.geometry2vb[ geometry.gid ];
 		delete this.geometry2vb[ geometry.gid ];
+
+		// Remove geometry vertex
+		this.vertices.splice( data.vertexStart, data.vertexCount );
 		
+		// Update indices after vertex removal
 		for ( var i = data.lineIndexStart+data.lineIndexCount; i < this.lineIndices.length; i++ ) 
 		{
 			this.lineIndices[i] -= (data.vertexCount/3);
@@ -199,10 +219,10 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.remove = function(geometry)
 			this.triangleIndices[i] -= (data.vertexCount/3);
 		}
 
-		this.vertices.splice( data.vertexStart, data.vertexCount );
 		this.lineIndices.splice( data.lineIndexStart, data.lineIndexCount );
 		this.triangleIndices.splice( data.triIndexStart, data.triIndexCount );
 		
+		// Update render data for all other geometries
 		for ( var g in this.geometry2vb ) 
 		{
 			if ( g ) 
@@ -221,7 +241,13 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.remove = function(geometry)
 		this.triBufferDirty = true;
 	}
 }
-GlobWeb.ConvexPolygonRenderer.Renderable.prototype.dispose = function(renderContext)
+
+/**************************************************************************************************************/
+
+/**
+	Dispose the renderable : removeall buffers
+ */
+ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.dispose = function(renderContext)
 {
 	if ( this.vertexBuffer ) 
 	{
@@ -287,8 +313,14 @@ GlobWeb.ConvexPolygonRenderer.prototype.removeGeometryFromTile = function(geomet
 	}
 }
 
+/**************************************************************************************************************/
+
+/**
+ 	Remove the geometry
+ */
 GlobWeb.ConvexPolygonRenderer.prototype.removeGeometry = function()
 {
+	// TODO
 }
 
 /**************************************************************************************************************/
@@ -351,7 +383,8 @@ GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style
 			&& bucket.style.strokeColor[1] == style.strokeColor[1]
 			&& bucket.style.strokeColor[2] == style.strokeColor[2]
 			&& bucket.style.fill == style.fill
-			&& bucket.style.fillTexture == style.fillTexture
+			&& (bucket.style.fillTextureUrl == style.fillTextureUrl
+			|| bucket.style.fillTexture == style.fillTexture)
 			&& bucket.style.fillShader == style.fillShader )
 		{
 			return bucket;
@@ -366,28 +399,23 @@ GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style
 	var bucket = {
 		style: new GlobWeb.FeatureStyle(style),
 		layer: layer,
-		polygonProgram: null
+		polygonProgram: null,
+		texture: style.fillTexture
 	};
 
 	// Create texture
 	var self = this;
 	
-	if ( style.fillTextureUrl )
+
+	if ( style.fill )
 	{
-		var cacheTexture = this.textureCache[style.fillTextureUrl];
-		if ( cacheTexture )
-		{
-			bucket.style.fillTexture = cacheTexture.texture;
-			cacheTexture.count++;
-		}
-		else
+		if ( style.fillTextureUrl )
 		{
 			var image = new Image();
 			image.crossOrigin = '';
 			image.onload = function () 
 			{
-				bucket.style.fillTexture = self.renderContext.createNonPowerOfTwoTextureFromImage(image);
-				self.textureCache[style.fillTextureUrl] = { texture: bucket.style.fillTexture, count: 1 };
+				bucket.texture = self.renderContext.createNonPowerOfTwoTextureFromImage(image);
 			}
 			
 			image.onerror = function(event)
@@ -397,17 +425,12 @@ GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style
 			
 			image.src = style.fillTextureUrl;
 		}
-		bucket.style.textureUrl = style.fillTextureUrl;
-	}
-	else if ( style.fillTexture )
-	{
-		bucket.style.fillTexture = style.fillTexture;
-	}
-
-	// TODO refactor maybe...
-	if ( style.fill )
-	{
-		if ( style.fillTexture )
+		else if ( style.fillTexture )
+		{
+			bucket.texture = style.fillTexture;
+		}
+			
+		if ( style.fillShader && style.fillShader.fragmentCode )
 		{
 			if ( style.fillShader )
 			{
@@ -446,25 +469,12 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 {	
 	var renderContext = this.renderContext;
 	var gl = this.renderContext.gl;
-
-	// Purge textures from the cache if nay
-	for ( var i = 0; i < this.texturesToPurge.length; i++ )
-	{
-		var cacheTexture = this.textureCache[ this.texturesToPurge[i] ];
-		if ( cacheTexture.count <= 0 )
-		{
-			gl.deleteTexture(cacheTexture.texture);
-			delete this.textureCache[ this.texturesToPurge[i] ];
-		}
-	}
-	this.texturesToPurge.length = 0;
 	
 	// Setup states
 	gl.disable(gl.DEPTH_TEST);
 	gl.enable(gl.BLEND);
 	gl.blendEquation(gl.FUNC_ADD);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
 
 	for ( var n = 0; n < tiles.length; n++ )
 	{
@@ -561,9 +571,9 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 				renderable.triBufferDirty = false;
 			}
 			// Add texture
-			if ( renderable.bucket.style.fillTexture ) 
+			if ( renderable.bucket.texture ) 
 			{
-				gl.bindTexture(gl.TEXTURE_2D, renderable.bucket.style.fillTexture); // use texture of renderable
+				gl.bindTexture(gl.TEXTURE_2D, renderable.bucket.texture); // use texture of renderable
 				gl.uniform4f(currentPolygonProgram.uniforms["color"], 1.0, 1.0, 1.0, renderable.bucket.layer.opacity());  // use whiteColor
 			}
 			else

@@ -54,6 +54,7 @@ globFiles = [
 	]
 
 vectorFiles = [
+		"RendererTileData.js",
 		"VectorRendererManager.js",
 		"PointRenderer.js",
 		"FeatureStyle.js",
@@ -69,7 +70,8 @@ astroFiles = [
 		"HEALPixLayer.js",
 		"HEALPixTiling.js",
 		"SimpleLineRenderer.js",
-		"SimplePolygonRenderer.js",
+		"PointSpriteRenderer.js",
+		"ConvexPolygonRenderer.js",
 		"AstroNavigation.js",
 		"HEALPixTables.js",
 		"HEALPixBase.js",
