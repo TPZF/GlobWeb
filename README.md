@@ -1,4 +1,4 @@
-GlobWebaaaa
+GlobWeb
 =======
 
 Virtual Globe with WebGL
