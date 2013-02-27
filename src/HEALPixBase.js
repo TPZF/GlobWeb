@@ -178,7 +178,7 @@ GlobWeb.HEALPixBase = (function(){
 	        var face_num;
 	        if ( ifp.equals(ifm) )
 	        {
-	        	face_num = ifp.or(GlobWeb.Long.fromNumber(4.));
+	        	face_num = ifp.or(GlobWeb.Long.fromInt(4));
 	        }
 	        else
 	        {
@@ -188,7 +188,7 @@ GlobWeb.HEALPixBase = (function(){
 	        	}
 	        	else
 	        	{
-	        		face_num = ifp.add(GlobWeb.Long.fromNumber(8.));
+	        		face_num = ifm.add(GlobWeb.Long.fromInt(8));
 	        	}
 	        }
 
@@ -211,7 +211,7 @@ GlobWeb.HEALPixBase = (function(){
 			var jm = GlobWeb.Long.fromNumber((1.0-tp)*tmp);
 			var lNside = GlobWeb.Long.fromNumber(nside);
 			var nSideMinusOne = GlobWeb.Long.fromNumber(nside-1.);
-			var lOne = GlobWeb.Long.fromNumber(1.);
+			var lOne = GlobWeb.Long.fromInt(1);
 			if ( jp.greaterThanOrEqual(lNside) )
 				jp = nSideMinusOne;
 			if ( jm.greaterThanOrEqual(lNside) )
