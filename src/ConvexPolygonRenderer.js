@@ -99,7 +99,6 @@ GlobWeb.ConvexPolygonRenderer = function(tileManager)
 	this.texProgram = this.createProgram(this.texFillShader);
 	
 	this.frameNumber = 0;
-	this.gid = 0;
 
 	var gl = this.renderContext.gl;
 	// Parameters used to implement ONE shader for color xor texture rendering
@@ -275,10 +274,6 @@ GlobWeb.ConvexPolygonRenderer.prototype.addGeometryToTile = function(bucket,geom
 	{
 		tileData = tile.extension.polygon = new GlobWeb.RendererTileData();
 	}
-	if (!geometry.gid)
-	{
-		geometry.gid = this.gid++;
-	}
 	var renderable = tileData.getRenderable(bucket);
 	if (!renderable) 
 	{
@@ -369,7 +364,8 @@ GlobWeb.ConvexPolygonRenderer.prototype.getProgram = function(fillShader) {
 
 /**************************************************************************************************************/
 
-/*
+
+/**
 	Get or create bucket to render a point
  */
 GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style)
@@ -383,8 +379,8 @@ GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style
 			&& bucket.style.strokeColor[1] == style.strokeColor[1]
 			&& bucket.style.strokeColor[2] == style.strokeColor[2]
 			&& bucket.style.fill == style.fill
-			&& (bucket.style.fillTextureUrl == style.fillTextureUrl
-			|| bucket.style.fillTexture == style.fillTexture)
+			&& bucket.style.fillTexture == style.fillTexture
+			&& bucket.style.fillTextureUrl == style.fillTextureUrl
 			&& bucket.style.fillShader == style.fillShader )
 		{
 			return bucket;
@@ -400,7 +396,7 @@ GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style
 		style: new GlobWeb.FeatureStyle(style),
 		layer: layer,
 		polygonProgram: null,
-		texture: style.fillTexture
+		texture: null
 	};
 
 	// Create texture
@@ -409,6 +405,7 @@ GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style
 
 	if ( style.fill )
 	{
+		var hasTexture = false;
 		if ( style.fillTextureUrl )
 		{
 			var image = new Image();
@@ -424,34 +421,28 @@ GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style
 			}
 			
 			image.src = style.fillTextureUrl;
+			hasTexture = true;
 		}
 		else if ( style.fillTexture )
 		{
 			bucket.texture = style.fillTexture;
+			hasTexture = true;
 		}
 			
-		if ( style.fillShader && style.fillShader.fragmentCode )
+		if ( style.fillShader&& style.fillShader.fragmentCode )
 		{
-			if ( style.fillShader )
-			{
-				// User defined texture program
-				if ( !style.fillShader.vertexCode )
-					style.fillShader.vertexCode = this.texVertexShader;
-				if ( !style.fillShader.vertexCode )
-					style.fillShader.fragmentCode = this.texFragmentShader;
+			// User defined texture program
+			if ( !style.fillShader.vertexCode )
+				style.fillShader.vertexCode = this.texVertexShader;
+			if ( !style.fillShader.vertexCode )
+				style.fillShader.fragmentCode = this.texFragmentShader;
 
-				bucket.polygonProgram = this.getProgram(style.fillShader);
-			}
-			else
-			{
-				// Default texture program
-				bucket.polygonProgram = this.texProgram;
-			}
+			bucket.polygonProgram = this.getProgram(style.fillShader);
 		}
 		else
 		{
-			// Default basic program
-			bucket.polygonProgram = this.basicProgram;
+			// Default program
+			bucket.polygonProgram = hasTexture ? this.texProgram : this.basicProgram;
 		}
 	}
 		

@@ -48,7 +48,7 @@ GlobWeb.PointSpriteRenderer = function(tileManager,style)
 	";
 	
 	var fragmentShader = "\
-	precision highp float; \n\
+	precision lowp float; \n\
 	uniform sampler2D texture; \n\
 	uniform float alpha; \n\
 	uniform vec3 color; \n\
@@ -66,7 +66,6 @@ GlobWeb.PointSpriteRenderer = function(tileManager,style)
     this.program.createFromSource(vertexShader, fragmentShader);
 	
 	this.frameNumber = 0;
-	this.gid = 0;
 
 	this.defaultTexture = null;
 }
@@ -112,6 +111,18 @@ GlobWeb.PointSpriteRenderer.Renderable.prototype.remove = function(geometry)
 		delete this.geometry2vb[ geometry.gid ];
 		this.vertices.splice( vbIndex, 3 );
 		this.vertexBufferDirty = true;
+		
+		// Update render data for all other geometries
+		for ( var g in this.geometry2vb ) 
+		{
+			if ( g ) 
+			{
+				if ( this.geometry2vb[g] > vbIndex ) 
+				{
+					this.geometry2vb[g] -= 3;
+				}
+			}
+		}
 	}
 }
 
@@ -174,10 +185,6 @@ GlobWeb.PointSpriteRenderer.prototype.addGeometryToTile = function(bucket,geomet
 	{
 		tileData = tile.extension.pointSprite = new GlobWeb.RendererTileData();
 	}
-	if (!geometry.gid)
-	{
-		geometry.gid = this.gid++;
-	}
 	var renderable = tileData.getRenderable(bucket);
 	if (!renderable) 
 	{
@@ -223,7 +230,9 @@ GlobWeb.PointSpriteRenderer.prototype.getOrCreateBucket = function(layer,style)
 		if ( bucket.layer == layer && bucket.style.iconUrl == style.iconUrl
 			&& bucket.style.icon == style.icon
 			&& bucket.style.label == style.label
-			&& bucket.style.fillColor == style.fillColor )
+			&& bucket.style.fillColor[0] == style.fillColor[0]
+			&& bucket.style.fillColor[1] == style.fillColor[1]
+			&& bucket.style.fillColor[2] == style.fillColor[2])
 		{
 			return bucket;
 		}
@@ -235,8 +244,9 @@ GlobWeb.PointSpriteRenderer.prototype.getOrCreateBucket = function(layer,style)
 
 	// Create a bucket
 	var bucket = {
-		style: style,
-		layer: layer
+		style: new GlobWeb.FeatureStyle(style),
+		layer: layer,
+		texture: null
 	};
 		
 	// Initialize bucket : create the texture	
@@ -342,7 +352,6 @@ GlobWeb.PointSpriteRenderer.prototype.render = function(tiles)
 	}
 
     gl.disable(gl.BLEND);
-	gl.disable(gl.POLYGON_OFFSET_FILL);
 	
 	this.frameNumber++;
 }

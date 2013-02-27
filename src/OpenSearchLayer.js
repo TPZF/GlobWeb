@@ -73,8 +73,7 @@ GlobWeb.OpenSearchLayer = function(options){
 	{
 		// Configure cluster service options
 		this.treshold = options.treshold || 5;
-		this.maxOrder = options.maxOrder || 10;
-		this.orderDepth = options.orderDepth || 6;
+		this.maxOrder = options.maxOrder || 8;
 		this.maxClusterOrder = options.maxClusterOrder || 8;
 
 		// Handle distributions
@@ -293,14 +292,13 @@ GlobWeb.OpenSearchLayer.prototype.addCluster = function(pixelIndex, order, face,
  */
 GlobWeb.OpenSearchLayer.prototype.computeClusters = function(tile)
 {
-	var pixelIndicesToRequest = [];
-	
-	if ( tile.order < this.maxClusterOrder )
+	if ( this.distributions && tile.order < this.maxClusterOrder  )
 	{
+		var pixelIndicesToRequest = [];
 		var orderDepth = this.maxOrder - tile.order;
 		var childOrder = this.maxOrder;
 
-		if( this.distributions && this.distributions[childOrder] )
+		if(  this.distributions[childOrder] )
 		{
 			// Distribution exists
 			var numSubTiles = Math.pow(4,orderDepth); // Number of subtiles depending on order
@@ -379,7 +377,7 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile, childOrder, pix
 	{
 		return;
 	}
-
+	
 	// Set that the tile is loading its data for OpenSearch
 	tileData.state = GlobWeb.OpenSearchLayer.TileState.LOADING;
 	
@@ -506,8 +504,7 @@ GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
 	if ( !this.featuresSet.hasOwnProperty(feature.properties.identifier) )
 	{
 		this.features.push( feature );
-		featureData = { counter: 1, 
-			index: this.features.length-1, 
+		featureData = { index: this.features.length-1, 
 			tiles: [tile]
 		};
 		this.featuresSet[feature.properties.identifier] = featureData;
@@ -515,15 +512,36 @@ GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
 	else
 	{
 		featureData = this.featuresSet[feature.properties.identifier];
-		// Increment the counter for current feature
-		featureData.counter++;
-		// Store the tile
-		featureData.tiles.push(tile);
+		
+		// Always use the base feature to manage geometry indices
+		feature = this.features[ featureData.index ];
+		
+		// DEBUG : check tile is only present one time
+		var isTileExists = false;
+		for ( var i = 0; i < featureData.tiles.length; i++ )
+		{
+			if ( tile.order == featureData.tiles[i].order
+			&& tile.pixelIndex == featureData.tiles[i].pixelIndex  )
+			{
+				isTileExists = true;
+				console.log('OpenSearchLayer internal error : tile already there! ' + tile.order + ' ' + tile.pixelIndex  );
+			}
+		}
+		
+		if (!isTileExists)
+		{
+			// Store the tile
+			featureData.tiles.push(tile);
+		}
 	}
+
 	
 	// Add feature id
 	tileData.featureIds.push( feature.properties.identifier );
 	
+	// Set the identifier on the geometry
+	feature.geometry.gid = feature.properties.identifier;
+
 	// Add to renderer
 	if ( feature.geometry['type'] == "Point" )
 	{
@@ -554,7 +572,7 @@ GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
 /**
  *	Remove feature from Dynamic OpenSearch layer
  */
-GlobWeb.OpenSearchLayer.prototype.removeFeature = function( identifier )
+GlobWeb.OpenSearchLayer.prototype.removeFeature = function( identifier, tile )
 {
 	var featureIt = this.featuresSet[identifier];
 	
@@ -562,7 +580,18 @@ GlobWeb.OpenSearchLayer.prototype.removeFeature = function( identifier )
 		return;
 	}
 	
-	if ( featureIt.counter == 1 )
+	// Remove tile from array
+	var tileIndex = featureIt.tiles.indexOf(tile);
+	if ( tileIndex >= 0 )
+	{
+		featureIt.tiles.splice(tileIndex,1);
+	}
+	else
+	{
+		console.log('OpenSearchLayer internal error : tile not found when removing feature');
+	}
+	
+	if ( featureIt.tiles.length == 0 )
 	{
 		// Remove it from the set		
 		delete this.featuresSet[identifier];
@@ -576,11 +605,6 @@ GlobWeb.OpenSearchLayer.prototype.removeFeature = function( identifier )
 			// Update its index in the Set.
 			this.featuresSet[ lastFeature.properties.identifier ].index = featureIt.index;
 		}
-	}
-	else
-	{
-		// Just decrease the counter
-		featureIt.counter--;
 	}
 }
 
@@ -628,21 +652,26 @@ GlobWeb.OpenSearchLayer.TileState = {
  */
 GlobWeb.OpenSearchLayer.prototype.generate = function(tile) 
 {
-	var osData;
-	if ( tile.parent )
-	{	
-		var parentOSData = tile.parent.extension[this.extId];
-		osData = new GlobWeb.OpenSearchLayer.OSData(this);
-		osData.state = parentOSData.complete ? GlobWeb.OpenSearchLayer.TileState.INHERIT_PARENT : GlobWeb.OpenSearchLayer.TileState.NOT_LOADED;
-		osData.complete = parentOSData.complete;
-	}
-	else
+	// Create data for the layer
+	// Check that it has not been created before (it can happen with level 0 tile)
+	var osData = tile.extension[this.extId];
+	if ( !osData )
 	{
-		osData = new GlobWeb.OpenSearchLayer.OSData(this);
+		if ( tile.parent )
+		{	
+			var parentOSData = tile.parent.extension[this.extId];
+			osData = new GlobWeb.OpenSearchLayer.OSData(this,tile);
+			osData.state = parentOSData.complete ? GlobWeb.OpenSearchLayer.TileState.INHERIT_PARENT : GlobWeb.OpenSearchLayer.TileState.NOT_LOADED;
+			osData.complete = parentOSData.complete;
+		}
+		else
+		{
+			osData = new GlobWeb.OpenSearchLayer.OSData(this,tile);
+		}
+		
+		// Store in on the tile
+		tile.extension[this.extId] = osData;
 	}
-	
-	// Store in on the tile
-	tile.extension[this.extId] = osData;
 	
 };
 
@@ -655,9 +684,10 @@ GlobWeb.OpenSearchLayer.prototype.generate = function(tile)
  *
  *	OpenSearch renderable
  */
-GlobWeb.OpenSearchLayer.OSData = function(layer)
+GlobWeb.OpenSearchLayer.OSData = function(layer,tile)
 {
 	this.layer = layer;
+	this.tile = tile;
 	this.featureIds = []; // exclusive parameter to remove from layer
 	this.state = GlobWeb.OpenSearchLayer.TileState.NOT_LOADED;
 	this.complete = false;
@@ -670,10 +700,11 @@ GlobWeb.OpenSearchLayer.OSData = function(layer)
  */
 GlobWeb.OpenSearchLayer.OSData.prototype.dispose = function( renderContext, tilePool )
 {	
-	for( var i=0; i<this.featureIds.length; i++ )
+	for( var i = 0; i < this.featureIds.length; i++ )
 	{
-		this.layer.removeFeature( this.featureIds[i] );
+		this.layer.removeFeature( this.featureIds[i], this.tile );
 	}
+	this.tile = null;
 }
 
 /**************************************************************************************************************/
