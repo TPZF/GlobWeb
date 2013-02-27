@@ -20,7 +20,6 @@ commonFiles= [
 		"CoordinateSystem.js",
 		"Frustum.js",
 		"RenderContext.js",
-		#"Mesh.js",
 		"Program.js",
 		"TileIndexBuffer.js",
 		"Tile.js",
@@ -66,10 +65,11 @@ vectorFiles = [
    ]
 
 astroFiles = [
+		"Mesh.js",
 		"EquatorialCoordinateSystem.js",
 		"HEALPixLayer.js",
 		"HEALPixTiling.js",
-		"SimpleLineRenderer.js",
+		#"SimpleLineRenderer.js",
 		"PointSpriteRenderer.js",
 		"ConvexPolygonRenderer.js",
 		"AstroNavigation.js",

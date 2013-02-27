@@ -123,7 +123,6 @@ GlobWeb.ConvexPolygonRenderer = function(tileManager)
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
 	this.tcoordBuffer.itemSize = 2;
 	this.tcoordBuffer.numItems = 5;
-
 }
 
 /**************************************************************************************************************/
@@ -244,7 +243,7 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.remove = function(geometry)
 /**************************************************************************************************************/
 
 /**
-	Dispose the renderable : removeall buffers
+	Dispose the renderable : remove all buffers
  */
  GlobWeb.ConvexPolygonRenderer.Renderable.prototype.dispose = function(renderContext)
 {
@@ -311,11 +310,39 @@ GlobWeb.ConvexPolygonRenderer.prototype.removeGeometryFromTile = function(geomet
 /**************************************************************************************************************/
 
 /**
- 	Remove the geometry
+ 	Add a geometry to the renderer
  */
-GlobWeb.ConvexPolygonRenderer.prototype.removeGeometry = function()
+GlobWeb.ConvexPolygonRenderer.prototype.addGeometry = function(geometry, layer, style)
 {
-	// TODO
+	var bucket = this.getOrCreateBucket(layer,style);
+	if (!bucket.mainRenderable)
+	{
+		bucket.mainRenderable = new GlobWeb.ConvexPolygonRenderer.Renderable(bucket);
+	}
+	
+	bucket.mainRenderable.add(geometry);
+}
+
+/**************************************************************************************************************/
+
+/**
+ 	Remove a geometry from the renderer
+ */
+GlobWeb.ConvexPolygonRenderer.prototype.removeGeometry = function(geometry)
+{
+	for ( var n = 0; n < this.buckets.length; n++ )
+	{
+		var bucket = this.buckets[n];
+		if ( bucket.mainRenderable )
+		{
+			bucket.mainRenderable.remove(geometry);
+			if ( bucket.mainRenderable.vertices.length == 0 )
+			{
+				bucket.mainRenderable.dispose(this.renderContext);
+				bucket.mainRenderable = null;
+			}
+		}
+	}
 }
 
 /**************************************************************************************************************/
@@ -366,7 +393,7 @@ GlobWeb.ConvexPolygonRenderer.prototype.getProgram = function(fillShader) {
 
 
 /**
-	Get or create bucket to render a point
+	Get or create bucket to render a polygon
  */
 GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style)
 {
@@ -396,7 +423,9 @@ GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style
 		style: new GlobWeb.FeatureStyle(style),
 		layer: layer,
 		polygonProgram: null,
-		texture: null
+		texture: null,
+		mainRenderable : null,
+		currentRenderables : []
 	};
 
 	// Create texture
@@ -467,9 +496,9 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 	gl.blendEquation(gl.FUNC_ADD);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+	// Retrieve renderables stored on the visible tiles
 	for ( var n = 0; n < tiles.length; n++ )
 	{
-
 		var tile = tiles[n];
 		var tileData = tile.extension.polygon;
 		while (tile.parent && !tileData)
@@ -482,23 +511,41 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 			continue;
 		
 		tileData.frameNumber = this.frameNumber;
-
-
-		// The shader only needs the viewProjection matrix, use GlobWeb.modelViewMatrix as a temporary storage
-		mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
 		
 		for (var i=0; i < tileData.renderables.length; i++ ) 
 		{
-			// Setup line program
-			this.basicProgram.apply();
-			gl.uniformMatrix4fv(this.basicProgram.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
+			tileData.renderables[i].bucket.currentRenderables.push( tileData.renderables[i] );
+		}
+	}
+	
+	// Setup the basic program
+	this.basicProgram.apply();
+	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
+	gl.uniformMatrix4fv(this.basicProgram.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
+	
+	// Render each bucket
+	for ( var n = 0; n < this.buckets.length; n++ )
+	{
+		var bucket = this.buckets[n];
+		
+		if (!bucket.layer.visible())
+			continue;
 			
-			var renderable = tileData.renderables[i];
-			if (!renderable.bucket.layer.visible())
-				continue;
-			var color = renderable.bucket.style.strokeColor;
-			gl.uniform4f(this.basicProgram.uniforms["color"], color[0], color[1], color[2], color[3] * renderable.bucket.layer.opacity() );
-				
+		if ( bucket.mainRenderable ) 
+			bucket.currentRenderables.push( bucket.mainRenderable );
+		
+		if (bucket.currentRenderables.length == 0)
+			continue;		
+		
+		// Set the color
+		var color = bucket.style.strokeColor;
+		gl.uniform4f(this.basicProgram.uniforms["color"], color[0], color[1], color[2], color[3] * bucket.layer.opacity() );
+		
+		for ( var i = 0; i < bucket.currentRenderables.length; i++ )
+		{
+			var renderable = bucket.currentRenderables[i];
+			
+			// Update vertex buffer
 			if ( !renderable.vertexBuffer )
 			{
 				renderable.vertexBuffer = gl.createBuffer();
@@ -519,14 +566,16 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 
 			gl.drawElements( gl.LINES, renderable.lineIndices.length, gl.UNSIGNED_SHORT, 0);
 			
-
 			// Construct renderables for second pass with filled polygons
-			if ( renderable.bucket.polygonProgram )
-				this.programs[ renderable.bucket.polygonProgram.id ].renderables.push(renderable);
+			if ( bucket.polygonProgram )
+				this.programs[ bucket.polygonProgram.id ].renderables.push(renderable);
 		}
+		
+		// Remove current renderables from bucket
+		bucket.currentRenderables.length = 0;
 	}
-
-
+	
+	// Second pass for filled polygons
 	for ( var i=0; i<this.programs.length; i++ )
 	{
 		if ( this.programs[i].renderables.length == 0 )
@@ -565,7 +614,7 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 			if ( renderable.bucket.texture ) 
 			{
 				gl.bindTexture(gl.TEXTURE_2D, renderable.bucket.texture); // use texture of renderable
-				gl.uniform4f(currentPolygonProgram.uniforms["color"], 1.0, 1.0, 1.0, renderable.bucket.layer.opacity());  // use whiteColor
+				gl.uniform4f(currentPolygonProgram.uniforms["color"], 1.0, 1.0, 1.0, color[3] * renderable.bucket.layer.opacity());  // use whiteColor
 			}
 			else
 			{
@@ -577,6 +626,7 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 			gl.drawElements( gl.TRIANGLES, renderable.triangleIndices.length, gl.UNSIGNED_SHORT, 0);
 
 		}
+		
 		// Remove all renderables for current program
 		this.programs[i].renderables.length = 0;
 	}	
@@ -594,5 +644,5 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 GlobWeb.VectorRendererManager.registerRenderer({
 			id: "ConvexPolygon",
 			creator: function(globe) { return new GlobWeb.ConvexPolygonRenderer(globe.tileManager); },
-			canApply: function(type,style) {return false; }
+			canApply: function(type,style) {return (style.rendererHint == "Basic") && type == "Polygon"; }
 		});

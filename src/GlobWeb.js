@@ -72,8 +72,6 @@ var GlobWeb = GlobWeb || {};
 		"TiledVectorRenderer.js",
 		"PolygonRenderable.js",
 		"LineStringRenderable.js",
-		"SimpleLineRenderer.js",
-		"SimplePolygonRenderer.js",
 		"BaseLayer.js",
 		"AtmosphereLayer.js",
 		"VectorLayer.js",
