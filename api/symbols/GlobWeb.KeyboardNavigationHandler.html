@@ -211,6 +211,8 @@ ul.inheritsList
 	
 	<li><a href="../symbols/GlobWeb.EquatorialGridLayer.html">GlobWeb.EquatorialGridLayer</a></li>
 	
+	<li><a href="../symbols/GlobWeb.EquatorialGridLayer.TexturePool.html">GlobWeb.EquatorialGridLayer.TexturePool</a></li>
+	
 	<li><a href="../symbols/GlobWeb.FeatureOverlayManager.html">GlobWeb.FeatureOverlayManager</a></li>
 	
 	<li><a href="../symbols/GlobWeb.FeatureStyle.html">GlobWeb.FeatureStyle</a></li>
@@ -237,6 +239,8 @@ ul.inheritsList
 	
 	<li><a href="../symbols/GlobWeb.HEALPixTiling.html">GlobWeb.HEALPixTiling</a></li>
 	
+	<li><a href="../symbols/GlobWeb.InertiaAnimation.html">GlobWeb.InertiaAnimation</a></li>
+	
 	<li><a href="../symbols/GlobWeb.InterpolatedAnimation.html">GlobWeb.InterpolatedAnimation</a></li>
 	
 	<li><a href="../symbols/GlobWeb.KeyboardNavigationHandler.html">GlobWeb.KeyboardNavigationHandler</a></li>
@@ -257,6 +261,10 @@ ul.inheritsList
 	
 	<li><a href="../symbols/GlobWeb.Navigation.html">GlobWeb.Navigation</a></li>
 	
+	<li><a href="../symbols/GlobWeb.OpenSearchLayer.html">GlobWeb.OpenSearchLayer</a></li>
+	
+	<li><a href="../symbols/GlobWeb.OpenSearchLayer.OSData.html">GlobWeb.OpenSearchLayer.OSData</a></li>
+	
 	<li><a href="../symbols/GlobWeb.OSMLayer.html">GlobWeb.OSMLayer</a></li>
 	
 	<li><a href="../symbols/GlobWeb.PathAnimation.html">GlobWeb.PathAnimation</a></li>
@@ -266,8 +274,6 @@ ul.inheritsList
 	<li><a href="../symbols/GlobWeb.PointRenderer.html">GlobWeb.PointRenderer</a></li>
 	
 	<li><a href="../symbols/GlobWeb.PolygonRenderable.html">GlobWeb.PolygonRenderable</a></li>
-	
-	<li><a href="../symbols/GlobWeb.PositionAttitudeAnimation.html">GlobWeb.PositionAttitudeAnimation</a></li>
 	
 	<li><a href="../symbols/GlobWeb.Program.html">GlobWeb.Program</a></li>
 	
@@ -311,6 +317,8 @@ ul.inheritsList
 	
 	<li><a href="../symbols/GlobWeb.TileWireframeLayer.html">GlobWeb.TileWireframeLayer</a></li>
 	
+	<li><a href="../symbols/GlobWeb.TrackballNavigation.html">GlobWeb.TrackballNavigation</a></li>
+	
 	<li><a href="../symbols/GlobWeb.VectorLayer.html">GlobWeb.VectorLayer</a></li>
 	
 	<li><a href="../symbols/GlobWeb.VectorRendererManager.html">GlobWeb.VectorRendererManager</a></li>
@@ -322,6 +330,14 @@ ul.inheritsList
 	<li><a href="../symbols/GlobWeb.WMSLayer.html">GlobWeb.WMSLayer</a></li>
 	
 	<li><a href="../symbols/GlobWeb.WMTSLayer.html">GlobWeb.WMTSLayer</a></li>
+	
+	<li><a href="../symbols/mat4.html">mat4</a></li>
+	
+	<li><a href="../symbols/MatrixArray.html">MatrixArray</a></li>
+	
+	<li><a href="../symbols/quat4.html">quat4</a></li>
+	
+	<li><a href="../symbols/vec3.html">vec3</a></li>
 	
 </ul>
 <hr />
@@ -373,6 +389,34 @@ ul.inheritsList
 
 <!-- ============================== properties summary ===================== -->
 			
+				
+				
+				<table class="summaryTable" cellspacing="0" summary="A summary of the fields documented in the class GlobWeb.KeyboardNavigationHandler.">
+					<caption>Field Summary</caption>
+					<thead>
+						<tr>
+							<th scope="col">Field Attributes</th>
+							<th scope="col">Field Name and Description</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+						<tr>
+							<td class="attributes">&nbsp;</td>
+							<td class="nameDescription">
+								<div class="fixedFont">
+								<b><a href="../symbols/GlobWeb.KeyboardNavigationHandler.html#panFactor">panFactor</a></b>
+								</div>
+								<div class="description">Public variables</div>
+							</td>
+						</tr>
+					
+					</tbody>
+				</table>
+				
+				
+				
+			
 
 <!-- ============================== methods summary ======================== -->
 			
@@ -391,18 +435,18 @@ ul.inheritsList
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/GlobWeb.KeyboardNavigationHandler.html#handleKeyDown">handleKeyDown</a></b>(event)
+								<div class="fixedFont"><b><a href="../symbols/GlobWeb.KeyboardNavigationHandler.html#install">install</a></b>(navigation)
 								</div>
-								<div class="description">Event handler for key down</div>
+								<div class="description">Setup the default event handlers for the navigation</div>
 							</td>
 						</tr>
 					
 						<tr>
 							<td class="attributes">&nbsp;</td>
 							<td class="nameDescription">
-								<div class="fixedFont"><b><a href="../symbols/GlobWeb.KeyboardNavigationHandler.html#install">install</a></b>(navigation)
+								<div class="fixedFont"><b><a href="../symbols/GlobWeb.KeyboardNavigationHandler.html#uninstall">uninstall</a></b>()
 								</div>
-								<div class="description">Setup the default event handlers for the navigation</div>
+								<div class="description">Remove the default event handlers for the navigation</div>
 							</td>
 						</tr>
 					
@@ -463,48 +507,39 @@ ul.inheritsList
 
 <!-- ============================== field details ========================== -->		
 			
+				<div class="sectionTitle">
+					Field Detail
+				</div>
+				
+					<a name="panFactor"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>panFactor</b>
+					
+					</div>
+					<div class="description">
+						Public variables
+						
+						
+					</div>
+					
+					
+
+						
+						
+						
+						
+
+					
+				
+			
 
 <!-- ============================== method details ========================= -->		
 			
 				<div class="sectionTitle">
 					Method Detail
 				</div>
-				
-					<a name="handleKeyDown"> </a>
-					<div class="fixedFont">
-					
-					
-					<b>handleKeyDown</b>(event)
-					
-					</div>
-					<div class="description">
-						Event handler for key down
-						
-						
-					</div>
-					
-					
-					
-						
-							<dl class="detailList">
-							<dt class="heading">Parameters:</dt>
-							
-								<dt>
-									<b>event</b>
-									
-								</dt>
-								<dd></dd>
-							
-							</dl>
-						
-						
-						
-						
-						
-						
-						
-
-					<hr />
 				
 					<a name="install"> </a>
 					<div class="fixedFont">
@@ -540,6 +575,31 @@ ul.inheritsList
 						
 						
 
+					<hr />
+				
+					<a name="uninstall"> </a>
+					<div class="fixedFont">
+					
+					
+					<b>uninstall</b>()
+					
+					</div>
+					<div class="description">
+						Remove the default event handlers for the navigation
+						
+						
+					</div>
+					
+					
+					
+						
+						
+						
+						
+						
+						
+						
+
 					
 				
 			
@@ -554,7 +614,7 @@ ul.inheritsList
 <!-- ============================== footer ================================= -->
 		<div class="fineprint" style="clear:both">
 			
-			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Mon Nov 26 2012 16:02:14 GMT+0100 (CET)
+			Documentation generated by <a href="http://code.google.com/p/jsdoc-toolkit/" target="_blank">JsDoc Toolkit</a> 2.4.0 on Wed Feb 27 2013 15:47:57 GMT+0100 (CET)
 		</div>
 	</body>
 </html>

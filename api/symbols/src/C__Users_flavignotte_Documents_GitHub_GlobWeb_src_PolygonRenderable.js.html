@@ -30,10 +30,10 @@
 <span class='line'> 23</span> </span><span class="COMM">/** @constructor
 <span class='line'> 24</span>  *	PolygonRenderable constructor
 <span class='line'> 25</span>  */</span><span class="WHIT">
-<span class='line'> 26</span> </span><span class="NAME">GlobWeb.PolygonRenderable</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">style</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'> 26</span> </span><span class="NAME">GlobWeb.PolygonRenderable</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">bucket</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">gl</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="WHIT">
 <span class='line'> 27</span> </span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 28</span> </span><span class="WHIT">	</span><span class="NAME">GlobWeb.PolygonRenderable.base.constructor.call</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">,</span><span class="NAME">style</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 29</span> </span><span class="WHIT">	</span><span class="NAME">this.glMode</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">GlobWeb.RenderContext.gl.TRIANGLES</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 28</span> </span><span class="WHIT">	</span><span class="NAME">GlobWeb.TiledVectorRenderable.prototype.constructor.call</span><span class="PUNC">(</span><span class="KEYW">this</span><span class="PUNC">,</span><span class="NAME">bucket</span><span class="PUNC">,</span><span class="NAME">gl</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 29</span> </span><span class="WHIT">	</span><span class="NAME">this.glMode</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">gl.TRIANGLES</span><span class="PUNC">;</span><span class="WHIT">
 <span class='line'> 30</span> </span><span class="PUNC">}</span><span class="WHIT">
 <span class='line'> 31</span> 
 <span class='line'> 32</span> </span><span class="COMM">/**************************************************************************************************************/</span><span class="WHIT">

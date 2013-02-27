@@ -66,7 +66,7 @@
 <span class='line'> 59</span> </span><span class="WHIT">	</span><span class="COMM">// Apply style parameters</span><span class="WHIT">
 <span class='line'> 60</span> </span><span class="WHIT">	</span><span class="KEYW">for</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">x</span><span class="WHIT"> </span><span class="KEYW">in</span><span class="WHIT"> </span><span class="NAME">style</span><span class="PUNC">)</span><span class="WHIT">
 <span class='line'> 61</span> </span><span class="WHIT">	</span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 62</span> </span><span class="WHIT">		</span><span class="NAME">$</span><span class="PUNC">(</span><span class="STRN">'#'</span><span class="PUNC">+</span><span class="WHIT"> </span><span class="NAME">this.id</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">css</span><span class="PUNC">(</span><span class="NAME">x</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">style</span><span class="PUNC">[</span><span class="NAME">x</span><span class="PUNC">]</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 62</span> </span><span class="WHIT">		</span><span class="NAME">document.getElementById</span><span class="PUNC">(</span><span class="NAME">this.id</span><span class="PUNC">)</span><span class="PUNC">.</span><span class="NAME">style</span><span class="PUNC">[</span><span class="NAME">x</span><span class="PUNC">]</span><span class="PUNC">=</span><span class="NAME">style</span><span class="PUNC">[</span><span class="NAME">x</span><span class="PUNC">]</span><span class="PUNC">;</span><span class="WHIT">
 <span class='line'> 63</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
 <span class='line'> 64</span> </span><span class="PUNC">}</span><span class="WHIT">
 <span class='line'> 65</span> 
@@ -79,32 +79,33 @@
 <span class='line'> 72</span> </span><span class="NAME">GlobWeb.AttributionHandler.prototype.removeAttribution</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">layer</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="WHIT">
 <span class='line'> 73</span> </span><span class="PUNC">{</span><span class="WHIT">
 <span class='line'> 74</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">div</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">document.getElementById</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="STRN">"attribution_"</span><span class="PUNC">+</span><span class="NAME">layer.id</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 75</span> </span><span class="WHIT">	</span><span class="NAME">this.attributionDiv.removeChild</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">div</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 76</span> </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'> 77</span> 
-<span class='line'> 78</span> </span><span class="COMM">/**************************************************************************************************************/</span><span class="WHIT">
-<span class='line'> 79</span> 
-<span class='line'> 80</span> </span><span class="COMM">/**
-<span class='line'> 81</span> * 	Add attribution in HTML
-<span class='line'> 82</span> * 	@param layer Selected layer
-<span class='line'> 83</span> */</span><span class="WHIT">
-<span class='line'> 84</span> </span><span class="NAME">GlobWeb.AttributionHandler.prototype.addAttribution</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">layer</span><span class="PUNC">)</span><span class="WHIT">
-<span class='line'> 85</span> </span><span class="PUNC">{</span><span class="WHIT"> </span><span class="WHIT">
-<span class='line'> 86</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">div</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">document.createElement</span><span class="PUNC">(</span><span class="STRN">'div'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 87</span> </span><span class="WHIT">	</span><span class="NAME">div.innerHTML</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">layer.attribution</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 88</span> </span><span class="WHIT">	</span><span class="NAME">div.id</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"attribution_"</span><span class="PUNC">+</span><span class="NAME">layer.id</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 89</span> </span><span class="WHIT">	</span><span class="WHIT">
-<span class='line'> 90</span> </span><span class="WHIT">	</span><span class="KEYW">if</span><span class="PUNC">(</span><span class="NAME">layer.id</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT">
-<span class='line'> 91</span> </span><span class="WHIT">	</span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 92</span> </span><span class="WHIT">		</span><span class="COMM">// Background layer</span><span class="WHIT">
-<span class='line'> 93</span> </span><span class="WHIT">		</span><span class="NAME">this.attributionDiv.insertBefore</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">div</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.attributionDiv.firstChild</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 94</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'> 95</span> </span><span class="WHIT">	</span><span class="KEYW">else</span><span class="WHIT">
-<span class='line'> 96</span> </span><span class="WHIT">	</span><span class="PUNC">{</span><span class="WHIT">
-<span class='line'> 97</span> </span><span class="WHIT">		</span><span class="NAME">this.attributionDiv.appendChild</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">div</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
-<span class='line'> 98</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'> 99</span> </span><span class="WHIT">	</span><span class="WHIT">
+<span class='line'> 75</span> </span><span class="WHIT">	</span><span class="KEYW">if</span><span class="WHIT"> </span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">div</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'> 76</span> </span><span class="WHIT">		</span><span class="NAME">this.attributionDiv.removeChild</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">div</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 77</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 78</span> 
+<span class='line'> 79</span> </span><span class="COMM">/**************************************************************************************************************/</span><span class="WHIT">
+<span class='line'> 80</span> 
+<span class='line'> 81</span> </span><span class="COMM">/**
+<span class='line'> 82</span> * 	Add attribution in HTML
+<span class='line'> 83</span> * 	@param layer Selected layer
+<span class='line'> 84</span> */</span><span class="WHIT">
+<span class='line'> 85</span> </span><span class="NAME">GlobWeb.AttributionHandler.prototype.addAttribution</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">layer</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'> 86</span> </span><span class="PUNC">{</span><span class="WHIT"> </span><span class="WHIT">
+<span class='line'> 87</span> </span><span class="WHIT">	</span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">div</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">document.createElement</span><span class="PUNC">(</span><span class="STRN">'div'</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 88</span> </span><span class="WHIT">	</span><span class="NAME">div.innerHTML</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">layer.attribution</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 89</span> </span><span class="WHIT">	</span><span class="NAME">div.id</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="STRN">"attribution_"</span><span class="PUNC">+</span><span class="NAME">layer.id</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 90</span> </span><span class="WHIT">	</span><span class="WHIT">
+<span class='line'> 91</span> </span><span class="WHIT">	</span><span class="KEYW">if</span><span class="PUNC">(</span><span class="NAME">layer.id</span><span class="WHIT"> </span><span class="PUNC">==</span><span class="WHIT"> </span><span class="NUMB">0</span><span class="PUNC">)</span><span class="WHIT">
+<span class='line'> 92</span> </span><span class="WHIT">	</span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 93</span> </span><span class="WHIT">		</span><span class="COMM">// Background layer</span><span class="WHIT">
+<span class='line'> 94</span> </span><span class="WHIT">		</span><span class="NAME">this.attributionDiv.insertBefore</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">div</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">this.attributionDiv.firstChild</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 95</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'> 96</span> </span><span class="WHIT">	</span><span class="KEYW">else</span><span class="WHIT">
+<span class='line'> 97</span> </span><span class="WHIT">	</span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 98</span> </span><span class="WHIT">		</span><span class="NAME">this.attributionDiv.appendChild</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="NAME">div</span><span class="WHIT"> </span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 99</span> </span><span class="WHIT">	</span><span class="PUNC">}</span><span class="WHIT">
 <span class='line'>100</span> </span><span class="WHIT">	</span><span class="WHIT">
-<span class='line'>101</span> </span><span class="PUNC">}</span><span class="WHIT">
-<span class='line'>102</span> 
-<span class='line'>103</span> </span><span class="COMM">/**************************************************************************************************************/</span></pre></body></html>
+<span class='line'>101</span> </span><span class="WHIT">	</span><span class="WHIT">
+<span class='line'>102</span> </span><span class="PUNC">}</span><span class="WHIT">
+<span class='line'>103</span> 
+<span class='line'>104</span> </span><span class="COMM">/**************************************************************************************************************/</span></pre></body></html>
