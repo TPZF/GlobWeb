@@ -497,7 +497,7 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 			if (!renderable.bucket.layer.visible())
 				continue;
 			var color = renderable.bucket.style.strokeColor;
-			gl.uniform4f(this.basicProgram.uniforms["color"], color[0], color[1], color[2], renderable.bucket.layer.opacity() );
+			gl.uniform4f(this.basicProgram.uniforms["color"], color[0], color[1], color[2], color[3] * renderable.bucket.layer.opacity() );
 				
 			if ( !renderable.vertexBuffer )
 			{
@@ -571,7 +571,7 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 			{
 				gl.bindTexture(gl.TEXTURE_2D, this.whiteTexture);  // use white texture
 				color = renderable.bucket.style.fillColor;
-				gl.uniform4f(currentPolygonProgram.uniforms["color"], color[0], color[1], color[2], renderable.bucket.layer.opacity() );
+				gl.uniform4f(currentPolygonProgram.uniforms["color"], color[0], color[1], color[2], color[3] * renderable.bucket.layer.opacity() );
 			}
 			
 			gl.drawElements( gl.TRIANGLES, renderable.triangleIndices.length, gl.UNSIGNED_SHORT, 0);
