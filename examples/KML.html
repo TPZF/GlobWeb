@@ -17,12 +17,12 @@
 
 		var navigation = new GlobWeb.Navigation(globe);
 
-		var bmlayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub",
+		var bmlayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub",
 					layers: "BlueMarble,esat" } );
 		globe.setBaseImagery( bmlayer );
 		
-		var elevation = new GlobWeb.BasicElevationLayer( {baseUrl:"http://demonstrator.vegaspace.com/json_elevations/get.php"});
-		globe.setBaseElevation( elevation );
+		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
+		globe.setBaseElevation( elevationLayer );
 		
 		var vectorLayer = new GlobWeb.VectorLayer();
 

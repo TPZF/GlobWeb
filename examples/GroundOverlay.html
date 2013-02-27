@@ -31,7 +31,7 @@
 		var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble" });
 		globe.setBaseImagery( blueMarbleLayer );
 			
-		var elevationLayer = new GlobWeb.WMSElevationLayer({ baseUrl:"http://demonstrator.vegaspace.com/wmspub", layers: "GTOPO"});
+		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
 		globe.setBaseElevation( elevationLayer );
 				
 		var go1 = new GlobWeb.GroundOverlayLayer( { image:"GlobWeb.png", quad: [ [-1,45], [-2,46], [0,48], [1,47]  ], opacity: 0.5, flipY: false });

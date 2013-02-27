@@ -16,11 +16,11 @@
 
 		var nav = new GlobWeb.Navigation(globe);
 		
-		var publicWMSProvider = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub",
+		var publicWMSProvider = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub",
 					 layers: "BlueMarble,esat" } );
 		globe.setBaseImagery( publicWMSProvider );
-		var elevationProvider = new GlobWeb.BasicElevationLayer({baseUrl:"http://demonstrator.vegaspace.com/json_elevations/get.php"});
-		globe.setBaseElevation( elevationProvider );
+		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
+		globe.setBaseElevation( elevationLayer );
 		
 		
 		$.ajax({
