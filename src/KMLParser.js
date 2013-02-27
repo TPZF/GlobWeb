@@ -28,6 +28,24 @@ GlobWeb.KMLParser = (function()
 				features: [] };
 				
 	var styles = {};
+	
+	var parseColor = /^(\w{2})(\w{2})(\w{2})(\w{2})$/;
+	
+	/*
+	 * Parse a color string
+	 * @param color_string : the color string
+	 * @return the color
+	 */
+	var fromStringToColor = function(color_string)
+	{
+		var match = parseColor.exec(color_string);
+		if ( match )
+		{
+			return [ parseInt(match[4],16) / 255.0, parseInt(match[3],16) / 255.0, parseInt(match[2],16) / 255.0, parseInt(match[1],16) / 255.0 ];
+		}
+		
+		return [ 1., 1., 1., 1. ];
+	};
 		
 	/*
 	 * Parse coordinates, split them and return an array of coordinates in GeoJSON format
@@ -208,7 +226,7 @@ GlobWeb.KMLParser = (function()
 			switch ( child.nodeName )
 			{
 			case "color":
-				style.strokeColor = GlobWeb.FeatureStyle.fromStringToColor( child.childNodes[0].nodeValue );
+				style.strokeColor = fromStringToColor( child.childNodes[0].nodeValue );
 				break;
 			case "width":
 				style.strokeWidth = parseFloat( child.childNodes[0].nodeValue );
@@ -229,7 +247,7 @@ GlobWeb.KMLParser = (function()
 			switch ( child.nodeName )
 			{
 			case "color":
-				//style.strokeColor = GlobWeb.FeatureStyle.fromStringToColor( child.childNodes[0].nodeValue );
+				//style.strokeColor = fromStringToColor( child.childNodes[0].nodeValue );
 				break;
 			case "Icon":
 				if ( child.firstElementChild )
@@ -253,7 +271,7 @@ GlobWeb.KMLParser = (function()
 			switch ( child.nodeName )
 			{
 			case "color":
-				var labelColor = GlobWeb.FeatureStyle.fromStringToColor( child.textContent.trim() );
+				var labelColor = fromStringToColor( child.textContent.trim() );
 				if ( labelColor[3] == 0 )
 				{
 					style.label = null;
