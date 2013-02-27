@@ -85,7 +85,7 @@
 	        var face_num;
 	        if ( ifp.equals(ifm) )
 	        {
-	        	face_num = ifp.or(GlobWeb.Long.fromNumber(4.));
+	        	face_num = ifp.or(GlobWeb.Long.fromInt(4));
 	        }
 	        else
 	        {
@@ -95,7 +95,7 @@
 	        	}
 	        	else
 	        	{
-	        		face_num = ifp.add(GlobWeb.Long.fromNumber(8.));
+	        		face_num = ifm.add(GlobWeb.Long.fromInt(8));
 	        	}
 	        }
 
@@ -117,7 +117,7 @@
 			var jm = GlobWeb.Long.fromNumber((1.0-tp)*tmp);
 			var lNside = GlobWeb.Long.fromNumber(nside);
 			var nSideMinusOne = GlobWeb.Long.fromNumber(nside-1.);
-			var lOne = GlobWeb.Long.fromNumber(1.);
+			var lOne = GlobWeb.Long.fromInt(1);
 			if ( jp.greaterThanOrEqual(lNside) )
 				jp = nSideMinusOne;
 			if ( jm.greaterThanOrEqual(lNside) )
@@ -350,6 +350,15 @@
 		var coord_o4i254 = lonLat2ang(4.310217033803188, 84.11876549313016);
 		var o4i254 = loc2pix(4, coord_o4i254[0], coord_o4i254[1]);
 		deepEqual( o4i254, 254 );
+
+		// Southen same tile(boundary between equatorial & south polar regions)
+		var coord534 = lonLat2ang( 76.19735902817038, -45.73346893957995 );
+		var trueCoord534 = lonLat2ang( 73.86582261206472, -39.93684262289889 );
+		var i534 = loc2pix(3, coord534[0], coord534[1]);
+		var truei534 = loc2pix(3, trueCoord534[0], trueCoord534[1]);
+		deepEqual( i534, 534 );
+		deepEqual( truei534, 534 );
+
 	});
 
 	test("lonLat2ang", function(){
