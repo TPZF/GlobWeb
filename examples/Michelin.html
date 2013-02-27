@@ -8,57 +8,28 @@
 
 <script type="text/javascript">
 	
-	var fpsElement = null;
-	var globe = null;
-	
-	function stats()
-	{
-		if ( !globe.isRunning )
-			return;
-//		console.log( "FPS : " + numFrames );
-		console.log( "Num rendered tiles : " + globe.tileManager.numRenderedTiles );
-//		console.log( "Num traversed tiles : " + globe.tileManager.numTraversedTiles );
-//		console.log( "Num tiles : " + GlobWeb.tileManager.tileMap.getCount() );
-//		console.log( "Num created textures : " + GlobWeb.TilePool.numCreatedTextures );
-//		console.log( "Num reused textures : " + GlobWeb.TilePool.numReusedTextures );
-//		console.log( "Num created meshes : " + GlobWeb.TilePool.numCreatedMeshses );
-		console.log( "Num tile generated : " + globe.tileManager.numTilesGenerated + " " + GlobWeb.RenderContext.numFrames );
-/*		console.log( "TT : " + globe.tileManager.traversingTime / GlobWeb.RenderContext.numFrames + " RT : " + globe.tileManager.renderTime / GlobWeb.RenderContext.numFrames
-					+ " GT : " + globe.tileManager.generateTime / GlobWeb.RenderContext.numFrames
-					+ " LT : " + globe.tileManager.requestTime / GlobWeb.RenderContext.numFrames );
-			
-		globe.tileManager.traversingTime = 0;
-		globe.tileManager.renderTime = 0;
-		globe.tileManager.generateTime = 0;
-		globe.tileManager.requestTime = 0;*/
-
-		globe.tileManager.numTilesGenerated = 0;
-
-		if ( fpsElement != null )
-		{
-			fpsElement.innerHTML = "<span style=\"font-weight:bold\">FPS : " + GlobWeb.RenderContext.numFrames + "</span>";
-		}
-
-		var geoBound = GlobWeb.RenderContext.getViewportGeoBound();
-		GlobWeb.RenderContext.numFrames = 0;
-	}
-	
 	
     function webGLStart() 
 	{	
-		globe = new GlobWeb.Globe("GlobWebCanvas");
-	//	globe.setAtmosphereVisible(true);
-	//	globe.setTiling(16,4,2);
-	//	globe.tileManager.textureSize = 128;
-
-		var navigator = new GlobWeb.Navigator(globe);
-		fpsElement = document.getElementById("fps");
+		var globe = new GlobWeb.Globe( { canvas: "GlobWebCanvas", 
+				atmosphere: false,
+				lighting: false,
+				tileErrorTreshold: 3, 
+				continuousRendering: true } );
+				
+		var navigator = new GlobWeb.Navigation(globe);
 		
-		var publicWMSProvider = new GlobWeb.WMSTileProvider("http://demonstrator.vegaspace.com/wmspub",
-					{ layers: "BlueMarble,esat" } );
-		globe.setImageryProvider( publicWMSProvider );
-		var elevationProvider = new GlobWeb.PHPTileProvider("http://demonstrator.vegaspace.com/json_elevations/get.php");
-		globe.setElevationProvider( elevationProvider );
+		// Add stats
+		var stats = new GlobWeb.Stats( globe, {element: 'fps', verbose: false} );
+	
+		var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble" });
+		globe.setBaseImagery( blueMarbleLayer );
+			
+		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
+		globe.setBaseElevation( elevationLayer );
+		
+		var vectorLayer = new GlobWeb.VectorLayer();
+		globe.addLayer( vectorLayer );
 		
 		var xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = function(e)
@@ -75,15 +46,15 @@
 					coords.push( [ lon.childNodes[0].nodeValue / 1000000.0, lat.childNodes[0].nodeValue / 1000000.0 ] );
 				}
 				var feature = { type: "Feature", geometry: { type: "LineString", coordinates: coords } };
-				globe.addFeature( feature );
+				vectorLayer.addFeature( feature );
 				
 				var pathAnimation = new GlobWeb.PathAnimation(coords,1000,undefined,globe);
+				globe.addAnimation(pathAnimation);
 				pathAnimation.start();
 			}
 		};
 		xhr.open("GET","coordonnees-geo-paris-marseille.xml");
 		xhr.send();
-		window.setInterval(stats,1000);
     }
 
 
