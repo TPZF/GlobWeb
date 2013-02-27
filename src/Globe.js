@@ -352,8 +352,8 @@ GlobWeb.Globe.prototype.render = function()
 	
 	@param name Event name
 		<ul>
-			<li>startAnimation : called when navigation is started (by the user or through animation)</li>
-			<li>endAnimation : called when navigation is ended (by the user or through animation)t</li>
+			<li>startNavigation : called when navigation is started (by the user or through animation)</li>
+			<li>endNavigation : called when navigation is ended (by the user or through animation)t</li>
 			<li>baseLayersReady : called when the base layers are ready to be displayed</li>
 			<li>baseLayersError : called when the base layers are not valid, or not accessible, in that case nothing is displayed so this event is useful to provide an error message to the user</li>
 		</ul>
