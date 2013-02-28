@@ -1,0 +1,44 @@
+<html>
+
+<head>
+<title>GlobWeb example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+
+<script type="text/javascript" src="../src/GlobWeb.js"></script>
+
+<script type="text/javascript">
+	
+    function webGLStart() 
+	{	
+		var cvs = document.getElementById("GlobWebCanvas");
+		cvs.width = window.innerWidth;
+		cvs.height = window.innerHeight;
+		
+		// Create the globe
+		var globe = new GlobWeb.Globe( { canvas: cvs,} );
+
+		// Add mouse navigation
+		var VThandler = new GlobWeb.VTNavigationHandler({zoomOnDblClick: true});
+		var navigation = new GlobWeb.Navigation(globe, {handlers: [VThandler]});
+	
+		var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble" });
+		globe.setBaseImagery( blueMarbleLayer );
+				
+		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
+		globe.setBaseElevation( elevationLayer );
+		
+   }
+
+
+</script>
+
+</head>
+
+
+<body onload="webGLStart();" style="margin: 0; padding: 0;">
+    <canvas id="GlobWebCanvas" style="border: none; margin: 0; padding: 0;" width="800" height="600"></canvas> 
+</body>
+
+</html>
+
