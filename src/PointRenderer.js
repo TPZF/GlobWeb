@@ -108,10 +108,7 @@ GlobWeb.PointRenderer = function(tileManager)
 	";
 	
 	var fragmentShader = "\
-	#ifdef GL_ES \n\
-	precision highp float; \n\
-	#endif \n\
-	\n\
+	precision lowp float; \n\
 	varying vec2 texCoord; \n\
 	uniform sampler2D texture; \n\
 	uniform float alpha; \n\

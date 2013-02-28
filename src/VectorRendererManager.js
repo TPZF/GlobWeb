@@ -33,7 +33,7 @@ GlobWeb.VectorRendererManager = function(globe)
 	var globalFactories = GlobWeb.VectorRendererManager.globalFactories;
 	for ( var i = 0; i < globalFactories.length; i++ )
 	{
-		this.factories.push( { creator: globalFactories[i].creator, canApply: globalFactories[i].canApply, instance: null } );
+		this.factories.push( { id: globalFactories[i].id, creator: globalFactories[i].creator, canApply: globalFactories[i].canApply, instance: null } );
 	}
 }
 
@@ -58,6 +58,30 @@ GlobWeb.VectorRendererManager.globalFactories = [];
 GlobWeb.VectorRendererManager.registerRenderer = function(factory)
 {
 	GlobWeb.VectorRendererManager.globalFactories.push( factory );
+}
+
+/**************************************************************************************************************/
+
+/** 
+	Get a renderer compatible for the given type and style
+ */
+GlobWeb.VectorRendererManager.prototype.getRenderer = function(id)
+{
+	for ( var i = 0; i < this.factories.length; i++ )
+	{
+		var factory = this.factories[i];
+		if ( factory.id == id )
+		{
+			if ( !factory.instance )
+			{
+				factory.instance = factory.creator(this.globe);
+				this.globe.tileManager.addPostRenderer(factory.instance);
+			}
+			return factory.instance;
+		}
+	}
+	
+	return null;
 }
 
 /**************************************************************************************************************/
