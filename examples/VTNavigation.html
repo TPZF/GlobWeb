@@ -1,7 +1,7 @@
 <html>
 
 <head>
-<title>GlobWeb example</title>
+<title>GlobWeb example with VTNavigationHandler</title>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 <link rel="stylesheet" href="GlobWeb.css">
 
@@ -18,13 +18,13 @@
 		// Create the globe
 		var globe = new GlobWeb.Globe( { canvas: cvs,} );
 
-		// Add mouse navigation
+		// Add VT mouse navigation
 		var VThandler = new GlobWeb.VTNavigationHandler({zoomOnDblClick: true});
-		var navigation = new GlobWeb.Navigation(globe, {handlers: [VThandler]});
+		var navigation = new GlobWeb.Navigation(globe, {handlers: [VThandler], inertia: false});
 	
 		var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble" });
 		globe.setBaseImagery( blueMarbleLayer );
-				
+		
 		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
 		globe.setBaseElevation( elevationLayer );
 		
