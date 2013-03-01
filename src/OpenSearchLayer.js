@@ -513,19 +513,22 @@ GlobWeb.OpenSearchLayer.prototype.render = function( tiles )
 		if ( tile.order >= this.minOrder )
 		{
 			var osData = tile.extension[this.extId];
-			if ( osData && osData.state == GlobWeb.OpenSearchLayer.TileState.NOT_LOADED ) 
+			if ( !osData || osData.state == GlobWeb.OpenSearchLayer.TileState.NOT_LOADED ) 
 			{
 				// Check if the parent is loaded or not, in that case load the parent first
 				while ( tile.parent 
 					&& tile.parent.order >= this.minOrder 
+					&& tile.parent.extension[this.extId]
 					&& tile.parent.extension[this.extId].state == GlobWeb.OpenSearchLayer.TileState.NOT_LOADED )
 				{
 					tile = tile.parent;
 				}
-
-				// Skip loading parent
-				if ( tile.parent && tile.parent.extension[this.extId].state == GlobWeb.OpenSearchLayer.TileState.LOADING )
-					continue;
+				
+				if ( tile.extension[this.extId] && tile.extension[this.extId].state == GlobWeb.OpenSearchLayer.TileState.NOT_LOADED )
+				{
+					// Skip loading parent
+					if ( tile.parent && tile.parent.extension[this.extId].state == GlobWeb.OpenSearchLayer.TileState.LOADING )
+						continue;
 
 				var url = this.buildUrl(tile);
 				if ( url )
