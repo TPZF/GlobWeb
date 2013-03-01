@@ -76,6 +76,9 @@ GlobWeb.VTNavigationHandler = function(options){
 				var pos2 = _navigation.globe.getPixelFromLonLat(geo[0], geo[1]);
 				
 				var dx = pos[0] - pos2[0];
+				var widthHeightFactor = Math.round(_navigation.globe.renderContext.canvas.width / _navigation.globe.renderContext.canvas.height);
+				widthHeightFactor = (widthHeightFactor < 1) ? 1 : widthHeightFactor;
+				dx *= widthHeightFactor;
 				var dy = pos[1] - pos2[1];
 				_navigation.pan(dx, dy);
 			}
