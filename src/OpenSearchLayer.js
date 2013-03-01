@@ -29,7 +29,6 @@
 			<li>minOrder : Starting order for OpenSearch requests</li>
 			<li>displayProperties : Properties which will be shown in priority</li>
 			<li>proxyUrl : Url of proxy for external pages</li>
-			<li>useCluster : Boolean indicating if cluster information is used</li>
 		</ul>
 */
 GlobWeb.OpenSearchLayer = function(options){
@@ -37,9 +36,8 @@ GlobWeb.OpenSearchLayer = function(options){
 	
 	this.serviceUrl = options.serviceUrl;
 	this.minOrder = options.minOrder || 5;
-	this.proxyUrl = options.proxyUrl || "";
-	this.useCluster = options.useCluster || false;
 	this.requestProperties = "";
+	this.proxyUrl = options.proxyUrl || "";
 
 	// Set style
 	if ( options && options['style'] )
@@ -51,7 +49,6 @@ GlobWeb.OpenSearchLayer = function(options){
 		this.style = new GlobWeb.FeatureStyle();
 	}
 	
-	// TODO "os" is overriden by BaseLayer id when attached by globe
 	this.extId = "os";
 
 	// Used for picking management
@@ -68,24 +65,6 @@ GlobWeb.OpenSearchLayer = function(options){
 		var xhr = new XMLHttpRequest();
 		this.freeRequests.push( xhr );
 	}
-
-	if ( this.useCluster )
-	{
-		// Configure cluster service options
-		this.treshold = options.treshold || 5;
-		this.maxOrder = options.maxOrder || 8;
-		this.maxClusterOrder = options.maxClusterOrder || 8;
-
-		// Handle distributions
-		this.distributions = null;
-		this.clusterServiceUrl = null;
-
-		this.handleClusterService();
-
-		this.clusterStyle = new GlobWeb.FeatureStyle(this.style);
-		this.clusterStyle.iconUrl = options.clusterIconUrl || "css/images/cluster.png";
-		this.clusterBucket = null;
-	}
 	
 	// For rendering
 	this.pointBucket = null;
@@ -97,109 +76,6 @@ GlobWeb.OpenSearchLayer = function(options){
 /**************************************************************************************************************/
 
 GlobWeb.inherits( GlobWeb.BaseLayer, GlobWeb.OpenSearchLayer );
-
-/**************************************************************************************************************/
-
-/**
- *	Get cluster service url from OpenSearch description XML file
- */
-GlobWeb.OpenSearchLayer.prototype.handleClusterService = function()
-{
-	var xhr = new XMLHttpRequest();
-	var self = this;
-	xhr.onreadystatechange = function(e)
-	{
-		if ( xhr.readyState == 4 ) 
-		{
-			if ( xhr.status == 200 )
-			{
-				var urls = xhr.responseXML.getElementsByTagName("Url");
-				// Find rel=clusterdesc url
-				for ( var i=0; i<urls.length; i++ )
-				{
-					if ( urls[i].attributes.getNamedItem("rel") && urls[i].attributes.getNamedItem("rel").nodeValue == "clusterdesc" )
-					{
-						// Get clusterdesc template
-						var describeUrl = urls[i].attributes.getNamedItem("template").nodeValue;
-						
-						if ( describeUrl )
-						{
-							// Cut inused data
-							var splitIndex = describeUrl.indexOf( "q=" );
-							if ( splitIndex != -1 )
-							{
-								self.clusterServiceUrl = describeUrl.substring( 0, splitIndex );
-							}
-							else
-							{
-								self.clusterServiceUrl =  describeUrl;
-							}
-							self.updateDistributions();
-						}
-						break;
-					}
-				}
-				if ( i == urls.length )
-				{
-					// Cluster description doesn't exist
-					self.useCluster = false;
-				}
-			}
-		}
-	};
-	xhr.open("GET", this.serviceUrl );
-	xhr.send();
-}
-
-/**************************************************************************************************************/
-
-/**
- *	Update cluster distribution
- */
-GlobWeb.OpenSearchLayer.prototype.updateDistributions = function()
-{
-	var xhr = new XMLHttpRequest();
-	var url = this.clusterServiceUrl + this.requestProperties;
-	var self = this;
-	xhr.onreadystatechange = function(e)
-	{
-		if ( xhr.readyState == 4 ) 
-		{
-			if ( xhr.status == 200 )
-			{
-				var response = JSON.parse(xhr.response);
-				self.handleDistribution(response);
-			}
-		}
-	};
-	xhr.open("GET", url );
-	xhr.send();
-}
-
-/**************************************************************************************************************/
-
-/**
- *	Handle SOLR distribution response
- *
- *	@param response SOLR response
- *	@param distributions Distributions ClusterManager variable
- */
-GlobWeb.OpenSearchLayer.prototype.handleDistribution = function(response)
-{
-	var distributions = {};
-	var facet_fields = response.facet_counts.facet_fields;
-	var order = 3;
-	for (var key in facet_fields)
-	{
-		distributions[order] = {};
-		for (var i=0; i<facet_fields[key].length; i+=2)
-		{
-			distributions[order][facet_fields[key][i]] = facet_fields[key][i+1];
-		}
-		order++;
-	}
-	this.distributions = distributions;
-}
 
 /**************************************************************************************************************/
 
@@ -227,119 +103,11 @@ GlobWeb.OpenSearchLayer.prototype._detach = function()
 	this.globe.tileManager.removePostRenderer(this);
 	this.pointRenderer = null;
 	this.pointBucket = null;
-	if ( this.useCluster )
-	{
-		this.clusterBucket = null;
-	}
+
 	this.polygonRenderer = null;
 	this.polygonBucket = null;
 	
 	GlobWeb.BaseLayer.prototype._detach.call(this);
-}
-
-/**************************************************************************************************************/
-
-/**
- *	Adding cluster geometry to renderer
- *
- *	@param pixelIndex Pixel index
- *	@param order Pixel order
- *	@param face Face of pixel
- *	@param pixelDistribution Number of features in cluster
- */
-GlobWeb.OpenSearchLayer.prototype.addCluster = function(pixelIndex, order, face, pixelDistribution, tile)
-{
-	
-	// Create geometry
-	var nside = Math.pow(2, order);
-	var pix=pixelIndex&(nside*nside-1);
-	var ix = GlobWeb.HEALPixBase.compress_bits(pix);
-	var iy = GlobWeb.HEALPixBase.compress_bits(pix>>>1);
-	var center = GlobWeb.HEALPixBase.fxyf((ix+0.5)/nside, (iy+0.5)/nside, face);
-
-	var geo = GlobWeb.CoordinateSystem.from3DToGeo( center );
-	var pos3d = center;
-	var vertical = vec3.create();
-	vec3.normalize(pos3d, vertical);
-	
-	var geometry = {
-		coordinates: geo,
-		type: "Point"
-	};
-
-	// Create renderable
-	var identifier = order+"_"+pixelIndex;
-	var feature = {
-		geometry: geometry,
-		properties: {
-			featureNum: pixelDistribution,
-			identifier: identifier,
-			title: "Cluster("+pixelDistribution+")",
-			order: order,
-			pixelIndex: pixelIndex,
-			style: new GlobWeb.FeatureStyle(this.clusterStyle)
-		},
-		cluster : true
-	};
-	tile.extension[this.extId].containsCluster = true;
-	this.addFeature( feature, tile );
-}
-
-/**************************************************************************************************************/
-
-/**
- *	Compute clusters and launch request for point features if needed
- */
-GlobWeb.OpenSearchLayer.prototype.computeClusters = function(tile)
-{
-	if ( this.distributions && tile.order < this.maxClusterOrder  )
-	{
-		var pixelIndicesToRequest = [];
-		var orderDepth = this.maxOrder - tile.order;
-		var childOrder = this.maxOrder;
-
-		if(  this.distributions[childOrder] )
-		{
-			// Distribution exists
-			var numSubTiles = Math.pow(4,orderDepth); // Number of subtiles depending on order
-			var firstSubTileIndex = tile.pixelIndex * numSubTiles;
-
-			for ( var j=firstSubTileIndex; j<firstSubTileIndex+numSubTiles; j++ )
-			{
-				var pixelDistribution = this.distributions[childOrder][j];
-				if ( pixelDistribution > this.treshold )
-				{
-					// Cluster child
-					this.addCluster(j, this.maxOrder, tile.face, pixelDistribution, tile);
-				}
-				else if ( pixelDistribution > 0 )
-				{
-					// Feature containing child
-					pixelIndicesToRequest.push(j);
-				}
-			}
-		}
-
-		if ( pixelIndicesToRequest.length > 0 )
-		{
-			this.launchRequest( tile, childOrder, pixelIndicesToRequest );
-		}
-		else 
-		{
-			if ( !tile.extension[this.extId].containsCluster )
-			{
-				// Empty tile
-				tile.extension[this.extId].complete = true;
-				// HACK to avoid multiple rendering of parent features
-				tile.extension.pointSprite = new GlobWeb.RendererTileData();
-			}
-			tile.extension[this.extId].state = GlobWeb.OpenSearchLayer.TileState.LOADED;
-		}
-	}
-	else
-	{
-		this.launchRequest(tile, tile.order, [tile.pixelIndex]);
-	}
 }
 
 /**************************************************************************************************************/
@@ -368,7 +136,7 @@ GlobWeb.OpenSearchLayer.prototype.updateChildrenState = function(tile)
 /**
  * 	Launch request to the OpenSearch service
  */
-GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile, childOrder, pixelIndicesToRequest)
+GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile, url)
 {
 	var tileData = tile.extension[this.extId];
 	var index = null;
@@ -380,31 +148,14 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile, childOrder, pix
 	
 	// Set that the tile is loading its data for OpenSearch
 	tileData.state = GlobWeb.OpenSearchLayer.TileState.LOADING;
-	
-	var xhr = this.freeRequests.pop();
-	
-	// Build URL
-	var url;
-	if ( this.useCluster )
-	{
-		var indices = "";
-		for ( var i=0; i<pixelIndicesToRequest.length-1; i++ )
-		{
-			indices+=pixelIndicesToRequest[i]+",";
-		}
-		indices+=pixelIndicesToRequest[i];
-		url = this.serviceUrl + "/search?order=" + childOrder + "&healpix=" + indices;
-	}
-	else
-	{
-		url = this.serviceUrl + "/search?order=" + tile.order + "&healpix=" + tile.pixelIndex;
-	}
 
+	// Add request properties to length
 	if ( this.requestProperties != "" )
 	{
 		url += '&' + this.requestProperties;
 	}
 		
+	var xhr = this.freeRequests.pop();
 	this.globe.publish("startLoad",this.id);
 	
 	var self = this;
@@ -416,18 +167,15 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile, childOrder, pix
 			{
 				var response = JSON.parse(xhr.response);
 
-				if ( !tileData.containsCluster )
-				{
-					tileData.complete = (response.totalResults == response.features.length);
+				tileData.complete = (response.totalResults == response.features.length);
 					
-					// Update children state
-					if ( tileData.complete )
-					{
-						self.updateChildrenState(tile);
-					}
+				// Update children state
+				if ( tileData.complete )
+				{
+					self.updateChildrenState(tile);
 				}
 
-				self.recomputeFeaturesGeometry(response.features);
+				self.updateFeatures(response.features);
 				
 				if ( response.features.length > 0 )
 				{
@@ -474,6 +222,17 @@ GlobWeb.OpenSearchLayer.prototype.setReqestProperties = function(properties)
 	});
 
 	// TODO clean renderers
+	// Never tested yet...
+	// for ( var x in this.featuresSet )
+	// {
+	// 	var featureData = this.featuresSet[x];
+	// 	for ( var i=0; i<featureData.tiles.length; i++ )
+	// 	{
+	// 		var tile = featureData.tiles[i];
+	// 		var feature = this.features[featureData.index];
+	// 		this.removeFeatureFromRenderer( feature, tile );
+	// 	}
+	// }
 
 	// Set request properties
 	this.requestProperties = "";
@@ -483,10 +242,6 @@ GlobWeb.OpenSearchLayer.prototype.setReqestProperties = function(properties)
 			this.requestProperties += '&'
 		this.requestProperties += key+'="'+properties[key]+'"';
 	}
-
-	// Reset distributions
-	this.distributions = null;
-	this.updateDistributions();
 	
 }
 
@@ -534,7 +289,6 @@ GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
 			featureData.tiles.push(tile);
 		}
 	}
-
 	
 	// Add feature id
 	tileData.featureIds.push( feature.properties.identifier );
@@ -543,18 +297,24 @@ GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
 	feature.geometry.gid = feature.properties.identifier;
 
 	// Add to renderer
+	this.addFeatureToRenderer(feature, tile);
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Add feature to renderer
+ */
+GlobWeb.OpenSearchLayer.prototype.addFeatureToRenderer = function( feature, tile )
+{
 	if ( feature.geometry['type'] == "Point" )
 	{
 		if (!this.pointRenderer) 
 		{
 			this.pointRenderer = this.globe.vectorRendererManager.getRenderer("PointSprite"); 
 			this.pointBucket = this.pointRenderer.getOrCreateBucket( this, this.style );
-			if ( this.useCluster )
-			{
-				this.clusterBucket = this.pointRenderer.getOrCreateBucket( this, this.clusterStyle );
-			}
 		}
-		this.pointRenderer.addGeometryToTile( (feature.cluster ? this.clusterBucket : this.pointBucket), feature.geometry, tile );
+		this.pointRenderer.addGeometryToTile( this.pointBucket, feature.geometry, tile );
 	} 
 	else if ( feature.geometry['type'] == "Polygon" )
 	{
@@ -564,6 +324,23 @@ GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
 			this.polygonBucket = this.polygonRenderer.getOrCreateBucket( this, this.style );
 		}
 		this.polygonRenderer.addGeometryToTile( this.polygonBucket, feature.geometry, tile );
+	}
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Remove feature from renderer
+ */
+GlobWeb.OpenSearchLayer.prototype.removeFeatureFromRenderer = function( feature, tile )
+{
+	if ( feature.geometry['type'] == "Point" )
+	{
+		this.pointRenderer.removeGeometryFromTile( this.pointBucket, geometry, tile );
+	} 
+	else if ( feature.geometry['type'] == "Polygon" )
+	{
+		this.polygonRenderer.removeGeometryFromTile( this.polygonBucket, geometry, tile );
 	}
 }
 
@@ -710,6 +487,16 @@ GlobWeb.OpenSearchLayer.OSData.prototype.dispose = function( renderContext, tile
 /**************************************************************************************************************/
 
 /**
+ *	Build request url
+ */
+GlobWeb.OpenSearchLayer.prototype.buildUrl = function( tile )
+{
+	return url = this.serviceUrl + "/search?order=" + tile.order + "&healpix=" + tile.pixelIndex;
+}
+
+/**************************************************************************************************************/
+
+/**
 	Render function
 	
 	@param tiles The array of tiles to render
@@ -740,13 +527,10 @@ GlobWeb.OpenSearchLayer.prototype.render = function( tiles )
 				if ( tile.parent && tile.parent.extension[this.extId].state == GlobWeb.OpenSearchLayer.TileState.LOADING )
 					continue;
 
-				if ( this.useCluster )
+				var url = this.buildUrl(tile);
+				if ( url )
 				{
-					this.computeClusters(tile);
-				}
-				else
-				{
-					this.launchRequest(tile);
+					this.launchRequest(tile, url);
 				}
 			}
 		}
@@ -756,35 +540,10 @@ GlobWeb.OpenSearchLayer.prototype.render = function( tiles )
 /**************************************************************************************************************/
 
 /**
- * 	Recompute geometry from equatorial coordinates to geo for each feature
+ * 	Update features
  */
-GlobWeb.OpenSearchLayer.prototype.recomputeFeaturesGeometry = function( features )
+GlobWeb.OpenSearchLayer.prototype.updateFeatures = function( features )
 {
-	for ( var i=0; i<features.length; i++ )
-	{
-		var currentFeature = features[i];
-		
-		switch ( currentFeature.geometry.type )
-		{
-			case "Point":
-				if ( currentFeature.geometry.coordinates[0] > 180 )
-					currentFeature.geometry.coordinates[0] -= 360;
-				break;
-			case "Polygon":
-				var ring = currentFeature.geometry.coordinates[0];
-				for ( var j = 0; j < ring.length; j++ )
-				{
-					if ( ring[j][0] > 180 )
-						ring[j][0] -= 360;
-				}
-				// Add proxy url to quicklook url if not local
-				if ( this.proxyUrl && currentFeature.properties.quicklook && currentFeature.properties.quicklook.substring(0,4) == 'http' )
-					currentFeature.properties.quicklook = this.proxyUrl+currentFeature.properties.quicklook;
-				break;
-			default:
-				break;
-		}
-	}
 }
 
 /*************************************************************************************************************/
