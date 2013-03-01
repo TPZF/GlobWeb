@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of 
+ * This file is part of GlobWeb.
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,7 +14,7 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with  If not, see <http://www.gnu.org/licenses/>.
+ * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
  
 define(['./Utils', './BaseLayer', './FeatureStyle'], 
