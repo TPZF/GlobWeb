@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,15 +14,18 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+ define( ['./CoordinateSystem','./VectorRendererManager','./FeatureStyle','./Program'], 
+	function(CoordinateSystem,VectorRendererManager,FeatureStyle,Program) {
 
 /**************************************************************************************************************/
 
 /** @constructor
 	Basic module to generate texture from text
  */	
-GlobWeb.Text = (function()
+var Text = (function()
 {
 	var fontSize = 18;
 	var margin = 1;
@@ -44,7 +47,7 @@ GlobWeb.Text = (function()
 		if (!fillColor)
 			fillColor = '#fff';
 		else if ( fillColor instanceof Array )
-			fillColor = GlobWeb.FeatureStyle.fromColorToString(textColor);
+			fillColor = FeatureStyle.fromColorToString(textColor);
 		
 		var ctx = canvas2d.getContext("2d");
 		ctx.clearRect(0,0,canvas2d.width,canvas2d.height);
@@ -73,7 +76,7 @@ GlobWeb.Text = (function()
 /** @constructor
 	POI Renderer constructor
  */
-GlobWeb.PointRenderer = function(tileManager)
+var PointRenderer = function(tileManager)
 {
 	// Store object for rendering
 	this.renderContext = tileManager.renderContext;
@@ -122,7 +125,7 @@ GlobWeb.PointRenderer = function(tileManager)
 	} \n\
 	";
 
-    this.program = new GlobWeb.Program(this.renderContext);
+    this.program = new Program(this.renderContext);
     this.program.createFromSource(vertexShader, fragmentShader);
 
 	var vertices = new Float32Array([-0.5, -0.5, 0.0,
@@ -143,7 +146,7 @@ GlobWeb.PointRenderer = function(tileManager)
 /*
 	Build a default texture
  */
-GlobWeb.PointRenderer.prototype._buildDefaultTexture = function(bucket)
+PointRenderer.prototype._buildDefaultTexture = function(bucket)
 {  	
 	if ( !this.defaultTexture )
 	{
@@ -164,7 +167,7 @@ GlobWeb.PointRenderer.prototype._buildDefaultTexture = function(bucket)
 /*
 	Build a texture from an image and store in a bucket
  */
-GlobWeb.PointRenderer.prototype._buildTextureFromImage = function(bucket,image)
+PointRenderer.prototype._buildTextureFromImage = function(bucket,image)
 {  	
 	bucket.texture = this.renderContext.createNonPowerOfTwoTextureFromImage(image);
 	bucket.textureWidth = image.width;
@@ -176,14 +179,14 @@ GlobWeb.PointRenderer.prototype._buildTextureFromImage = function(bucket,image)
 /*
 	Add a point to the renderer
  */
-GlobWeb.PointRenderer.prototype.addGeometry = function(geometry,layer,style)
+PointRenderer.prototype.addGeometry = function(geometry,layer,style)
 {
 	if ( style )
 	{
 		var bucket = this.getOrCreateBucket( layer,style );
 		
 		var posGeo = geometry['coordinates'];
-		var pos3d = GlobWeb.CoordinateSystem.fromGeoTo3D( posGeo );
+		var pos3d = CoordinateSystem.fromGeoTo3D( posGeo );
 		var vertical = vec3.create();
 		vec3.normalize(pos3d, vertical);
 		
@@ -201,7 +204,7 @@ GlobWeb.PointRenderer.prototype.addGeometry = function(geometry,layer,style)
 /*
 	Remove a point from renderer
  */
-GlobWeb.PointRenderer.prototype.removeGeometry = function(geometry,layer)
+PointRenderer.prototype.removeGeometry = function(geometry,layer)
 {
 	for ( var i = 0; i < this.buckets.length; i++ )
 	{
@@ -230,7 +233,7 @@ GlobWeb.PointRenderer.prototype.removeGeometry = function(geometry,layer)
 /*
 	Get or create bucket to render a point
  */
-GlobWeb.PointRenderer.prototype.getOrCreateBucket = function(layer,style)
+PointRenderer.prototype.getOrCreateBucket = function(layer,style)
 {
 	// Find an existing bucket for the given style, except if label is set, always create a new one
 	for ( var i = 0; i < this.buckets.length; i++ )
@@ -254,7 +257,7 @@ GlobWeb.PointRenderer.prototype.getOrCreateBucket = function(layer,style)
 	// Initialize bucket : create the texture	
 	if ( style['label'] )
 	{
-		var imageData = GlobWeb.Text.generateImageData(style['label'], style['textColor']);
+		var imageData = Text.generateImageData(style['label'], style['textColor']);
 		this._buildTextureFromImage(bucket,imageData);
 	}
 	else if ( style['iconUrl'] )
@@ -284,7 +287,7 @@ GlobWeb.PointRenderer.prototype.getOrCreateBucket = function(layer,style)
 /*
 	Render all the POIs
  */
-GlobWeb.PointRenderer.prototype.render = function()
+PointRenderer.prototype.render = function()
 {
 	if (this.buckets.length == 0)
 	{
@@ -305,7 +308,7 @@ GlobWeb.PointRenderer.prototype.render = function()
 	// Setup program
 	this.program.apply();
 	
-	// The shader only needs the viewProjection matrix, use GlobWeb.modelViewMatrix as a temporary storage
+	// The shader only needs the viewProjection matrix, use modelViewMatrix as a temporary storage
 	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
 	gl.uniformMatrix4fv(this.program.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
 	gl.uniform1i(this.program.uniforms["texture"], 0);
@@ -348,7 +351,7 @@ GlobWeb.PointRenderer.prototype.render = function()
 			var poiVec = bucket.points[i].vertical;
 			var scale = bucket.textureHeight * ( pixelSizeVector[0] * worldPoi[0] + pixelSizeVector[1] * worldPoi[1] + pixelSizeVector[2] * worldPoi[2] + pixelSizeVector[3] );
 			scale *= this.tileConfig.cullSign;
-			var scaleInKm = (scale / GlobWeb.CoordinateSystem.heightScale) * 0.001;
+			var scaleInKm = (scale / CoordinateSystem.heightScale) * 0.001;
 			if ( scaleInKm > bucket.style.pointMaxSize )
 				continue;
 				
@@ -377,7 +380,11 @@ GlobWeb.PointRenderer.prototype.render = function()
 /**************************************************************************************************************/
 
 // Register the renderer
-GlobWeb.VectorRendererManager.registerRenderer({
-										creator: function(globe) { return new GlobWeb.PointRenderer(globe.tileManager); },
+VectorRendererManager.registerRenderer({
+										creator: function(globe) { return new PointRenderer(globe.tileManager); },
 										canApply: function(type,style) {return type == "Point"; }
 									});
+									
+return PointRenderer;
+
+});

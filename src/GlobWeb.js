@@ -16,12 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
- 
-/**
- Declare GlobWeb namespace
- */
-var GlobWeb = GlobWeb || {};
 
+<<<<<<< HEAD
 // Declare function to load all javascript files for GlobWeb
 (function()
 {
@@ -111,16 +107,29 @@ var GlobWeb = GlobWeb || {};
         "TouchNavigation.js",
         "KMLParser.js"
 		];
+=======
+ // Declare the GlobWeb namespace
+ define( ["./Globe", "./WMSLayer", "./WMTSLayer", "./WCSElevationLayer", "./OSMLayer", "./BingLayer", "./VectorLayer", "./AtmosphereLayer", "./Navigation", "./Stats", "./KMLParser",
+		"./PointRenderer", "./LineStringRenderable"], 
+	function(Globe, WMSLayer, WMTSLayer, WCSElevationLayer, OSMLayer, BingLayer, VectorLayer, AtmosphereLayer, Navigation, Stats, KMLParser) {
+>>>>>>> First commit to use Require.js in GlobWeb
 
-	// use "parser-inserted scripts" for guaranteed execution order
-	// http://hsivonen.iki.fi/script-execution/
-	var scriptTags = new Array(jsFiles.length);
-	for (var i=0; i<jsFiles.length; i++) {
-		scriptTags[i] = "<script src='" + host + jsFiles[i] + "' type='text/javascript'></script>"; 
-	}
-	if (scriptTags.length > 0) {
-		document.write(scriptTags.join(""));
-	}
-	
+// Declare GlobWeb 
+var GlobWeb = {};
 
-})();  
+GlobWeb.Globe = Globe;
+GlobWeb.WMSLayer = WMSLayer;
+GlobWeb.WMTSLayer = WMTSLayer;
+GlobWeb.WCSElevationLayer = WCSElevationLayer;
+GlobWeb.OSMLayer = OSMLayer;
+GlobWeb.BingLayer = BingLayer;
+GlobWeb.VectorLayer = VectorLayer;
+GlobWeb.AtmosphereLayer = AtmosphereLayer;
+GlobWeb.Navigation = Navigation;
+GlobWeb.Stats = Stats;
+GlobWeb.KMLParser = KMLParser;
+
+
+return GlobWeb;
+
+});

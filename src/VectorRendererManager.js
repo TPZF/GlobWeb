@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,10 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+ 
+ define( function() {
  
 /**************************************************************************************************************/
 
@@ -24,13 +26,13 @@
 	@constructor
 	@param globe	the globe
  */
-GlobWeb.VectorRendererManager = function(globe)
+var VectorRendererManager = function(globe)
 {
 	this.globe = globe;
 	this.factories = [];
 	
 	// Clone 'global' factories to this instance
-	var globalFactories = GlobWeb.VectorRendererManager.globalFactories;
+	var globalFactories = VectorRendererManager.globalFactories;
 	for ( var i = 0; i < globalFactories.length; i++ )
 	{
 		this.factories.push( { id: globalFactories[i].id, creator: globalFactories[i].creator, canApply: globalFactories[i].canApply, instance: null } );
@@ -42,9 +44,9 @@ GlobWeb.VectorRendererManager = function(globe)
 /** 
 	A global array that contains a factory for each vector renderer
 	A factory is just two function :
-	@see GlobWeb.VectorRendererManager.registerRenderer
+	@see VectorRendererManager.registerRenderer
  */
-GlobWeb.VectorRendererManager.globalFactories = [];
+VectorRendererManager.globalFactories = [];
 
 
 /**************************************************************************************************************/
@@ -55,9 +57,9 @@ GlobWeb.VectorRendererManager.globalFactories = [];
 	@param factory.creator a function to create a renderer
 	@param factory.canApply a function to check if the renderer can be applied
  */
-GlobWeb.VectorRendererManager.registerRenderer = function(factory)
+VectorRendererManager.registerRenderer = function(factory)
 {
-	GlobWeb.VectorRendererManager.globalFactories.push( factory );
+	VectorRendererManager.globalFactories.push( factory );
 }
 
 /**************************************************************************************************************/
@@ -65,7 +67,7 @@ GlobWeb.VectorRendererManager.registerRenderer = function(factory)
 /** 
 	Get a renderer compatible for the given type and style
  */
-GlobWeb.VectorRendererManager.prototype.getRenderer = function(id)
+VectorRendererManager.prototype.getRenderer = function(id)
 {
 	for ( var i = 0; i < this.factories.length; i++ )
 	{
@@ -89,7 +91,7 @@ GlobWeb.VectorRendererManager.prototype.getRenderer = function(id)
 /** 
 	Add a geometry to renderers
  */
-GlobWeb.VectorRendererManager.prototype.addGeometry = function(geometry,layer,style)
+VectorRendererManager.prototype.addGeometry = function(geometry,layer,style)
 {
 	var type = geometry['type'];
 	for ( var i = 0; i < this.factories.length; i++ )
@@ -112,7 +114,7 @@ GlobWeb.VectorRendererManager.prototype.addGeometry = function(geometry,layer,st
 /** 
 	Remove a geometry from renderers
  */
-GlobWeb.VectorRendererManager.prototype.removeGeometry = function(geometry,layer)
+VectorRendererManager.prototype.removeGeometry = function(geometry,layer)
 {
 	for ( var i = 0; i < this.factories.length; i++ )
 	{
@@ -125,3 +127,7 @@ GlobWeb.VectorRendererManager.prototype.removeGeometry = function(geometry,layer
 }
 
 /**************************************************************************************************************/
+
+return VectorRendererManager;
+
+});

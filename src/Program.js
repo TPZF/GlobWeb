@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,15 +14,17 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+ define(function() {
 
 /**************************************************************************************************************/
 
 /** @constructor
 	Program constructor
  */
-GlobWeb.Program = function(renderContext)
+var Program = function(renderContext)
 {
 	this.renderContext = renderContext;
     this.glProgram = null;
@@ -36,7 +38,7 @@ GlobWeb.Program = function(renderContext)
 /*!
   Creates a shader of the given type from the given source string
 */
-GlobWeb.Program.prototype.createShader = function(type, source)
+Program.prototype.createShader = function(type, source)
 {
 	var gl = this.renderContext.gl;
     var shader = gl.createShader(type);
@@ -58,7 +60,7 @@ GlobWeb.Program.prototype.createShader = function(type, source)
 /*
 	Create the program from source shaders
  */
-GlobWeb.Program.prototype.createFromSource = function(vertexSource, fragmentSource)
+Program.prototype.createFromSource = function(vertexSource, fragmentSource)
 {
 	var gl = this.renderContext.gl;
 	
@@ -118,7 +120,7 @@ GlobWeb.Program.prototype.createFromSource = function(vertexSource, fragmentSour
 /*
 	Load from file (must be located on the server)
  */
-GlobWeb.Program.prototype.loadFromFile = function(vertexFile, fragmentFile)
+Program.prototype.loadFromFile = function(vertexFile, fragmentFile)
 {
     var xhr = new XMLHttpRequest;
 	xhr.open("get", this.renderContext.shadersPath + vertexFile, false);
@@ -136,7 +138,7 @@ GlobWeb.Program.prototype.loadFromFile = function(vertexFile, fragmentFile)
 /*
 	Apply the programs
  */
-GlobWeb.Program.prototype.apply = function()
+Program.prototype.apply = function()
 {
 	var rc = this.renderContext;
 	var gl =  rc.gl;
@@ -162,7 +164,7 @@ GlobWeb.Program.prototype.apply = function()
 /*
 	Load shader using Http request
  */
-// GlobWeb.Program.prototype.loadShader = function (shader, type, callback) 
+// Program.prototype.loadShader = function (shader, type, callback) 
 // {
 //     function onreadystatechange() {
 //         var xhr = this;
@@ -196,7 +198,7 @@ GlobWeb.Program.prototype.apply = function()
 /*
 	Get the shader using defined in HTML
  */
-// GlobWeb.Program.prototype.getShader = function(id)
+// Program.prototype.getShader = function(id)
 //  {
 // 	var shaderScript = document.getElementById(id);
 // 	if (!shaderScript) {
@@ -214,18 +216,18 @@ GlobWeb.Program.prototype.apply = function()
 
 // 	var shader;
 // 	if (shaderScript.type == "x-shader/x-fragment") {
-// 		shader = GlobWeb.RenderContext.gl.createShader(GlobWeb.RenderContext.gl.FRAGMENT_SHADER);
+// 		shader = RenderContext.gl.createShader(RenderContext.gl.FRAGMENT_SHADER);
 // 	} else if (shaderScript.type == "x-shader/x-vertex") {
-// 		shader = GlobWeb.RenderContext.gl.createShader(GlobWeb.RenderContext.gl.VERTEX_SHADER);
+// 		shader = RenderContext.gl.createShader(RenderContext.gl.VERTEX_SHADER);
 // 	} else {
 // 		return null;
 // 	}
 
-// 	GlobWeb.RenderContext.gl.shaderSource(shader, str);
-// 	GlobWeb.RenderContext.gl.compileShader(shader);
+// 	RenderContext.gl.shaderSource(shader, str);
+// 	RenderContext.gl.compileShader(shader);
 
-// 	if (!GlobWeb.RenderContext.gl.getShaderParameter(shader, GlobWeb.RenderContext.gl.COMPILE_STATUS)) {
-// 		alert(GlobWeb.RenderContext.gl.getShaderInfoLog(shader));
+// 	if (!RenderContext.gl.getShaderParameter(shader, RenderContext.gl.COMPILE_STATUS)) {
+// 		alert(RenderContext.gl.getShaderInfoLog(shader));
 // 		return null;
 // 	}
 
@@ -234,3 +236,6 @@ GlobWeb.Program.prototype.apply = function()
 
 /**************************************************************************************************************/
 
+return Program;
+
+});

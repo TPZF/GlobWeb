@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,11 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+ define(['./CoordinateSystem', './RenderContext','./TileManager','./Tile' , './VectorRendererManager', './AttributionHandler' ], 
+	function(CoordinateSystem, RenderContext, TileManager, Tile, VectorRendererManager, AttributionHandler) {
 
 /**************************************************************************************************************/
 
@@ -35,12 +38,12 @@
 		</ul>
 	
  */
-GlobWeb.Globe = function(options)
+var Globe = function(options)
 {
-	this.renderContext = new GlobWeb.RenderContext(options);
-	this.tileManager = new GlobWeb.TileManager( this );
-	this.vectorRendererManager = new GlobWeb.VectorRendererManager( this );
-	this.attributionHandler = new GlobWeb.AttributionHandler();
+	this.renderContext = new RenderContext(options);
+	this.tileManager = new TileManager( this );
+	this.vectorRendererManager = new VectorRendererManager( this );
+	this.attributionHandler = new AttributionHandler();
 	this.activeAnimations = [];
 	this.preRenderers = [];
 	this.nbCreatedLayers = 0;
@@ -77,7 +80,7 @@ GlobWeb.Globe = function(options)
 /** 
 	Dispose the globe and all its ressources
  */
-GlobWeb.Globe.prototype.dispose = function()
+Globe.prototype.dispose = function()
 {	
 	this.tileManager.tilePool.disposeAll();
 	this.tileManager.reset();
@@ -89,7 +92,7 @@ GlobWeb.Globe.prototype.dispose = function()
 /** 
   Refresh rendering, must be called when canvas size is modified
  */
-GlobWeb.Globe.prototype.refresh = function()
+Globe.prototype.refresh = function()
 {
 	this.renderContext.requestFrame();
 }
@@ -99,9 +102,9 @@ GlobWeb.Globe.prototype.refresh = function()
 /** 
   Set the base imagery layer for the globe
   
-  @param {GlobWeb.RasterLayer} layer the layer to use, must be an imagery RasterLayer
+  @param {RasterLayer} layer the layer to use, must be an imagery RasterLayer
 */
-GlobWeb.Globe.prototype.setBaseImagery = function(layer)
+Globe.prototype.setBaseImagery = function(layer)
 {
 	if ( this.tileManager.imageryProvider )
 	{
@@ -120,9 +123,9 @@ GlobWeb.Globe.prototype.setBaseImagery = function(layer)
 /** 
   Set the base elevation layer for the globe
   
-  @param {GlobWeb.RasterLayer} layer the layer to use, must be an elevation RasterLayer
+  @param {RasterLayer} layer the layer to use, must be an elevation RasterLayer
 */
-GlobWeb.Globe.prototype.setBaseElevation = function(layer)
+Globe.prototype.setBaseElevation = function(layer)
 {
 	if ( this.tileManager.elevationProvider )
 	{
@@ -145,7 +148,7 @@ GlobWeb.Globe.prototype.setBaseElevation = function(layer)
   
   @param layer the layer to add
 */
-GlobWeb.Globe.prototype.addLayer = function(layer)
+Globe.prototype.addLayer = function(layer)
 {
 	layer.id = this.nbCreatedLayers;
 	layer._attach(this);
@@ -160,7 +163,7 @@ GlobWeb.Globe.prototype.addLayer = function(layer)
   
   @param layer the layer to remove
 */
-GlobWeb.Globe.prototype.removeLayer = function(layer)
+Globe.prototype.removeLayer = function(layer)
 {
 	layer._detach();
 	this.renderContext.requestFrame();
@@ -173,7 +176,7 @@ GlobWeb.Globe.prototype.removeLayer = function(layer)
   
   @param anim the animation to add
 */
-GlobWeb.Globe.prototype.addAnimation = function(anim)
+Globe.prototype.addAnimation = function(anim)
 {
 	anim.globe = this;
 }
@@ -185,7 +188,7 @@ GlobWeb.Globe.prototype.addAnimation = function(anim)
   
   @param anim the animation to remove
 */
-GlobWeb.Globe.prototype.removeAnimation = function(anim)
+Globe.prototype.removeAnimation = function(anim)
 {
 	anim.globe = null;
 }
@@ -199,11 +202,11 @@ GlobWeb.Globe.prototype.removeAnimation = function(anim)
   @param lat  the latitude in degree
   @return the elevation in meter at the position [lon,lat]
 */
-GlobWeb.Globe.prototype.getElevation = function(lon,lat)
+Globe.prototype.getElevation = function(lon,lat)
 {
 	var tiling = this.tileManager.imageryProvider.tiling;
 	var levelZeroTile = this.tileManager.level0Tiles[ tiling.lonlat2LevelZeroIndex(lon,lat) ];
-	if ( levelZeroTile.state == GlobWeb.Tile.State.LOADED )
+	if ( levelZeroTile.state == Tile.State.LOADED )
 		return levelZeroTile.getElevation(lon,lat);
 	else
 		return 0.0;
@@ -215,7 +218,7 @@ GlobWeb.Globe.prototype.getElevation = function(lon,lat)
 	Get the viewport geo bound
     @return the geo bound of the viewport
 */
-GlobWeb.Globe.prototype.getViewportGeoBound = function()
+Globe.prototype.getViewportGeoBound = function()
 {
 	var rc = this.renderContext;
 	var tmpMat = mat4.create();
@@ -240,14 +243,14 @@ GlobWeb.Globe.prototype.getViewportGeoBound = function()
 		vec3.subtract(points[i], eye, points[i]);
 		vec3.normalize( points[i] );
 		
-		var t = Numeric.raySphereIntersection( eye, points[i], earthCenter, GlobWeb.CoordinateSystem.radius);
+		var t = Numeric.raySphereIntersection( eye, points[i], earthCenter, CoordinateSystem.radius);
 		if ( t < 0.0 )
 			return null;
 			
-		points[i] = GlobWeb.CoordinateSystem.from3DToGeo( Numeric.pointOnRay(eye, points[i], t, tmpPt) );
+		points[i] = CoordinateSystem.from3DToGeo( Numeric.pointOnRay(eye, points[i], t, tmpPt) );
 	}
 
-	var geoBound = new GlobWeb.GeoBound();
+	var geoBound = new GeoBound();
 	geoBound.computeFromCoordinates( points );
 
 	return geoBound;
@@ -263,12 +266,12 @@ GlobWeb.Globe.prototype.getViewportGeoBound = function()
 	@param 	y the pixel y coordinate
 	@return	an array of two numbers [lon,lat] or null if the pixel is not on the globe
  */
-GlobWeb.Globe.prototype.getLonLatFromPixel = function(x,y)
+Globe.prototype.getLonLatFromPixel = function(x,y)
 {	
 	var pos3d = this.renderContext.get3DFromPixel(x,y);
 	if ( pos3d )
 	{
-		return GlobWeb.CoordinateSystem.from3DToGeo(pos3d);
+		return CoordinateSystem.from3DToGeo(pos3d);
 	}
 	else
 	{
@@ -286,10 +289,10 @@ GlobWeb.Globe.prototype.getLonLatFromPixel = function(x,y)
 	@param lat	the latitude
 	@return	an array of two numbers [x,y] or null if the pixel is not on the globe
  */
-GlobWeb.Globe.prototype.getPixelFromLonLat = function(lon,lat)
+Globe.prototype.getPixelFromLonLat = function(lon,lat)
 {	
 	var pos3d = vec3.create();
-	GlobWeb.CoordinateSystem.fromGeoTo3D([lon,lat], pos3d);
+	CoordinateSystem.fromGeoTo3D([lon,lat], pos3d);
 	var pixel = this.renderContext.getPixelFrom3D(pos3d[0],pos3d[1],pos3d[2]);
 	return pixel
 }
@@ -302,7 +305,7 @@ GlobWeb.Globe.prototype.getPixelFromLonLat = function(lon,lat)
 	
 	@private
  */
-GlobWeb.Globe.prototype.render = function()
+Globe.prototype.render = function()
 {
 	var rc = this.renderContext;
 	var stats = rc.stats;
@@ -359,7 +362,7 @@ GlobWeb.Globe.prototype.render = function()
 		</ul>
 	@param callback Callback function
 */
-GlobWeb.Globe.prototype.subscribe = function(name,callback)
+Globe.prototype.subscribe = function(name,callback)
 {
 	if( !this.callbacks[name] ) {
 		this.callbacks[name] = [ callback ];
@@ -373,10 +376,10 @@ GlobWeb.Globe.prototype.subscribe = function(name,callback)
 /** 
 	Unsubscribe to an event 
 	
-	@param name Event name {@link GlobWeb.Globe#subscribe}
+	@param name Event name {@link Globe#subscribe}
 	@param callback Callback function
 */
-GlobWeb.Globe.prototype.unsubscribe = function(name,callback)
+Globe.prototype.unsubscribe = function(name,callback)
 {
 	if( this.callbacks[name] ) {
 		var i = this.callbacks[name].indexOf( callback );
@@ -396,7 +399,7 @@ GlobWeb.Globe.prototype.unsubscribe = function(name,callback)
 	
 	@private
 */
-GlobWeb.Globe.prototype.publish = function(name,context)
+Globe.prototype.publish = function(name,context)
 {
 	if ( this.callbacks[name] ) {
 		var cbs = this.callbacks[name];
@@ -405,3 +408,7 @@ GlobWeb.Globe.prototype.publish = function(name,context)
 		}
 	}
 }
+
+return Globe;
+
+});

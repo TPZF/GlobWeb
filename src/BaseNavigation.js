@@ -1,3 +1,6 @@
+
+define( ['./MouseNavigationHandler', './KeyboardNavigationHandler', './InertiaAnimation' ], function(MouseNavigationHandler,KeyboardNavigationHandler,InertiaAnimation) {
+
 /**************************************************************************************************************/
 
 /** @export
@@ -12,7 +15,7 @@
 		</ul>
 
  */
-GlobWeb.BaseNavigation = function(globe, options)
+var BaseNavigation = function(globe, options)
 {
 	this.globe = globe;
 
@@ -25,13 +28,13 @@ GlobWeb.BaseNavigation = function(globe, options)
 	// Create default handlers if none are created in options
 	if ( !this.handlers ) 
 	{
-		this.handlers = [new GlobWeb.MouseNavigationHandler({ zoomOnDblClick : true }), new GlobWeb.KeyboardNavigationHandler()];
+		this.handlers = [new MouseNavigationHandler({ zoomOnDblClick : true }), new KeyboardNavigationHandler()];
 	}
 	
 	// Inertia effect
 	if( options && options.inertia )
 	{
-		this.inertia = new GlobWeb.InertiaAnimation(this);
+		this.inertia = new InertiaAnimation(this);
 	}
 	// ZoomTo animation
 	this.zoomToAnimation = null;
@@ -45,7 +48,7 @@ GlobWeb.BaseNavigation = function(globe, options)
 /** @export
 	Start the navigation
 */
-GlobWeb.BaseNavigation.prototype.start = function()
+BaseNavigation.prototype.start = function()
 {
 	// Install handlers
 	for (var i=0; i<this.handlers.length; i++)
@@ -59,7 +62,7 @@ GlobWeb.BaseNavigation.prototype.start = function()
 /** @export
 	Stop the navigation
 */
-GlobWeb.BaseNavigation.prototype.stop = function()
+BaseNavigation.prototype.stop = function()
 {
 	// Uninstall handlers
 	for (var i=0; i<this.handlers.length; i++)
@@ -73,7 +76,7 @@ GlobWeb.BaseNavigation.prototype.stop = function()
 /** @export
 	Stop the animations running on the navigation
 */
-GlobWeb.BaseNavigation.prototype.stopAnimations = function()
+BaseNavigation.prototype.stopAnimations = function()
 {
 	if ( this.inertia )
 	{
@@ -93,10 +96,14 @@ GlobWeb.BaseNavigation.prototype.stopAnimations = function()
 	
 	@return {Float[]} Fovx and fovy in degrees
 */
-GlobWeb.BaseNavigation.prototype.getFov = function()
+BaseNavigation.prototype.getFov = function()
 {
 	var aspect = this.globe.renderContext.canvas.width / this.globe.renderContext.canvas.height;
 	return [ aspect * this.globe.renderContext.fov, this.globe.renderContext.fov ];
 }
 
 /**************************************************************************************************************/
+
+return BaseNavigation;
+
+});

@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,15 +14,17 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+define( ['./FeatureStyle'], function(FeatureStyle) {
 
 /**************************************************************************************************************/
 
 /** @constructor
 	KMLParser constructor
  */
-GlobWeb.KMLParser = (function()
+var KMLParser = (function()
 {
 	var featureCollection = { type: "FeatureCollection",
 				features: [] };
@@ -181,7 +183,7 @@ GlobWeb.KMLParser = (function()
 			{
 				if ( shareStyle )
 				{
-					style = feature.properties.style = new GlobWeb.FeatureStyle(style);
+					style = feature.properties.style = new FeatureStyle(style);
 				}
 				style.label = feature.properties.name;
 			}
@@ -296,7 +298,7 @@ GlobWeb.KMLParser = (function()
 	{
 		var id = '#' + node.getAttribute("id");
 
-		var style = new GlobWeb.FeatureStyle();
+		var style = new FeatureStyle();
 		styles[id] = style;
 		
 		// Iterate through child to manage all different style element
@@ -356,3 +358,8 @@ GlobWeb.KMLParser = (function()
 	
 	return { parse: parse };
 })();
+
+return KMLParser;
+
+});
+

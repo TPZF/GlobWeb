@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,10 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+ define(['./Utils','./RasterLayer','./MercatorTiling'], function(Utils,RasterLayer,MercatorTiling) {
 
 /**************************************************************************************************************/
 
@@ -24,11 +26,11 @@
 	@constructor
 	OSMLayer constructor
  */
-GlobWeb.OSMLayer = function( options )
+var OSMLayer = function( options )
 {
-	GlobWeb.RasterLayer.prototype.constructor.call( this, options );
+	RasterLayer.prototype.constructor.call( this, options );
 	this.tilePixelSize = options.tilePixelSize || 256;
-	this.tiling = new GlobWeb.MercatorTiling( options.baseLevel || 2 );
+	this.tiling = new MercatorTiling( options.baseLevel || 2 );
 	this.numberOfLevels = options.numberOfLevels || 21;
 	this.type = "ImageryRaster";
 	this.baseUrl = options.baseUrl;
@@ -36,14 +38,14 @@ GlobWeb.OSMLayer = function( options )
 
 /**************************************************************************************************************/
 
-GlobWeb.inherits(GlobWeb.RasterLayer,GlobWeb.OSMLayer);
+Utils.inherits(RasterLayer,OSMLayer);
 
 /**************************************************************************************************************/
 
 /**
 	Get an url for the given tile
  */
-GlobWeb.OSMLayer.prototype.getUrl = function(tile)
+OSMLayer.prototype.getUrl = function(tile)
 {
 	var url = this.baseUrl + '/' + tile.level + '/' + tile.x + '/' + tile.y + '.png';
 	return url;
@@ -51,3 +53,7 @@ GlobWeb.OSMLayer.prototype.getUrl = function(tile)
 
 
 /**************************************************************************************************************/
+
+return OSMLayer;
+
+});

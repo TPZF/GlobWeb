@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,15 +14,17 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+define( ['./Program','./Tile'], function(Program,Tile) {
 
 //*************************************************************************
 
 /** 
 	@constructor
  */
-GlobWeb.RasterOverlayRenderer = function(tileManager)
+var RasterOverlayRenderer = function(tileManager)
 {
 	var vertexShader = "\
 	attribute vec3 vertex;\n\
@@ -59,7 +61,7 @@ GlobWeb.RasterOverlayRenderer = function(tileManager)
 	this.requestHighestResolutionFirst = true;
 	this.tileManager = tileManager;
 	
-    this.program = new GlobWeb.Program(tileManager.renderContext);
+    this.program = new Program(tileManager.renderContext);
 	this.program.createFromSource( vertexShader, fragmentShader );
 	
 	this.overlays = [];
@@ -115,7 +117,7 @@ GlobWeb.RasterOverlayRenderer = function(tileManager)
 	Create a renderable for the overlay.
 	There is one renderable per overlay and per tile.
  */
-GlobWeb.RasterOverlayRenderable = function( overlay )
+RasterOverlayRenderable = function( overlay )
 {
 	this.overlay = overlay;
 	this.texture = null;
@@ -128,7 +130,7 @@ GlobWeb.RasterOverlayRenderable = function( overlay )
 /** 
 	Dispose the renderable
  */
-GlobWeb.RasterOverlayRenderable.prototype.dispose = function(renderContext,tilePool)
+RasterOverlayRenderable.prototype.dispose = function(renderContext,tilePool)
 {
 	if ( this.texture ) 
 	{
@@ -145,7 +147,7 @@ GlobWeb.RasterOverlayRenderable.prototype.dispose = function(renderContext,tileP
 	Create tile data for the Raster overlay renderer.
 	The tile data is just an array of renderables.
  */
-GlobWeb.RasterOverlayRenderer.TileData = function()
+RasterOverlayRenderer.TileData = function()
 {
 	this.renderables = [];
 }
@@ -155,7 +157,7 @@ GlobWeb.RasterOverlayRenderer.TileData = function()
 /** 
 	Find the renderable of an overlay on a tile
  */
-GlobWeb.RasterOverlayRenderer.TileData.prototype.findRenderable = function(overlay)
+RasterOverlayRenderer.TileData.prototype.findRenderable = function(overlay)
 {
 	for ( var i = 0; i < this.renderables.length; i++ )
 	{
@@ -172,7 +174,7 @@ GlobWeb.RasterOverlayRenderer.TileData.prototype.findRenderable = function(overl
 /** 
 	Dispose tile data. Just dispose all renderables.
  */
-GlobWeb.RasterOverlayRenderer.TileData.prototype.dispose = function(renderContext,tilePool)
+RasterOverlayRenderer.TileData.prototype.dispose = function(renderContext,tilePool)
 {
 	for ( var i = 0; i < this.renderables.length; i++ )
 	{
@@ -186,13 +188,13 @@ GlobWeb.RasterOverlayRenderer.TileData.prototype.dispose = function(renderContex
 	Add an overlay into the renderer.
 	The overlay is added to all loaded tiles.
  */
-GlobWeb.RasterOverlayRenderer.prototype.addOverlay = function( overlay )
+RasterOverlayRenderer.prototype.addOverlay = function( overlay )
 {
 	this.overlays.push( overlay );
 	for ( var i = 0; i < this.tileManager.level0Tiles.length; i++ )
 	{
 		var tile = this.tileManager.level0Tiles[i];
-		if ( tile.state == GlobWeb.Tile.State.LOADED )
+		if ( tile.state == Tile.State.LOADED )
 		{
 			this.addOverlayToTile( tile, overlay );
 		}
@@ -205,7 +207,7 @@ GlobWeb.RasterOverlayRenderer.prototype.addOverlay = function( overlay )
 	Remove an overlay
 	The overlay is removed from all loaded tiles.
  */
-GlobWeb.RasterOverlayRenderer.prototype.removeOverlay = function( overlay )
+RasterOverlayRenderer.prototype.removeOverlay = function( overlay )
 {
 	var index = this.overlays.indexOf( overlay );
 	this.overlays.splice(index,1);
@@ -239,19 +241,19 @@ GlobWeb.RasterOverlayRenderer.prototype.removeOverlay = function( overlay )
 	Add an overlay into a tile.
 	Create tile data if needed, and create the renderable for the overlay.
  */
-GlobWeb.RasterOverlayRenderer.prototype.addOverlayToTile = function( tile, overlay )
+RasterOverlayRenderer.prototype.addOverlayToTile = function( tile, overlay )
 {
 	if ( !tile.extension.rasterOverlay )
-		tile.extension.rasterOverlay = new GlobWeb.RasterOverlayRenderer.TileData();
+		tile.extension.rasterOverlay = new RasterOverlayRenderer.TileData();
 	
-	tile.extension.rasterOverlay.renderables.push( new GlobWeb.RasterOverlayRenderable(overlay) );
+	tile.extension.rasterOverlay.renderables.push( new RasterOverlayRenderable(overlay) );
 	
 	if ( tile.children )
 	{
 		// Add the overlay to loaded children
 		for ( var i = 0; i < 4; i++ )
 		{
-			if ( tile.children[i].state == GlobWeb.Tile.State.LOADED
+			if ( tile.children[i].state == Tile.State.LOADED
 					&& this.overlayIntersects( tile.children[i].geoBound, overlay ) )
 			{
 				this.addOverlayToTile( tile.children[i], overlay );
@@ -266,7 +268,7 @@ GlobWeb.RasterOverlayRenderer.prototype.addOverlayToTile = function( tile, overl
 /**
 	Create an interpolated for polygon clipping
  */	
-GlobWeb.RasterOverlayRenderer.prototype.createInterpolatedVertex = function( t, p1, p2 )
+RasterOverlayRenderer.prototype.createInterpolatedVertex = function( t, p1, p2 )
 {
 	return [ p1[0] + t * (p2[0] - p1[0]), p1[1] + t * (p2[1] - p1[1]) ];
 }
@@ -276,7 +278,7 @@ GlobWeb.RasterOverlayRenderer.prototype.createInterpolatedVertex = function( t, 
 /**
 	Clip polygon to a side (used by bound-overlay intersection)
  */	
-GlobWeb.RasterOverlayRenderer.prototype.clipPolygonToSide = function( coord, sign, value, polygon )
+RasterOverlayRenderer.prototype.clipPolygonToSide = function( coord, sign, value, polygon )
 {
 	var clippedPolygon = [];
 
@@ -320,7 +322,7 @@ GlobWeb.RasterOverlayRenderer.prototype.clipPolygonToSide = function( coord, sig
 /**
 	Check the intersection between a geo bound and an overlay
  */	
-GlobWeb.RasterOverlayRenderer.prototype.overlayIntersects = function( bound, overlay )
+RasterOverlayRenderer.prototype.overlayIntersects = function( bound, overlay )
 {
 	if ( overlay.coordinates )
 	{
@@ -346,7 +348,7 @@ GlobWeb.RasterOverlayRenderer.prototype.overlayIntersects = function( bound, ove
 	Generate Raster overlay data on the tile.
 	The method is called by TileManager when a new tile has been generated.
  */
-GlobWeb.RasterOverlayRenderer.prototype.generate = function( tile )
+RasterOverlayRenderer.prototype.generate = function( tile )
 {
 	if ( tile.parent )
 	{	
@@ -377,7 +379,7 @@ GlobWeb.RasterOverlayRenderer.prototype.generate = function( tile )
 /**
 	Request the overlay texture for a tile
  */
-GlobWeb.RasterOverlayRenderer.prototype.requestOverlayTextureForTile = function( tile, renderable )
+RasterOverlayRenderer.prototype.requestOverlayTextureForTile = function( tile, renderable )
 {	
 	if ( !renderable.request )
 	{
@@ -410,7 +412,7 @@ GlobWeb.RasterOverlayRenderer.prototype.requestOverlayTextureForTile = function(
 /**
  *	Render the raster overlays for the given tiles
  */
-GlobWeb.RasterOverlayRenderer.prototype.render = function( tiles )
+RasterOverlayRenderer.prototype.render = function( tiles )
 {
 	// First check if there is someting to do
 	if ( this.overlays.length == 0 )
@@ -439,7 +441,7 @@ GlobWeb.RasterOverlayRenderer.prototype.render = function( tiles )
 		var tile = tiles[i];
 				
 		// First retreive tileData for overlay
-		var isTileLoaded = (tile.state == GlobWeb.Tile.State.LOADED);
+		var isTileLoaded = (tile.state == Tile.State.LOADED);
 		var tileData;
 		
 		if ( isTileLoaded )
@@ -555,3 +557,7 @@ GlobWeb.RasterOverlayRenderer.prototype.render = function( tiles )
 }
 
 //*************************************************************************
+
+return RasterOverlayRenderer;
+
+});

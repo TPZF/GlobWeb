@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,16 +14,18 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+ define( function() {
+ 
 /**************************************************************************************************************/
 
 /** 
 	@constructor
 	Function constructor for Stats
  */
-GlobWeb.Stats = function(globe,options)
+var Stats = function(globe,options)
 {
 	globe.renderContext.stats = this;
 	this.globe = globe;
@@ -54,7 +56,7 @@ GlobWeb.Stats = function(globe,options)
 /** 
 	Start measuring time
  */
-GlobWeb.Stats.prototype.start = function(name)
+Stats.prototype.start = function(name)
 {
 	this[name] = Date.now();
 }
@@ -64,7 +66,7 @@ GlobWeb.Stats.prototype.start = function(name)
 /** 
 	End measuring time
  */
-GlobWeb.Stats.prototype.end = function(name)
+Stats.prototype.end = function(name)
 {
 	var time = Date.now() - this[name];
 	
@@ -89,7 +91,7 @@ GlobWeb.Stats.prototype.end = function(name)
 /** 
 	Print stats in an HTML element
  */
-GlobWeb.Stats.prototype.print = function()
+Stats.prototype.print = function()
 {
 	if ( this.numFrames > 0 )
 	{
@@ -134,3 +136,7 @@ GlobWeb.Stats.prototype.print = function()
 }
 
 /**************************************************************************************************************/
+
+return Stats;
+
+});

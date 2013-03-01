@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,10 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+ define( ['./Program','./FeatureStyle','./Tile','./RendererTileData'], function(Program,FeatureStyle,Tile,RendererTileData) {
 
 /**************************************************************************************************************/
 
@@ -23,13 +25,13 @@
 /** @constructor
 	TiledVectorRenderer constructor
  */
-GlobWeb.TiledVectorRenderer = function(tileManager)
+var TiledVectorRenderer = function(tileManager)
 {
 	this.tileManager = tileManager;
 	
 	// Create a bucket with default style
 	// Bucket aggregate geometries that shares a common style
-	this.buckets = [  { style: new GlobWeb.FeatureStyle(), geometries: [] } ];
+	this.buckets = [  { style: new FeatureStyle(), geometries: [] } ];
 	
 	var vertexShader = "\
 	attribute vec3 vertex; \n\
@@ -55,7 +57,7 @@ GlobWeb.TiledVectorRenderer = function(tileManager)
 	} \n\
 	";
 
-    this.program = new GlobWeb.Program(this.tileManager.renderContext);
+    this.program = new Program(this.tileManager.renderContext);
     this.program.createFromSource(vertexShader, fragmentShader);
 	
 	// Customization for different renderer : lineString or polygon
@@ -69,7 +71,7 @@ GlobWeb.TiledVectorRenderer = function(tileManager)
 /**
 	Get or create a bucket to store a feature with the given style
  */
-GlobWeb.TiledVectorRenderer.prototype.getOrCreateBucket = function( layer, style )
+TiledVectorRenderer.prototype.getOrCreateBucket = function( layer, style )
 {
 	for ( var i = 0; i < this.buckets.length; i++ )
 	{
@@ -89,7 +91,7 @@ GlobWeb.TiledVectorRenderer.prototype.getOrCreateBucket = function( layer, style
 /**
 	Remove a geometry from the tile
  */
-GlobWeb.TiledVectorRenderer.prototype.removeGeometryFromTile = function( bucket, geometry, tile )
+TiledVectorRenderer.prototype.removeGeometryFromTile = function( bucket, geometry, tile )
 {
 	var renderable = this.findRenderable( bucket, tile );
 	if ( renderable && renderable.removeGeometry( geometry ) && tile.children )
@@ -97,7 +99,7 @@ GlobWeb.TiledVectorRenderer.prototype.removeGeometryFromTile = function( bucket,
 		// Remove the geometry from loaded children
 		for ( var i = 0; i < 4; i++ )
 		{
-			if ( tile.children[i].state == GlobWeb.Tile.State.LOADED )
+			if ( tile.children[i].state == Tile.State.LOADED )
 			{
 				this.removeGeometryFromTile( bucket, geometry, tile.children[i] );
 			}
@@ -110,7 +112,7 @@ GlobWeb.TiledVectorRenderer.prototype.removeGeometryFromTile = function( bucket,
 /**
 	Remove a geometry from the renderer
  */
-GlobWeb.TiledVectorRenderer.prototype.removeGeometry = function( geometry, layer )
+TiledVectorRenderer.prototype.removeGeometry = function( geometry, layer )
 {
 	var foundBucket = null;
 	
@@ -146,7 +148,7 @@ GlobWeb.TiledVectorRenderer.prototype.removeGeometry = function( geometry, layer
 	Clean-up a tile
 	TODO : the method is only used by TileManager.removePostRenderer, maybe remove it, TileManager can use directly the extension id.
  */
-GlobWeb.TiledVectorRenderer.prototype.cleanupTile = function( tile )
+TiledVectorRenderer.prototype.cleanupTile = function( tile )
 {
 	if ( tile.extension[this.id] )
 	{
@@ -161,7 +163,7 @@ GlobWeb.TiledVectorRenderer.prototype.cleanupTile = function( tile )
 	Add a geometry to the renderer.
 	Public method to add geometry to the renderer
  */
-GlobWeb.TiledVectorRenderer.prototype.addGeometry = function( geometry, layer, style )
+TiledVectorRenderer.prototype.addGeometry = function( geometry, layer, style )
 {
 	var bucket = this.getOrCreateBucket( layer, style );
 	bucket.geometries.push( geometry );
@@ -169,7 +171,7 @@ GlobWeb.TiledVectorRenderer.prototype.addGeometry = function( geometry, layer, s
 	for ( var i = 0; i < this.tileManager.level0Tiles.length; i++ )
 	{
 		var tile = this.tileManager.level0Tiles[i];
-		if ( tile.state == GlobWeb.Tile.State.LOADED )
+		if ( tile.state == Tile.State.LOADED )
 			this.addGeometryToTile( bucket, geometry, tile );
 	}
 }
@@ -180,7 +182,7 @@ GlobWeb.TiledVectorRenderer.prototype.addGeometry = function( geometry, layer, s
 	Add a geometry to the given tile.
 	The method is recursive, it will also add the geometry to children if exists
  */
-GlobWeb.TiledVectorRenderer.prototype.addGeometryToTile = function( bucket, geometry, tile )
+TiledVectorRenderer.prototype.addGeometryToTile = function( bucket, geometry, tile )
 {
 	var isNewRenderable = false;
 	
@@ -203,7 +205,7 @@ GlobWeb.TiledVectorRenderer.prototype.addGeometryToTile = function( bucket, geom
 		// Recursively add the geometry to loaded children
 		for ( var i = 0; i < 4; i++ )
 		{
-			if ( tile.children[i].state == GlobWeb.Tile.State.LOADED )
+			if ( tile.children[i].state == Tile.State.LOADED )
 			{
 				this.addGeometryToTile( bucket, geometry, tile.children[i] );
 			}
@@ -222,12 +224,12 @@ GlobWeb.TiledVectorRenderer.prototype.addGeometryToTile = function( bucket, geom
 /**
 	Add a renderable to the tile
  */
-GlobWeb.TiledVectorRenderer.prototype.addRenderableToTile = function( tile, renderable )
+TiledVectorRenderer.prototype.addRenderableToTile = function( tile, renderable )
 {
 	if ( renderable.vertices.length > 0 )
 	{
 		if ( !tile.extension[this.id] )
-			tile.extension[this.id] = new GlobWeb.RendererTileData();
+			tile.extension[this.id] = new RendererTileData();
 		
 		tile.extension[this.id].renderables.push( renderable );
 	}
@@ -238,7 +240,7 @@ GlobWeb.TiledVectorRenderer.prototype.addRenderableToTile = function( tile, rend
 /**
 	Generate renderable data on the tile
  */
-GlobWeb.TiledVectorRenderer.prototype.generate = function( tile )
+TiledVectorRenderer.prototype.generate = function( tile )
 {
 	if ( tile.parent )
 	{	
@@ -282,7 +284,7 @@ GlobWeb.TiledVectorRenderer.prototype.generate = function( tile )
 /**
 	Render all redenrable on the given tiles
  */
-GlobWeb.TiledVectorRenderer.prototype.render = function( visibleTiles )
+TiledVectorRenderer.prototype.render = function( visibleTiles )
 {
 	var renderContext = this.tileManager.renderContext;
 	var gl = renderContext.gl;
@@ -330,7 +332,7 @@ GlobWeb.TiledVectorRenderer.prototype.render = function( visibleTiles )
 			}
 		}
 		// If the tile is not loaded, but its parent contains some renderable, render them 'clipped' to the child tile to avoid 'glitch' when zooming
-		else if ( tile.state != GlobWeb.Tile.State.LOADED && tile.parent.extension[this.id] )
+		else if ( tile.state != Tile.State.LOADED && tile.parent.extension[this.id] )
 		{
 			mat4.multiply( renderContext.viewMatrix, tile.parent.matrix, modelViewMatrix );
 			gl.uniformMatrix4fv( this.program.uniforms["modelViewMatrix"], false, modelViewMatrix );
@@ -363,3 +365,7 @@ GlobWeb.TiledVectorRenderer.prototype.render = function( visibleTiles )
 }
 
 /**************************************************************************************************************/
+
+return TiledVectorRenderer;
+
+});

@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,26 +14,29 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+ define(['./Utils','./VectorRendererManager','./TiledVectorRenderable','./TiledVectorRenderer','./Numeric'],
+	function(Utils,VectorRendererManager,TiledVectorRenderable,TiledVectorRenderer,Numeric) {
 
 /**************************************************************************************************************/
 
 
 /** @constructor
- *  @extends GlobWeb.TiledVectorRenderable
+ *  @extends TiledVectorRenderable
  *	LineStringRenderable manages lineString data to be rendered on a tile.
  */
-GlobWeb.LineStringRenderable = function( bucket, gl )
+var LineStringRenderable = function( bucket, gl )
 {
-	GlobWeb.TiledVectorRenderable.prototype.constructor.call(this,bucket,gl);
+	TiledVectorRenderable.prototype.constructor.call(this,bucket,gl);
 	this.glMode = gl.LINES;
 }
 
 /**************************************************************************************************************/
 
 // Inheritance
-GlobWeb.inherits(GlobWeb.TiledVectorRenderable,GlobWeb.LineStringRenderable);
+Utils.inherits(TiledVectorRenderable,LineStringRenderable);
 
 /**************************************************************************************************************/
 
@@ -41,7 +44,7 @@ GlobWeb.inherits(GlobWeb.TiledVectorRenderable,GlobWeb.LineStringRenderable);
  * Build children indices.
  * Children indices are used to render a tile children when it is not completely loaded.
  */
-GlobWeb.LineStringRenderable.prototype.buildChildrenIndices = function()
+LineStringRenderable.prototype.buildChildrenIndices = function()
 {
 	this.childrenIndices = [ [], [], [], [] ];
 	this.childrenIndexBuffers = [ null, null, null, null ];
@@ -76,7 +79,7 @@ GlobWeb.LineStringRenderable.prototype.buildChildrenIndices = function()
  * Build vertices and indices from the coordinates.
  * Clamp a line string on a tile
  */
-GlobWeb.LineStringRenderable.prototype.buildVerticesAndIndices = function( tile, coords )
+LineStringRenderable.prototype.buildVerticesAndIndices = function( tile, coords )
 {
 	if ( coords.length == 0 )
 		return;
@@ -204,12 +207,16 @@ GlobWeb.LineStringRenderable.prototype.buildVerticesAndIndices = function( tile,
 /**************************************************************************************************************/
 
 // Register the renderer
-GlobWeb.VectorRendererManager.registerRenderer({
+VectorRendererManager.registerRenderer({
 					creator: function(globe) { 
-						var lineStringRenderer = new GlobWeb.TiledVectorRenderer(globe.tileManager);
+						var lineStringRenderer = new TiledVectorRenderer(globe.tileManager);
 						lineStringRenderer.id = "lineString";
-						lineStringRenderer.styleEquals = function(s1,s2) { return s1.isEqualForLine(s2); };
-						lineStringRenderer.renderableConstuctor = GlobWeb.LineStringRenderable;
+						lineStringRenderer.styleEquals = function(s1,s2) {
+							if (!s1.isEqualForLine)
+								console.log(s1);
+							return s1.isEqualForLine(s2);
+						};
+						lineStringRenderer.renderableConstuctor = LineStringRenderable;
 						return lineStringRenderer;
 					},
 					canApply: function(type,style) {
@@ -219,4 +226,9 @@ GlobWeb.VectorRendererManager.registerRenderer({
 							|| (!style.fill && (type == "Polygon" || type == "MultiPolygon"))); 
 					} 
 				});
+				
+return LineStringRenderable;
+
+});
+
 										

@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,11 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+ define(['./Utils', './BaseLayer', './RasterOverlayRenderer' ], 
+	function(Utils, BaseLayer, RasterOverlayRenderer) {
 
 /**************************************************************************************************************/
 
@@ -24,9 +27,9 @@
 	@constructor
 	RasterLayer constructor
  */
- GlobWeb.RasterLayer = function( options )
+var RasterLayer = function( options )
 {
-	GlobWeb.BaseLayer.prototype.constructor.call( this, options );
+	BaseLayer.prototype.constructor.call( this, options );
 	
 	// Base properties
 	this.tilePixelSize = -1;
@@ -42,14 +45,14 @@
 
 /**************************************************************************************************************/
 
-GlobWeb.inherits( GlobWeb.BaseLayer,GlobWeb.RasterLayer );
+Utils.inherits( BaseLayer,RasterLayer );
 
 /**************************************************************************************************************/
 
 /** 
   Attach the raster layer to the globe
  */
-GlobWeb.RasterLayer.prototype._attach = function( g )
+RasterLayer.prototype._attach = function( g )
 {
 	if ( !this.overlay )
 	{
@@ -57,14 +60,14 @@ GlobWeb.RasterLayer.prototype._attach = function( g )
 		this.id = 0;
 	}
 
-	GlobWeb.BaseLayer.prototype._attach.call( this, g );
+	BaseLayer.prototype._attach.call( this, g );
 		
 	if ( this.overlay )
 	{
 		// Create the renderer if needed
 		if ( !g.rasterOverlayRenderer )
 		{
-			var renderer = new GlobWeb.RasterOverlayRenderer(g.tileManager);
+			var renderer = new RasterOverlayRenderer(g.tileManager);
 			g.tileManager.addPostRenderer(renderer);
 			g.rasterOverlayRenderer = renderer;
 		}
@@ -77,7 +80,7 @@ GlobWeb.RasterLayer.prototype._attach = function( g )
 /** 
   Detach the raster layer from the globe
  */
-GlobWeb.RasterLayer.prototype._detach = function()
+RasterLayer.prototype._detach = function()
 {
 	// Remove raster from overlay renderer if needed
 	if ( this.overlay && this.globe.rasterOverlayRenderer )
@@ -85,7 +88,11 @@ GlobWeb.RasterLayer.prototype._detach = function()
 		this.globe.rasterOverlayRenderer.removeOverlay(this);
 	}
 	
-	GlobWeb.BaseLayer.prototype._detach.call(this);
+	BaseLayer.prototype._detach.call(this);
 }
 
 /**************************************************************************************************************/
+
+return RasterLayer;
+
+});

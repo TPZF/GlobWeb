@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,10 +14,12 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-GlobWeb.BingTileSystem = (function() 
+ define(['./Utils','./RasterLayer','./MercatorTiling'], function(Utils,RasterLayer,MercatorTiling) {
+
+var BingTileSystem = (function() 
 {
 	var EarthRadius = 6378137;
 	var MinLatitude = -85.05112878;
@@ -247,15 +249,15 @@ GlobWeb.BingTileSystem = (function()
 /** 
 	@constructor BingLayer constructor
 	@class A layer to supports Bing imagery.
-	@extends GlobWeb.RasterLayer
+	@extends RasterLayer
  */
-GlobWeb.BingLayer = function( options )
+var BingLayer = function( options )
 {
 	// Call ancestor
-	GlobWeb.RasterLayer.prototype.constructor.call( this, options );
+	RasterLayer.prototype.constructor.call( this, options );
 	
 	this.tilePixelSize = 256;
-	this.tiling = new GlobWeb.MercatorTiling( options.baseLevel || 2 );
+	this.tiling = new MercatorTiling( options.baseLevel || 2 );
 	this.numberOfLevels = 18;
 	this.type = "ImageryRaster";
 	this.ready = false;
@@ -292,17 +294,21 @@ GlobWeb.BingLayer = function( options )
 	document.getElementsByTagName("head")[0].appendChild(script);
 }
 
-GlobWeb.inherits(GlobWeb.RasterLayer,GlobWeb.BingLayer);
+Utils.inherits(RasterLayer,BingLayer);
 
 /**************************************************************************************************************/
 
 /**
 	Get an url for the given tile
  */
-GlobWeb.BingLayer.prototype.getUrl = function(tile)
+BingLayer.prototype.getUrl = function(tile)
 {
-	var url = this.baseUrl.replace( "{quadkey}", GlobWeb.BingTileSystem.tileXYToQuadKey(tile.x,tile.y,tile.level) );	
+	var url = this.baseUrl.replace( "{quadkey}", BingTileSystem.tileXYToQuadKey(tile.x,tile.y,tile.level) );	
 	return url.replace( "{subdomain}", this.baseUrlSubDomains[ Math.floor( Math.random() * this.baseUrlSubDomains.length ) ] );
 }
 
 /**************************************************************************************************************/
+
+return BingLayer;
+
+});

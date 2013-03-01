@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,10 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+ define(['./Utils','./Animation','./Numeric'], function(Utils,Animation,Numeric) {
 
 /**************************************************************************************************************/
 
@@ -28,10 +30,10 @@
   The current segment is then looked up with that 't' value and used to interpolate
   the animation's current value.
  */
-GlobWeb.SegmentedAnimation = function(duration, valueSetter)
+var SegmentedAnimation = function(duration, valueSetter)
 {
     // Call ancestor constructor
-    GlobWeb.Animation.prototype.constructor.call(this);
+    Animation.prototype.constructor.call(this);
 
     this.segments = [];
     this.duration = duration;
@@ -40,14 +42,14 @@ GlobWeb.SegmentedAnimation = function(duration, valueSetter)
 
 /**************************************************************************************************************/
 
-GlobWeb.inherits(GlobWeb.Animation,GlobWeb.SegmentedAnimation);
+Utils.inherits(Animation,SegmentedAnimation);
 
 /**************************************************************************************************************/
 
 /** @constructor
   Segment struct
 */
-GlobWeb.SegmentedAnimation.Segment = function(start, startValue, end, endValue, interpolator)
+SegmentedAnimation.Segment = function(start, startValue, end, endValue, interpolator)
 {
     this.start = start;
     this.startValue = startValue;
@@ -64,13 +66,13 @@ GlobWeb.SegmentedAnimation.Segment = function(start, startValue, end, endValue, 
 	startValue, endValue are animation values at 't'=start and 't'=end
 	interpolator is the function that will be called to interpolate bewteen startValue and endValue.
 */
-GlobWeb.SegmentedAnimation.prototype.addSegment = function(start, startValue, end, endValue, interpolator)
+SegmentedAnimation.prototype.addSegment = function(start, startValue, end, endValue, interpolator)
 {
     var count = this.segments.length;
     var index = 0;
     while (index < count && this.segments[index].end <= start) index++;
     // Insert new segment at position 'index'
-    this.segments.splice(index, 0, new GlobWeb.SegmentedAnimation.Segment(start, startValue, end, endValue, interpolator));
+    this.segments.splice(index, 0, new SegmentedAnimation.Segment(start, startValue, end, endValue, interpolator));
 }
 
 /**************************************************************************************************************/
@@ -78,7 +80,7 @@ GlobWeb.SegmentedAnimation.prototype.addSegment = function(start, startValue, en
 /*
 	Animation update method
 */
-GlobWeb.SegmentedAnimation.prototype.update = function(now)
+SegmentedAnimation.prototype.update = function(now)
 {
     var t = Numeric.map01(now, this.startTime, this.startTime + this.duration);
     if (t >= 1)
@@ -106,3 +108,7 @@ GlobWeb.SegmentedAnimation.prototype.update = function(now)
 }
 
 /**************************************************************************************************************/
+
+return SegmentedAnimation;
+
+});

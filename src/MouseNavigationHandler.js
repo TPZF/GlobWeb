@@ -1,3 +1,6 @@
+
+define( function() {
+
 /**************************************************************************************************************/
 
 /** @export
@@ -9,7 +12,7 @@
 				<li>inertia: boolean value of inertia effect</li>
 			</ul>
  */
-GlobWeb.MouseNavigationHandler = function(options){
+var MouseNavigationHandler = function(options){
 	
 	/**************************************************************************************************************/
 	
@@ -247,3 +250,7 @@ GlobWeb.MouseNavigationHandler = function(options){
 		canvas.removeEventListener("mousewheel", _handleMouseWheel);
 	};
 };
+
+return MouseNavigationHandler;
+
+});

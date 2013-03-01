@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,9 +14,11 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+ define( function() {
+ 
 /**************************************************************************************************************/
 
 
@@ -24,8 +26,7 @@
 	@constructor
 	BaseLayer constructor
  */
-
-GlobWeb.BaseLayer = function(options)
+var BaseLayer = function(options)
 {
 	this.globe = null;
 	this.name = options && options.hasOwnProperty('name') ? options['name'] : "";
@@ -41,7 +42,7 @@ GlobWeb.BaseLayer = function(options)
 /** 
   Attach the raster layer to the globe
  */
-GlobWeb.BaseLayer.prototype._attach = function( g )
+BaseLayer.prototype._attach = function( g )
 {
 	this.globe = g;
 	if ( this.attribution )
@@ -55,7 +56,7 @@ GlobWeb.BaseLayer.prototype._attach = function( g )
 /** 
   Detach the vector layer from the globe
  */
-GlobWeb.BaseLayer.prototype._detach = function()
+BaseLayer.prototype._detach = function()
 {
 	if ( this.attribution )
 	{
@@ -70,7 +71,7 @@ GlobWeb.BaseLayer.prototype._detach = function()
 /**
   Set the layer visible
  */
-GlobWeb.BaseLayer.prototype.visible = function( arg )
+BaseLayer.prototype.visible = function( arg )
 {
 	if ( typeof arg == "boolean" )
 	{
@@ -85,7 +86,7 @@ GlobWeb.BaseLayer.prototype.visible = function( arg )
 /**
   Set the opacity of the layer
  */
-GlobWeb.BaseLayer.prototype.opacity = function( arg )
+BaseLayer.prototype.opacity = function( arg )
 {
 	if ( typeof arg == "number" )
 	{
@@ -94,3 +95,7 @@ GlobWeb.BaseLayer.prototype.opacity = function( arg )
 	}
 	return this._opacity;
 }
+
+return BaseLayer;
+
+});

@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,10 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+ define( function() {
 
 /**************************************************************************************************************/
 
@@ -31,7 +33,7 @@
 	@param styles CSS style parameters
 */
 
-GlobWeb.AttributionHandler = function(options, style)
+var AttributionHandler = function(options, style)
 {
 	// Default options
 	this.id = "attributions";
@@ -69,7 +71,7 @@ GlobWeb.AttributionHandler = function(options, style)
 * 	Remove attribution from HTML
 * 	@param layer Selected layer
 */
-GlobWeb.AttributionHandler.prototype.removeAttribution = function( layer )
+AttributionHandler.prototype.removeAttribution = function( layer )
 {
 	var div = document.getElementById( "attribution_"+layer.id );
 	if ( div )
@@ -82,7 +84,7 @@ GlobWeb.AttributionHandler.prototype.removeAttribution = function( layer )
 * 	Add attribution in HTML
 * 	@param layer Selected layer
 */
-GlobWeb.AttributionHandler.prototype.addAttribution = function(layer)
+AttributionHandler.prototype.addAttribution = function(layer)
 { 
 	var div = document.createElement('div');
 	div.innerHTML = layer.attribution;
@@ -102,3 +104,7 @@ GlobWeb.AttributionHandler.prototype.addAttribution = function(layer)
 }
 
 /**************************************************************************************************************/
+
+return AttributionHandler;
+
+});

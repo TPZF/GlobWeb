@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,50 +14,12 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-/**************************************************************************************************************/
-
-/** @constructor
-	FeatureStyle construtor
- */
-GlobWeb.FeatureStyle = function(style)
-{
-	// Color used for lines or polygon outline
-	this.strokeColor = [1.0, 0.0, 0.0, 1.0];
-	// Color used to full polygon
-	this.fillColor = [1.0, 0.0, 0.0, 1.0];
-	this.fillTextureUrl = null;
-   this.fillTexture = null;
-   this.fillShader = null;
-	this.strokeWidth = 1;
-	this.iconUrl = null;
-	this.icon = null;
-	this.label = null;
-	this.textColor = [1.0, 1.0, 1.0, 1.0];
-	this.fill = false;
-	this.pointMaxSize = 40;
-	this.opacity = 1.;
-	this['rendererHint'] = "Tiled";
-	
-	if ( style )
-	{
-		for ( var s in style )
-		{
-			this[s] = style[s];
-		}
-	}
-}
-
-
-/**************************************************************************************************************/
-
-/**
- * Convert a color from a string to RGB
- */
-GlobWeb.FeatureStyle.fromStringToColor = (function() {
-
+ define( function() {
+ 
+ 
 // Simple colors
 var simple_colors = {
    aliceblue: 'f0f8ff',
@@ -209,68 +171,104 @@ var parseHex = /^(\w{2})(\w{2})(\w{2})$/;
 var parseRgb = /^rgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)$/;
 var parseRgba = /^rgba\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3},\s*(\d{1,3}))\)$/;
 
-var parseColorString = function(color_string)
-{
-        var r = 0, g = 0, b = 0, a = 255;
-		var match;
-		
-        color_string = color_string.trim();
-        color_string = color_string.toLowerCase();
-        // strip any leading #
-        if (color_string.charAt(0) == '#') { // remove # if any
-           color_string = color_string.substr(1,6);
-        }
-		
-		// Convert a litteral color to rgb string
-		if ( simple_colors.hasOwnProperty(color_string) )
-		{
-			color_string = simple_colors[color_string];
-		}
-		
-		match = parseHex.exec(color_string);
-		if ( match )
-		{
-			r = parseInt(match[1],16);
-			g = parseInt(match[2],16);
-			b = parseInt(match[3],16);
-		}
-		
-		match = parseRgb.exec(color_string);
-		if ( match )
-		{
-			r = parseInt(match[1]);
-			g = parseInt(match[2]);
-			b = parseInt(match[3]);
-		}
-		
-		match = parseRgba.exec(color_string);
-		if ( match )
-		{
-			r = parseInt(match[1]);
-			g = parseInt(match[2]);
-			b = parseInt(match[3]);
-			a = parseInt(match[4]);
-		}
-	
-        // validate/cleanup values
-        r = (r < 0) ? 0 : ((r > 255) ? 255 : r);
-        g = (g < 0) ? 0 : ((g > 255) ? 255 : g);
-        b = (b < 0) ? 0 : ((b > 255) ? 255 : b);
-        a = (a < 0) ? 0 : ((a > 255) ? 255 : a);
 
-        return [r / 255.0, g / 255.0, b / 255.0, a / 255.0];
+/**************************************************************************************************************/
+
+/** @constructor
+	FeatureStyle construtor
+ */
+var FeatureStyle = function(style)
+{
+	// Color used for lines or polygon outline
+	this.strokeColor = [1.0, 0.0, 0.0, 1.0];
+	// Color used to full polygon
+	this.fillColor = [1.0, 0.0, 0.0, 1.0];
+	this.fillTextureUrl = null;
+    this.fillTexture = null;
+    this.fillShader = null;
+	this.strokeWidth = 1;
+	this.iconUrl = null;
+	this.icon = null;
+	this.label = null;
+	this.textColor = [1.0, 1.0, 1.0, 1.0];
+	this.fill = false;
+	this.pointMaxSize = 40;
+	this.opacity = 1.;
+	this['rendererHint'] = "Tiled";
+	
+	if ( style )
+	{
+		for ( var s in style )
+		{
+			this[s] = style[s];
+		}
+	}
 }
 
-return parseColorString;
 
-})();
+/**************************************************************************************************************/
+
+/**
+ * Convert a color from a string to RGB
+ */
+FeatureStyle.fromStringToColor = function()
+{
+	var r = 0, g = 0, b = 0, a = 255;
+	var match;
+	
+	color_string = color_string.trim();
+	color_string = color_string.toLowerCase();
+	// strip any leading #
+	if (color_string.charAt(0) == '#') { // remove # if any
+	   color_string = color_string.substr(1,6);
+	}
+	
+	// Convert a litteral color to rgb string
+	if ( simple_colors.hasOwnProperty(color_string) )
+	{
+		color_string = simple_colors[color_string];
+	}
+	
+	match = parseHex.exec(color_string);
+	if ( match )
+	{
+		r = parseInt(match[1],16);
+		g = parseInt(match[2],16);
+		b = parseInt(match[3],16);
+	}
+	
+	match = parseRgb.exec(color_string);
+	if ( match )
+	{
+		r = parseInt(match[1]);
+		g = parseInt(match[2]);
+		b = parseInt(match[3]);
+	}
+	
+	match = parseRgba.exec(color_string);
+	if ( match )
+	{
+		r = parseInt(match[1]);
+		g = parseInt(match[2]);
+		b = parseInt(match[3]);
+		a = parseInt(match[4]);
+	}
+
+	// validate/cleanup values
+	r = (r < 0) ? 0 : ((r > 255) ? 255 : r);
+	g = (g < 0) ? 0 : ((g > 255) ? 255 : g);
+	b = (b < 0) ? 0 : ((b > 255) ? 255 : b);
+	a = (a < 0) ? 0 : ((a > 255) ? 255 : a);
+
+	return [r / 255.0, g / 255.0, b / 255.0, a / 255.0];
+}
 
 /**************************************************************************************************************/
 
 /** 
  * Convert an internal color to a string based color representation
  */
-GlobWeb.FeatureStyle.fromColorToString = function(color)
+FeatureStyle.fromColorToString = function(color)
 {		
    var hashColor = '#';
    for ( var i=0; i<3; i++ )
@@ -287,7 +285,7 @@ GlobWeb.FeatureStyle.fromColorToString = function(color)
 /** 
  * Check if a style is equals to render poly
  */
-GlobWeb.FeatureStyle.prototype.isEqualForPoly = function(style)
+FeatureStyle.prototype.isEqualForPoly = function(style)
 {
 	return this.fill == style.fill;
 }
@@ -297,7 +295,7 @@ GlobWeb.FeatureStyle.prototype.isEqualForPoly = function(style)
 /** 
  * Check if a style is equals to render poly
  */
-GlobWeb.FeatureStyle.prototype.isEqualForLine = function(style)
+FeatureStyle.prototype.isEqualForLine = function(style)
 {
 	return this.strokeColor[0] == style.strokeColor[0]
 		&& this.strokeColor[1] == style.strokeColor[1]
@@ -311,7 +309,7 @@ GlobWeb.FeatureStyle.prototype.isEqualForLine = function(style)
 /** 
  * Check if a style is equals to render point
  */
-GlobWeb.FeatureStyle.prototype.isEqualForPoint = function(style)
+FeatureStyle.prototype.isEqualForPoint = function(style)
 {
 	return this.iconUrl == style.iconUrl
 		&& this.icon == style.icon
@@ -319,4 +317,8 @@ GlobWeb.FeatureStyle.prototype.isEqualForPoint = function(style)
 }
 
 /**************************************************************************************************************/
+
+return FeatureStyle;
+
+});
 

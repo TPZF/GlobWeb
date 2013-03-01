@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,15 +14,17 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+ define(function() {
+ 
 /**************************************************************************************************************/
 
 /** @constructor
 	TileRequest constructor
  */
-GlobWeb.TileRequest = function(cb)
+var TileRequest = function(cb)
 {
 	this.successfull = false;
 	this.failed = false;
@@ -58,7 +60,7 @@ GlobWeb.TileRequest = function(cb)
 /**
 	Handle when image is loaded
  */
-GlobWeb.TileRequest.prototype.handleLoadedImage = function() 
+TileRequest.prototype.handleLoadedImage = function() 
 {
 	this.imageLoaded = true;
 	if ( this.elevationLoaded )
@@ -73,7 +75,7 @@ GlobWeb.TileRequest.prototype.handleLoadedImage = function()
 /**
 	Handle when loading image failed
  */
-GlobWeb.TileRequest.prototype.handleErrorImage = function() 
+TileRequest.prototype.handleErrorImage = function() 
 {
 	console.log( "Error while loading " + this.image.src );
 	this.failed = true;
@@ -84,7 +86,7 @@ GlobWeb.TileRequest.prototype.handleErrorImage = function()
 /**
 	Handle when elevation is loaded
  */
-GlobWeb.TileRequest.prototype.handleLoadedElevation = function() 
+TileRequest.prototype.handleLoadedElevation = function() 
 {
 	this.elevations = this.xhr.responseText;
 		
@@ -102,7 +104,7 @@ GlobWeb.TileRequest.prototype.handleLoadedElevation = function()
 /**
 	Handle when loading elevation failed
  */
-GlobWeb.TileRequest.prototype.handleErrorElevation = function() 
+TileRequest.prototype.handleErrorElevation = function() 
 {
 	this.elevations = null;
 	this.elevationLoaded = true;
@@ -119,7 +121,7 @@ GlobWeb.TileRequest.prototype.handleErrorElevation = function()
 /**
 	Launch the HTTP request for a tile
  */
-GlobWeb.TileRequest.prototype.launch = function(imageUrl,elevationUrl)
+TileRequest.prototype.launch = function(imageUrl,elevationUrl)
 {
 	this.successfull = false;
 	this.failed = false;
@@ -137,3 +139,7 @@ GlobWeb.TileRequest.prototype.launch = function(imageUrl,elevationUrl)
 }
 
 /**************************************************************************************************************/
+
+return TileRequest;
+
+});

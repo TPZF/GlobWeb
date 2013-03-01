@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,15 +14,17 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+ define(['./Utils', './BaseLayer', './Program','./CoordinateSystem'], function(Utils,BaseLayer,Program,CoordinateSystem) {
 
 /** @constructor
 	Atmosphere constructor
  */
-GlobWeb.AtmosphereLayer = function(options)
+var AtmosphereLayer = function(options)
 {
-	GlobWeb.BaseLayer.prototype.constructor.call( this, options );
+	BaseLayer.prototype.constructor.call( this, options );
 	if (!this.name)
 		this.name = "Atmosphere";
 
@@ -33,7 +35,7 @@ GlobWeb.AtmosphereLayer = function(options)
 	this.wavelength = (options && options['wavelength']) || [0.650,0.570,0.475];
 	
 	// internal properties
-	this._innerRadius = GlobWeb.CoordinateSystem.radius;
+	this._innerRadius = CoordinateSystem.radius;
 	this._outerRadius = this._innerRadius * 1.025;
 	this._skyProgram = null;
 	this._groundProgram = null;
@@ -43,30 +45,30 @@ GlobWeb.AtmosphereLayer = function(options)
 
 /**************************************************************************************************************/
 
-GlobWeb.inherits( GlobWeb.BaseLayer,GlobWeb.AtmosphereLayer );
+Utils.inherits( BaseLayer,AtmosphereLayer );
 
 /**************************************************************************************************************/
 
 /** 
   Attach the atmosphere layer to the globe
  */
-GlobWeb.AtmosphereLayer.prototype._attach = function( g )
+AtmosphereLayer.prototype._attach = function( g )
 {
 	this.globe = g;
 	var renderContext = g.renderContext;
 	
 	// Setup program, uniform now that we have the render context
 		
-    this._skyFromSpaceProgram = new GlobWeb.Program(renderContext);
+    this._skyFromSpaceProgram = new Program(renderContext);
 	this._skyFromSpaceProgram.loadFromFile( "SkyFromSpaceVert.glsl", "SkyFrag.glsl" );
 	
-	this._skyFromAtmosphereProgram = new GlobWeb.Program(renderContext);
+	this._skyFromAtmosphereProgram = new Program(renderContext);
 	this._skyFromAtmosphereProgram.loadFromFile( "SkyFromAtmosphereVert.glsl", "SkyFrag.glsl" );
 	
-	this._groundFromSpaceProgram = new GlobWeb.Program(renderContext);
+	this._groundFromSpaceProgram = new Program(renderContext);
 	this._groundFromSpaceProgram.loadFromFile( "GroundFromSpaceVert.glsl", "GroundFrag.glsl" );
 	
-    this._groundFromAtmosphereProgram = new GlobWeb.Program(renderContext);
+    this._groundFromAtmosphereProgram = new Program(renderContext);
 	this._groundFromAtmosphereProgram.loadFromFile( "GroundFromAtmosphereVert.glsl", "GroundFrag.glsl" );
 	
 	// Check if the atmosphre is valid : all programs must be OK
@@ -148,7 +150,7 @@ GlobWeb.AtmosphereLayer.prototype._attach = function( g )
 /*
 	Initialize uniforms
  */
-GlobWeb.AtmosphereLayer.prototype._initUniforms = function( uniforms )
+AtmosphereLayer.prototype._initUniforms = function( uniforms )
 {
 	var gl = this.globe.renderContext.gl;
 	
@@ -186,7 +188,7 @@ GlobWeb.AtmosphereLayer.prototype._initUniforms = function( uniforms )
 /*
 	Pre-render the atmoshpere
  */
-GlobWeb.AtmosphereLayer.prototype.preRender = function()
+AtmosphereLayer.prototype.preRender = function()
 {
 	if ( !this._isValid )
 		return;
@@ -248,7 +250,7 @@ GlobWeb.AtmosphereLayer.prototype.preRender = function()
 /*
 	Render the atmosphere
  */
-GlobWeb.AtmosphereLayer.prototype.render = function()
+AtmosphereLayer.prototype.render = function()
 {
 	if ( !this._isValid || ! this._visible )
 		return;
@@ -273,6 +275,7 @@ GlobWeb.AtmosphereLayer.prototype.render = function()
 
 /**************************************************************************************************************/
 
+return AtmosphereLayer;
 
-/**************************************************************************************************************/
+});
 

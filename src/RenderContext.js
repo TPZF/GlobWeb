@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,11 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+ 
+define([ './Frustum', './Numeric', './CoordinateSystem', './glMatrix' ], 
+	function( Frustum, Numeric, CoordinateSystem ) {
 
 /**************************************************************************************************************/
 
@@ -23,7 +26,7 @@
 	@constructor
 	Function constructor for RencerContext
 */
-GlobWeb.RenderContext = function(options)
+var RenderContext = function(options)
 {
 	/**
 	 * Private properties
@@ -100,13 +103,13 @@ GlobWeb.RenderContext = function(options)
 	this.projectionMatrix = mat4.create();
 	this.gl = gl;
 	this.canvas = canvas;
-	this.frustum = new GlobWeb.Frustum();
-	this.worldFrustum = new GlobWeb.Frustum();
-	this.localFrustum = new GlobWeb.Frustum();
+	this.frustum = new Frustum();
+	this.worldFrustum = new Frustum();
+	this.localFrustum = new Frustum();
 	this.eyePosition = vec3.create();
 	this.eyeDirection = vec3.create();
 	this.minNear = 0.00001;
-	this.near = GlobWeb.RenderContext.minNear;
+	this.near = RenderContext.minNear;
 	this.far = 6.0;
 	this.numActiveAttribArray = 0;
 	this.frameRequested = false;
@@ -131,7 +134,7 @@ GlobWeb.RenderContext = function(options)
 /** 
 	Request a frame
 */
-GlobWeb.RenderContext.prototype.requestFrame = function()
+RenderContext.prototype.requestFrame = function()
 {	
 	if (!this.frameRequested)
 	{
@@ -144,7 +147,7 @@ GlobWeb.RenderContext.prototype.requestFrame = function()
 /** 
 	Update properies that depends on the view matrix
 */
-GlobWeb.RenderContext.prototype.updateViewDependentProperties = function()
+RenderContext.prototype.updateViewDependentProperties = function()
 {
 	var inverseViewMatrix = mat4.create();
 	mat4.inverse( this.viewMatrix, inverseViewMatrix );
@@ -172,7 +175,7 @@ GlobWeb.RenderContext.prototype.updateViewDependentProperties = function()
 /**
 	Get mouse coordinates relative to the canvas element
 */
-GlobWeb.RenderContext.prototype.getXYRelativeToCanvas = function(event)
+RenderContext.prototype.getXYRelativeToCanvas = function(event)
 {
 	// cf. http://stackoverflow.com/questions/55677/how-do-i-get-the-coordinates-of-a-mouse-click-on-a-canvas-element
 	var pos = [];
@@ -204,7 +207,7 @@ GlobWeb.RenderContext.prototype.getXYRelativeToCanvas = function(event)
 /** 
 	Compute the pixel size vector
 */
-GlobWeb.RenderContext.prototype.computePixelSizeVector = function( mv )
+RenderContext.prototype.computePixelSizeVector = function( mv )
 {
 	// pre adjust P00,P20,P23,P33 by multiplying them by the viewport window matrix.
 	// here we do it in short hand with the knowledge of how the window matrix is formed
@@ -250,7 +253,7 @@ GlobWeb.RenderContext.prototype.computePixelSizeVector = function( mv )
 /** 
 	Get 3D from a pixel
 */
-GlobWeb.RenderContext.prototype.get3DFromPixel = function(x,y)
+RenderContext.prototype.get3DFromPixel = function(x,y)
 {
 	// reverse y because (0,0) is top left but opengl's normalized
 	// device coordinate (-1,-1) is bottom left
@@ -275,7 +278,7 @@ GlobWeb.RenderContext.prototype.get3DFromPixel = function(x,y)
 	vec3.normalize(rayDirection);
 	
 	// Intersect earth sphere
-	var t = Numeric.raySphereIntersection(worldCam, rayDirection, [0.0, 0.0, 0.0], GlobWeb.CoordinateSystem.radius);
+	var t = Numeric.raySphereIntersection(worldCam, rayDirection, [0.0, 0.0, 0.0], CoordinateSystem.radius);
 	if (t >= 0)
 	{
 		var pos3d = Numeric.pointOnRay(worldCam, rayDirection, t);
@@ -290,7 +293,7 @@ GlobWeb.RenderContext.prototype.get3DFromPixel = function(x,y)
 /** 
 	Get pixel from 3D
 */
-GlobWeb.RenderContext.prototype.getPixelFrom3D = function(x,y,z)
+RenderContext.prototype.getPixelFrom3D = function(x,y,z)
 {
 	var viewProjectionMatrix = mat4.create();
 	mat4.multiply(this.projectionMatrix, this.viewMatrix, viewProjectionMatrix);
@@ -314,7 +317,7 @@ GlobWeb.RenderContext.prototype.getPixelFrom3D = function(x,y,z)
 /** 
 	Create a non power of two texture from an image
 */
-GlobWeb.RenderContext.prototype.createNonPowerOfTwoTextureFromImage = function(image)
+RenderContext.prototype.createNonPowerOfTwoTextureFromImage = function(image)
 {	
 	var gl = this.gl;
 	var tex = gl.createTexture();
@@ -328,3 +331,7 @@ GlobWeb.RenderContext.prototype.createNonPowerOfTwoTextureFromImage = function(i
 }
 
 /**************************************************************************************************************/
+
+return RenderContext;
+
+});

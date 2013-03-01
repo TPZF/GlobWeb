@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,11 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+ 
+define(['./Utils', './RasterLayer', './GeoTiling'], 
+	function(Utils, RasterLayer, GeoTiling) {
 
 /**************************************************************************************************************/
 
@@ -24,13 +27,13 @@
 	@constructor
 	WCSElevationLayer constructor
  */
-GlobWeb.WCSElevationLayer = function( options )
+var WCSElevationLayer = function( options )
 {
-	GlobWeb.RasterLayer.prototype.constructor.call( this, options );
+	RasterLayer.prototype.constructor.call( this, options );
 	
 	this.baseUrl = options['baseUrl'];
 	this.tilePixelSize = options['tilePixelSize'] || 33;
-	this.tiling = new GlobWeb.GeoTiling( 4, 2 );
+	this.tiling = new GeoTiling( 4, 2 );
 	this.numberOfLevels = options['numberOfLevels'] || 21;
 	this.type = "ImageryRaster";
 	this.version = options['version'] || '2.0.0';
@@ -70,7 +73,7 @@ GlobWeb.WCSElevationLayer = function( options )
 	this.getCoverageBaseUrl = url;
 }
 
-GlobWeb.inherits(GlobWeb.RasterLayer,GlobWeb.WCSElevationLayer);
+Utils.inherits(RasterLayer,WCSElevationLayer);
 
 
 /**************************************************************************************************************/
@@ -78,7 +81,7 @@ GlobWeb.inherits(GlobWeb.RasterLayer,GlobWeb.WCSElevationLayer);
 /**
 	Parse a elevation response
  */
-GlobWeb.WCSElevationLayer.prototype.parseElevations = function(text)
+WCSElevationLayer.prototype.parseElevations = function(text)
 {
 	if (text == null) {
 		return this._returnZeroElevations();
@@ -98,7 +101,7 @@ GlobWeb.WCSElevationLayer.prototype.parseElevations = function(text)
 /**
 	Fallback elevations when no data was returned
  */
-GlobWeb.WCSElevationLayer.prototype._returnZeroElevations = function()
+WCSElevationLayer.prototype._returnZeroElevations = function()
 {
 	var elevations = [];
 	for( var i = 0; i < this.tilePixelSize * this.tilePixelSize; ++i ) {
@@ -114,7 +117,7 @@ GlobWeb.WCSElevationLayer.prototype._returnZeroElevations = function()
 /**
 	Parse a elevation response from AAIGrid
  */
-GlobWeb.WCSElevationLayer.prototype._parseAAIGrid = function(text)
+WCSElevationLayer.prototype._parseAAIGrid = function(text)
 {
 	var elevations = [];
 	var lines = text.trim().split('\n');
@@ -145,7 +148,7 @@ GlobWeb.WCSElevationLayer.prototype._parseAAIGrid = function(text)
 /**
 	Get an url for the given tile
  */
-GlobWeb.WCSElevationLayer.prototype.getUrl = function(tile)
+WCSElevationLayer.prototype.getUrl = function(tile)
 {
 	var geoBound = tile.geoBound;
 	var url = this.getCoverageBaseUrl;
@@ -171,3 +174,7 @@ GlobWeb.WCSElevationLayer.prototype.getUrl = function(tile)
 }
 
 /**************************************************************************************************************/
+
+return WCSElevationLayer;
+
+});

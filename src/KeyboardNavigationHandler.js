@@ -1,3 +1,6 @@
+
+define( function() {
+
 /**************************************************************************************************************/
 
 /** @export
@@ -10,7 +13,7 @@
 				<li>installOnDocument : True to install the event listener on the document and not on the canvas</li>
 			</ul>
  */
-GlobWeb.KeyboardNavigationHandler = function(options){
+var KeyboardNavigationHandler = function(options){
 	
 	/**************************************************************************************************************/
 	
@@ -181,3 +184,8 @@ GlobWeb.KeyboardNavigationHandler = function(options){
 	};
 	
 };
+
+return KeyboardNavigationHandler;
+
+});
+

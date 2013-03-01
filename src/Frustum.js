@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,15 +14,17 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+define( ['./glMatrix'], function() {
 
 /**************************************************************************************************************/
 
 /** @constructor
 	Plane constructor
  */
-GlobWeb.Plane = function()
+var Plane = function()
 {
 	this.normal = vec3.create( [0.0, 0.0, 0.0] );
 	this.d = 0.0;
@@ -33,7 +35,7 @@ GlobWeb.Plane = function()
 /**
 	Plane init from 3 points
  */
-GlobWeb.Plane.prototype.init = function( v1, v2, v3 )
+Plane.prototype.init = function( v1, v2, v3 )
 {
 	var vu = [];
 	var vv = [];
@@ -50,7 +52,7 @@ GlobWeb.Plane.prototype.init = function( v1, v2, v3 )
 /**
 	Transform the plane with the given matrix
  */
-GlobWeb.Plane.prototype.transform = function(matrix)
+Plane.prototype.transform = function(matrix)
 {
 	var vec = [ this.normal[0], this.normal[1], this.normal[2], this.d ];
 	mat4.multiplyVec4(matrix,vec);
@@ -68,7 +70,7 @@ GlobWeb.Plane.prototype.transform = function(matrix)
             return 0 if the bs intersects the plane,
             return -1 if the bs is completely below the plane.
 */
-GlobWeb.Plane.prototype.intersectSphere = function( center, radius )
+Plane.prototype.intersectSphere = function( center, radius )
 {
 	var dist = vec3.dot( center, this.normal ) + this.d;
 	if 	(dist > radius) return 1;
@@ -81,7 +83,7 @@ GlobWeb.Plane.prototype.intersectSphere = function( center, radius )
 /**
 	Return the distance between a point and the plane
 */
-GlobWeb.Plane.prototype.distance = function( point )
+Plane.prototype.distance = function( point )
 {
 	return point[0] * this.normal[0] + point[1] * this.normal[1] + point[2] * this.normal[2] +  this.d
 }
@@ -95,7 +97,7 @@ GlobWeb.Plane.prototype.distance = function( point )
             return 0 if the bbox intersects the plane,
             return -1 if the bbox is completely below the plane.
 */
-GlobWeb.Plane.prototype.intersectBoundingBox = function( bbox )
+Plane.prototype.intersectBoundingBox = function( bbox )
 {
 	var upperBBCorner = (this.normal[0]>=0.0?1:0) |
                              (this.normal[1]>=0.0?2:0) |
@@ -119,12 +121,12 @@ GlobWeb.Plane.prototype.intersectBoundingBox = function( bbox )
 /** @constructor
 	Frustum constructor
  */
-GlobWeb.Frustum = function()
+var Frustum = function()
 {
 	// The frustum does not contains near and far plane, because near and far are computed during rendering.
 	// Some tests have been done with a near plane but are not really useful
-	//this.planes = [ new GlobWeb.Plane(), new GlobWeb.Plane(), new GlobWeb.Plane(), new GlobWeb.Plane(), new GlobWeb.Plane() ];
-	this.planes = [ new GlobWeb.Plane(), new GlobWeb.Plane(), new GlobWeb.Plane(), new GlobWeb.Plane() ];
+	//this.planes = [ new Plane(), new Plane(), new Plane(), new Plane(), new Plane() ];
+	this.planes = [ new Plane(), new Plane(), new Plane(), new Plane() ];
 }
 
 /**************************************************************************************************************/
@@ -132,7 +134,7 @@ GlobWeb.Frustum = function()
 /**
 	Compute the frustum from the given projection matrix
  */
-GlobWeb.Frustum.prototype.compute = function(projectionMatrix)
+Frustum.prototype.compute = function(projectionMatrix)
 {
 	var inverseProjectionMatrix = mat4.create();
 	mat4.inverse( projectionMatrix, inverseProjectionMatrix )
@@ -156,7 +158,7 @@ GlobWeb.Frustum.prototype.compute = function(projectionMatrix)
 /**
 	Transform the frustum with the given matrix
  */
-GlobWeb.Frustum.prototype.transform = function(frustum,matrix)
+Frustum.prototype.transform = function(frustum,matrix)
 {
 	var mat = mat4.create();
 	mat4.inverse(matrix,mat);
@@ -168,7 +170,7 @@ GlobWeb.Frustum.prototype.transform = function(frustum,matrix)
 /**
 	Inverse transform the frustum with the given matrix
  */
-GlobWeb.Frustum.prototype.inverseTransform = function(frustum,matrix)
+Frustum.prototype.inverseTransform = function(frustum,matrix)
 {
 	// Optimized implementation
 	for ( var i = 0; i < frustum.planes.length; i++ )
@@ -197,7 +199,7 @@ GlobWeb.Frustum.prototype.inverseTransform = function(frustum,matrix)
 		return 0 if the bs intersects the frustum,
 		return -1 if the bs is completely inside the frustum.
  */
-GlobWeb.Frustum.prototype.containsSphere = function( center, radius )
+Frustum.prototype.containsSphere = function( center, radius )
 {
 	var flag = 1;
 	
@@ -225,7 +227,7 @@ GlobWeb.Frustum.prototype.containsSphere = function( center, radius )
 /**
 	Test if the frustum contains the given bounding box
  */
-GlobWeb.Frustum.prototype.containsBoundingBox = function( bbox )
+Frustum.prototype.containsBoundingBox = function( bbox )
 {
 	// Optimized implementation
 	for (var i = 0; i < this.planes.length; i++)
@@ -256,3 +258,7 @@ GlobWeb.Frustum.prototype.containsBoundingBox = function( bbox )
 }
 
 /**************************************************************************************************************/
+
+return Frustum;
+
+});

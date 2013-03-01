@@ -1,11 +1,13 @@
 
+define( function() {
+
 /**************************************************************************************************************/
 
 /** @constructor
 	RendererTileData constructor
 	Contains a list of renderables for the tiles
  */
-GlobWeb.RendererTileData = function()
+var RendererTileData = function()
 {
 	this.renderables = [];
 	this.frameNumber = -1;
@@ -16,7 +18,7 @@ GlobWeb.RendererTileData = function()
 /**
 	Get a renderable from the tile, given the bucket
  */
-GlobWeb.RendererTileData.prototype.getRenderable = function(bucket)
+RendererTileData.prototype.getRenderable = function(bucket)
 {
 	for ( var i=0; i < this.renderables.length; i++ )
 	{
@@ -33,7 +35,7 @@ GlobWeb.RendererTileData.prototype.getRenderable = function(bucket)
 /**
 	Dispose renderable data from tile
  */
-GlobWeb.RendererTileData.prototype.dispose = function(renderContext)
+RendererTileData.prototype.dispose = function(renderContext)
 {
 	for ( var i=0; i < this.renderables.length; i++ )
 	{
@@ -43,3 +45,7 @@ GlobWeb.RendererTileData.prototype.dispose = function(renderContext)
 }
 
 /**************************************************************************************************************/
+
+return RendererTileData;
+
+});

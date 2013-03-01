@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,8 +14,10 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+ define( function() {
 
 /**************************************************************************************************************/
 
@@ -23,7 +25,7 @@
 /** @constructor
  *	TiledVectorRenderable constructor
  */
-GlobWeb.TiledVectorRenderable = function( bucket, gl )
+var TiledVectorRenderable = function( bucket, gl )
 {
 	this.gl = gl;
 	this.bucket = bucket;
@@ -46,7 +48,7 @@ GlobWeb.TiledVectorRenderable = function( bucket, gl )
  * Build children indices.
  * Children indices are used to render a tile children when it is not completely loaded.
  */
-GlobWeb.TiledVectorRenderable.prototype.buildChildrenIndices = function( )
+TiledVectorRenderable.prototype.buildChildrenIndices = function( )
 {
 	// Default method : nothing is done
 	this.childrenIndices = [ [], [], [], [] ];
@@ -59,7 +61,7 @@ GlobWeb.TiledVectorRenderable.prototype.buildChildrenIndices = function( )
 /**
  *	Remove a geometry from the renderable
  */
-GlobWeb.TiledVectorRenderable.prototype.removeGeometry = function( geometry )
+TiledVectorRenderable.prototype.removeGeometry = function( geometry )
 {
 	var fiIndex = -1;
 
@@ -119,7 +121,7 @@ GlobWeb.TiledVectorRenderable.prototype.removeGeometry = function( geometry )
 /** 
   Check if a geometry crosses the date line
 */
-GlobWeb.TiledVectorRenderable.prototype._fixDateLine = function( tile, coords ) 
+TiledVectorRenderable.prototype._fixDateLine = function( tile, coords ) 
 {		
 	var crossDateLine = false;
 	var startLon = coords[0][0];
@@ -171,7 +173,7 @@ GlobWeb.TiledVectorRenderable.prototype._fixDateLine = function( tile, coords )
 /**
  *	Add a feature to the renderable
  */
-GlobWeb.TiledVectorRenderable.prototype.addGeometry = function( geometry, tile )
+TiledVectorRenderable.prototype.addGeometry = function( geometry, tile )
 {		
 	var geometryInfo = { geometry: geometry,
 						startVertices: this.vertices.length,
@@ -227,7 +229,7 @@ GlobWeb.TiledVectorRenderable.prototype.addGeometry = function( geometry, tile )
 /**
  *	Dispose children index buffers
  */
-GlobWeb.TiledVectorRenderable.prototype.disposeChildrenIndexBuffers = function()
+TiledVectorRenderable.prototype.disposeChildrenIndexBuffers = function()
 {
 	var gl = this.gl;
 
@@ -251,7 +253,7 @@ GlobWeb.TiledVectorRenderable.prototype.disposeChildrenIndexBuffers = function()
 /**
  *	Dispose graphics data 
  */
-GlobWeb.TiledVectorRenderable.prototype.dispose = function()
+TiledVectorRenderable.prototype.dispose = function()
 {
 	var gl = this.gl;
 	
@@ -272,7 +274,7 @@ GlobWeb.TiledVectorRenderable.prototype.dispose = function()
  *	Render the line string for a child tile
  *  Used for loading tiles
  */
-GlobWeb.TiledVectorRenderable.prototype.renderChild = function(attributes, childIndex)
+TiledVectorRenderable.prototype.renderChild = function(attributes, childIndex)
 {
 	if ( this.childrenIndices == null )
 		this.buildChildrenIndices();
@@ -320,7 +322,7 @@ GlobWeb.TiledVectorRenderable.prototype.renderChild = function(attributes, child
 /**
  *	Render the line string
  */
-GlobWeb.TiledVectorRenderable.prototype.render = function(attributes)
+TiledVectorRenderable.prototype.render = function(attributes)
 {
 	var gl = this.gl;
 			
@@ -351,3 +353,7 @@ GlobWeb.TiledVectorRenderable.prototype.render = function(attributes)
 }
 
 /**************************************************************************************************************/
+
+return TiledVectorRenderable;
+
+});

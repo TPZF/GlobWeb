@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,9 +14,12 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
  
+define(['./Utils', './RasterLayer', './GeoTiling'], 
+	function(Utils, RasterLayer, GeoTiling) {
+
 /**************************************************************************************************************/
 
 
@@ -24,13 +27,13 @@
 	@constructor
 	WMSLayer constructor
  */
-GlobWeb.WMSLayer = function( options )
+var WMSLayer = function( options )
 {
-	GlobWeb.RasterLayer.prototype.constructor.call( this, options );
+	RasterLayer.prototype.constructor.call( this, options );
 	
 	this.baseUrl = options['baseUrl'];
 	this.tilePixelSize = options['tilePixelSize'] || 256;
-	this.tiling = new GlobWeb.GeoTiling( 4, 2 );
+	this.tiling = new GeoTiling( 4, 2 );
 	this.numberOfLevels = options['numberOfLevels'] || 21;
 	this.type = "ImageryRaster";
 	
@@ -74,14 +77,14 @@ GlobWeb.WMSLayer = function( options )
 
 /**************************************************************************************************************/
 
-GlobWeb.inherits(GlobWeb.RasterLayer,GlobWeb.WMSLayer);
+Utils.inherits(RasterLayer,WMSLayer);
 
 /**************************************************************************************************************/
 
 /**
 	Get an url for the given tile
  */
-GlobWeb.WMSLayer.prototype.getUrl = function(tile)
+WMSLayer.prototype.getUrl = function(tile)
 {
 	// Just add the bounding box to the GetMap URL
 	var geoBound = tile.geoBound;
@@ -102,3 +105,8 @@ GlobWeb.WMSLayer.prototype.getUrl = function(tile)
 }
 
 /**************************************************************************************************************/
+
+return WMSLayer;
+
+});
+

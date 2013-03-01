@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,15 +14,17 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+define( function() {
 
 /**************************************************************************************************************/
 
 /** @constructor
 	BoundingBox constructor
  */
-GlobWeb.BoundingBox = function(min,max)
+var BoundingBox = function(min,max)
 {
 	if (min)
 	{
@@ -39,7 +41,7 @@ GlobWeb.BoundingBox = function(min,max)
 /**
 	Extent the bounding box with the given point
  */
-GlobWeb.BoundingBox.prototype.extend = function( x, y, z)
+BoundingBox.prototype.extend = function( x, y, z)
 {
 	if (!this.min)
 	{
@@ -86,7 +88,7 @@ GlobWeb.BoundingBox.prototype.extend = function( x, y, z)
 /**
 	Compute the bounding box from an array of vertices
  */
-GlobWeb.BoundingBox.prototype.compute = function(vertices,length,stride)
+BoundingBox.prototype.compute = function(vertices,length,stride)
 {
 	if (!this.min)
 	{
@@ -125,7 +127,7 @@ GlobWeb.BoundingBox.prototype.compute = function(vertices,length,stride)
 /**
 	Get the corner of a bounding box
  */
-GlobWeb.BoundingBox.prototype.getCorner = function(pos)
+BoundingBox.prototype.getCorner = function(pos)
 {
 	return [ pos&1 ? this.max[0] : this.min[0],
 			pos&2 ? this.max[1] : this.min[1],
@@ -137,7 +139,7 @@ GlobWeb.BoundingBox.prototype.getCorner = function(pos)
 /**
 	Get the center of a bounding box
  */
-GlobWeb.BoundingBox.prototype.getCenter = function()
+BoundingBox.prototype.getCenter = function()
 {
 	return [ (this.max[0] + this.min[0]) * 0.5,
 			(this.max[1] + this.min[1]) * 0.5,
@@ -149,7 +151,7 @@ GlobWeb.BoundingBox.prototype.getCenter = function()
 /**
 	Get the radius of a bounding box
  */
-GlobWeb.BoundingBox.prototype.getRadius = function()
+BoundingBox.prototype.getRadius = function()
 {
 	var vec = vec3.create();
 	vec3.subtract( this.max, this.min, vec)
@@ -157,3 +159,7 @@ GlobWeb.BoundingBox.prototype.getRadius = function()
 }
 
 /**************************************************************************************************************/
+
+return BoundingBox;
+
+});

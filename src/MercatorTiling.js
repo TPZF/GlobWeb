@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,15 +14,17 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+ define (['./Utils', './Tile', './GeoBound', './CoordinateSystem'], function(Utils,Tile,GeoBound,CoordinateSystem) {
 
 /**************************************************************************************************************/
 
 /** @constructor
 	MercatorTiling constructor
  */
-GlobWeb.MercatorTiling = function(startLevel)
+var MercatorTiling = function(startLevel)
 {
 	this.startLevel = startLevel;
 }
@@ -32,7 +34,7 @@ GlobWeb.MercatorTiling = function(startLevel)
 /** 
 	Generate the tiles for level zero
  */
-GlobWeb.MercatorTiling.prototype.generateLevelZeroTiles = function(config)
+MercatorTiling.prototype.generateLevelZeroTiles = function(config)
 {
 	config.skirt = true;
 	config.cullSign = 1;
@@ -46,7 +48,7 @@ GlobWeb.MercatorTiling.prototype.generateLevelZeroTiles = function(config)
 	{
 		for (var i = 0; i < level0NumTilesX; i++)
 		{
-			var tile = new GlobWeb.MercatorTile( this.startLevel, i, j );
+			var tile = new MercatorTile( this.startLevel, i, j );
 			tile.config = config;
 			level0Tiles.push( tile );
 		}
@@ -60,7 +62,7 @@ GlobWeb.MercatorTiling.prototype.generateLevelZeroTiles = function(config)
 /** 
 	Locate a level zero tile
  */
-GlobWeb.MercatorTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
+MercatorTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 {	
 	// TODO
 	return 0;
@@ -68,11 +70,11 @@ GlobWeb.MercatorTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 
 /**************************************************************************************************************/
 
-GlobWeb.MercatorTiling.tile2long = function(x,z) {
+MercatorTiling.tile2long = function(x,z) {
 	return ( x /Math.pow(2,z) * 360 - 180 );
 }
 
-GlobWeb.MercatorTiling.tile2lat = function(y,z) {
+MercatorTiling.tile2lat = function(y,z) {
 	var n = Math.PI - 2 * Math.PI * y / Math.pow(2,z);
 	return ( 180 / Math.PI * Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
 }		
@@ -82,29 +84,29 @@ GlobWeb.MercatorTiling.tile2lat = function(y,z) {
 /** @constructor
 	Tile constructor
  */
-GlobWeb.MercatorTile = function( level, x, y )
+MercatorTile = function( level, x, y )
 {
     // Call ancestor constructor
-    GlobWeb.Tile.prototype.constructor.call(this);
+    Tile.prototype.constructor.call(this);
 	
 	this.level = level;
 	this.x = x;
 	this.y = y;
 	
-	this.geoBound = new GlobWeb.GeoBound( GlobWeb.MercatorTiling.tile2long(x,level), GlobWeb.MercatorTiling.tile2lat(y+1,level), GlobWeb.MercatorTiling.tile2long(x+1,level), GlobWeb.MercatorTiling.tile2lat(y,level) );
+	this.geoBound = new GeoBound( MercatorTiling.tile2long(x,level), MercatorTiling.tile2lat(y+1,level), MercatorTiling.tile2long(x+1,level), MercatorTiling.tile2lat(y,level) );
 }
 
 /**************************************************************************************************************/
 
 /** Inhertis from tile */
-GlobWeb.MercatorTile.prototype = new GlobWeb.Tile;
+MercatorTile.prototype = new Tile;
 
 /**************************************************************************************************************/
 
 /** @export
   Get elevation at a geo position
 */
-GlobWeb.MercatorTile.prototype.getElevation = function(lon,lat)
+MercatorTile.prototype.getElevation = function(lon,lat)
 {
 	// TODO
 	return 0.0;
@@ -115,13 +117,13 @@ GlobWeb.MercatorTile.prototype.getElevation = function(lon,lat)
 /**
 	Create the children
  */
-GlobWeb.MercatorTile.prototype.createChildren = function()
+MercatorTile.prototype.createChildren = function()
 {
 	// Create the children
-	var tile00 = new GlobWeb.MercatorTile( this.level+1, 2*this.x, 2*this.y );
-	var tile10 = new GlobWeb.MercatorTile( this.level+1, 2*this.x+1, 2*this.y );
-	var tile01 = new GlobWeb.MercatorTile( this.level+1, 2*this.x, 2*this.y+1 );
-	var tile11 = new GlobWeb.MercatorTile( this.level+1, 2*this.x+1, 2*this.y+1 );
+	var tile00 = new MercatorTile( this.level+1, 2*this.x, 2*this.y );
+	var tile10 = new MercatorTile( this.level+1, 2*this.x+1, 2*this.y );
+	var tile01 = new MercatorTile( this.level+1, 2*this.x, 2*this.y+1 );
+	var tile11 = new MercatorTile( this.level+1, 2*this.x+1, 2*this.y+1 );
 	
 	tile00.initFromParent( this, 0, 0 );
 	tile10.initFromParent( this, 1, 0 );
@@ -138,7 +140,7 @@ GlobWeb.MercatorTile.prototype.createChildren = function()
 	Tile space means coordinates are between [0,tesselation-1] if inside the tile
 	Used by renderers algorithm to clamp coordinates on the tile
  */
-GlobWeb.MercatorTile.prototype.lonlat2tile = function(coordinates)
+MercatorTile.prototype.lonlat2tile = function(coordinates)
 {
 	var tpl = Math.pow(2,this.level);
 	var factor = this.config.tesselation-1;
@@ -161,10 +163,10 @@ GlobWeb.MercatorTile.prototype.lonlat2tile = function(coordinates)
 /**
 	Generate vertices for tile
  */
-GlobWeb.MercatorTile.prototype.generateVertices = function(elevations)
+MercatorTile.prototype.generateVertices = function(elevations)
 {	 
 	// Compute tile matrix
-	this.matrix = GlobWeb.CoordinateSystem.getLHVTransform( this.geoBound.getCenter() );
+	this.matrix = CoordinateSystem.getLHVTransform( this.geoBound.getCenter() );
 	var invMatrix = mat4.create();
 	mat4.inverse( this.matrix, invMatrix );
 	this.inverseMatrix = invMatrix;
@@ -173,8 +175,8 @@ GlobWeb.MercatorTile.prototype.generateVertices = function(elevations)
 	var size = this.config.tesselation;
 	var vertices = new Float32Array( 3*size*(size+6) );
 	var step = 1.0 / (size-1);
-	var radius = GlobWeb.CoordinateSystem.radius;
-	var scale = GlobWeb.CoordinateSystem.heightScale;
+	var radius = CoordinateSystem.radius;
+	var scale = CoordinateSystem.heightScale;
 	var offset = 0;
 	
 	var twoPowLevel = Math.pow(2,this.level);
@@ -221,7 +223,7 @@ GlobWeb.MercatorTile.prototype.generateVertices = function(elevations)
 	Override buildSkirtVertices for mercator.
 	Use skirt to "fill" the pole
  */
- GlobWeb.MercatorTile.prototype.buildSkirtVertices = function(center,srcOffset,srcStep,dstOffset)
+ MercatorTile.prototype.buildSkirtVertices = function(center,srcOffset,srcStep,dstOffset)
 {
 	var size = this.config.tesselation;
 	var vertexSize = this.config.vertexSize;
@@ -235,7 +237,7 @@ GlobWeb.MercatorTile.prototype.generateVertices = function(elevations)
 	{
 		var vertices = this.vertices;
 		
-		var pt = GlobWeb.CoordinateSystem.fromGeoTo3D( isTop ? [ 0.0, 90.0, 0.0 ] : [ 0.0, -90.0, 0.0 ] );
+		var pt = CoordinateSystem.fromGeoTo3D( isTop ? [ 0.0, 90.0, 0.0 ] : [ 0.0, -90.0, 0.0 ] );
 		mat4.multiplyVec3( this.inverseMatrix, pt );
 		
 		for ( var i = 0; i < size; i++)
@@ -258,8 +260,12 @@ GlobWeb.MercatorTile.prototype.generateVertices = function(elevations)
 	}
 	else
 	{
-		GlobWeb.Tile.prototype.buildSkirtVertices.call(this,center,srcOffset,srcStep,dstOffset);
+		Tile.prototype.buildSkirtVertices.call(this,center,srcOffset,srcStep,dstOffset);
 	}
 }
 
 /**************************************************************************************************************/
+
+return MercatorTiling;
+
+});

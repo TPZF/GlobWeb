@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,9 +14,11 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+ define( function() {
+ 
 /**************************************************************************************************************/
 
 /**	@constructor
@@ -24,7 +26,7 @@
 	Defines animation states (STOPPED, STARTED), animation base members
 	and start() stop() functions.
 */
-GlobWeb.Animation = function()
+var Animation = function()
 {
     this.startTime = -1;
 	this.pauseTime = -1;
@@ -36,7 +38,7 @@ GlobWeb.Animation = function()
 /**
   Unregister as active animation
 */
-GlobWeb.Animation.prototype._unregisterActive = function()
+Animation.prototype._unregisterActive = function()
 {
 	var index = this.globe.activeAnimations.indexOf(this);
 	this.globe.activeAnimations.splice(index,1);
@@ -47,7 +49,7 @@ GlobWeb.Animation.prototype._unregisterActive = function()
 /**
   Get animation status
 */
-GlobWeb.Animation.prototype.getStatus = function()
+Animation.prototype.getStatus = function()
 {
 	if ( this.startTime == -1 )
 		return "STOPPED";
@@ -61,7 +63,7 @@ GlobWeb.Animation.prototype.getStatus = function()
 	Start function, record the start time in startTime member
 	and register the animation in the GlobWeb object.
 */
-GlobWeb.Animation.prototype.start = function()
+Animation.prototype.start = function()
 {
 	if ( !this.globe )
 		return;
@@ -91,7 +93,7 @@ GlobWeb.Animation.prototype.start = function()
 /** @export
 	Pause function
 */
-GlobWeb.Animation.prototype.pause = function()
+Animation.prototype.pause = function()
 {	
 	if ( !this.globe )
 		return;
@@ -108,7 +110,7 @@ GlobWeb.Animation.prototype.pause = function()
 /** @export
 	Stop function, removes the animation from the GlobWeb object
 */
-GlobWeb.Animation.prototype.stop = function()
+Animation.prototype.stop = function()
 {
 	this.startTime = -1;
 	this.pauseTime = -1;
@@ -121,3 +123,7 @@ GlobWeb.Animation.prototype.stop = function()
 }
 
 /**************************************************************************************************************/
+
+return Animation;
+
+});

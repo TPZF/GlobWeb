@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,24 +14,27 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
  
+define(['./Utils', './BaseLayer', './FeatureStyle'], 
+	function(Utils, BaseLayer, FeatureStyle) {
+
 /**************************************************************************************************************/
 
 /** 
 	@constructor
 	Function constructor for VectorLayer
  */
-GlobWeb.VectorLayer = function( options )
+var VectorLayer = function( options )
 {
-	GlobWeb.BaseLayer.prototype.constructor.call( this, options );
+	BaseLayer.prototype.constructor.call( this, options );
 	
 	// Set style
 	if ( options && options['style'] )
 		this.style = options['style'];
 	else
-		this.style = new GlobWeb.FeatureStyle();
+		this.style = new FeatureStyle();
 	
 	this.features = [];
 	this.type = "Vector";
@@ -39,16 +42,16 @@ GlobWeb.VectorLayer = function( options )
 
 /**************************************************************************************************************/
 
-GlobWeb.inherits( GlobWeb.BaseLayer,GlobWeb.VectorLayer );
+Utils.inherits( BaseLayer,VectorLayer );
 
 /**************************************************************************************************************/
 
 /** 
   Attach the vector layer to the globe
  */
-GlobWeb.VectorLayer.prototype._attach = function( g )
+VectorLayer.prototype._attach = function( g )
 {
-	GlobWeb.BaseLayer.prototype._attach.call( this, g );
+	BaseLayer.prototype._attach.call( this, g );
 	
 	// Add the feature to renderers
 	for ( var i=0; i < this.features.length; i++ )
@@ -62,7 +65,7 @@ GlobWeb.VectorLayer.prototype._attach = function( g )
 /** 
   Detach the vector layer from the globe
  */
-GlobWeb.VectorLayer.prototype._detach = function()
+VectorLayer.prototype._detach = function()
 {
 	// Remove feature from renderers
 	for ( var i=0; i < this.features.length; i++ )
@@ -70,7 +73,7 @@ GlobWeb.VectorLayer.prototype._detach = function()
 		this._removeFeatureFromRenderers( this.features[i] );
 	}
 	
-	GlobWeb.BaseLayer.prototype._detach.call(this);
+	BaseLayer.prototype._detach.call(this);
 }
 
 /**************************************************************************************************************/
@@ -78,7 +81,7 @@ GlobWeb.VectorLayer.prototype._detach = function()
 /** @export
   Adds a feature collection, in GeoJSON format
  */
-GlobWeb.VectorLayer.prototype.addFeatureCollection = function( featureCollection )
+VectorLayer.prototype.addFeatureCollection = function( featureCollection )
 {
 	// Note : use property defined as ['']  to avoid renaming when compiled in advanced mode with the closure compiler
 	var features = featureCollection['features'];
@@ -96,7 +99,7 @@ GlobWeb.VectorLayer.prototype.addFeatureCollection = function( featureCollection
 /** @export
   Removes a feature collection, in GeoJSON format
 */
-GlobWeb.VectorLayer.prototype.removeFeatureCollection = function( featureCollection )
+VectorLayer.prototype.removeFeatureCollection = function( featureCollection )
 {
 	// Note : use property defined as ['']  to avoid renaming when compiled in advanced mode with the closure compiler
 	var features = featureCollection['features'];
@@ -114,7 +117,7 @@ GlobWeb.VectorLayer.prototype.removeFeatureCollection = function( featureCollect
 /** 
   Add a feature to renderers
 */
-GlobWeb.VectorLayer.prototype._addFeatureToRenderers = function( feature )
+VectorLayer.prototype._addFeatureToRenderers = function( feature )
 {
 	var geometry = feature['geometry']
 	
@@ -149,7 +152,7 @@ GlobWeb.VectorLayer.prototype._addFeatureToRenderers = function( feature )
 /** 
   Remove a feature from renderers
 */
-GlobWeb.VectorLayer.prototype._removeFeatureFromRenderers = function( feature )
+VectorLayer.prototype._removeFeatureFromRenderers = function( feature )
 {
 	var geometry = feature['geometry']
 	
@@ -173,7 +176,7 @@ GlobWeb.VectorLayer.prototype._removeFeatureFromRenderers = function( feature )
 /** @export
   Add a feature to the layer
 */
-GlobWeb.VectorLayer.prototype.addFeature = function( feature )
+VectorLayer.prototype.addFeature = function( feature )
 {
 	// Check feature geometry : only add valid feature
 	var geometry = feature['geometry'];
@@ -194,7 +197,7 @@ GlobWeb.VectorLayer.prototype.addFeature = function( feature )
 /** @export
   Remove a feature from the layer
 */
-GlobWeb.VectorLayer.prototype.removeFeature = function( feature )
+VectorLayer.prototype.removeFeature = function( feature )
 {
 	var index = this.features.indexOf( feature );
 	this.features.splice( index, 1 );
@@ -210,7 +213,7 @@ GlobWeb.VectorLayer.prototype.removeFeature = function( feature )
 /** @export
   Remove all feature from the layer
 */
-GlobWeb.VectorLayer.prototype.removeAllFeatures = function()
+VectorLayer.prototype.removeAllFeatures = function()
 {
 	// Remove feature from renderers
 	if ( this.globe )
@@ -234,7 +237,7 @@ GlobWeb.VectorLayer.prototype.removeAllFeatures = function()
 /** @export
   Modify feature style
 */
-GlobWeb.VectorLayer.prototype.modifyFeatureStyle = function( feature, style )
+VectorLayer.prototype.modifyFeatureStyle = function( feature, style )
 {
 	this._removeFeatureFromRenderers( feature );
 	feature['properties']['style'] = style;
@@ -246,7 +249,7 @@ GlobWeb.VectorLayer.prototype.modifyFeatureStyle = function( feature, style )
 /** @export
   Modify the vector layer style
 */
-GlobWeb.VectorLayer.prototype.modifyStyle = function(style)
+VectorLayer.prototype.modifyStyle = function(style)
 {
 	for ( var i=0; i<this.features.length; i++ )
 	{
@@ -260,4 +263,8 @@ GlobWeb.VectorLayer.prototype.modifyStyle = function(style)
 		this._addFeatureToRenderers( this.features[i] );
 	}
 }
+
+return VectorLayer;
+
+});
 

@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,16 +14,18 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+ define( function() {
+ 
 /**************************************************************************************************************/
 
 /** @constructor
 	@export
 	GeoBound constructor
  */
-GlobWeb.GeoBound = function( w, s, e, n )
+var GeoBound = function( w, s, e, n )
 {
 	this.south = s;
 	this.west = w;
@@ -36,7 +38,7 @@ GlobWeb.GeoBound = function( w, s, e, n )
 /**
 	Get geo center
  */
-GlobWeb.GeoBound.prototype.getCenter = function()
+GeoBound.prototype.getCenter = function()
 {
 	return [ (this.east+this.west)*0.5, (this.south+this.north)*0.5, 0.0 ];
 }
@@ -46,7 +48,7 @@ GlobWeb.GeoBound.prototype.getCenter = function()
 /**	@export
 	Get north
  */
-GlobWeb.GeoBound.prototype.getNorth = function()
+GeoBound.prototype.getNorth = function()
 {
 	return this.north;
 }
@@ -56,7 +58,7 @@ GlobWeb.GeoBound.prototype.getNorth = function()
 /**	@export
 	Get south
  */
-GlobWeb.GeoBound.prototype.getSouth = function()
+GeoBound.prototype.getSouth = function()
 {
 	return this.south;
 }
@@ -66,7 +68,7 @@ GlobWeb.GeoBound.prototype.getSouth = function()
 /**	@export
 	Get west
  */
-GlobWeb.GeoBound.prototype.getWest = function()
+GeoBound.prototype.getWest = function()
 {
 	return this.west;
 }
@@ -76,7 +78,7 @@ GlobWeb.GeoBound.prototype.getWest = function()
 /**	@export
 	Get east
  */
-GlobWeb.GeoBound.prototype.getEast = function()
+GeoBound.prototype.getEast = function()
 {
 	return this.east;
 }
@@ -86,7 +88,7 @@ GlobWeb.GeoBound.prototype.getEast = function()
 /**
 	Compute the geo bound from coordinates
  */
-GlobWeb.GeoBound.prototype.computeFromCoordinates = function( coordinates )
+GeoBound.prototype.computeFromCoordinates = function( coordinates )
 {
 	this.west = coordinates[0][0];
 	this.east = coordinates[0][0];
@@ -107,7 +109,7 @@ GlobWeb.GeoBound.prototype.computeFromCoordinates = function( coordinates )
 /**
 	Intersects this geo bound with another one
  */
-GlobWeb.GeoBound.prototype.intersects = function( geoBound )
+GeoBound.prototype.intersects = function( geoBound )
 {
 	if ( this.west >= geoBound.east || this.east <= geoBound.west )
 		return false;
@@ -119,3 +121,7 @@ GlobWeb.GeoBound.prototype.intersects = function( geoBound )
 }
 
 /**************************************************************************************************************/
+
+return GeoBound;
+
+});

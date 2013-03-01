@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,17 +14,19 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-GlobWeb.CoordinateSystem = { radius: 1.0, heightScale: 1.0 / 6356752.3142, realEarthRadius: 6356752.3142  };
+define( ['./Numeric' ], function(Numeric) {
+ 
+var CoordinateSystem = { radius: 1.0, heightScale: 1.0 / 6356752.3142, realEarthRadius: 6356752.3142  };
 
 /**************************************************************************************************************/
 
 /*
 	Convert a geographic position to 3D
  */
-GlobWeb.CoordinateSystem.fromGeoTo3D = function(geo, dest)
+CoordinateSystem.fromGeoTo3D = function(geo, dest)
 {
     if (!dest) { dest = new Array(3); }
 
@@ -33,8 +35,8 @@ GlobWeb.CoordinateSystem.fromGeoTo3D = function(geo, dest)
 	var cosLat = Math.cos(latInRad);
 	
 	// Take height into account
-	var height = geo.length > 2 ? GlobWeb.CoordinateSystem.heightScale * geo[2] : 0;
-	var radius = GlobWeb.CoordinateSystem.radius + height;
+	var height = geo.length > 2 ? CoordinateSystem.heightScale * geo[2] : 0;
+	var radius = CoordinateSystem.radius + height;
 
     dest[0] = radius * Math.cos(longInRad) * cosLat;
     dest[1] = radius * Math.sin(longInRad) * cosLat;
@@ -49,7 +51,7 @@ GlobWeb.CoordinateSystem.fromGeoTo3D = function(geo, dest)
 	Convert a 3D position to geographic
     Returns 3 values [long, lat, distance from earth surface]
  */
-GlobWeb.CoordinateSystem.from3DToGeo = function(position3d, dest)
+CoordinateSystem.from3DToGeo = function(position3d, dest)
 {
     if (!dest) { dest = new Array(3); }
 
@@ -61,7 +63,7 @@ GlobWeb.CoordinateSystem.from3DToGeo = function(position3d, dest)
 
     dest[0] = Numeric.toDegree(lon);
     dest[1] = Numeric.toDegree(lat);
-    dest[2] = GlobWeb.CoordinateSystem.realEarthRadius * Math.abs(r - GlobWeb.CoordinateSystem.radius);
+    dest[2] = CoordinateSystem.realEarthRadius * Math.abs(r - CoordinateSystem.radius);
 
     return dest;
 }
@@ -71,7 +73,7 @@ GlobWeb.CoordinateSystem.from3DToGeo = function(position3d, dest)
 /*
 	Get local transformation
  */
-GlobWeb.CoordinateSystem.getLocalTransform = function(geo, dest)
+CoordinateSystem.getLocalTransform = function(geo, dest)
 {
     if (!dest) { dest = mat4.create(); }
 
@@ -111,7 +113,7 @@ GlobWeb.CoordinateSystem.getLocalTransform = function(geo, dest)
 /*
 	Get local transformation
  */
-GlobWeb.CoordinateSystem.getLHVTransform = function(geo, dest)
+CoordinateSystem.getLHVTransform = function(geo, dest)
 {
     if (!dest) { dest = mat4.create(); }
 
@@ -123,7 +125,7 @@ GlobWeb.CoordinateSystem.getLHVTransform = function(geo, dest)
 	var north = vec3.create();
 	vec3.cross( up, east, north );
 	
-	var pt = GlobWeb.CoordinateSystem.fromGeoTo3D(geo);
+	var pt = CoordinateSystem.fromGeoTo3D(geo);
 	
 	dest[0] = east[0];
 	dest[1] = east[1];
@@ -153,7 +155,7 @@ GlobWeb.CoordinateSystem.getLHVTransform = function(geo, dest)
 /*
 	Get the side (i.e. X) vector from a local transformation
  */
-GlobWeb.CoordinateSystem.getSideVector = function( matrix, v )
+CoordinateSystem.getSideVector = function( matrix, v )
 {
 	v[0] = matrix[0];
 	v[1] = matrix[1];
@@ -167,7 +169,7 @@ GlobWeb.CoordinateSystem.getSideVector = function( matrix, v )
 /*
 	Get the front (i.e. Y) vector from a local transformation
  */
-GlobWeb.CoordinateSystem.getFrontVector = function( matrix, v )
+CoordinateSystem.getFrontVector = function( matrix, v )
 {
 	v[0] = matrix[4];
 	v[1] = matrix[5];
@@ -181,7 +183,7 @@ GlobWeb.CoordinateSystem.getFrontVector = function( matrix, v )
 /*
 	Get the up (i.e. Z) vector from a local transformation
  */
-GlobWeb.CoordinateSystem.getUpVector = function( matrix, v )
+CoordinateSystem.getUpVector = function( matrix, v )
 {
 	v[0] = matrix[8];
 	v[1] = matrix[9];
@@ -192,3 +194,6 @@ GlobWeb.CoordinateSystem.getUpVector = function( matrix, v )
 
 /**************************************************************************************************************/
 
+return CoordinateSystem;
+
+});

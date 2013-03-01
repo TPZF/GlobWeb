@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,16 +14,18 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+ define(function() {
+ 
 /**************************************************************************************************************/
 
 /** 
 	@constructor TileIndexBuffer
 	TileIndexBuffer
  */
-GlobWeb.TileIndexBuffer = function( renderContext, config )
+var TileIndexBuffer = function( renderContext, config )
 {
 	this.renderContext = renderContext;
 	this.config = config;
@@ -37,7 +39,7 @@ GlobWeb.TileIndexBuffer = function( renderContext, config )
 /**  
  * Reset the index buffers.
  */
-GlobWeb.TileIndexBuffer.prototype.reset = function()
+TileIndexBuffer.prototype.reset = function()
 {	
 	var gl = this.renderContext.gl;
 	for ( var i=0; i < 4; i++ )
@@ -60,7 +62,7 @@ GlobWeb.TileIndexBuffer.prototype.reset = function()
 /**
  *	Get index buffer for sub solid
  */
-GlobWeb.TileIndexBuffer.prototype.getSubSolid = function(ii)
+TileIndexBuffer.prototype.getSubSolid = function(ii)
 {
 	if ( this.subSolidIndexBuffer[ii] == null )
 	{
@@ -164,7 +166,7 @@ GlobWeb.TileIndexBuffer.prototype.getSubSolid = function(ii)
 /*
 	Build index buffer
  */
-GlobWeb.TileIndexBuffer.prototype.getSolid = function()
+TileIndexBuffer.prototype.getSolid = function()
 {
 	if ( this.solidIndexBuffer == null )
 	{
@@ -254,3 +256,7 @@ GlobWeb.TileIndexBuffer.prototype.getSolid = function()
 }
 
 /**************************************************************************************************************/
+
+return TileIndexBuffer;
+
+});

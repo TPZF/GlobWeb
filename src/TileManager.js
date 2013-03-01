@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,17 +14,20 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+define(['./Tile','./TilePool', './TileRequest', './TileIndexBuffer', './Program'],
+	function (Tile,TilePool,TileRequest,TileIndexBuffer,Program) {
 
 /** @constructor
 	TileManager constructor
  */
-GlobWeb.TileManager = function( globe )
+var TileManager = function( globe )
 {
 	this.globe = globe;
 	this.renderContext = this.globe.renderContext;
-	this.tilePool = new GlobWeb.TilePool(this.renderContext);
+	this.tilePool = new TilePool(this.renderContext);
 	this.imageryProvider = null;
 	this.elevationProvider = null;
 	this.tilesToRender = [];
@@ -39,7 +42,7 @@ GlobWeb.TileManager = function( globe )
 	this.tileRequests = [];
 	for ( var i=0; i < 4; i++ )
 	{
-		this.tileRequests[i] = new GlobWeb.TileRequest(callback);
+		this.tileRequests[i] = new TileRequest(callback);
 	}
 				
 	this.level0TilesLoaded = false;
@@ -56,7 +59,7 @@ GlobWeb.TileManager = function( globe )
 		
 	// Shared index and texture coordinate buffer : all tiles uses the same
 	this.tcoordBuffer = null;
-	this.tileIndexBuffer = new GlobWeb.TileIndexBuffer(this.renderContext,this.tileConfig);
+	this.tileIndexBuffer = new TileIndexBuffer(this.renderContext,this.tileConfig);
 	this.identityTextureTransform = [ 1.0, 1.0, 0.0, 0.0 ];
 
 	// For debug
@@ -104,7 +107,7 @@ GlobWeb.TileManager = function( globe )
 	}\n\
 	";
 	
-	this.program = new GlobWeb.Program(this.renderContext);
+	this.program = new Program(this.renderContext);
 	this.program.createFromSource( vertexShader, fragmentShader );
 }
 
@@ -113,7 +116,7 @@ GlobWeb.TileManager = function( globe )
 /** 
 	Add post renderer
  */
-GlobWeb.TileManager.prototype.addPostRenderer = function(renderer)
+TileManager.prototype.addPostRenderer = function(renderer)
 {	
 	this.postRenderers.push( renderer );
 }
@@ -123,7 +126,7 @@ GlobWeb.TileManager.prototype.addPostRenderer = function(renderer)
 /** 
 	Remove a post renderer
  */
-GlobWeb.TileManager.prototype.removePostRenderer = function(renderer)
+TileManager.prototype.removePostRenderer = function(renderer)
 {
 	var rendererIndex = this.postRenderers.indexOf(renderer);
 	if ( rendererIndex != -1 )
@@ -142,7 +145,7 @@ GlobWeb.TileManager.prototype.removePostRenderer = function(renderer)
 /** 
 	Set the imagery provider to be used
  */
-GlobWeb.TileManager.prototype.setImageryProvider = function(ip)
+TileManager.prototype.setImageryProvider = function(ip)
 {
 	this.reset();
 	this.imageryProvider = ip;
@@ -160,7 +163,7 @@ GlobWeb.TileManager.prototype.setImageryProvider = function(ip)
 /** 
 	Set the elevation provider to be used
  */
-GlobWeb.TileManager.prototype.setElevationProvider = function(tp)
+TileManager.prototype.setElevationProvider = function(tp)
 {	
 	this.reset();
 	this.elevationProvider = tp;
@@ -172,7 +175,7 @@ GlobWeb.TileManager.prototype.setElevationProvider = function(tp)
 /**
 	Reset the tile manager : remove all the tiles
  */
-GlobWeb.TileManager.prototype.reset = function()
+TileManager.prototype.reset = function()
 {
 	// Reset all level zero tiles : destroy render data, and reset state to NONE
 	for (var i = 0; i < this.level0Tiles.length; i++)
@@ -197,7 +200,7 @@ GlobWeb.TileManager.prototype.reset = function()
 /** 
 	Tile visitor
  */
-GlobWeb.TileManager.prototype.visitTiles = function( callback )
+TileManager.prototype.visitTiles = function( callback )
 {
 	// Store the tiles to process in an array, first copy level0 tiles
 	var tilesToProcess = this.level0Tiles.concat([]);
@@ -225,7 +228,7 @@ GlobWeb.TileManager.prototype.visitTiles = function( callback )
 /**
 	Launch the HTTP request for a tile
  */
-GlobWeb.TileManager.prototype.launchRequest = function(tile)
+TileManager.prototype.launchRequest = function(tile)
 {
 	var tileRequest = null;
 	
@@ -250,11 +253,11 @@ GlobWeb.TileManager.prototype.launchRequest = function(tile)
 		}
 		tileRequest.launch( this.imageryProvider.getUrl(tile), elevationUrl );
 
-		tile.state = GlobWeb.Tile.State.LOADING;
+		tile.state = Tile.State.LOADING;
 	}
 	else
 	{
-		tile.state = GlobWeb.Tile.State.NONE;
+		tile.state = Tile.State.NONE;
 	}
 }
 
@@ -263,7 +266,7 @@ GlobWeb.TileManager.prototype.launchRequest = function(tile)
 /**
 	Traverse tiless tiles
  */
- GlobWeb.TileManager.prototype.traverseTiles = function()
+ TileManager.prototype.traverseTiles = function()
  {		
 	this.tilesToRender.length = 0;
 	this.tilesToRequest.length = 0;
@@ -276,7 +279,7 @@ GlobWeb.TileManager.prototype.launchRequest = function(tile)
 		for ( var i = 0; i < this.level0Tiles.length; i++ )
 		{
 			var tile = this.level0Tiles[i];
-			var tileIsLoaded = tile.state == GlobWeb.Tile.State.LOADED;
+			var tileIsLoaded = tile.state == Tile.State.LOADED;
 			
 			// Update frame number
 			tile.frameNumber = this.frameNumber;
@@ -285,12 +288,12 @@ GlobWeb.TileManager.prototype.launchRequest = function(tile)
 			if ( !tileIsLoaded )
 			{		
 				// Request tile if necessary
-				if ( tile.state == GlobWeb.Tile.State.NONE )
+				if ( tile.state == Tile.State.NONE )
 				{
-					tile.state = GlobWeb.Tile.State.REQUESTED;
+					tile.state = Tile.State.REQUESTED;
 					this.tilesToRequest.push(tile);
 				}
-				else if ( tile.state == GlobWeb.Tile.State.ERROR )
+				else if ( tile.state == Tile.State.ERROR )
 				{
 					this.globe.publish("baseLayersError");
 					this.imageryProvider.ready = false;
@@ -316,13 +319,13 @@ GlobWeb.TileManager.prototype.launchRequest = function(tile)
 			}
 			else 
 			{
-				var tileIsLoaded = (tile.state == GlobWeb.Tile.State.LOADED);
+				var tileIsLoaded = (tile.state == Tile.State.LOADED);
 				// Remove texture from level 0 tile, only if there is a global level zero texture
 				if( this.levelZeroTexture && tileIsLoaded )
 				{
 						this.tilePool.disposeGLTexture( tile.texture );
 						tile.texture = null;
-						tile.state = GlobWeb.Tile.State.NONE;
+						tile.state = Tile.State.NONE;
 				}
 				// Delete its children
 				tile.deleteChildren(this.renderContext,this.tilePool);
@@ -336,7 +339,7 @@ GlobWeb.TileManager.prototype.launchRequest = function(tile)
 /**
 	Process a tile
  */
-GlobWeb.TileManager.prototype.processTile = function(tile,level)
+TileManager.prototype.processTile = function(tile,level)
 {
 	this.numTraversedTiles++;
 	
@@ -344,16 +347,16 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 	tile.frameNumber = this.frameNumber;
 
 	// Request the tile if needed
-	if ( tile.state == GlobWeb.Tile.State.NONE )
+	if ( tile.state == Tile.State.NONE )
 	{
-		tile.state = GlobWeb.Tile.State.REQUESTED;
+		tile.state = Tile.State.REQUESTED;
 		
 		// Add it to the request
 		this.tilesToRequest.push(tile);
 	}
 	
 	// Check if the tiles needs to be refined
-	if ( (tile.state == GlobWeb.Tile.State.LOADED) && (level+1 < this.imageryProvider.numberOfLevels) && (tile.needsToBeRefined(this.renderContext) ) )
+	if ( (tile.state == Tile.State.LOADED) && (level+1 < this.imageryProvider.numberOfLevels) && (tile.needsToBeRefined(this.renderContext) ) )
 	{
 		// Create the children if needed
 		if ( tile.children == null )
@@ -385,7 +388,7 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 /**
 	Generate tiles
  */
- GlobWeb.TileManager.prototype.generateReceivedTiles = function()
+ TileManager.prototype.generateReceivedTiles = function()
  {
 	for ( var i = 0; i < this.tileRequests.length; i++ )
 	{
@@ -415,14 +418,14 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 			}
 			else
 			{
-				tile.state = GlobWeb.Tile.State.NONE;			
+				tile.state = Tile.State.NONE;			
 			}
 			
 			tileRequest.tile = null;
 		}
 		else if ( tile && tileRequest.failed )
 		{
-			tile.state = GlobWeb.Tile.State.ERROR;
+			tile.state = Tile.State.ERROR;
 			tileRequest.tile = null;
 		}
 	}
@@ -433,7 +436,7 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 /**
 	Render tiles
  */
- GlobWeb.TileManager.prototype.renderTiles = function()
+ TileManager.prototype.renderTiles = function()
  {	
 	var rc = this.renderContext;
 	var gl = rc.gl;
@@ -453,8 +456,8 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 	{
 		// When in "Astro" mode, do not compute near/far from tiles not really needed
 		// And the code used for "Earth" does not works really well, when the earth is seen from inside...
-		rc.near = 0.2 * GlobWeb.CoordinateSystem.radius;
-		rc.far = 1.1 * GlobWeb.CoordinateSystem.radius;
+		rc.near = 0.2 * CoordinateSystem.radius;
+		rc.far = 1.1 * CoordinateSystem.radius;
 	}
 	else
 	{
@@ -493,7 +496,7 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 	{
 		var tile = this.tilesToRender[i];
 		
-		var isLoaded = ( tile.state == GlobWeb.Tile.State.LOADED );
+		var isLoaded = ( tile.state == Tile.State.LOADED );
 		var isLevelZero = ( tile.parentIndex == -1 );
 		
 		// Bind tile texture
@@ -559,7 +562,7 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 /**
 	Request tiles
  */
- GlobWeb.TileManager.prototype.launchRequests = function()
+ TileManager.prototype.launchRequests = function()
  {
 	// Process request
 	this.tilesToRequest.sort( function(a,b) { return a.distance - b.distance; } );
@@ -574,7 +577,7 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 		}
 		else
 		{
-			tile.state = GlobWeb.Tile.State.NONE;
+			tile.state = Tile.State.NONE;
 		}
 	}
 }
@@ -584,7 +587,7 @@ GlobWeb.TileManager.prototype.processTile = function(tile,level)
 /**
 	Render the tiles
  */
-GlobWeb.TileManager.prototype.render = function()
+TileManager.prototype.render = function()
 {
 	if ( this.imageryProvider == null
 		|| !this.imageryProvider.ready )
@@ -631,7 +634,7 @@ GlobWeb.TileManager.prototype.render = function()
 /**
 	Returns visible tile for given longitude/latitude, null otherwise
  */
-GlobWeb.TileManager.prototype.getVisibleTile = function(lon, lat)
+TileManager.prototype.getVisibleTile = function(lon, lat)
 {
 	return this.imageryProvider.tiling.findInsideTile(lon, lat, this.tilesToRender);
 }
@@ -641,7 +644,7 @@ GlobWeb.TileManager.prototype.getVisibleTile = function(lon, lat)
 /**
 	Build shared texture coordinate buffer
  */
-GlobWeb.TileManager.prototype.buildSharedTexCoordBuffer = function()
+TileManager.prototype.buildSharedTexCoordBuffer = function()
 {
 	var size = this.tileConfig.tesselation;
 	var skirt = this.tileConfig.skirt;
@@ -745,3 +748,7 @@ GlobWeb.TileManager.prototype.buildSharedTexCoordBuffer = function()
 }
 
 /**************************************************************************************************************/
+
+return TileManager;
+
+});

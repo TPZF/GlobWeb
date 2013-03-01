@@ -1,7 +1,7 @@
 /***************************************
  * Copyright 2011, 2012 GlobWeb contributors.
  *
- * This file is part of GlobWeb.
+ * This file is part of 
  *
  * GlobWeb is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -14,9 +14,11 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+ define(['./Utils','./Animation'], function(Utils,Animation) {
+ 
 /**************************************************************************************************************/
 
 /**	@constructor
@@ -24,9 +26,9 @@
  *
  *	@param nav Navigation
  */
-GlobWeb.InertiaAnimation = function(nav)
+var InertiaAnimation = function(nav)
 {
-    GlobWeb.Animation.prototype.constructor.call(this);
+    Animation.prototype.constructor.call(this);
 
 	this.factor = 0.95;
 	this.type = null;
@@ -38,11 +40,11 @@ GlobWeb.InertiaAnimation = function(nav)
 
 /**************************************************************************************************************/
 
-GlobWeb.inherits(GlobWeb.Animation,GlobWeb.InertiaAnimation);
+Utils.inherits(Animation,InertiaAnimation);
 
 /**************************************************************************************************************/
 
-GlobWeb.InertiaAnimation.prototype.update = function(now)
+InertiaAnimation.prototype.update = function(now)
 {
 	if ( this.factor > 0 )
 	{		
@@ -82,7 +84,7 @@ GlobWeb.InertiaAnimation.prototype.update = function(now)
  *	@param speed Starting speed
  *	@param {Int[]} inertiaVector Vector of mouvement in window coordinates(for pan and rotate inertias)
  */
-GlobWeb.InertiaAnimation.prototype.launch = function(type, dx, dy)
+InertiaAnimation.prototype.launch = function(type, dx, dy)
 {
 	// Set first value
  	this.type = type;
@@ -93,3 +95,7 @@ GlobWeb.InertiaAnimation.prototype.launch = function(type, dx, dy)
 }
 
 /**************************************************************************************************************/
+
+return InertiaAnimation;
+
+});

@@ -14,15 +14,18 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
+ * along with  If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+ define(['./BoundingBox','./CoordinateSystem','./glMatrix'], 
+	function(BoundingBox,CoordinateSystem) {
 
 /**************************************************************************************************************/
 
 /** @constructor
 	Tile constructor
  */
-GlobWeb.Tile = function()
+var Tile = function()
 {
 	// Parent/child relationship
 	this.parent = null;
@@ -38,7 +41,7 @@ GlobWeb.Tile = function()
 	// Tile spatial data
 	this.matrix = null;
 	this.inverseMatrix = null;
-	this.bbox = new GlobWeb.BoundingBox();
+	this.bbox = new BoundingBox();
 	
 	// For culling
 	this.radius = 0.0;	
@@ -51,7 +54,7 @@ GlobWeb.Tile = function()
 	// For debug
 	//this.color = [ Math.random(), Math.random(), Math.random() ];
 	
-	this.state = GlobWeb.Tile.State.NONE;
+	this.state = Tile.State.NONE;
 	
 	// Tile configuration given by tile manager : contains if the tile uses skirt, the tesselation, etc...
 	this.config = null;
@@ -62,7 +65,7 @@ GlobWeb.Tile = function()
 /**
  *	Tile state enumerations
  */
-GlobWeb.Tile.State = 
+Tile.State = 
 {
 	ERROR : -10,
 	NONE : 0,
@@ -77,7 +80,7 @@ GlobWeb.Tile.State =
 /**
  * Compute position on the tile using normalized coordinate between [0,size-1]
  */
-GlobWeb.Tile.prototype.computePosition = function(u,v)
+Tile.prototype.computePosition = function(u,v)
 {
 	var vFloor = Math.floor( v );
 	var vFrac = v - vFloor;
@@ -104,7 +107,7 @@ GlobWeb.Tile.prototype.computePosition = function(u,v)
 /**
  *	Initialize the tile from its parent
  */
-GlobWeb.Tile.prototype.initFromParent = function(parent,i,j)
+Tile.prototype.initFromParent = function(parent,i,j)
 {
 	this.parent = parent;
 	this.parentIndex = j*2 + i;
@@ -143,7 +146,7 @@ GlobWeb.Tile.prototype.initFromParent = function(parent,i,j)
 /**
  *	Test if the tile needs to be refined
  */
-GlobWeb.Tile.prototype.needsToBeRefined = function(renderContext)
+Tile.prototype.needsToBeRefined = function(renderContext)
 {
 	if ( this.distance < this.radius )
 		return true;
@@ -175,7 +178,7 @@ GlobWeb.Tile.prototype.needsToBeRefined = function(renderContext)
 /**
  *	Test if the tile is culled given the current view parameters
  */
-GlobWeb.Tile.prototype.isCulled = function(renderContext)
+Tile.prototype.isCulled = function(renderContext)
 {	
 	// Compute the eye in tile local space
 	var mat = this.inverseMatrix;
@@ -206,15 +209,15 @@ GlobWeb.Tile.prototype.isCulled = function(renderContext)
 			// Compute vertical at the closest point. The earth center is [0, 0, -radius] in tile local space.
 			var vx = pt[0];
 			var vy = pt[1];
-			var vz = pt[2] + GlobWeb.CoordinateSystem.radius;
+			var vz = pt[2] + CoordinateSystem.radius;
 			var vl = Math.sqrt( vx * vx + vy * vy + vz * vz );
 			vx /= vl; vy /= vl; vz /= vl;
 			
 			// Compute eye direction at the closest point (clampled on earth to avoid problem with mountains)
 			// The position clamp to earth is Vertical * Radius + EarthCenter. The EarthCenter being 0,0,-radius a lot of simplification is done.
-			var edx = ex - vx * GlobWeb.CoordinateSystem.radius;
-			var edy = ey - vy * GlobWeb.CoordinateSystem.radius;
-			var edz = ez - (vz - 1.0) * GlobWeb.CoordinateSystem.radius;
+			var edx = ex - vx * CoordinateSystem.radius;
+			var edy = ey - vy * CoordinateSystem.radius;
+			var edz = ez - (vz - 1.0) * CoordinateSystem.radius;
 			
 			// Compute dot product between eye direction and the vertical at the point
 			var el = Math.sqrt( edx * edx + edy * edy  + edz * edz );
@@ -242,9 +245,9 @@ GlobWeb.Tile.prototype.isCulled = function(renderContext)
 /**
  *	Dispose the tile
  */
-GlobWeb.Tile.prototype.dispose = function(renderContext,tilePool)
+Tile.prototype.dispose = function(renderContext,tilePool)
 {		
-	if ( this.state == GlobWeb.Tile.State.LOADED  )
+	if ( this.state == Tile.State.LOADED  )
 	{
 		tilePool.disposeGLBuffer(this.vertexBuffer);
 		tilePool.disposeGLTexture(this.texture);
@@ -259,7 +262,7 @@ GlobWeb.Tile.prototype.dispose = function(renderContext,tilePool)
 		this.texture = null;
 		this.parent = null;
 		
-		this.state = GlobWeb.Tile.State.NONE;
+		this.state = Tile.State.NONE;
 	}
 }
 
@@ -268,7 +271,7 @@ GlobWeb.Tile.prototype.dispose = function(renderContext,tilePool)
 /**
  *	Delete the children
  */
-GlobWeb.Tile.prototype.deleteChildren = function(renderContext,tilePool)
+Tile.prototype.deleteChildren = function(renderContext,tilePool)
 {
 	if ( this.children )
 	{
@@ -289,7 +292,7 @@ GlobWeb.Tile.prototype.deleteChildren = function(renderContext,tilePool)
 /**
  *	Build skirt vertices
  */
-GlobWeb.Tile.prototype.buildSkirtVertices = function(center,srcOffset,srcStep,dstOffset)
+Tile.prototype.buildSkirtVertices = function(center,srcOffset,srcStep,dstOffset)
 {
 	var vertices = this.vertices;
 	var skirtHeight = this.radius * 0.05;
@@ -332,7 +335,7 @@ GlobWeb.Tile.prototype.buildSkirtVertices = function(center,srcOffset,srcStep,ds
 /**
  *	Generate normals for a tile
  */
-GlobWeb.Tile.prototype.generateNormals = function()
+Tile.prototype.generateNormals = function()
 {	
 	var size = this.config.tesselation;
 	var vertexSize = this.config.vertexSize;
@@ -374,7 +377,7 @@ GlobWeb.Tile.prototype.generateNormals = function()
 /**
  *	Generate the tile
  */
-GlobWeb.Tile.prototype.generate = function(tilePool,image,elevations)
+Tile.prototype.generate = function(tilePool,image,elevations)
 {
 	// Generate the vertices
 	this.vertices = this.generateVertices(elevations);
@@ -428,7 +431,11 @@ GlobWeb.Tile.prototype.generate = function(tilePool,image,elevations)
 		this.texture = tilePool.createGLTexture(image);
 	}
 	
-	this.state = GlobWeb.Tile.State.LOADED;
+	this.state = Tile.State.LOADED;
 }
 
 /**************************************************************************************************************/
+
+return Tile;
+
+});
