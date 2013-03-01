@@ -81,6 +81,7 @@ GlobWeb.MouseNavigationHandler = function(options){
 	 */
 	var _handleMouseDown = function(event)
 	{
+		document.addEventListener("mouseup", _handleMouseUp);
 		_pressedButton = event.button;
 		
 		// Stop all animations when an event is received
@@ -109,6 +110,7 @@ GlobWeb.MouseNavigationHandler = function(options){
 	{
 		// No button pressed anymore
 		_pressedButton = -1;
+		document.removeEventListener("mouseup", _handleMouseUp);
 
 		if ( _navigation.inertia && (_dx != 0 || _dy != 0)  )
 		{	
@@ -216,7 +218,6 @@ GlobWeb.MouseNavigationHandler = function(options){
 		
 		// Setup the mouse event handlers
 		canvas.addEventListener("mousedown", _handleMouseDown);
-		document.addEventListener("mouseup", _handleMouseUp);
 		canvas.addEventListener("mousemove", _handleMouseMove);
 		
 		if ( options.zoomOnDblClick )
@@ -236,7 +237,6 @@ GlobWeb.MouseNavigationHandler = function(options){
 		var canvas = _navigation.globe.renderContext.canvas;
 
 		canvas.removeEventListener("mousedown", _handleMouseDown);
-		document.removeEventListener("mouseup", _handleMouseUp);
 		canvas.removeEventListener("mousemove", _handleMouseMove);
 		
 		if ( options.zoomOnDblClick )
