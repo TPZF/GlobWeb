@@ -35,7 +35,7 @@ var Program = function(renderContext)
 
 /**************************************************************************************************************/
 
-/*!
+/**
   Creates a shader of the given type from the given source string
 */
 Program.prototype.createShader = function(type, source)
@@ -57,7 +57,7 @@ Program.prototype.createShader = function(type, source)
 
 /**************************************************************************************************************/
 
-/*
+/**
 	Create the program from source shaders
  */
 Program.prototype.createFromSource = function(vertexSource, fragmentSource)

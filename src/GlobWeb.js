@@ -129,6 +129,7 @@ GlobWeb.Navigation = Navigation;
 GlobWeb.Stats = Stats;
 GlobWeb.KMLParser = KMLParser;
 
+window.GlobWeb = GlobWeb;
 
 return GlobWeb;
 

@@ -17,15 +17,18 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
  
+define(['./Utils', './BaseLayer','./Program','./Tile'], 
+	function(Utils, BaseLayer, Program, Tile) {
+
 /**************************************************************************************************************/
 
 /** 
 	@constructor
 	Function constructor for TileWireframeLayer
  */
-GlobWeb.TileWireframeLayer = function( options )
+var TileWireframeLayer = function( options )
 {
-	GlobWeb.BaseLayer.prototype.constructor.call( this, options );
+	BaseLayer.prototype.constructor.call( this, options );
 	this.outline = (options && options['outline']) ? options['outline'] : false;
 	this.globe = null;
 	this.program = null;
@@ -35,14 +38,14 @@ GlobWeb.TileWireframeLayer = function( options )
 
 /**************************************************************************************************************/
 
-GlobWeb.inherits( GlobWeb.BaseLayer,GlobWeb.TileWireframeLayer );
+Utils.inherits( BaseLayer,TileWireframeLayer );
 
 /**************************************************************************************************************/
 
 /** 
   Build the index buffer
  */
-GlobWeb.TileWireframeLayer.prototype.buildIndexBuffer = function()
+TileWireframeLayer.prototype.buildIndexBuffer = function()
 {
 	var gl = this.globe.renderContext.gl;
 	var size = this.globe.tileManager.tileConfig.tesselation;
@@ -117,9 +120,9 @@ GlobWeb.TileWireframeLayer.prototype.buildIndexBuffer = function()
 /** 
   Attach the layer to the globe
  */
-GlobWeb.TileWireframeLayer.prototype._attach = function( g )
+TileWireframeLayer.prototype._attach = function( g )
 {
-	GlobWeb.BaseLayer.prototype._attach.call( this, g );
+	BaseLayer.prototype._attach.call( this, g );
 	
 	if ( this._visible )
 	{
@@ -147,7 +150,7 @@ GlobWeb.TileWireframeLayer.prototype._attach = function( g )
 		}\n\
 		";
 		
-		this.program = new GlobWeb.Program(this.globe.renderContext);
+		this.program = new Program(this.globe.renderContext);
 		this.program.createFromSource( vertexShader, fragmentShader );
 		
 		this.buildIndexBuffer();
@@ -159,10 +162,10 @@ GlobWeb.TileWireframeLayer.prototype._attach = function( g )
 /** 
   Detach the layer from the globe
  */
-GlobWeb.TileWireframeLayer.prototype._detach = function()
+TileWireframeLayer.prototype._detach = function()
 {
 	this.globe.tileManager.removePostRenderer(this);
-	GlobWeb.BaseLayer.prototype._detach.call(this);
+	BaseLayer.prototype._detach.call(this);
 }
 
 /**************************************************************************************************************/
@@ -170,7 +173,7 @@ GlobWeb.TileWireframeLayer.prototype._detach = function()
 /**
 	Render the tiles outline
  */
-GlobWeb.TileWireframeLayer.prototype.render = function( tiles )
+TileWireframeLayer.prototype.render = function( tiles )
 {
 	var rc = this.globe.renderContext;
 	var gl = rc.gl;
@@ -188,7 +191,7 @@ GlobWeb.TileWireframeLayer.prototype.render = function( tiles )
 	{
 		var tile = tiles[i];
 		
-		var isLoaded = ( tile.state == GlobWeb.Tile.State.LOADED );
+		var isLoaded = ( tile.state == Tile.State.LOADED );
 		var isLevelZero = ( tile.parentIndex == -1 );
 	
 		// Update uniforms for modelview matrix
@@ -221,7 +224,7 @@ GlobWeb.TileWireframeLayer.prototype.render = function( tiles )
 /**
  * 	Set visibility of the layer
  */
-GlobWeb.TileWireframeLayer.prototype.visible = function( arg )
+TileWireframeLayer.prototype.visible = function( arg )
 {
 	if ( typeof arg == "boolean" && this._visible != arg )
 	{
@@ -238,3 +241,7 @@ GlobWeb.TileWireframeLayer.prototype.visible = function( arg )
 	
 	return this._visible;
 }
+
+return TileWireframeLayer;
+
+});

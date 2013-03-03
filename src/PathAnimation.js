@@ -17,22 +17,24 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+ define(['./Utils','./Animation','./CoordinateSystem','./Numeric'], function(Utils,Animation,CoordinateSystem,Numeric) {
+
 /**************************************************************************************************************/
 
 /** @export
 	@constructor
   PathAnimation is an animation defined with a path.
  */
-GlobWeb.PathAnimation = function(coords,speed,valueSetter)
+var PathAnimation = function(coords,speed,valueSetter)
 {
     // Call ancestor constructor
-    GlobWeb.Animation.prototype.constructor.call(this);
+    Animation.prototype.constructor.call(this);
 
-    this.speed = speed * GlobWeb.CoordinateSystem.heightScale / 1000;
+    this.speed = speed * CoordinateSystem.heightScale / 1000;
 	this.nodes = [];
 	for ( var i = 0; i < coords.length; i++ )
 	{
-		var node = { position: GlobWeb.CoordinateSystem.fromGeoTo3D(coords[i]),
+		var node = { position: CoordinateSystem.fromGeoTo3D(coords[i]),
 					velocity: null,
 					distance: 0.0 };
 		this.nodes.push( node );
@@ -86,11 +88,11 @@ GlobWeb.PathAnimation = function(coords,speed,valueSetter)
 		{				
 			var up = vec3.normalize( value, vec3.create() );
 			
-			var geoEye = GlobWeb.CoordinateSystem.from3DToGeo( value );
+			var geoEye = CoordinateSystem.from3DToGeo( value );
 			geoEye[2] = that.globe.getElevation( geoEye[0], geoEye[1] ) + that.altitudeOffset;
-			var eye =  GlobWeb.CoordinateSystem.fromGeoTo3D( geoEye );
+			var eye =  CoordinateSystem.fromGeoTo3D( geoEye );
 			
-			//var eye = vec3.add( vec3.scale(up, (that.altitudeOffset+elevation) * GlobWeb.CoordinateSystem.heightScale, vec3.create()), value );
+			//var eye = vec3.add( vec3.scale(up, (that.altitudeOffset+elevation) * CoordinateSystem.heightScale, vec3.create()), value );
 			var dirn = vec3.normalize( direction, vec3.create() );
 			var center = vec3.add( eye, dirn, vec3.create() );
 			vec3.add( center, vec3.scale(up, that.centerOffset, vec3.create()) );
@@ -101,16 +103,16 @@ GlobWeb.PathAnimation = function(coords,speed,valueSetter)
 
 /**************************************************************************************************************/
 
-GlobWeb.inherits(GlobWeb.Animation,GlobWeb.PathAnimation);
+Utils.inherits(Animation,PathAnimation);
 
 /**************************************************************************************************************/
 
 /**
 	Set the speed
  */
-GlobWeb.PathAnimation.prototype.setSpeed = function(val)
+PathAnimation.prototype.setSpeed = function(val)
 {
-    this.speed = parseFloat(val) * GlobWeb.CoordinateSystem.heightScale / 1000;
+    this.speed = parseFloat(val) * CoordinateSystem.heightScale / 1000;
 }
 
 /**************************************************************************************************************/
@@ -118,7 +120,7 @@ GlobWeb.PathAnimation.prototype.setSpeed = function(val)
 /**
 	Set the altitude offset
  */
-GlobWeb.PathAnimation.prototype.setAltitudeOffset = function(val)
+PathAnimation.prototype.setAltitudeOffset = function(val)
 {
 	this.altitudeOffset = parseFloat(val);
 }
@@ -128,7 +130,7 @@ GlobWeb.PathAnimation.prototype.setAltitudeOffset = function(val)
 /**
 	Set the direction angle
  */
-GlobWeb.PathAnimation.prototype.setDirectionAngle = function(vertical)
+PathAnimation.prototype.setDirectionAngle = function(vertical)
 {
 	this.centerOffset = Math.tan( parseFloat(vertical) * Math.PI / 180.0 );
 }
@@ -138,7 +140,7 @@ GlobWeb.PathAnimation.prototype.setDirectionAngle = function(vertical)
 /** @export
 	Start the animation
  */
-GlobWeb.PathAnimation.prototype.start = function()
+PathAnimation.prototype.start = function()
 {
 	var previousStartTime = -1;
 	if ( this.pauseTime != -1 )
@@ -146,7 +148,7 @@ GlobWeb.PathAnimation.prototype.start = function()
 		previousStartTime = this.startTime;
 	}
 
-    GlobWeb.Animation.prototype.start.call(this);
+    Animation.prototype.start.call(this);
 	
 	if ( previousStartTime != -1 )
 	{
@@ -163,7 +165,7 @@ GlobWeb.PathAnimation.prototype.start = function()
 /*
 	Animation update method
 */
-GlobWeb.PathAnimation.prototype.update = function(now)
+PathAnimation.prototype.update = function(now)
 {
 	if ( this.previousTime == -1 )
 	{
@@ -204,3 +206,7 @@ GlobWeb.PathAnimation.prototype.update = function(now)
 }
 
 /**************************************************************************************************************/
+
+return PathAnimation;
+
+});

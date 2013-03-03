@@ -16,13 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+ 
+define(['./Program','./Tile'], function(Program,Tile) {
 
 //*************************************************************************
 
 /** 
 	@constructor
  */
-GlobWeb.GroundOverlayRenderer = function(tileManager)
+var GroundOverlayRenderer = function(tileManager)
 {
 	this.renderContext = tileManager.renderContext;
 	this.tileIndexBuffer = tileManager.tileIndexBuffer;
@@ -63,7 +65,7 @@ GlobWeb.GroundOverlayRenderer = function(tileManager)
 	}\n\
 	";
 	
-    this.program = new GlobWeb.Program(this.renderContext);
+    this.program = new Program(this.renderContext);
 	this.program.createFromSource( vertexShader, fragmentShader );
 	
 	this.groundOverlays = [];
@@ -76,7 +78,7 @@ GlobWeb.GroundOverlayRenderer = function(tileManager)
 /*
 	Render the ground overlays above the tiles in parameter
  */
-GlobWeb.GroundOverlayRenderer.prototype.render = function( tiles )
+GroundOverlayRenderer.prototype.render = function( tiles )
 {
  	var gl = this.renderContext.gl;
 
@@ -132,7 +134,7 @@ GlobWeb.GroundOverlayRenderer.prototype.render = function( tiles )
 					initialized = true;
 				}
 
-				var extent = (tile.state == GlobWeb.Tile.State.LOADED) ? tile.geoBound : tile.parent.geoBound;
+				var extent = (tile.state == Tile.State.LOADED) ? tile.geoBound : tile.parent.geoBound;
 				
 				gl.uniform4f(this.program.uniforms["extent"], extent.west, extent.east, extent.north, extent.south );
 				mat4.multiply( this.renderContext.viewMatrix, tile.matrix, modelViewMatrix );
@@ -143,7 +145,7 @@ GlobWeb.GroundOverlayRenderer.prototype.render = function( tiles )
 				gl.vertexAttribPointer(attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
 				
 				// Bind the index buffer only if different (index buffer is shared between tiles)
-				var indexBuffer = ( tile.state == GlobWeb.Tile.State.LOADED ) ? this.tileIndexBuffer.getSolid() : this.tileIndexBuffer.getSubSolid(tile.parentIndex);
+				var indexBuffer = ( tile.state == Tile.State.LOADED ) ? this.tileIndexBuffer.getSolid() : this.tileIndexBuffer.getSubSolid(tile.parentIndex);
 				if ( currentIB != indexBuffer )
 				{
 					gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -160,3 +162,7 @@ GlobWeb.GroundOverlayRenderer.prototype.render = function( tiles )
 }
 
 //*************************************************************************
+
+return GroundOverlayRenderer;
+
+});

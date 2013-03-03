@@ -17,22 +17,25 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+define(['./Utils','./VectorRendererManager','./TiledVectorRenderable','./TiledVectorRenderer','./Numeric','./CoordinateSystem','./Triangulator'],
+	function(Utils,VectorRendererManager,TiledVectorRenderable,TiledVectorRenderer,Numeric,CoordinateSystem,Triangulator) {
+
 /**************************************************************************************************************/
 
 
 /** @constructor
  *	PolygonRenderable constructor
  */
-GlobWeb.PolygonRenderable = function( bucket, gl )
+var PolygonRenderable = function( bucket, gl )
 {
-	GlobWeb.TiledVectorRenderable.prototype.constructor.call(this,bucket,gl);
+	TiledVectorRenderable.prototype.constructor.call(this,bucket,gl);
 	this.glMode = gl.TRIANGLES;
 }
 
 /**************************************************************************************************************/
 
 // Inheritance
-GlobWeb.inherits(GlobWeb.TiledVectorRenderable,GlobWeb.PolygonRenderable);
+Utils.inherits(TiledVectorRenderable,PolygonRenderable);
 
 /**************************************************************************************************************/
 
@@ -40,7 +43,7 @@ GlobWeb.inherits(GlobWeb.TiledVectorRenderable,GlobWeb.PolygonRenderable);
  * Build children indices.
  * Children indices are used to render a tile children when it is not completely loaded.
  */
-GlobWeb.PolygonRenderable.prototype.buildChildrenIndices = function( tile )
+PolygonRenderable.prototype.buildChildrenIndices = function( tile )
 {
 	this.childrenIndices = [ [], [], [], [] ];
 	this.childrenIndexBuffers = [ null, null, null, null ];
@@ -315,7 +318,7 @@ var clipPolygonToTriGridStartUp = function( points, bounds, level )
 /**
  * Clamp a polygon on a tile
  */
-GlobWeb.PolygonRenderable.prototype.buildVerticesAndIndices = function( tile, coordinates )
+PolygonRenderable.prototype.buildVerticesAndIndices = function( tile, coordinates )
 {
 	//var coords = clipPolygon( coordinates, [ tile.geoBound.west, tile.geoBound.south, tile.geoBound.east, tile.geoBound.north ] );
 	var points = coordinates.slice(0);
@@ -325,8 +328,8 @@ GlobWeb.PolygonRenderable.prototype.buildVerticesAndIndices = function( tile, co
 		for ( var n = 0; n < polygons.length; n++ )
 		{
 			var invMatrix = tile.inverseMatrix;
-			var radius = GlobWeb.CoordinateSystem.radius;
-			var height = 100 * GlobWeb.CoordinateSystem.heightScale;
+			var radius = CoordinateSystem.radius;
+			var height = 100 * CoordinateSystem.heightScale;
 			
 			var vertexOffset = this.vertices.length;
 			var indexOffset = this.vertices.length / 3;
@@ -349,7 +352,7 @@ GlobWeb.PolygonRenderable.prototype.buildVerticesAndIndices = function( tile, co
 				vertexOffset += 3;
 			}
 			
-			var tris = GlobWeb.Triangulator.process( coords );
+			var tris = Triangulator.process( coords );
 			if ( tris )
 			{		
 				for ( var i = 0; i < tris.length; i++ )
@@ -368,14 +371,15 @@ GlobWeb.PolygonRenderable.prototype.buildVerticesAndIndices = function( tile, co
 /**************************************************************************************************************/
 
 // Register the renderer
-GlobWeb.VectorRendererManager.registerRenderer({
+VectorRendererManager.registerRenderer({
 	creator: function(globe) { 
-			var polygonRenderer = new GlobWeb.TiledVectorRenderer(globe.tileManager);
+			var polygonRenderer = new TiledVectorRenderer(globe.tileManager);
 			polygonRenderer.id = "polygon";
 			polygonRenderer.styleEquals = function(s1,s2) { return s1.isEqualForPoly(s2); };
-			polygonRenderer.renderableConstuctor = GlobWeb.PolygonRenderable;
+			polygonRenderer.renderableConstuctor = PolygonRenderable;
 			return polygonRenderer;
 	},
 	canApply: function(type,style) {return style.rendererHint == "Tiled" && type == "Polygon" && style.fill; }
 });
-										
+				
+});

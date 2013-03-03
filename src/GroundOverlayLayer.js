@@ -17,7 +17,11 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-//*************************************************************************
+define(['./Utils', './BaseLayer', './GeoBound', './GroundOverlayRenderer'], 
+	function(Utils, BaseLayer, GeoBound, GroundOverlayRenderer) {
+
+
+/**************************************************************************************************************/
 
 /** @constructor
 	@export
@@ -28,8 +32,10 @@
 		opacity : opacity of the layer
 		flipY : flip or not the image
  */
-GlobWeb.GroundOverlayLayer = function( options )
+var GroundOverlayLayer = function( options )
 {
+	BaseLayer.prototype.constructor.call( this, options );
+	
 	this.quad = options.quad;
 	this.opacity = options.opacity || 1.0;
 	if ( typeof options.flipY === 'undefined' )
@@ -42,7 +48,7 @@ GlobWeb.GroundOverlayLayer = function( options )
 	}
 	
 	// Compute the geo bound of the ground overlay
-	this.geoBound = new GlobWeb.GeoBound();
+	this.geoBound = new GeoBound();
 	this.geoBound.computeFromCoordinates( this.quad );
 	this.computeTransform();
 
@@ -59,18 +65,22 @@ GlobWeb.GroundOverlayLayer = function( options )
 	this.globe = null;
 }
 
-//*************************************************************************
+/**************************************************************************************************************/
+
+Utils.inherits( BaseLayer,GroundOverlayLayer );
+
+/**************************************************************************************************************/
 
 /**
 	Attach layer to the globe
  */
-GlobWeb.GroundOverlayLayer.prototype._attach = function( globe )
+GroundOverlayLayer.prototype._attach = function( globe )
 {
 	// Add layer to ground overlay renderer, create one if needed
 	var renderer = globe.groundOverlayRenderer;
 	if ( !renderer )
 	{
-		renderer = new GlobWeb.GroundOverlayRenderer(globe.tileManager);
+		renderer = new GroundOverlayRenderer(globe.tileManager);
 		globe.tileManager.addPostRenderer( renderer );
 		globe.groundOverlayRenderer = renderer;
 	}
@@ -84,7 +94,7 @@ GlobWeb.GroundOverlayLayer.prototype._attach = function( globe )
 /**
 	Dtach layer from the globe
  */
-GlobWeb.GroundOverlayLayer.prototype._detach = function( globe )
+GroundOverlayLayer.prototype._detach = function( globe )
 {
 	// Remove layer from the globe renderer for ground overlay
 	var prevRenderer = this.globe.groundOverlayRenderer;
@@ -109,7 +119,7 @@ GlobWeb.GroundOverlayLayer.prototype._detach = function( globe )
 /**
 	Transform a geographic position into the unit square of the ground overlay
  */
-GlobWeb.GroundOverlayLayer.prototype.transformFromSquare = function( point )
+GroundOverlayLayer.prototype.transformFromSquare = function( point )
 {
 	var x = this.transform[0] * point[0] + this.transform[3] * point[1] + this.transform[6];
 	var y = this.transform[1] * point[0] + this.transform[4] * point[1] + this.transform[7];
@@ -124,7 +134,7 @@ GlobWeb.GroundOverlayLayer.prototype.transformFromSquare = function( point )
 /**
 	Transform from the unit square of the ground overlay into a unit square
  */
-GlobWeb.GroundOverlayLayer.prototype.transformToSquare = function( point )
+GroundOverlayLayer.prototype.transformToSquare = function( point )
 {
 	var x = this.inverseTransform[0] * point[0] + this.inverseTransform[3] * point[1] + this.inverseTransform[6];
 	var y = this.inverseTransform[1] * point[0] + this.inverseTransform[4] * point[1] + this.inverseTransform[7];
@@ -140,7 +150,7 @@ GlobWeb.GroundOverlayLayer.prototype.transformToSquare = function( point )
 	Compute the inverse transform from unit square to geo position
 	Code taken from QTransform
  */
-GlobWeb.GroundOverlayLayer.prototype.computeInverse = function()
+GroundOverlayLayer.prototype.computeInverse = function()
 {
     var det =  this.transform[0] * (this.transform[8] * this.transform[4] - this.transform[5] * this.transform[7]) -
         this.transform[3] * (this.transform[8] * this.transform[1] -  this.transform[7]) *  this.transform[3] 
@@ -170,7 +180,7 @@ GlobWeb.GroundOverlayLayer.prototype.computeInverse = function()
 	Compute the transform from geo position to unit square
 	Code taken from QTransform
  */
-GlobWeb.GroundOverlayLayer.prototype.computeTransform = function()
+GroundOverlayLayer.prototype.computeTransform = function()
 {
     var dx0 = this.quad[0][0];
     var dx1 = this.quad[1][0];
@@ -226,3 +236,7 @@ GlobWeb.GroundOverlayLayer.prototype.computeTransform = function()
 }
 
 //*************************************************************************
+
+return GroundOverlayLayer;
+
+});
