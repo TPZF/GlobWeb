@@ -1,3 +1,18 @@
+requirejs.config({
+    shim: {
+		'js/jquery-ui-1.8.20.custom.min': ['js/jquery-1.7.2.min'],
+    },
+	paths: {
+		gw: '../../src'
+	}
+});
+
+require(['gw/Globe','gw/WMSLayer','gw/WCSElevationLayer', 'gw/VectorLayer', 'gw/AtmosphereLayer',
+	'gw/PathAnimation','gw/Navigation','gw/Stats','gw/FeatureStyle',
+	'gw/PointRenderer', 'gw/LineStringRenderable', 
+	'js/jquery-1.7.2.min','js/jquery-ui-1.8.20.custom.min','config'], 
+	function(Globe,WMSLayer,WCSElevationLayer,VectorLayer,AtmosphereLayer,PathAnimation,Navigation,Stats,FeatureStyle) {
+
 var globe = null;
 var nav = null;
 var pathAnimation = null;
@@ -52,7 +67,7 @@ onElevationClicked = function(e)
 // Called when a POI is clicked
 onPoiClicked = function(e)
 {
-	nav.zoomTo( [e.currentTarget.lon, e.currentTarget.lat], 20000, 1500 );
+	nav.zoomTo( [ parseFloat(e.currentTarget.dataset.long), parseFloat(e.currentTarget.dataset.lat) ], 20000, 1500 );
 }
 
 onWindowResize = function(e)
@@ -66,7 +81,12 @@ onWindowResize = function(e)
 // Initialize the POI into GlobWeb
 initializePoi = function(pois)
 {
-	var poiLayer = new GlobWeb.VectorLayer();
+	var poiLayer = new VectorLayer({
+		style: new FeatureStyle({
+			iconUrl: 'hotspot.png',
+			fillColor: [1, 1, 1, 1]
+		})
+	});
 	for (var i=0; i < pois.length; i++)
 	{
 		pois[i].lat = parseFloat( pois[i].getAttribute("data-lat") );
@@ -80,7 +100,6 @@ initializePoi = function(pois)
 				coordinates: [pois[i].lon,pois[i].lat,pois[i].height]
 			}
 		};
-		//var poi = new GlobWeb.Poi(pois[i].name,pois[i].lat,pois[i].lon,pois[i].height);
 		poiLayer.addFeature( poi );
 	}
 	globe.addLayer(poiLayer);
@@ -90,9 +109,7 @@ initializePoi = function(pois)
 initializeElevation = function(value)
 {
 	elevations["None"] = null;
-	elevations["GTOPO"] = new GlobWeb.WMSElevationLayer({ baseUrl: config.serverUrl + "/wmspub", layers: "GTOPO"});
-		//new GlobWeb.BasicElevationLayer( { baseUrl: config.serverUrl + "/GlobeWeb/map.php"} );
-
+	elevations["GTOPO"] = new WCSElevationLayer({ baseUrl: config.serverUrl + "/wcspub", coverage: "GTOPO", version: "1.0.0"});
 	activeElevation = elevations[value];
 	globe.setBaseElevation( activeElevation );
 }
@@ -100,9 +117,9 @@ initializeElevation = function(value)
 // Initialize the imagery
 initializeImagery = function(value)
 {
-	imageries["PO"] = new GlobWeb.WMSLayer( { baseUrl: config.serverUrl + "/wmspo",  layers: "PO150m,POFrance15m,POI15m" } );
-	//imageries["Landsat"] = new GlobWeb.WMSLayer( { baseUrl: config.serverUrl + "/wmspo",  layers: "PO150m,POFrance15m,POI15m" } );
-	imageries["OSM"] = new GlobWeb.WMSLayer( { baseUrl: config.serverUrl + "/geocache/wms", layers: "imposm-fr", format: "image/png" } );
+	imageries["PO"] = new WMSLayer( { baseUrl: config.serverUrl + "/wmspo",  layers: "PO150m,POFrance15m,POI15m" } );
+	//imageries["Landsat"] = new WMSLayer( { baseUrl: config.serverUrl + "/wmspo",  layers: "PO150m,POFrance15m,POI15m" } );
+	imageries["OSM"] = new WMSLayer( { baseUrl: config.serverUrl + "/geocache/wms", layers: "imposm-fr", format: "image/png" } );
 
 	activeImagery = imageries[value];
 	globe.setBaseImagery( activeImagery );
@@ -199,12 +216,12 @@ initializePath = function()
 				coords.push( [ lon.childNodes[0].nodeValue / 1000000.0, lat.childNodes[0].nodeValue / 1000000.0 ] );
 			}
 			
-			var pathLayer = new GlobWeb.VectorLayer();
+			var pathLayer = new VectorLayer();
 			var feature = { type: "Feature", geometry: { type: "LineString", coordinates: coords } };
 			pathLayer.addFeature( feature );
 			globe.addLayer(pathLayer);
 			
-			pathAnimation = new GlobWeb.PathAnimation(coords,1000,undefined);
+			pathAnimation = new PathAnimation(coords,1000,undefined);
 			globe.addAnimation(pathAnimation);
 			
 			}
@@ -258,8 +275,7 @@ $(function()
 	// Initialize webgl
 	try
 	{
-		globe = new GlobWeb.Globe({ canvas: 'GlobWebCanvas', 
-				atmosphere: false, 
+		globe = new Globe({ canvas: 'GlobWebCanvas', 
 				shadersPath: config.shadersPath 
 		});
 	}
@@ -269,7 +285,9 @@ $(function()
 		document.getElementById('webGLNotAvailable').style.display = "block";
 	}
 		
-	nav = new GlobWeb.Navigation(globe);
+	nav = new Navigation(globe);
+	
+	globe.addLayer( new AtmosphereLayer() );
 	
 	initializeImagery('PO');
 	initializeElevation('GTOPO');
@@ -278,7 +296,9 @@ $(function()
 	initializePath();
 
 	// Init Stats
-	var stats = new GlobWeb.Stats(globe,{element: "fps",verbose: false});
+	var stats = new Stats(globe,{element: "fps",verbose: false});
+
+});
 
 });
 
