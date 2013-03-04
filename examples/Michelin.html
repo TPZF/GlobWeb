@@ -4,66 +4,63 @@
 <title>GlobWeb example</title>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 <link rel="stylesheet" href="GlobWeb.css">
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
-
+<script  src="require.min.js"></script>
 <script type="text/javascript">
 	
-	
-    function webGLStart() 
-	{	
-		var globe = new GlobWeb.Globe( { canvas: "GlobWebCanvas", 
-				atmosphere: false,
-				lighting: false,
-				tileErrorTreshold: 3, 
-				continuousRendering: true } );
-				
-		var navigator = new GlobWeb.Navigation(globe);
-		
-		// Add stats
-		var stats = new GlobWeb.Stats( globe, {element: 'fps', verbose: false} );
-	
-		var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble" });
-		globe.setBaseImagery( blueMarbleLayer );
+require(['../src/GlobWeb'], function (GlobWeb) 
+{	
+	var globe = new GlobWeb.Globe( { canvas: "GlobWebCanvas", 
+			atmosphere: false,
+			lighting: false,
+			tileErrorTreshold: 3, 
+			continuousRendering: true } );
 			
-		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
-		globe.setBaseElevation( elevationLayer );
-		
-		var vectorLayer = new GlobWeb.VectorLayer();
-		globe.addLayer( vectorLayer );
-		
-		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = function(e)
-		{
-			if ( xhr.readyState == 4 )
-			{
-				var doc =  xhr.responseXML;
-				var points = doc.getElementsByTagName("point");
-				var coords = [];
-				for (var i = 0; i < points.length; i++)
-				{
-					var lon = points[i].getElementsByTagName("lon")[0];
-					var lat = points[i].getElementsByTagName("lat")[0];
-					coords.push( [ lon.childNodes[0].nodeValue / 1000000.0, lat.childNodes[0].nodeValue / 1000000.0 ] );
-				}
-				var feature = { type: "Feature", geometry: { type: "LineString", coordinates: coords } };
-				vectorLayer.addFeature( feature );
-				
-				var pathAnimation = new GlobWeb.PathAnimation(coords,1000,undefined,globe);
-				globe.addAnimation(pathAnimation);
-				pathAnimation.start();
-			}
-		};
-		xhr.open("GET","coordonnees-geo-paris-marseille.xml");
-		xhr.send();
-    }
+	var navigator = new GlobWeb.Navigation(globe);
+	
+	// Add stats
+	var stats = new GlobWeb.Stats( globe, {element: 'fps', verbose: false} );
 
+	var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble" });
+	globe.setBaseImagery( blueMarbleLayer );
+		
+	var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
+	globe.setBaseElevation( elevationLayer );
+	
+	var vectorLayer = new GlobWeb.VectorLayer();
+	globe.addLayer( vectorLayer );
+	
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function(e)
+	{
+		if ( xhr.readyState == 4 )
+		{
+			var doc =  xhr.responseXML;
+			var points = doc.getElementsByTagName("point");
+			var coords = [];
+			for (var i = 0; i < points.length; i++)
+			{
+				var lon = points[i].getElementsByTagName("lon")[0];
+				var lat = points[i].getElementsByTagName("lat")[0];
+				coords.push( [ lon.childNodes[0].nodeValue / 1000000.0, lat.childNodes[0].nodeValue / 1000000.0 ] );
+			}
+			var feature = { type: "Feature", geometry: { type: "LineString", coordinates: coords } };
+			vectorLayer.addFeature( feature );
+			
+			var pathAnimation = new GlobWeb.PathAnimation(coords,1000,undefined,globe);
+			globe.addAnimation(pathAnimation);
+			pathAnimation.start();
+		}
+	};
+	xhr.open("GET","coordonnees-geo-paris-marseille.xml");
+	xhr.send();
+});
 
 </script>
 
 </head>
 
 
-<body onload="webGLStart();">
+<body>
 	<h1>Glob Web</h1>
     <canvas id="GlobWebCanvas" style="border: none;" width="800" height="450"></canvas> 
   	<br/>

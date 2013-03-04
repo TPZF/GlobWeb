@@ -5,96 +5,93 @@
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 <link rel="stylesheet" href="GlobWeb.css">
 <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
-
-
+<script  src="require.min.js"></script>
 <script type="text/javascript">
 	
+require(['../src/GlobWeb'], function (GlobWeb) 
+{	
+	var globe = new GlobWeb.Globe({ canvas: "GlobWebCanvas", 
+			atmosphere: false,
+			lighting: false,
+			showWireframe: false,
+			tileErrorTreshold: 4, 
+			continuousRendering: false,
+			statsElement: "fps" });
+			
+
+
+	var navigation = new GlobWeb.Navigation(globe);
+		
+	var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble,esat" });
+	globe.setBaseImagery( blueMarbleLayer );
+	var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
+	globe.setBaseElevation( elevationLayer );
 	
-    function webGLStart() 
-	{	
-		var globe = new GlobWeb.Globe({ canvas: "GlobWebCanvas", 
-				atmosphere: false,
-				lighting: false,
-				showWireframe: false,
-				tileErrorTreshold: 4, 
-				continuousRendering: false,
-				statsElement: "fps" });
-				
+/*		var osmLayer = new GlobWeb.OSMLayer( {baseUrl:"http://tile.openstreetmap.org"} );
+	globe.setBaseImagery( osmLayer );*/
+	
+	var vectorLayer = new GlobWeb.VectorLayer();
+	globe.addLayer( vectorLayer );
+	
 	
 
-		var navigation = new GlobWeb.Navigation(globe);
-			
-		var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble,esat" });
-		globe.setBaseImagery( blueMarbleLayer );
-		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
-		globe.setBaseElevation( elevationLayer );
-		
-/*		var osmLayer = new GlobWeb.OSMLayer( {baseUrl:"http://tile.openstreetmap.org"} );
-		globe.setBaseImagery( osmLayer );*/
-		
-		var vectorLayer = new GlobWeb.VectorLayer();
-		globe.addLayer( vectorLayer );
-		
-		
+	var feature = { type: "Feature",
+					geometry: { type: "Polygon",
+							coordinates: [ [ [79.34, 70.2],
+											[360-278.72, 70.06],
+											[79.47, 67.02],
+											[77.79, 63.52],
+											[76.52, 60.4],
+											[75.18, 60.52],
+											[76.3, 63.64],
+											[77.78, 67.15],
+											[79.34, 70.2] ] ]
+							}
+				};
+	vectorLayer.addFeature( feature );
 	
-		var feature = { type: "Feature",
-						geometry: { type: "Polygon",
-								coordinates: [ [ [79.34, 70.2],
-												[360-278.72, 70.06],
-												[79.47, 67.02],
-												[77.79, 63.52],
-												[76.52, 60.4],
-												[75.18, 60.52],
-												[76.3, 63.64],
-												[77.78, 67.15],
-												[79.34, 70.2] ] ]
-								}
-					};
-		vectorLayer.addFeature( feature );
-		
-		$.ajax({
-			  url: "error.geojson",
-			  dataType: "json",
-			  success: function(data)
-			  {
-				vectorLayer.addFeatureCollection( data );
-			  }
-		});
-		
-		$.ajax({
-			  url: "europe.json",
-			  success: function(data)
-			  {
-				vectorLayer.addFeatureCollection( data );
-			  }
-		});
- 		
-		$.ajax({
-			  url: "multiPolygon.json",
-			  success: function(data)
-			  {
-				vectorLayer.addFeatureCollection( data );
-			  }
-		});
-		
- 		$('#GlobWebCanvas').keypress( function(event) { 
-			var key = String.fromCharCode(event.which);
-			if ( key == 'v' )
-			{
-				vectorLayer.visible( !vectorLayer.visible() );
-			}
-			else if ( key == 'a' )
-			{
-				vectorLayer.opacity( vectorLayer.opacity() - 0.1 );
-			}
-			else if ( key == 'z' )
-			{
-				vectorLayer.opacity( vectorLayer.opacity() + 0.1 );
-			}
-					//globe.tileManager.freeze = !globe.tileManager.freeze; 
-		});
-  }
+	$.ajax({
+		  url: "error.geojson",
+		  dataType: "json",
+		  success: function(data)
+		  {
+			vectorLayer.addFeatureCollection( data );
+		  }
+	});
+	
+	$.ajax({
+		  url: "europe.json",
+		  success: function(data)
+		  {
+			vectorLayer.addFeatureCollection( data );
+		  }
+	});
+	
+	$.ajax({
+		  url: "multiPolygon.json",
+		  success: function(data)
+		  {
+			vectorLayer.addFeatureCollection( data );
+		  }
+	});
+	
+	$('#GlobWebCanvas').keypress( function(event) { 
+		var key = String.fromCharCode(event.which);
+		if ( key == 'v' )
+		{
+			vectorLayer.visible( !vectorLayer.visible() );
+		}
+		else if ( key == 'a' )
+		{
+			vectorLayer.opacity( vectorLayer.opacity() - 0.1 );
+		}
+		else if ( key == 'z' )
+		{
+			vectorLayer.opacity( vectorLayer.opacity() + 0.1 );
+		}
+				//globe.tileManager.freeze = !globe.tileManager.freeze; 
+	});
+ });
 
 
 </script>
@@ -102,7 +99,7 @@
 </head>
 
 
-<body onload="webGLStart();">
+<body>
 	<h1>Glob Web</h1>
     <canvas id="GlobWebCanvas" style="border: none;" width="800" height="450"></canvas> 
   	<br/>

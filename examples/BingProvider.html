@@ -4,35 +4,28 @@
 <title>GlobWeb example</title>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 <link rel="stylesheet" href="GlobWeb.css">
-
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
-
+<script  src="require.min.js"></script>
 <script type="text/javascript">
-
-function webGLStart()
-{
-	var globe = new GlobWeb.Globe({ canvas: "GlobWebCanvas" });
 	
-	var navigation = new GlobWeb.Navigation(globe);
-
-	//	var pixelXY = GlobWeb.BingTileSystem.latLongToPixelXY(42,2,4);
-
-	//	var quadKey = GlobWeb.BingTileSystem.tileXYToQuadKey( pixelXY[0] / 256, pixelXY[1] / 256, 4 );
+require(['../src/Globe','../src/BingLayer','../src/Navigation'], 
+	function (Globe,BingLayer,Navigation) 
+{	
+	var globe = new Globe({ canvas: "GlobWebCanvas" });
+	
+	var navigation = new Navigation(globe);
 		
-	var bingLayer = new GlobWeb.BingLayer({ imageSet:"AerialWithLabels", 
+	var bingLayer = new BingLayer({ imageSet:"AerialWithLabels", 
 											key: "Ar7-_U1iwNtChqq64tAQsOfO8G7FwF3DabvgkQ1rziC4Z9zzaKZlRDWJTKTOPBPV" 
 										});
 	globe.setBaseImagery( bingLayer );
-}	
-    
-
+});
 
 </script>
 
 </head>
 
 
-<body onload="webGLStart();">
+<body>
 	<h1>Glob Web</h1>
     <canvas id="GlobWebCanvas" style="border: none;" width="800" height="600"></canvas> 
   	<br/>

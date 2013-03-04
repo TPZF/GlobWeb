@@ -7,8 +7,8 @@
 <script  src="require.min.js"></script>
 <script type="text/javascript">
 	
-require(['../src/Globe','../src/WMSLayer','../src/WCSElevationLayer','../src/Navigation','../src/Stats','../src/VectorLayer','../src/FeatureStyle','../src/PolygonRenderable'], 
-	function (Globe,WMSLayer,WCSElevationLayer,Navigation,Stats,VectorLayer,FeatureStyle) 
+require(['../src/Globe','../src/WMSLayer','../src/WCSElevationLayer','../src/Navigation','../src/Stats','../src/TileWireframeLayer'], 
+	function (Globe,WMSLayer,WCSElevationLayer,Navigation,Stats,TileWireframeLayer) 
 {	
 		var cvs = document.getElementById("GlobWebCanvas");
 		cvs.width = window.innerWidth;
@@ -32,29 +32,17 @@ require(['../src/Globe','../src/WMSLayer','../src/WCSElevationLayer','../src/Nav
 		var elevationLayer = new WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
 		globe.setBaseElevation( elevationLayer );
 		
-		var style  = new FeatureStyle();
-		style.fill = true;
-		var polygon = { type: "Feature",
-						geometry: { type: "Polygon",
-							coordinates: [ [ [-5, -5], [5, -4], [3, 3], [-1, 2], [-5, -5] ] ]
-						}
-					};
-		var vectorLayer = new VectorLayer({ style: style });
-		vectorLayer.addFeature( polygon );
-		globe.addLayer( vectorLayer );
-});			
-
+		globe.addLayer( new TileWireframeLayer() );
+});
 
 </script>
 
 </head>
 
 
-<body>
-	<h1>Glob Web</h1>
-    <canvas id="GlobWebCanvas" style="border: none;" width="800" height="450"></canvas> 
-  	<br/>
-	<div id="fps"><span style="font-weight:bold">FPS : 0</span></div>
+<body style="margin: 0; padding: 0;">
+    <canvas id="GlobWebCanvas" style="border: none; margin: 0; padding: 0;" width="800" height="600"></canvas> 
+ 	<div id="fps"></div>
 </body>
 
 </html>

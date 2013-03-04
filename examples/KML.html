@@ -4,50 +4,46 @@
 <title>GlobWeb example</title>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 <link rel="stylesheet" href="GlobWeb.css">
-
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
-<script type="text/javascript" src="../src/KMLParser.js"></script>
-
+<script  src="require.min.js"></script>
 <script type="text/javascript">
 	
+require(['../src/GlobWeb'], function (GlobWeb) 
+{	
+	var globe = new GlobWeb.Globe( { canvas: "GlobWebCanvas" } );
+
+	var navigation = new GlobWeb.Navigation(globe);
+
+	var bmlayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub",
+				layers: "BlueMarble,esat" } );
+	globe.setBaseImagery( bmlayer );
 	
-    function webGLStart() 
-	{	
-		var globe = new GlobWeb.Globe( { canvas: "GlobWebCanvas" } );
+	var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
+	globe.setBaseElevation( elevationLayer );
+	
+	var vectorLayer = new GlobWeb.VectorLayer();
 
-		var navigation = new GlobWeb.Navigation(globe);
-
-		var bmlayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub",
-					layers: "BlueMarble,esat" } );
-		globe.setBaseImagery( bmlayer );
-		
-		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
-		globe.setBaseElevation( elevationLayer );
-		
-		var vectorLayer = new GlobWeb.VectorLayer();
-
-		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = function(e)
+	var xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = function(e)
+	{
+		if ( xhr.readyState == 4 )// && xhr.status == 200)
 		{
-			if ( xhr.readyState == 4 )// && xhr.status == 200)
-			{
-				vectorLayer.addFeatureCollection( GlobWeb.KMLParser.parse( xhr.responseXML ) );
-				globe.addLayer( vectorLayer );
-			}
-		};
-		//xhr.open("GET", "world-borders/doc.kml");
-		xhr.open("GET", "doc.kml");
-		//xhr.open("GET", "testUS.kml");
-		xhr.send();
-		
-		
-		var vis = true;
- 		document.onkeypress = function(event)
-		{
-			vis = !vis;
-			vectorLayer.visible( vis );
+			vectorLayer.addFeatureCollection( GlobWeb.KMLParser.parse( xhr.responseXML ) );
+			globe.addLayer( vectorLayer );
 		}
-   }
+	};
+	//xhr.open("GET", "world-borders/doc.kml");
+	xhr.open("GET", "doc.kml");
+	//xhr.open("GET", "testUS.kml");
+	xhr.send();
+	
+	
+	var vis = true;
+	document.onkeypress = function(event)
+	{
+		vis = !vis;
+		vectorLayer.visible( vis );
+	}
+});
 
 
 </script>
@@ -55,7 +51,7 @@
 </head>
 
 
-<body onload="webGLStart();">
+<body>
 	<h1>Glob Web</h1>
     <canvas id="GlobWebCanvas" style="border: none;" width="800" height="450"></canvas> 
   	<br/>

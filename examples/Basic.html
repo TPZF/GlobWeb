@@ -4,48 +4,45 @@
 <title>GlobWeb example</title>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 <link rel="stylesheet" href="GlobWeb.css">
-
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
-
+<script  src="require.min.js"></script>
 <script type="text/javascript">
 	
-    function webGLStart() 
-	{	
-		var cvs = document.getElementById("GlobWebCanvas");
-		cvs.width = window.innerWidth;
-		cvs.height = window.innerHeight;
-		
-		// Create the globe
-		var globe = new GlobWeb.Globe( { canvas: cvs, 
-				lighting: false,
-				tileErrorTreshold: 3, 
-				continuousRendering: true } );
-
-		// Add mouse navigation
-		var navigation = new GlobWeb.Navigation(globe, { inertia: true });
-		
-		// Add stats
-		var stats = new GlobWeb.Stats( globe, {element: 'fps', verbose: false} );
+require(['../src/GlobWeb'], function (GlobWeb) 
+{	
+	var cvs = document.getElementById("GlobWebCanvas");
+	cvs.width = window.innerWidth;
+	cvs.height = window.innerHeight;
 	
-		var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble" });
-		globe.setBaseImagery( blueMarbleLayer );
-				
-		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
-		globe.setBaseElevation( elevationLayer );
-		
-		/*var osmLayer = new GlobWeb.OSMLayer( {baseUrl:"http://tile.openstreetmap.org"} );
-		globe.setBaseImagery( osmLayer );*/
-		
-		//globe.addLayer( new GlobWeb.TileWireframeLayer() );
-		var atmosphere = new GlobWeb.AtmosphereLayer({ visible: false, exposure: 1.4 });
-		globe.addLayer( atmosphere );
-		
- 		document.onkeypress = function(event)
-		{
-			atmosphere.visible( !atmosphere.visible() );
-			//globe.tileManager.freeze = !globe.tileManager.freeze;
-		}
-   }
+	// Create the globe
+	var globe = new GlobWeb.Globe( { canvas: cvs, 
+			lighting: false,
+			tileErrorTreshold: 3, 
+			continuousRendering: true } );
+
+	// Add mouse navigation
+	var navigation = new GlobWeb.Navigation(globe, { inertia: true });
+	
+	// Add stats
+	var stats = new GlobWeb.Stats( globe, {element: 'fps', verbose: false} );
+
+	var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble" });
+	globe.setBaseImagery( blueMarbleLayer );
+			
+	var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
+	globe.setBaseElevation( elevationLayer );
+	
+	/*var osmLayer = new GlobWeb.OSMLayer( {baseUrl:"http://tile.openstreetmap.org"} );
+	globe.setBaseImagery( osmLayer );*/
+	
+	var atmosphere = new GlobWeb.AtmosphereLayer({ visible: false, exposure: 1.4 });
+	globe.addLayer( atmosphere );
+	
+	document.onkeypress = function(event)
+	{
+		atmosphere.visible( !atmosphere.visible() );
+		//globe.tileManager.freeze = !globe.tileManager.freeze;
+	}
+});
 
 
 </script>
@@ -53,7 +50,7 @@
 </head>
 
 
-<body onload="webGLStart();" style="margin: 0; padding: 0;">
+<body style="margin: 0; padding: 0;">
     <canvas id="GlobWebCanvas" style="border: none; margin: 0; padding: 0;" width="800" height="600"></canvas> 
  	<div id="fps"></div>
 </body>

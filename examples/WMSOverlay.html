@@ -4,45 +4,42 @@
 <title>GlobWeb example</title>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 <link rel="stylesheet" href="GlobWeb.css">
-
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
-
+<script  src="require.min.js"></script>
 <script type="text/javascript">
 	
-	
-    function webGLStart() 
-	{	
-		// Create the globe
-		var globe = new GlobWeb.Globe( { canvas: "GlobWebCanvas", 
-				atmosphere: false,
-				lighting: false,
-				tileErrorTreshold: 3, 
-				continuousRendering: true } );
+require(['../src/GlobWeb'], function (GlobWeb) 
+{	
+	// Create the globe
+	var globe = new GlobWeb.Globe( { canvas: "GlobWebCanvas", 
+			atmosphere: false,
+			lighting: false,
+			tileErrorTreshold: 3, 
+			continuousRendering: true } );
 
-		// Add mouse navigation
-		var navigation = new GlobWeb.Navigation(globe);
-		
-		// Add stats
-		var stats = new GlobWeb.Stats( globe, {element: 'fps', verbose: false} );
+	// Add mouse navigation
+	var navigation = new GlobWeb.Navigation(globe);
 	
-		var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble" });
-		globe.setBaseImagery( blueMarbleLayer );
-				
-		var eosLayer = new GlobWeb.WMSLayer({
-			baseUrl: "http://127.0.0.1/WMS2EOS/servlets/wms",
-			styles: "ellipsoid",
-			version: "1.1.1",
-			layers: "urn:ogc:def:EOP:ESA:ESA.EECF.ENVISAT_ASA_IMx_xS",
-			time: "2011-04-12T08:53:20.110Z/2011-04-12T08:57:30.100Z",
-			format: "image/png",
-			transparent: "true",
-			geoBound: new GlobWeb.GeoBound(-1.1911907196044922,29.734153747558594,34.946327209472656,51.279144287109375),
-			coordinates: [ [-1.1911907196044922,29.734153747558594], [34.946327209472656,29.734153747558594], [34.946327209472656,51.279144287109375], 
-			[-1.1911907196044922,51.279144287109375], [-1.1911907196044922,29.734153747558594] ]
-		});
-		eosLayer.opacity(0.5);
-		globe.addLayer( eosLayer );
-    }
+	// Add stats
+	var stats = new GlobWeb.Stats( globe, {element: 'fps', verbose: false} );
+
+	var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble" });
+	globe.setBaseImagery( blueMarbleLayer );
+			
+	var eosLayer = new GlobWeb.WMSLayer({
+		baseUrl: "http://127.0.0.1/WMS2EOS/servlets/wms",
+		styles: "ellipsoid",
+		version: "1.1.1",
+		layers: "urn:ogc:def:EOP:ESA:ESA.EECF.ENVISAT_ASA_IMx_xS",
+		time: "2011-04-12T08:53:20.110Z/2011-04-12T08:57:30.100Z",
+		format: "image/png",
+		transparent: "true",
+		geoBound: new GlobWeb.GeoBound(-1.1911907196044922,29.734153747558594,34.946327209472656,51.279144287109375),
+		coordinates: [ [-1.1911907196044922,29.734153747558594], [34.946327209472656,29.734153747558594], [34.946327209472656,51.279144287109375], 
+		[-1.1911907196044922,51.279144287109375], [-1.1911907196044922,29.734153747558594] ]
+	});
+	eosLayer.opacity(0.5);
+	globe.addLayer( eosLayer );
+});
 
 
 </script>
@@ -50,7 +47,7 @@
 </head>
 
 
-<body onload="webGLStart();">
+<body>
 	<h1>Glob Web</h1>
     <canvas id="GlobWebCanvas" style="border: none;" width="800" height="450"></canvas> 
   	<br/>
