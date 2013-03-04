@@ -38,6 +38,7 @@ var WCSElevationLayer = function( options )
 	this.type = "ImageryRaster";
 	this.version = options['version'] || '2.0.0';
 	this.format = options['format'] || 'image/x-aaigrid';
+	this.minElevation = options['minElevation'] || 0;
 	
 	// Build the base GetMap URL
 	var url = this.baseUrl;
@@ -135,7 +136,10 @@ WCSElevationLayer.prototype._parseAAIGrid = function(text)
 		var elts = lines[i].trim().split(/\s+/);
 		for ( var n=0; n < elts.length; n++ )
 		{
-			elevations.push( parseInt(elts[n]) );
+			var elevation = parseInt(elts[n]);
+			if ( elevation < this.minElevation ) 
+				elevation = this.minElevation;
+			elevations.push( elevation );
 		}
 	}
 
