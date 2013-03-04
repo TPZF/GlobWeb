@@ -5,12 +5,8 @@
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 <link rel="stylesheet" href="GlobWeb.css">
 
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
 <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
-
-<script type="text/javascript" src="../src/Collada/ColladaNavigator.js"></script>
-<script type="text/javascript" src="../src/Collada/ColladaParser.js"></script>
-<script type="text/javascript" src="../src/Collada/SceneGraph.js"></script>
+<script  src="require.min.js"></script>
 
 <style type="text/css">
 	
@@ -48,6 +44,9 @@
 
 <script>
 
+require(['../src/RenderContext','../src/Collada/ColladaNavigator','../src/Collada/ColladaParser','../src/Collada/ModelRenderer'], 
+	function (RenderContext,ColladaNavigator,ColladaParser,ModelRenderer)  {
+
 var fpsElement = null;
 var renderContext;
 
@@ -66,7 +65,7 @@ $(function()
 	fpsElement = document.getElementById("fps");
 	window.setInterval(stats,1000);
 	
-	renderContext = new GlobWeb.RenderContext( { canvas: "ColladaCanvas" });
+	renderContext = new RenderContext( { canvas: "ColladaCanvas" });
 
 	var nav = new ColladaNavigator(renderContext);
 	nav.setupDefaultEventHandlers();
@@ -78,8 +77,8 @@ $(function()
 	{
 		if ( xhr.readyState == 4 )// && xhr.status == 200)
 		{
-			var sg = GlobWeb.ColladaParser.parse( xhr.responseXML );
-			sgRenderer = new GlobWeb.SceneGraphRenderer(renderContext,sg);
+			var model = ColladaParser.parse( xhr.responseXML );
+			sgRenderer = new ModelRenderer(renderContext,model);
 		}
 	};
 	xhr.open("GET", "models/warehouse_model.dae");
@@ -99,6 +98,9 @@ $(function()
 	window.requestAnimationFrame(tick);
 
 });
+
+});
+
 </script>
 
 </head>

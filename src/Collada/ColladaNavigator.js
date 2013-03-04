@@ -17,6 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+ define( ['../glMatrix'], function() {
 
 /**************************************************************************************************************/
 
@@ -24,7 +25,7 @@
 	@constructor
 	Navigation constructor
  */
-ColladaNavigator = function(renderContext)
+var ColladaNavigator = function(renderContext)
 {
 	this.renderContext = renderContext;
     this.pressX = -1;
@@ -258,3 +259,6 @@ ColladaNavigator.prototype.handleMouseUp = function(event)
     return true;
 }
 
+return ColladaNavigator
+
+});
