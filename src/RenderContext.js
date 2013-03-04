@@ -168,6 +168,10 @@ RenderContext.prototype.updateViewDependentProperties = function()
 	
 	// Compute the world frustum
 	this.worldFrustum.inverseTransform( this.frustum, this.viewMatrix );
+	
+	// Init near and far to 'invalid' values
+	this.near = 1e9;
+	this.far = 0.0;
 }
 
 /**************************************************************************************************************/

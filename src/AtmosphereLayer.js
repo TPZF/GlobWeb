@@ -242,7 +242,7 @@ AtmosphereLayer.prototype.preRender = function()
 	
 	tileManager.program = this._groundProgram;
 	
-	rc.far = 3;
+	rc.far = 2;
 }
 
 /**************************************************************************************************************/

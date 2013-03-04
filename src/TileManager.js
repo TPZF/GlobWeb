@@ -452,27 +452,29 @@ TileManager.prototype.processTile = function(tile,level)
 	var attributes = this.program.attributes;
 	
 	// Compute near/far from tiles
+	var nr;
+	var fr;
 	if ( this.tileConfig.cullSign < 0 )
 	{
 		// When in "Astro" mode, do not compute near/far from tiles not really needed
 		// And the code used for "Earth" does not works really well, when the earth is seen from inside...
-		rc.near = 0.2 * CoordinateSystem.radius;
-		rc.far = 1.1 * CoordinateSystem.radius;
+		nr = 0.2 * CoordinateSystem.radius;
+		fr = 1.1 * CoordinateSystem.radius;
 	}
 	else
 	{
-		var nr = 1e9;
-		var fr = 0.0;
+		nr = 1e9;
+		fr = 0.0;
 		for ( var i = 0; i < this.tilesToRender.length; i++ )
 		{
 			var tile = this.tilesToRender[i];
 			// Update near/far to take into account the tile
-			nr = Math.max( rc.minNear, Math.min( nr, tile.distance - 2.0 * tile.radius ) );
+			nr = Math.min( nr, tile.distance - 2.0 * tile.radius );
 			fr = Math.max( fr, tile.distance + 2.0 * tile.radius );
 		}
-		rc.near = nr;
-		rc.far = fr;
 	}
+	rc.near = Math.max( rc.minNear, Math.min(nr,rc.near) );
+	rc.far = Math.max( fr, rc.far );
 	
 	// Update projection matrix with new near and far values
 	mat4.perspective(rc.fov, rc.canvas.width / rc.canvas.height, rc.near, rc.far, rc.projectionMatrix);
