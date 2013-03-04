@@ -63,7 +63,7 @@ CoordinateSystem.from3DToGeo = function(position3d, dest)
 
     dest[0] = Numeric.toDegree(lon);
     dest[1] = Numeric.toDegree(lat);
-    dest[2] = CoordinateSystem.realEarthRadius * Math.abs(r - CoordinateSystem.radius);
+    dest[2] = CoordinateSystem.realEarthRadius * (r - CoordinateSystem.radius);
 
     return dest;
 }
