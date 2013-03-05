@@ -530,10 +530,11 @@ GlobWeb.OpenSearchLayer.prototype.render = function( tiles )
 					if ( tile.parent && tile.parent.extension[this.extId].state == GlobWeb.OpenSearchLayer.TileState.LOADING )
 						continue;
 
-				var url = this.buildUrl(tile);
-				if ( url )
-				{
-					this.launchRequest(tile, url);
+					var url = this.buildUrl(tile);
+					if ( url )
+					{
+						this.launchRequest(tile, url);
+					}
 				}
 			}
 		}
