@@ -209,30 +209,33 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile, url)
 /**
  * 	Set new request properties
  */
-GlobWeb.OpenSearchLayer.prototype.setReqestProperties = function(properties)
+GlobWeb.OpenSearchLayer.prototype.setRequestProperties = function(properties)
 {
+	// clean renderers
+	for ( var x in this.featuresSet )
+	{
+		var featureData = this.featuresSet[x];
+		for ( var i=0; i<featureData.tiles.length; i++ )
+		{
+			var tile = featureData.tiles[i];
+			var feature = this.features[featureData.index];
+			this.removeFeatureFromRenderer( feature, tile );
+		}
+	}
+
 	// Clean old results
 	var self = this;
 	this.globe.tileManager.visitTiles( function(tile) {
 		if( tile.extension[self.extId] )
 		{
 			tile.extension[self.extId].dispose();
-			delete tile.extension[self.extId];
+			tile.extension[self.extId].featureIds = []; // exclusive parameter to remove from layer
+			tile.extension[self.extId].state = GlobWeb.OpenSearchLayer.TileState.NOT_LOADED;
+			tile.extension[self.extId].complete = false;
 		}
 	});
-
-	// TODO clean renderers
-	// Never tested yet...
-	// for ( var x in this.featuresSet )
-	// {
-	// 	var featureData = this.featuresSet[x];
-	// 	for ( var i=0; i<featureData.tiles.length; i++ )
-	// 	{
-	// 		var tile = featureData.tiles[i];
-	// 		var feature = this.features[featureData.index];
-	// 		this.removeFeatureFromRenderer( feature, tile );
-	// 	}
-	// }
+	this.featuresSet = {};
+	this.features = [];
 
 	// Set request properties
 	this.requestProperties = "";
@@ -240,7 +243,7 @@ GlobWeb.OpenSearchLayer.prototype.setReqestProperties = function(properties)
 	{
 		if ( this.requestProperties != "" )
 			this.requestProperties += '&'
-		this.requestProperties += key+'="'+properties[key]+'"';
+		this.requestProperties += key+'='+properties[key];
 	}
 	
 }
@@ -336,11 +339,11 @@ GlobWeb.OpenSearchLayer.prototype.removeFeatureFromRenderer = function( feature,
 {
 	if ( feature.geometry['type'] == "Point" )
 	{
-		this.pointRenderer.removeGeometryFromTile( this.pointBucket, geometry, tile );
+		this.pointRenderer.removeGeometryFromTile( feature.geometry, tile );
 	} 
 	else if ( feature.geometry['type'] == "Polygon" )
 	{
-		this.polygonRenderer.removeGeometryFromTile( this.polygonBucket, geometry, tile );
+		this.polygonRenderer.removeGeometryFromTile( feature.geometry, tile );
 	}
 }
 
