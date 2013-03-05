@@ -19,7 +19,7 @@
 		var globe = new GlobWeb.Globe( { canvas: cvs,} );
 
 		// Add VT mouse navigation
-		var VThandler = new GlobWeb.VTNavigationHandler({zoomOnDblClick: true});
+		var VThandler = new GlobWeb.VTNavigationHandler();
 		var navigation = new GlobWeb.Navigation(globe, {handlers: [VThandler], inertia: false});
 	
 		var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble" });
