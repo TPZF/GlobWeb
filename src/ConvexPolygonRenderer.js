@@ -529,7 +529,11 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 		var bucket = this.buckets[n];
 		
 		if (!bucket.layer.visible())
+		{
+			// Remove current renderables from bucket
+			bucket.currentRenderables.length = 0;
 			continue;
+		}
 			
 		if ( bucket.mainRenderable ) 
 			bucket.currentRenderables.push( bucket.mainRenderable );
