@@ -28,7 +28,6 @@
 			<li>serviceUrl : Url of OpenSearch description XML file(necessary option)</li>
 			<li>minOrder : Starting order for OpenSearch requests</li>
 			<li>displayProperties : Properties which will be shown in priority</li>
-			<li>proxyUrl : Url of proxy for external pages</li>
 		</ul>
 */
 GlobWeb.OpenSearchLayer = function(options){
@@ -37,7 +36,6 @@ GlobWeb.OpenSearchLayer = function(options){
 	this.serviceUrl = options.serviceUrl;
 	this.minOrder = options.minOrder || 5;
 	this.requestProperties = "";
-	this.proxyUrl = options.proxyUrl || "";
 
 	// Set style
 	if ( options && options['style'] )
@@ -551,6 +549,28 @@ GlobWeb.OpenSearchLayer.prototype.render = function( tiles )
  */
 GlobWeb.OpenSearchLayer.prototype.updateFeatures = function( features )
 {
+	for ( var i=0; i<features.length; i++ )
+	{
+		var currentFeature = features[i];
+		
+		switch ( currentFeature.geometry.type )
+		{
+			case "Point":
+				if ( currentFeature.geometry.coordinates[0] > 180 )
+					currentFeature.geometry.coordinates[0] -= 360;
+				break;
+			case "Polygon":
+				var ring = currentFeature.geometry.coordinates[0];
+				for ( var j = 0; j < ring.length; j++ )
+				{
+					if ( ring[j][0] > 180 )
+						ring[j][0] -= 360;
+				}
+				break;
+			default:
+				break;
+		}
+	}
 }
 
 /*************************************************************************************************************/
