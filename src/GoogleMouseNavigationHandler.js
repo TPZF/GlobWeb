@@ -2,18 +2,15 @@
 
 /** @export
 	@constructor
-	VTNavigationHandler constructor
+	GoogleMouseNavigationHandler constructor
  */
-GlobWeb.VTNavigationHandler = function(options){
+GlobWeb.GoogleMouseNavigationHandler = function(options){
 	
 	/**************************************************************************************************************/
 	
 	/**
  	 * Private variables
 	 */
-	 
-	var _panFactor = 10.;
-	var _zoomFactor = 1.;
 	
 	var _navigation = null;
 	var _pressedButton = -1;
@@ -316,64 +313,6 @@ GlobWeb.VTNavigationHandler = function(options){
 		return false;
 	};
 	
-	
-	/**
-	 *	Event handler for key down
-	 */
-	var _handleKeyDown = function(event)
-	{
-		console.log(event.keyCode);
-		switch( event.keyCode ){
-			case 187 :
-				// + on Safari
-			case 61 :
-				// +(=) on Firefox and Opera
-			case 107 :
-				// + on other
-				_navigation.zoom(-_zoomFactor);
-				break;
-			case 189 :
-				// - on Safari
-			case 54 :
-				// -(6) on Firefox and Opera
-			case 109 :
-				// - on other
-				_navigation.zoom(_zoomFactor);
-				break;
-			case 37 :
-				// Left arrow
-				if ( event.ctrlKey )
-				{
-					_navigation.rotate( -_panFactor, 0 );
-				}
-				else
-				{
-					_navigation.pan( _panFactor, 0 );
-				}
-				break;
-			case 38 :
-				// Up arrow
-				_navigation.pan( 0, _panFactor );
-				break;
-			case 39 :
-				// Right arrow
-				if ( event.ctrlKey )
-				{
-					_navigation.rotate( _panFactor, 0 );
-				}
-				else
-				{
-					_navigation.pan( -_panFactor, 0 );
-				}
-				break;
-			case 40 :
-				// Down arrow
-				_navigation.pan( 0, -_panFactor );
-				break;
-		}
-		_navigation.globe.renderContext.requestFrame();
-	};
-	
 
 	/**************************************************************************************************************/
 	
@@ -400,10 +339,6 @@ GlobWeb.VTNavigationHandler = function(options){
 		canvas.addEventListener("mousemove", _handleMouseMove);
 		canvas.addEventListener("contextmenu", _handleContextMenu);
 		canvas.addEventListener("dblclick", _handleMouseDblClick);
-		
-		canvas.addEventListener("keydown", _handleKeyDown);
-		// Setup focus handling to receive keyboard event on canvas
-		canvas.tabIndex = "0";
 			
 		// For Firefox
 		canvas.addEventListener("DOMMouseScroll", _handleMouseWheel);
@@ -425,8 +360,6 @@ GlobWeb.VTNavigationHandler = function(options){
 		canvas.removeEventListener("mousemove", _handleMouseMove);
 		canvas.removeEventListener("contextmenu", _handleContextMenu);
 		canvas.removeEventListener("dblclick", _handleMouseDblClick);
-		
-		canvas.removeEventListener("keydown", _handleKeyDown);
 			
 		// For Firefox
 		canvas.removeEventListener("DOMMouseScroll", _handleMouseWheel);

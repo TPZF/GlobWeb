@@ -105,7 +105,8 @@ var GlobWeb = GlobWeb || {};
 		"Long.js",
 		"InertiaAnimation.js",
 		"OpenSearchLayer.js",
-		"VTNavigationHandler.js",
+		"GoogleMouseNavigationHandler.js",
+		"GoogleKeyboardNavigationHandler.js",
         "TouchNavigation.js",
         "KMLParser.js"
 		];

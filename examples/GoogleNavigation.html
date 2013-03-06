@@ -18,9 +18,12 @@
 		// Create the globe
 		var globe = new GlobWeb.Globe( { canvas: cvs,} );
 
-		// Add VT mouse navigation
-		var VThandler = new GlobWeb.VTNavigationHandler();
-		var navigation = new GlobWeb.Navigation(globe, {handlers: [VThandler], inertia: false});
+		// Add Google mouse navigation
+		var GMHandler = new GlobWeb.GoogleMouseNavigationHandler();
+		// Add Google keyboard navigation
+		var GKHandler = new GlobWeb.GoogleKeyboardNavigationHandler();
+		
+		var navigation = new GlobWeb.Navigation(globe, {handlers: [GMHandler, GKHandler], inertia: false});
 	
 		var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble" });
 		globe.setBaseImagery( blueMarbleLayer );
