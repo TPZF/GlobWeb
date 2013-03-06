@@ -17,31 +17,33 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-/**************************************************************************************************************/
+define( ['./RasterLayer', './Utils', './GeoTiling' ],
+		function(RasterLayer, KeyboardNavigationHandler, GeoTiling) {
 
+/**************************************************************************************************************/
 
 /** @export
 	@constructor
 	BasicElevationLayer constructor
  */
-GlobWeb.BasicElevationLayer = function( options )
+var BasicElevationLayer = function( options )
 {
-	GlobWeb.RasterLayer.prototype.constructor.call( this, options );
+	RasterLayer.prototype.constructor.call( this, options );
 	this.tilePixelSize = options['tilePixelSize'] || 33;
-	this.tiling = new GlobWeb.GeoTiling( 4, 2 );
+	this.tiling = new GeoTiling( 4, 2 );
 	this.numberOfLevels = options['numberOfLevels'] || 21;
 	this.type = "ElevationRaster";
 	this.baseUrl = options['baseUrl'];
 }
 
-GlobWeb.inherits(GlobWeb.RasterLayer,GlobWeb.BasicElevationLayer);
+Utils.inherits(RasterLayer, BasicElevationLayer);
 
 /**************************************************************************************************************/
 
 /**
 	Get an url for the given tile
  */
-GlobWeb.BasicElevationLayer.prototype.getUrl = function(tile)
+BasicElevationLayer.prototype.getUrl = function(tile)
 {
 	var geoBound = tile.geoBound;
 	var url = this.baseUrl;
@@ -79,7 +81,7 @@ GlobWeb.BasicElevationLayer.prototype.getUrl = function(tile)
 /**
 	Parse a elevation response
  */
-GlobWeb.BasicElevationLayer.prototype.parseElevations = function(text)
+BasicElevationLayer.prototype.parseElevations = function(text)
 {
 	var elevations = JSON.parse( text );
 	
@@ -96,3 +98,7 @@ GlobWeb.BasicElevationLayer.prototype.parseElevations = function(text)
 }
 
 /**************************************************************************************************************/
+
+return BasicElevationLayer;
+
+});

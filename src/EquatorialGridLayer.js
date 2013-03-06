@@ -16,6 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+define( ['./BaseLayer', './Utils', './Program', './Mesh', './CoordinateSystem'],
+		function(BaseLayer, Utils, Program, Mesh, CoordinateSystem) {
  
 /**************************************************************************************************************/
 
@@ -23,9 +26,9 @@
 	@constructor
 	Function constructor for EquatorialGridLayer
  */
-GlobWeb.EquatorialGridLayer = function( options )
+var EquatorialGridLayer = function( options )
 {
-	GlobWeb.BaseLayer.prototype.constructor.call( this, options );
+	BaseLayer.prototype.constructor.call( this, options );
 	this.globe = null;
 
 	// Equatorial coordinates label renderables
@@ -49,7 +52,7 @@ GlobWeb.EquatorialGridLayer = function( options )
 
 /**************************************************************************************************************/
 
-GlobWeb.inherits( GlobWeb.BaseLayer,GlobWeb.EquatorialGridLayer );
+Utils.inherits( BaseLayer, EquatorialGridLayer );
 
 /**************************************************************************************************************/
 
@@ -58,7 +61,7 @@ GlobWeb.inherits( GlobWeb.BaseLayer,GlobWeb.EquatorialGridLayer );
  *
  *	@param {String} text Text generated in canvas
  */
-GlobWeb.EquatorialGridLayer.prototype.generateImageData = function(text)
+EquatorialGridLayer.prototype.generateImageData = function(text)
 {
 	var ctx = this.canvas2d.getContext("2d");
 	ctx.clearRect(0,0, this.canvas2d.width, this.canvas2d.height);
@@ -78,9 +81,9 @@ GlobWeb.EquatorialGridLayer.prototype.generateImageData = function(text)
 /** 
 	Attach the layer to the globe
  */
-GlobWeb.EquatorialGridLayer.prototype._attach = function( g )
+EquatorialGridLayer.prototype._attach = function( g )
 {
-	GlobWeb.BaseLayer.prototype._attach.call( this, g );
+	BaseLayer.prototype._attach.call( this, g );
 	
 	if ( this._visible )
 	{
@@ -144,14 +147,14 @@ GlobWeb.EquatorialGridLayer.prototype._attach = function( g )
 		} \n\
 		";
 		
-		this.gridProgram = new GlobWeb.Program(this.globe.renderContext);
-		this.textProgram = new GlobWeb.Program(this.globe.renderContext);
+		this.gridProgram = new Program(this.globe.renderContext);
+		this.textProgram = new Program(this.globe.renderContext);
 		this.gridProgram.createFromSource( vertexShader, fragmentShader );
 		this.textProgram.createFromSource( vertexTextShader, fragmentTextShader );
 	}
 	
 	// Texture used to show the equatorial coordinates
-	this.textMesh = new GlobWeb.Mesh(this.globe.renderContext);
+	this.textMesh = new Mesh(this.globe.renderContext);
 	var vertices = [-0.5, -0.5, 0.0,
 			-0.5,  0.5, 0.0,
 			0.5,  0.5, 0.0,
@@ -167,7 +170,7 @@ GlobWeb.EquatorialGridLayer.prototype._attach = function( g )
 
 	// Init texture pool
 	if ( !this.texturePool )
-		this.texturePool = new GlobWeb.EquatorialGridLayer.TexturePool(gl);
+		this.texturePool = new TexturePool(gl);
 }
 
 /**************************************************************************************************************/
@@ -175,7 +178,7 @@ GlobWeb.EquatorialGridLayer.prototype._attach = function( g )
 /** 
 	Detach the layer from the globe
  */
-GlobWeb.EquatorialGridLayer.prototype._detach = function()
+EquatorialGridLayer.prototype._detach = function()
 {
 	var gl = this.globe.renderContext.gl;
 	gl.deleteBuffer( this.vertexBuffer );
@@ -188,7 +191,7 @@ GlobWeb.EquatorialGridLayer.prototype._detach = function()
 	}
 
 	this.globe.tileManager.removePostRenderer(this);
-	GlobWeb.BaseLayer.prototype._detach.call(this);
+	BaseLayer.prototype._detach.call(this);
 
 }
 
@@ -197,7 +200,7 @@ GlobWeb.EquatorialGridLayer.prototype._detach = function()
 /**
 	Render the grid
  */
-GlobWeb.EquatorialGridLayer.prototype.render = function( tiles )
+EquatorialGridLayer.prototype.render = function( tiles )
 {
 	var renderContext = this.globe.renderContext;
 	var gl = renderContext.gl;
@@ -271,7 +274,7 @@ GlobWeb.EquatorialGridLayer.prototype.render = function( tiles )
 /**
  * 	Set visibility of the layer
  */
-GlobWeb.EquatorialGridLayer.prototype.visible = function( arg )
+EquatorialGridLayer.prototype.visible = function( arg )
 {
 	if ( typeof arg == "boolean" && this._visible != arg )
 	{
@@ -295,9 +298,9 @@ GlobWeb.EquatorialGridLayer.prototype.visible = function( arg )
 /**
  * 	Set opacity of the layer
  */
-GlobWeb.EquatorialGridLayer.prototype.opacity = function( arg )
+EquatorialGridLayer.prototype.opacity = function( arg )
 {
-	return GlobWeb.BaseLayer.prototype.opacity.call( this, arg );
+	return BaseLayer.prototype.opacity.call( this, arg );
 }
 
 /**************************************************************************************************************/
@@ -305,7 +308,7 @@ GlobWeb.EquatorialGridLayer.prototype.opacity = function( arg )
 /**
  * 	Compute samples depending on geoBound
  */
-GlobWeb.EquatorialGridLayer.prototype.computeSamples = function(geoBound)
+EquatorialGridLayer.prototype.computeSamples = function(geoBound)
 {
 	var dlong = geoBound.east - geoBound.west;
 	var dlat = geoBound.north - geoBound.south;
@@ -330,7 +333,7 @@ GlobWeb.EquatorialGridLayer.prototype.computeSamples = function(geoBound)
 /**
  * 	Generate buffers object of the grid
  */
-GlobWeb.EquatorialGridLayer.prototype.generateGridBuffers = function(geoBound)
+EquatorialGridLayer.prototype.generateGridBuffers = function(geoBound)
 {
 	// Clamp min/max longitudes to sample
 	var west = (Math.floor(geoBound.west / this.longitudeSample))*this.longitudeSample;
@@ -424,7 +427,7 @@ GlobWeb.EquatorialGridLayer.prototype.generateGridBuffers = function(geoBound)
 /**
  * 	Generate text of the grid
  */
-GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
+EquatorialGridLayer.prototype.generateText = function(geoBound)
 {
 	// Clamp min/max longitudes to sample
 	var west = (Math.floor(geoBound.west / this.longitudeSample))*this.longitudeSample;
@@ -451,13 +454,13 @@ GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 	// Compute geographic position of center of canvas
 	var posX3d = this.globe.renderContext.get3DFromPixel( this.globe.renderContext.canvas.width / 2. , this.globe.renderContext.canvas.height / 2. );
 	var posXgeo = [];
-	GlobWeb.CoordinateSystem.from3DToGeo( posX3d, posXgeo );
+	CoordinateSystem.from3DToGeo( posX3d, posXgeo );
 
 	for ( var phi = phiStart; phi <= phiStop; phi+=this.longitudeSample )
 	{
 		// convert to RA [0..360]
 		var RA = (phi < 0) ? phi+360 : phi;
-		var stringRA = GlobWeb.CoordinateSystem.fromDegreesToHMS( RA );
+		var stringRA = CoordinateSystem.fromDegreesToHMS( RA );
 
 		if ( !this.labels[stringRA] )
 		{
@@ -468,7 +471,7 @@ GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 		
 		// Compute position of label
 		var posGeo = [ phi, posXgeo[1] ];
-		var pos3d = GlobWeb.CoordinateSystem.fromGeoTo3D( posGeo );
+		var pos3d = CoordinateSystem.fromGeoTo3D( posGeo );
 		var vertical = vec3.create();
 		vec3.normalize(pos3d, vertical);
 		
@@ -488,7 +491,7 @@ GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 	{
 // 	for (var theta = -90; theta < 90; theta+=this.latitudeSample) {
 
-		var stringTheta = GlobWeb.CoordinateSystem.fromDegreesToDMS( theta );
+		var stringTheta = CoordinateSystem.fromDegreesToDMS( theta );
 		if ( !this.labels[stringTheta] )
 		{
 			this.labels[stringTheta] = {};
@@ -498,7 +501,7 @@ GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 		
 		// Compute position of label
 		var posGeo = [ posXgeo[0], theta ];
-		var pos3d = GlobWeb.CoordinateSystem.fromGeoTo3D( posGeo );
+		var pos3d = CoordinateSystem.fromGeoTo3D( posGeo );
 		var vertical = vec3.create();
 		vec3.normalize(pos3d, vertical);
 		
@@ -524,7 +527,7 @@ GlobWeb.EquatorialGridLayer.prototype.generateText = function(geoBound)
 /*
 	Build a texture from an image and store in a renderable
  */
-GlobWeb.EquatorialGridLayer.prototype._buildTextureFromImage = function(renderable,image)
+EquatorialGridLayer.prototype._buildTextureFromImage = function(renderable,image)
 {  	
 	renderable.texture = this.texturePool.createGLTexture(image);
 	renderable.textureWidth = image.width;
@@ -537,7 +540,7 @@ GlobWeb.EquatorialGridLayer.prototype._buildTextureFromImage = function(renderab
  *	@constructor
  *	GL Textures pool
  */
-GlobWeb.EquatorialGridLayer.TexturePool = function(gl)
+var TexturePool = function(gl)
 {
 	var gl = gl;
 	var glTextures = [];
@@ -601,5 +604,10 @@ GlobWeb.EquatorialGridLayer.TexturePool = function(gl)
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);	
 		return glTexture;
 	}
-
 }
+
+/**************************************************************************************************************/
+
+return EquatorialGridLayer;
+
+});

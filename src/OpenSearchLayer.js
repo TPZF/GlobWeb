@@ -17,6 +17,9 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+ define(['./FeatureStyle','./VectorRendererManager','./Utils','./BaseLayer','./RendererTileData'],
+	function(FeatureStyle,VectorRendererManager,Utils,BaseLayer,RendererTileData) {
+
 /**************************************************************************************************************/
 
 /**	@constructor
@@ -30,8 +33,8 @@
 			<li>displayProperties : Properties which will be shown in priority</li>
 		</ul>
 */
-GlobWeb.OpenSearchLayer = function(options){
-	GlobWeb.BaseLayer.prototype.constructor.call( this, options );
+var OpenSearchLayer = function(options){
+	BaseLayer.prototype.constructor.call( this, options );
 	
 	this.serviceUrl = options.serviceUrl;
 	this.minOrder = options.minOrder || 5;
@@ -44,7 +47,7 @@ GlobWeb.OpenSearchLayer = function(options){
 	}
 	else
 	{
-		this.style = new GlobWeb.FeatureStyle();
+		this.style = new FeatureStyle();
 	}
 	
 	this.extId = "os";
@@ -73,7 +76,7 @@ GlobWeb.OpenSearchLayer = function(options){
 
 /**************************************************************************************************************/
 
-GlobWeb.inherits( GlobWeb.BaseLayer, GlobWeb.OpenSearchLayer );
+Utils.inherits( BaseLayer, OpenSearchLayer );
 
 /**************************************************************************************************************/
 
@@ -82,9 +85,9 @@ GlobWeb.inherits( GlobWeb.BaseLayer, GlobWeb.OpenSearchLayer );
  * 
  * 	@param g The globe
  */
-GlobWeb.OpenSearchLayer.prototype._attach = function( g )
+OpenSearchLayer.prototype._attach = function( g )
 {
-	GlobWeb.BaseLayer.prototype._attach.call( this, g );
+	BaseLayer.prototype._attach.call( this, g );
 
 	this.extId += this.id;
 	
@@ -96,7 +99,7 @@ GlobWeb.OpenSearchLayer.prototype._attach = function( g )
 /** 
   Detach the layer from the globe
  */
-GlobWeb.OpenSearchLayer.prototype._detach = function()
+OpenSearchLayer.prototype._detach = function()
 {
 	this.globe.tileManager.removePostRenderer(this);
 	this.pointRenderer = null;
@@ -105,7 +108,7 @@ GlobWeb.OpenSearchLayer.prototype._detach = function()
 	this.polygonRenderer = null;
 	this.polygonBucket = null;
 	
-	GlobWeb.BaseLayer.prototype._detach.call(this);
+	BaseLayer.prototype._detach.call(this);
 }
 
 /**************************************************************************************************************/
@@ -113,7 +116,7 @@ GlobWeb.OpenSearchLayer.prototype._detach = function()
 /**
  *	Update children state as inherited from parent
  */
-GlobWeb.OpenSearchLayer.prototype.updateChildrenState = function(tile)
+OpenSearchLayer.prototype.updateChildrenState = function(tile)
 {
 	if ( tile.children )
 	{
@@ -121,7 +124,7 @@ GlobWeb.OpenSearchLayer.prototype.updateChildrenState = function(tile)
 		{
 			if ( tile.children[i].extension[this.extId] )
 			{
-				tile.children[i].extension[this.extId].state = GlobWeb.OpenSearchLayer.TileState.INHERIT_PARENT;
+				tile.children[i].extension[this.extId].state = OpenSearchLayer.TileState.INHERIT_PARENT;
 				tile.children[i].extension[this.extId].complete = true;
 			}
 			this.updateChildrenState(tile.children[i]);
@@ -134,7 +137,7 @@ GlobWeb.OpenSearchLayer.prototype.updateChildrenState = function(tile)
 /**
  * 	Launch request to the OpenSearch service
  */
-GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile, url)
+OpenSearchLayer.prototype.launchRequest = function(tile, url)
 {
 	var tileData = tile.extension[this.extId];
 	var index = null;
@@ -145,7 +148,7 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile, url)
 	}
 	
 	// Set that the tile is loading its data for OpenSearch
-	tileData.state = GlobWeb.OpenSearchLayer.TileState.LOADING;
+	tileData.state = OpenSearchLayer.TileState.LOADING;
 
 	// Add request properties to length
 	if ( this.requestProperties != "" )
@@ -185,7 +188,7 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile, url)
 				else
 				{
 					// HACK to avoid multiple rendering of parent features
-					tile.extension.pointSprite  = new GlobWeb.RendererTileData();
+					tile.extension.pointSprite  = new RendererTileData();
 				}
 			}
 			else if ( xhr.status >= 400 )
@@ -193,7 +196,7 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile, url)
 				console.error( xhr.responseText );
 			}
 			
-			tileData.state = GlobWeb.OpenSearchLayer.TileState.LOADED;
+			tileData.state = OpenSearchLayer.TileState.LOADED;
 			self.freeRequests.push( xhr );
 			self.globe.publish("endLoad",self.id);
 		}
@@ -207,7 +210,7 @@ GlobWeb.OpenSearchLayer.prototype.launchRequest = function(tile, url)
 /**
  * 	Set new request properties
  */
-GlobWeb.OpenSearchLayer.prototype.setRequestProperties = function(properties)
+OpenSearchLayer.prototype.setRequestProperties = function(properties)
 {
 	// clean renderers
 	for ( var x in this.featuresSet )
@@ -228,7 +231,7 @@ GlobWeb.OpenSearchLayer.prototype.setRequestProperties = function(properties)
 		{
 			tile.extension[self.extId].dispose();
 			tile.extension[self.extId].featureIds = []; // exclusive parameter to remove from layer
-			tile.extension[self.extId].state = GlobWeb.OpenSearchLayer.TileState.NOT_LOADED;
+			tile.extension[self.extId].state = OpenSearchLayer.TileState.NOT_LOADED;
 			tile.extension[self.extId].complete = false;
 		}
 	});
@@ -251,7 +254,7 @@ GlobWeb.OpenSearchLayer.prototype.setRequestProperties = function(properties)
 /**
  *	Add feature to the layer and to the tile extension
  */
-GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
+OpenSearchLayer.prototype.addFeature = function( feature, tile )
 {
 	var tileData = tile.extension[this.extId];
 	var featureData;
@@ -306,7 +309,7 @@ GlobWeb.OpenSearchLayer.prototype.addFeature = function( feature, tile )
 /**
  *	Add feature to renderer
  */
-GlobWeb.OpenSearchLayer.prototype.addFeatureToRenderer = function( feature, tile )
+OpenSearchLayer.prototype.addFeatureToRenderer = function( feature, tile )
 {
 	if ( feature.geometry['type'] == "Point" )
 	{
@@ -333,7 +336,7 @@ GlobWeb.OpenSearchLayer.prototype.addFeatureToRenderer = function( feature, tile
 /**
  *	Remove feature from renderer
  */
-GlobWeb.OpenSearchLayer.prototype.removeFeatureFromRenderer = function( feature, tile )
+OpenSearchLayer.prototype.removeFeatureFromRenderer = function( feature, tile )
 {
 	if ( feature.geometry['type'] == "Point" )
 	{
@@ -350,7 +353,7 @@ GlobWeb.OpenSearchLayer.prototype.removeFeatureFromRenderer = function( feature,
 /**
  *	Remove feature from Dynamic OpenSearch layer
  */
-GlobWeb.OpenSearchLayer.prototype.removeFeature = function( identifier, tile )
+OpenSearchLayer.prototype.removeFeature = function( identifier, tile )
 {
 	var featureIt = this.featuresSet[identifier];
 	
@@ -391,8 +394,8 @@ GlobWeb.OpenSearchLayer.prototype.removeFeature = function( identifier, tile )
 /**
  *	Modify feature style
  */
-GlobWeb.OpenSearchLayer.prototype.modifyFeatureStyle = function( feature, style ) {
-
+OpenSearchLayer.prototype.modifyFeatureStyle = function( feature, style )
+{
 	feature.properties.style = style;
 	var featureData = this.featuresSet[feature.properties.identifier];
 	if ( featureData )
@@ -415,7 +418,7 @@ GlobWeb.OpenSearchLayer.prototype.modifyFeatureStyle = function( feature, style 
 	}
 }
 
-GlobWeb.OpenSearchLayer.TileState = {
+OpenSearchLayer.TileState = {
 	LOADING: 0,
 	LOADED: 1,
 	NOT_LOADED: 2,
@@ -428,7 +431,7 @@ GlobWeb.OpenSearchLayer.TileState = {
 /**
  *	Generate the tile data
  */
-GlobWeb.OpenSearchLayer.prototype.generate = function(tile) 
+OpenSearchLayer.prototype.generate = function(tile) 
 {
 	// Create data for the layer
 	// Check that it has not been created before (it can happen with level 0 tile)
@@ -438,13 +441,13 @@ GlobWeb.OpenSearchLayer.prototype.generate = function(tile)
 		if ( tile.parent )
 		{	
 			var parentOSData = tile.parent.extension[this.extId];
-			osData = new GlobWeb.OpenSearchLayer.OSData(this,tile);
-			osData.state = parentOSData.complete ? GlobWeb.OpenSearchLayer.TileState.INHERIT_PARENT : GlobWeb.OpenSearchLayer.TileState.NOT_LOADED;
+			osData = new OSData(this,tile);
+			osData.state = parentOSData.complete ? OpenSearchLayer.TileState.INHERIT_PARENT : OpenSearchLayer.TileState.NOT_LOADED;
 			osData.complete = parentOSData.complete;
 		}
 		else
 		{
-			osData = new GlobWeb.OpenSearchLayer.OSData(this,tile);
+			osData = new OSData(this,tile);
 		}
 		
 		// Store in on the tile
@@ -457,17 +460,15 @@ GlobWeb.OpenSearchLayer.prototype.generate = function(tile)
 
 
 /**
- *	@constructor
- *	DynamicOSLayer.OSData constructor
- *
  *	OpenSearch renderable
  */
-GlobWeb.OpenSearchLayer.OSData = function(layer,tile)
+
+var OSData = function(layer,tile)
 {
 	this.layer = layer;
 	this.tile = tile;
 	this.featureIds = []; // exclusive parameter to remove from layer
-	this.state = GlobWeb.OpenSearchLayer.TileState.NOT_LOADED;
+	this.state = OpenSearchLayer.TileState.NOT_LOADED;
 	this.complete = false;
 }
 
@@ -476,7 +477,7 @@ GlobWeb.OpenSearchLayer.OSData = function(layer,tile)
 /**
  * 	Dispose renderable data from tile
  */
-GlobWeb.OpenSearchLayer.OSData.prototype.dispose = function( renderContext, tilePool )
+OSData.prototype.dispose = function( renderContext, tilePool )
 {	
 	for( var i = 0; i < this.featureIds.length; i++ )
 	{
@@ -490,7 +491,7 @@ GlobWeb.OpenSearchLayer.OSData.prototype.dispose = function( renderContext, tile
 /**
  *	Build request url
  */
-GlobWeb.OpenSearchLayer.prototype.buildUrl = function( tile )
+OpenSearchLayer.prototype.buildUrl = function( tile )
 {
 	return url = this.serviceUrl + "/search?order=" + tile.order + "&healpix=" + tile.pixelIndex;
 }
@@ -502,7 +503,7 @@ GlobWeb.OpenSearchLayer.prototype.buildUrl = function( tile )
 	
 	@param tiles The array of tiles to render
  */
-GlobWeb.OpenSearchLayer.prototype.render = function( tiles )
+OpenSearchLayer.prototype.render = function( tiles )
 {
 	if (!this._visible)
 		return;
@@ -514,21 +515,21 @@ GlobWeb.OpenSearchLayer.prototype.render = function( tiles )
 		if ( tile.order >= this.minOrder )
 		{
 			var osData = tile.extension[this.extId];
-			if ( !osData || osData.state == GlobWeb.OpenSearchLayer.TileState.NOT_LOADED ) 
+			if ( !osData || osData.state == OpenSearchLayer.TileState.NOT_LOADED ) 
 			{
 				// Check if the parent is loaded or not, in that case load the parent first
 				while ( tile.parent 
 					&& tile.parent.order >= this.minOrder 
 					&& tile.parent.extension[this.extId]
-					&& tile.parent.extension[this.extId].state == GlobWeb.OpenSearchLayer.TileState.NOT_LOADED )
+					&& tile.parent.extension[this.extId].state == OpenSearchLayer.TileState.NOT_LOADED )
 				{
 					tile = tile.parent;
 				}
 				
-				if ( tile.extension[this.extId] && tile.extension[this.extId].state == GlobWeb.OpenSearchLayer.TileState.NOT_LOADED )
+				if ( tile.extension[this.extId] && tile.extension[this.extId].state == OpenSearchLayer.TileState.NOT_LOADED )
 				{
 					// Skip loading parent
-					if ( tile.parent && tile.parent.extension[this.extId].state == GlobWeb.OpenSearchLayer.TileState.LOADING )
+					if ( tile.parent && tile.parent.extension[this.extId].state == OpenSearchLayer.TileState.LOADING )
 						continue;
 
 					var url = this.buildUrl(tile);
@@ -547,7 +548,7 @@ GlobWeb.OpenSearchLayer.prototype.render = function( tiles )
 /**
  * 	Update features
  */
-GlobWeb.OpenSearchLayer.prototype.updateFeatures = function( features )
+OpenSearchLayer.prototype.updateFeatures = function( features )
 {
 	for ( var i=0; i<features.length; i++ )
 	{
@@ -574,3 +575,7 @@ GlobWeb.OpenSearchLayer.prototype.updateFeatures = function( features )
 }
 
 /*************************************************************************************************************/
+
+return OpenSearchLayer;
+
+});

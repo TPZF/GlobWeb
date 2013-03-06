@@ -17,7 +17,9 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./Utils','./RasterLayer','./MercatorTiling'], function(Utils,RasterLayer,MercatorTiling) {
+define(['./Utils','./RasterLayer','./MercatorTiling'], function(Utils,RasterLayer,MercatorTiling) {
+
+/**************************************************************************************************************/
 
 var BingTileSystem = (function() 
 {

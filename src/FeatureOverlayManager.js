@@ -17,15 +17,17 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+define( ['./RenderContext', './LineStringRenderable'], function(RenderContext) {
+ 
 /**************************************************************************************************************/
 
 
 /** @constructor
 	FeatureOverlayManager constructor
  */
-GlobWeb.FeatureOverlayManager = function()
+var FeatureOverlayManager = function()
 {
-	var gl = GlobWeb.RenderContext.gl;
+	var gl = RenderContext.gl;
 	
 	var rttFramebuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, rttFramebuffer);
@@ -42,7 +44,7 @@ GlobWeb.FeatureOverlayManager = function()
 	
 	this.frameBuffer = rttFramebuffer;
 	
-	this.lineStringRenderer = new GlobWeb.LineStringRenderer();
+	this.lineStringRenderer = new LineStringRenderer();
 }
 
 /**************************************************************************************************************/
@@ -50,9 +52,9 @@ GlobWeb.FeatureOverlayManager = function()
 /*
 	Create an overlay texture
  */
- GlobWeb.FeatureOverlayManager.prototype.createOverlayTexture = function( extent )
+ FeatureOverlayManager.prototype.createOverlayTexture = function( extent )
 {
-	var gl = GlobWeb.RenderContext.gl;
+	var gl = RenderContext.gl;
 
 	gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
 	gl.clear(gl.COLOR_BUFFER_BIT);
@@ -65,7 +67,7 @@ GlobWeb.FeatureOverlayManager = function()
 	this.lineStringRenderer.render( viewMatrix, projectionMatrix );
 
 	// Create the texture, and upload the image
-	//this.texture = GlobWeb.TilePool.createGLTexture(this.image);
+	//this.texture = TilePool.createGLTexture(this.image);
 	var texture = gl.createTexture();
 /*	var image = new Uint8Array(4);
 	image[0] = 0;
@@ -87,3 +89,7 @@ GlobWeb.FeatureOverlayManager = function()
 }
 
 /**************************************************************************************************************/
+
+return FeatureOverlayManager;
+
+});

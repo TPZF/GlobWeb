@@ -17,6 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+define(['./Utils', './CoordinateSystem', './BaseNavigation', './SegmentedAnimation', './Numeric', './glMatrix'], function(Utils,CoordinateSystem,BaseNavigation,SegmentedAnimation,Numeric) {
+
 /**************************************************************************************************************/
 
 /** @export
@@ -29,13 +31,13 @@
 			<li>maxFov : The maximum field of view in degrees</li>
 		</ul>
  */
-GlobWeb.AstroNavigation = function(globe, options)
+AstroNavigation = function(globe, options)
 {
 	// Default values for fov (in degrees)
 	this['minFov'] = 0.25;
 	this['maxFov'] = 100;
 	
-	GlobWeb.BaseNavigation.prototype.constructor.call( this, globe, options );
+	BaseNavigation.prototype.constructor.call( this, globe, options );
 
 	// Initialize the navigator
 	this.center3d = [1.0, 0.0, 0.0];
@@ -47,7 +49,7 @@ GlobWeb.AstroNavigation = function(globe, options)
 
 /**************************************************************************************************************/
 
-GlobWeb.inherits( GlobWeb.BaseNavigation,GlobWeb.AstroNavigation );
+Utils.inherits( BaseNavigation, AstroNavigation );
 
 /**************************************************************************************************************/
 
@@ -57,7 +59,7 @@ GlobWeb.inherits( GlobWeb.BaseNavigation,GlobWeb.AstroNavigation );
 	@param {Int} fov Final zooming fov in degrees
 	@param {Int} duration Duration of animation in milliseconds
  */
-GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
+AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 {
 	var navigator = this;
 	
@@ -69,7 +71,7 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 	var geoStart = [];
 	var middleFov = 25.0;	// arbitrary middle fov value which determines if the animation needs two segments
 	
-	GlobWeb.CoordinateSystem.from3DToGeo(this.center3d, geoStart);
+	CoordinateSystem.from3DToGeo(this.center3d, geoStart);
 	var startValue = [geoStart[0], geoStart[1], this.globe.renderContext.fov];
 	var endValue = [geoPos[0], geoPos[1], destFov];
 	
@@ -81,11 +83,11 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 		else
 			endValue[0] +=360;
 	}
-	var animation = new GlobWeb.SegmentedAnimation(
+	var animation = new SegmentedAnimation(
 		duration,
 		// Value setter
 		function(value) {
-			var position3d = GlobWeb.CoordinateSystem.fromGeoTo3D( [ value[0], value[1] ] );
+			var position3d = CoordinateSystem.fromGeoTo3D( [ value[0], value[1] ] );
 			navigator.center3d[0] = position3d[0];
 			navigator.center3d[1] = position3d[1];
 			navigator.center3d[2] = position3d[2];
@@ -161,7 +163,7 @@ GlobWeb.AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 	@param {Float[]} geoPos Array of two floats corresponding to final Longitude and Latitude(in this order) to zoom
 	@param {Int} duration Duration of animation in milliseconds
  */
-GlobWeb.AstroNavigation.prototype.moveTo = function(geoPos, duration )
+AstroNavigation.prototype.moveTo = function(geoPos, duration )
 {
 	var navigator = this;
 	
@@ -169,7 +171,7 @@ GlobWeb.AstroNavigation.prototype.moveTo = function(geoPos, duration )
 	
 	// Create a single animation to animate center3d
 	var geoStart = [];
-	GlobWeb.CoordinateSystem.from3DToGeo(this.center3d, geoStart);
+	CoordinateSystem.from3DToGeo(this.center3d, geoStart);
 	
 	var startValue = [geoStart[0], geoStart[1]];
 	var endValue = [geoPos[0], geoPos[1]];
@@ -183,11 +185,11 @@ GlobWeb.AstroNavigation.prototype.moveTo = function(geoPos, duration )
 			endValue[0] +=360;
 	}
 	
-	var animation = new GlobWeb.SegmentedAnimation(
+	var animation = new SegmentedAnimation(
 		duration,
 		// Value setter
 		function(value) {
-			var position3d = GlobWeb.CoordinateSystem.fromGeoTo3D( [ value[0], value[1] ] );
+			var position3d = CoordinateSystem.fromGeoTo3D( [ value[0], value[1] ] );
 			navigator.center3d[0] = position3d[0];
 			navigator.center3d[1] = position3d[1];
 			navigator.center3d[2] = position3d[2];
@@ -220,7 +222,7 @@ GlobWeb.AstroNavigation.prototype.moveTo = function(geoPos, duration )
 /**
 	Compute the view matrix
  */
-GlobWeb.AstroNavigation.prototype.computeViewMatrix = function()
+AstroNavigation.prototype.computeViewMatrix = function()
 {
 	var eye = [];
 	vec3.normalize(this.center3d);
@@ -242,7 +244,7 @@ GlobWeb.AstroNavigation.prototype.computeViewMatrix = function()
 	Event handler for mouse wheel
 	@param delta Delta zoom
  */
-GlobWeb.AstroNavigation.prototype.zoom = function(delta)
+AstroNavigation.prototype.zoom = function(delta)
 {
 	this.globe.publish("startNavigation");
 	// Arbitrary value for smooth zooming
@@ -272,7 +274,7 @@ GlobWeb.AstroNavigation.prototype.zoom = function(delta)
 	@param dx Window delta x
 	@param dy Window delta y
  */
-GlobWeb.AstroNavigation.prototype.pan = function(dx, dy)
+AstroNavigation.prototype.pan = function(dx, dy)
 {
 	var x = this.globe.renderContext.canvas.width / 2.;
 	var y = this.globe.renderContext.canvas.height / 2.;
@@ -288,7 +290,7 @@ GlobWeb.AstroNavigation.prototype.pan = function(dx, dy)
 	@param dx Window delta x
 	@param dy Window delta y
  */
-GlobWeb.AstroNavigation.prototype.rotate = function(dx,dy)
+AstroNavigation.prototype.rotate = function(dx,dy)
 {
 	// constant tiny angle 
 	var angle = dx * 0.1 * Math.PI/180.;
@@ -301,3 +303,6 @@ GlobWeb.AstroNavigation.prototype.rotate = function(dx,dy)
 
 /**************************************************************************************************************/
 
+return AstroNavigation;
+
+});

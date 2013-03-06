@@ -17,12 +17,14 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+define(function() {
+
 /**************************************************************************************************************/
 
 /** @constructor
 	Mesh constructor
  */
-GlobWeb.Mesh = function(renderContext)
+var Mesh = function(renderContext)
 {
 	this.renderContext = renderContext;
 	this.vertexBuffer = null;
@@ -38,7 +40,7 @@ GlobWeb.Mesh = function(renderContext)
 /*
 	Mesh setVertices method
  */
-GlobWeb.Mesh.prototype.setVertices = function(vertices)
+Mesh.prototype.setVertices = function(vertices)
 {
 	var gl = this.renderContext.gl;
 	if ( this.vertexBuffer == null )
@@ -55,7 +57,7 @@ GlobWeb.Mesh.prototype.setVertices = function(vertices)
 /*
 	Mesh setTexCoords method
  */
-GlobWeb.Mesh.prototype.setTexCoords = function(tcoords)
+Mesh.prototype.setTexCoords = function(tcoords)
 {
 	var gl = this.renderContext.gl;
 	if ( this.tcoordBuffer == null )
@@ -71,7 +73,7 @@ GlobWeb.Mesh.prototype.setTexCoords = function(tcoords)
 /*
 	Mesh setColors method
  */
-GlobWeb.Mesh.prototype.setColors = function(colors)
+Mesh.prototype.setColors = function(colors)
 {
 	var gl = this.renderContext.gl;
 	if ( this.colorBuffer == null )
@@ -87,7 +89,7 @@ GlobWeb.Mesh.prototype.setColors = function(colors)
 /*
 	Mesh setIndices method
  */
-GlobWeb.Mesh.prototype.setIndices = function(indices)
+Mesh.prototype.setIndices = function(indices)
 {
 	var gl = this.renderContext.gl;
 	if ( this.indexBuffer == null )
@@ -104,7 +106,7 @@ GlobWeb.Mesh.prototype.setIndices = function(indices)
 /*
 	Convert to wireframe (for debug purposes)
  */
-GlobWeb.Mesh.prototype.setIndicesToWireframe = function(indices)
+Mesh.prototype.setIndicesToWireframe = function(indices)
 {
 	this.mode = this.renderContext.gl.LINES;
 	
@@ -132,7 +134,7 @@ GlobWeb.Mesh.prototype.setIndicesToWireframe = function(indices)
 /*
 	Mesh render method
  */
-GlobWeb.Mesh.prototype.render = function(attributes)
+Mesh.prototype.render = function(attributes)
 {
 	var gl = this.renderContext.gl;
 	
@@ -165,7 +167,7 @@ GlobWeb.Mesh.prototype.render = function(attributes)
 /*
 	Mesh dispose method
  */
-GlobWeb.Mesh.prototype.dispose = function()
+Mesh.prototype.dispose = function()
 {
 	var gl = this.renderContext.gl;
 	if ( this.indexBuffer )
@@ -185,4 +187,7 @@ GlobWeb.Mesh.prototype.dispose = function()
 
 /**************************************************************************************************************/
 
+return Mesh;
+
+});
 

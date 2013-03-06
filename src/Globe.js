@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./CoordinateSystem', './RenderContext','./TileManager','./Tile' , './VectorRendererManager', './AttributionHandler' ], 
-	function(CoordinateSystem, RenderContext, TileManager, Tile, VectorRendererManager, AttributionHandler) {
+ define(['./CoordinateSystem', './RenderContext','./TileManager','./Tile' , './VectorRendererManager', './AttributionHandler', './Numeric', './GeoBound' ], 
+	function(CoordinateSystem, RenderContext, TileManager, Tile, VectorRendererManager, AttributionHandler, Numeric, GeoBound) {
 
 /**************************************************************************************************************/
 

@@ -17,21 +17,23 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-/**************************************************************************************************************/
+define(['./Utils', './WMSLayer'], 
+	function(Utils, WMSLayer) {
 
+/**************************************************************************************************************/
 
 /** @export
 	@constructor
 	WMSElevationLayer constructor
  */
-GlobWeb.WMSElevationLayer = function( options )
+var WMSElevationLayer = function( options )
 {
 	options['format'] = 'image/x-aaigrid';
 	options['tilePixelSize'] = options['tilePixelSize'] || 33;
-	GlobWeb.WMSLayer.prototype.constructor.call( this, options );
+	WMSLayer.prototype.constructor.call( this, options );
 }
 
-GlobWeb.inherits(GlobWeb.WMSLayer,GlobWeb.WMSElevationLayer);
+Utils.inherits(WMSLayer,WMSElevationLayer);
 
 
 /**************************************************************************************************************/
@@ -39,7 +41,7 @@ GlobWeb.inherits(GlobWeb.WMSLayer,GlobWeb.WMSElevationLayer);
 /**
 	Parse a elevation response
  */
-GlobWeb.WMSElevationLayer.prototype.parseElevations = function(text)
+WMSElevationLayer.prototype.parseElevations = function(text)
 {
 	var elevations = [];
 	var lines = text.trim().split('\n');
@@ -57,3 +59,7 @@ GlobWeb.WMSElevationLayer.prototype.parseElevations = function(text)
 }
 
 /**************************************************************************************************************/
+
+return WMSElevationLayer;
+
+});

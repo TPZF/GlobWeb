@@ -17,14 +17,15 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-
+define(['./Program','./CoordinateSystem','./RendererTileData','./FeatureStyle', './VectorRendererManager'],
+	function(Program,CoordinateSystem,RendererTileData,FeatureStyle,VectorRendererManager) {
 
 /**************************************************************************************************************/
 
 /** @constructor
 	PointSpriteRenderer constructor
  */
-GlobWeb.PointSpriteRenderer = function(tileManager,style)
+var PointSpriteRenderer = function(tileManager,style)
 {
 	// Store object for rendering
 	this.renderContext = tileManager.renderContext;
@@ -62,7 +63,7 @@ GlobWeb.PointSpriteRenderer = function(tileManager,style)
 	} \n\
 	";
 
-    this.program = new GlobWeb.Program(this.renderContext);
+    this.program = new Program(this.renderContext);
     this.program.createFromSource(vertexShader, fragmentShader);
 	
 	this.frameNumber = 0;
@@ -75,7 +76,7 @@ GlobWeb.PointSpriteRenderer = function(tileManager,style)
 /**
  * Renderable constructor for PointSprite
  */
-GlobWeb.PointSpriteRenderer.Renderable = function(bucket) 
+var Renderable = function(bucket) 
 {
 	this.bucket = bucket;
 	this.geometry2vb = {};
@@ -89,10 +90,10 @@ GlobWeb.PointSpriteRenderer.Renderable = function(bucket)
 /**
  * Add a geometry to the renderbale
  */
-GlobWeb.PointSpriteRenderer.Renderable.prototype.add = function(geometry)
+Renderable.prototype.add = function(geometry)
 {
 	this.geometry2vb[ geometry.gid ] = this.vertices.length;
-	var pt = GlobWeb.CoordinateSystem.fromGeoTo3D( geometry['coordinates'] );
+	var pt = CoordinateSystem.fromGeoTo3D( geometry['coordinates'] );
 	// Hack : push away the point, only works for AstroWeb, sufficient for now
 	this.vertices.push( 0.99 * pt[0], 0.99 * pt[1], 0.99 * pt[2] );
 	this.vertexBufferDirty = true;
@@ -103,7 +104,7 @@ GlobWeb.PointSpriteRenderer.Renderable.prototype.add = function(geometry)
 /**
  * Remove a geometry from the renderable
  */
-GlobWeb.PointSpriteRenderer.Renderable.prototype.remove = function(geometry)
+Renderable.prototype.remove = function(geometry)
 {
 	if ( this.geometry2vb.hasOwnProperty(geometry.gid) )
 	{
@@ -131,7 +132,7 @@ GlobWeb.PointSpriteRenderer.Renderable.prototype.remove = function(geometry)
 /**
  * Dispose the renderable
  */
-GlobWeb.PointSpriteRenderer.Renderable.prototype.dispose = function(renderContext)
+Renderable.prototype.dispose = function(renderContext)
 {
 	if ( this.vertexBuffer ) 
 	{
@@ -144,7 +145,7 @@ GlobWeb.PointSpriteRenderer.Renderable.prototype.dispose = function(renderContex
 /*
 	Build a default texture
  */
-GlobWeb.PointSpriteRenderer.prototype._buildDefaultTexture = function(bucket)
+PointSpriteRenderer.prototype._buildDefaultTexture = function(bucket)
 {  	
 	if ( !this.defaultTexture )
 	{
@@ -165,7 +166,7 @@ GlobWeb.PointSpriteRenderer.prototype._buildDefaultTexture = function(bucket)
 /*
 	Build a texture from an image and store in a bucket
  */
-GlobWeb.PointSpriteRenderer.prototype._buildTextureFromImage = function(bucket,image)
+PointSpriteRenderer.prototype._buildTextureFromImage = function(bucket,image)
 {  	
 	bucket.texture = this.renderContext.createNonPowerOfTwoTextureFromImage(image);
 	bucket.textureWidth = image.width;
@@ -178,17 +179,17 @@ GlobWeb.PointSpriteRenderer.prototype._buildTextureFromImage = function(bucket,i
 /**
 	Add a point to the renderer
  */
-GlobWeb.PointSpriteRenderer.prototype.addGeometryToTile = function(bucket,geometry,tile)
+PointSpriteRenderer.prototype.addGeometryToTile = function(bucket,geometry,tile)
 {
 	var tileData = tile.extension.pointSprite;
 	if (!tileData)
 	{
-		tileData = tile.extension.pointSprite = new GlobWeb.RendererTileData();
+		tileData = tile.extension.pointSprite = new RendererTileData();
 	}
 	var renderable = tileData.getRenderable(bucket);
 	if (!renderable) 
 	{
-		renderable = new GlobWeb.PointSpriteRenderer.Renderable(bucket);
+		renderable = new Renderable(bucket);
 		tileData.renderables.push(renderable);
 	}
 	renderable.add(geometry);
@@ -200,7 +201,7 @@ GlobWeb.PointSpriteRenderer.prototype.addGeometryToTile = function(bucket,geomet
 /**
 	Remove a point from the renderer
  */
-GlobWeb.PointSpriteRenderer.prototype.removeGeometryFromTile = function(geometry,tile)
+PointSpriteRenderer.prototype.removeGeometryFromTile = function(geometry,tile)
 {
 	var tileData = tile.extension.pointSprite;
 	if (tileData)
@@ -212,7 +213,7 @@ GlobWeb.PointSpriteRenderer.prototype.removeGeometryFromTile = function(geometry
 	}
 }
 
-GlobWeb.PointSpriteRenderer.prototype.removeGeometry = function()
+PointSpriteRenderer.prototype.removeGeometry = function()
 {
 }
 
@@ -221,7 +222,7 @@ GlobWeb.PointSpriteRenderer.prototype.removeGeometry = function()
 /*
 	Get or create bucket to render a point
  */
-GlobWeb.PointSpriteRenderer.prototype.getOrCreateBucket = function(layer,style)
+PointSpriteRenderer.prototype.getOrCreateBucket = function(layer,style)
 {
 	// Find an existing bucket for the given style, except if label is set, always create a new one
 	for ( var i = 0; i < this.buckets.length; i++ )
@@ -244,7 +245,7 @@ GlobWeb.PointSpriteRenderer.prototype.getOrCreateBucket = function(layer,style)
 
 	// Create a bucket
 	var bucket = {
-		style: new GlobWeb.FeatureStyle(style),
+		style: new FeatureStyle(style),
 		layer: layer,
 		texture: null
 	};
@@ -252,7 +253,7 @@ GlobWeb.PointSpriteRenderer.prototype.getOrCreateBucket = function(layer,style)
 	// Initialize bucket : create the texture	
 	if ( style['label'] )
 	{
-		var imageData = GlobWeb.Text.generateImageData(style['label'], style['textColor']);
+		var imageData = Text.generateImageData(style['label'], style['textColor']);
 		this._buildTextureFromImage(bucket,imageData);
 	}
 	else if ( style['iconUrl'] )
@@ -282,7 +283,7 @@ GlobWeb.PointSpriteRenderer.prototype.getOrCreateBucket = function(layer,style)
 /*
 	Render all the POIs
  */
-GlobWeb.PointSpriteRenderer.prototype.render = function(tiles)
+PointSpriteRenderer.prototype.render = function(tiles)
 {	
 	var renderContext = this.renderContext;
 	var gl = this.renderContext.gl;
@@ -361,7 +362,7 @@ GlobWeb.PointSpriteRenderer.prototype.render = function(tiles)
 /*
 	Render all the POIs
  */
-/*GlobWeb.PointSpriteRenderer.prototype.render = function()
+/*PointSpriteRenderer.prototype.render = function()
 {
 	if (this.buckets.length == 0)
 	{
@@ -424,8 +425,12 @@ GlobWeb.PointSpriteRenderer.prototype.render = function(tiles)
 /**************************************************************************************************************/
 
 // Register the renderer
-GlobWeb.VectorRendererManager.registerRenderer({
-		id: "PointSprite",
-		creator: function(globe) { return new GlobWeb.PointSpriteRenderer(globe.tileManager); },
-		canApply: function(type,style) {return false; }
-	});
+VectorRendererManager.registerRenderer({
+	id: "PointSprite",
+	creator: function(globe) { return new PointSpriteRenderer(globe.tileManager); },
+	canApply: function(type,style) {return false; }
+});
+
+return PointSpriteRenderer;
+
+});

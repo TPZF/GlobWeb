@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Tile','./TilePool', './TileRequest', './TileIndexBuffer', './Program'],
-	function (Tile,TilePool,TileRequest,TileIndexBuffer,Program) {
+define(['./Tile','./TilePool', './TileRequest', './TileIndexBuffer', './Program', './CoordinateSystem'],
+	function (Tile,TilePool,TileRequest,TileIndexBuffer,Program, CoordinateSystem) {
 
 /** @constructor
 	TileManager constructor

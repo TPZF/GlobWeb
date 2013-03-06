@@ -1,17 +1,19 @@
 
+define( ['./CoordinateSystem', './Numeric'], function(CoordinateSystem, Numeric) {
+
 /**************************************************************************************************************/
 
 /**
 *	Convert a 3D position to equatorial coordinates
 */
-GlobWeb.CoordinateSystem.from3DToEquatorial = function(position3d, dest){
+CoordinateSystem.from3DToEquatorial = function(position3d, dest){
 	
 	if (!dest) { dest = new Array(3); }
 	
 	var geo = [];
 
-	GlobWeb.CoordinateSystem.from3DToGeo(position3d, geo);
-	GlobWeb.CoordinateSystem.fromGeoToEquatorial(geo, dest);
+	CoordinateSystem.from3DToGeo(position3d, geo);
+	CoordinateSystem.fromGeoToEquatorial(geo, dest);
 	
 	return dest;
 }
@@ -21,14 +23,14 @@ GlobWeb.CoordinateSystem.from3DToEquatorial = function(position3d, dest){
 /**
 *	Converts an equatorial position to 3D
 */
-GlobWeb.CoordinateSystem.fromEquatorialTo3D = function(equatorial, dest){
+CoordinateSystem.fromEquatorialTo3D = function(equatorial, dest){
 	
 	if (!dest) { dest = new Array(3); }
 
 	var geo = [];
 	
-	GlobWeb.CoordinateSystem.fromEquatorialToGeo(equatorial, geo);
-	GlobWeb.CoordinateSystem.fromGeoTo3D(geo,dest);
+	CoordinateSystem.fromEquatorialToGeo(equatorial, geo);
+	CoordinateSystem.fromGeoTo3D(geo,dest);
 	
 	return dest;	
 }
@@ -41,7 +43,7 @@ GlobWeb.CoordinateSystem.fromEquatorialTo3D = function(equatorial, dest){
 *					  specified by: "hours minuts seconds" and "degrees minuts seconds" respectively
 *	@param {Float[]} dest Destination array of two floats corresponding to Longitude and Latitude
 */
-GlobWeb.CoordinateSystem.fromEquatorialToGeo = function(equatorial, dest){
+CoordinateSystem.fromEquatorialToGeo = function(equatorial, dest){
 	
 	if(!dest) dest = [];
 	
@@ -79,10 +81,10 @@ GlobWeb.CoordinateSystem.fromEquatorialToGeo = function(equatorial, dest){
 *	@param {Float[]} geo Array of two floats corresponding to Longitude and Latitude
 *	@param {String[]} dest Destination array of two strings corresponding to Right Ascension and Declination
 *					  specified by: 'hours+"h" minuts+"m" seconds+"s"' and 'degrees+"°" minuts+"\'" seconds+"""' respectively
-* 	@see <GlobWeb.CoordinateSystem.fromDegreesToDMS>
-* * 	@see <GlobWeb.CoordinateSystem.fromDegreesToHMS>
+* 	@see <CoordinateSystem.fromDegreesToDMS>
+* * 	@see <CoordinateSystem.fromDegreesToHMS>
 */
-GlobWeb.CoordinateSystem.fromGeoToEquatorial = function(geo, dest){
+CoordinateSystem.fromGeoToEquatorial = function(geo, dest){
 	
 	if (!dest) dest = [];
 	
@@ -92,8 +94,8 @@ GlobWeb.CoordinateSystem.fromGeoToEquatorial = function(geo, dest){
 		deg += 360;
 	}
 
-	dest[0] = GlobWeb.CoordinateSystem.fromDegreesToHMS( deg );
-	dest[1] = GlobWeb.CoordinateSystem.fromDegreesToDMS(geo[1]);
+	dest[0] = CoordinateSystem.fromDegreesToHMS( deg );
+	dest[1] = CoordinateSystem.fromDegreesToDMS(geo[1]);
 	
 	return dest;
 }
@@ -106,7 +108,7 @@ GlobWeb.CoordinateSystem.fromGeoToEquatorial = function(geo, dest){
  *	@param {Float} degree The degree
  */
 
-GlobWeb.CoordinateSystem.fromDegreesToDMS = function(degree)
+CoordinateSystem.fromDegreesToDMS = function(degree)
 {
 	function stringSign(val)
 	{
@@ -129,7 +131,7 @@ GlobWeb.CoordinateSystem.fromDegreesToDMS = function(degree)
  *	@param {Float} degree The degree > 0
  */
 
-GlobWeb.CoordinateSystem.fromDegreesToHMS = function(degree)
+CoordinateSystem.fromDegreesToHMS = function(degree)
 {
 	var degree = degree/15;
 	
@@ -140,5 +142,6 @@ GlobWeb.CoordinateSystem.fromDegreesToHMS = function(degree)
 	var sec = (decimal - min) * 60;
 	
 	return hours+"h "+min+"m "+ Numeric.roundNumber(sec, 2) +"s";
-
 }
+
+});

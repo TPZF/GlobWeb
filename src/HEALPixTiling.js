@@ -16,11 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+define(['./Tile', './HEALPixBase', './GeoBound', './CoordinateSystem'], 
+	function(Tile, HEALPixBase, GeoBound, CoordinateSystem) {
+
+/**************************************************************************************************************/
+ 
 /** @constructor
 	HEALPixTiling constructor
-	Rq: sorte de HEALPixSphere
  */
-GlobWeb.HEALPixTiling = function(order)
+var HEALPixTiling = function(order)
 {
 	this.order = order;
 	this.nside = Math.pow(2,this.order);
@@ -31,7 +36,7 @@ GlobWeb.HEALPixTiling = function(order)
 /** 
 	Generate the tiles for level zero
  */
-GlobWeb.HEALPixTiling.prototype.generateLevelZeroTiles = function( config, tilePool )
+HEALPixTiling.prototype.generateLevelZeroTiles = function( config, tilePool )
 {	
 	config.skirt = false;
 	config.cullSign = -1;
@@ -45,11 +50,11 @@ GlobWeb.HEALPixTiling.prototype.generateLevelZeroTiles = function( config, tileP
 	
 	for (var i = 0; i < nQuads; i++){
 		var face = Math.floor(i/qpf);
-		var tile = new GlobWeb.HEALPixTile(this.order, i, face);
+		var tile = new HEALPixTile(this.order, i, face);
 		tile.config = config;
 		level0Tiles.push( tile );
 		tile.generate(tilePool);
-		tile.state = GlobWeb.Tile.State.NONE;
+		tile.state = Tile.State.NONE;
 	}
 
 	return level0Tiles;
@@ -60,7 +65,7 @@ GlobWeb.HEALPixTiling.prototype.generateLevelZeroTiles = function( config, tileP
 /** 
 	Locate a level zero tile
  */
-GlobWeb.HEALPixTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
+HEALPixTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 {	
 	// var i = Math.floor( (lon + 180) * this.level0NumTilesX / 360 );
  	// var j = Math.floor( (lat + 90) * this.level0NumTilesY / 180 );
@@ -74,12 +79,12 @@ GlobWeb.HEALPixTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 /**
  	Return tile of given longitude/latitude from tiles array if exists, null otherwise
  */
-GlobWeb.HEALPixTiling.prototype.findInsideTile = function(lon, lat, tiles)
+HEALPixTiling.prototype.findInsideTile = function(lon, lat, tiles)
 {
 	for ( var i=0; i<tiles.length; i++ )
 	{
 		var tile = tiles[i];
-		var index = GlobWeb.HEALPixBase.lonLat2pix( tile.order, lon, lat );
+		var index = HEALPixBase.lonLat2pix( tile.order, lon, lat );
 		if ( index == tile.pixelIndex )
 			return tile;
 	}
@@ -98,10 +103,10 @@ GlobWeb.HEALPixTiling.prototype.findInsideTile = function(lon, lat, tiles)
 		pix : pixel index number
 		face : face number = [0..11]
  */
-GlobWeb.HEALPixTile = function( order, pix, face )
+var HEALPixTile = function( order, pix, face )
 {
     // Call ancestor constructor
-    GlobWeb.Tile.prototype.constructor.call(this);
+    Tile.prototype.constructor.call(this);
 	
 	this.order = order;
 	this.nside = Math.pow(2, this.order);
@@ -118,22 +123,22 @@ GlobWeb.HEALPixTile = function( order, pix, face )
 
 /**************************************************************************************************************/
 
-/** inherits from GlobWeb.Tile */
-GlobWeb.HEALPixTile.prototype = new GlobWeb.Tile;
+/** inherits from Tile */
+HEALPixTile.prototype = new Tile;
 
 /**************************************************************************************************************/
 
 /**
 	Create the children
  */
-GlobWeb.HEALPixTile.prototype.createChildren = function()
+HEALPixTile.prototype.createChildren = function()
 {
 	// Create the children
 	
-	var child00 = new GlobWeb.HEALPixTile(this.order + 1, this.pixelIndex*4, this.face);
-	var child10 = new GlobWeb.HEALPixTile(this.order + 1, this.pixelIndex*4+2, this.face);
-	var child01 = new GlobWeb.HEALPixTile(this.order + 1, this.pixelIndex*4+1, this.face);
-	var child11 = new GlobWeb.HEALPixTile(this.order + 1, this.pixelIndex*4+3, this.face);
+	var child00 = new HEALPixTile(this.order + 1, this.pixelIndex*4, this.face);
+	var child10 = new HEALPixTile(this.order + 1, this.pixelIndex*4+2, this.face);
+	var child01 = new HEALPixTile(this.order + 1, this.pixelIndex*4+1, this.face);
+	var child11 = new HEALPixTile(this.order + 1, this.pixelIndex*4+3, this.face);
 	
 	child00.initFromParent( this, 0, 0 );
 	child10.initFromParent( this, 1, 0 );
@@ -149,7 +154,7 @@ GlobWeb.HEALPixTile.prototype.createChildren = function()
 /**
 	Compute the local matrix for the tile
  */
-GlobWeb.HEALPixTile.prototype.computeLocalMatrix = function(vertices){
+HEALPixTile.prototype.computeLocalMatrix = function(vertices){
 	var matrix = mat4.create();
 	
 	var east = vec3.create();
@@ -204,7 +209,7 @@ GlobWeb.HEALPixTile.prototype.computeLocalMatrix = function(vertices){
 /**
 	Generate vertices for tile
  */
-GlobWeb.HEALPixTile.prototype.generateVertices = function()
+HEALPixTile.prototype.generateVertices = function()
 {
 	// Build the vertices
 	var size = this.config.tesselation;
@@ -214,24 +219,24 @@ GlobWeb.HEALPixTile.prototype.generateVertices = function()
 	// xyf calculation
 	//var xyf = new healpixBase.Xyf(this.pixelIndex, this.order);
 	var pix=this.pixelIndex&(this.nside*this.nside-1);
-	var ix = GlobWeb.HEALPixBase.compress_bits(pix);
-	var iy = GlobWeb.HEALPixBase.compress_bits(pix>>>1);
+	var ix = HEALPixBase.compress_bits(pix);
+	var iy = HEALPixBase.compress_bits(pix>>>1);
 	
 	// Compute array of worldspace coordinates
 	for(var u = 0; u < size; u++){
 		for(var v = 0; v < size; v++){
-			worldSpaceVertices[u*size + v] = GlobWeb.HEALPixBase.fxyf((ix+u*step)/this.nside, (iy+v*step)/this.nside, this.face);
+			worldSpaceVertices[u*size + v] = HEALPixBase.fxyf((ix+u*step)/this.nside, (iy+v*step)/this.nside, this.face);
 		}
 	}
 	
 	// Compute geoBound using corners of tile
-	this.geoBound = new GlobWeb.GeoBound();
+	this.geoBound = new GeoBound();
 
 	var corners = [];
-	corners.push( GlobWeb.CoordinateSystem.from3DToGeo( worldSpaceVertices[0] ) );
-	corners.push( GlobWeb.CoordinateSystem.from3DToGeo( worldSpaceVertices[size-1] ) );
-	corners.push( GlobWeb.CoordinateSystem.from3DToGeo( worldSpaceVertices[size*(size-1)] ) );
-	corners.push( GlobWeb.CoordinateSystem.from3DToGeo( worldSpaceVertices[size*size-1] ) );
+	corners.push( CoordinateSystem.from3DToGeo( worldSpaceVertices[0] ) );
+	corners.push( CoordinateSystem.from3DToGeo( worldSpaceVertices[size-1] ) );
+	corners.push( CoordinateSystem.from3DToGeo( worldSpaceVertices[size*(size-1)] ) );
+	corners.push( CoordinateSystem.from3DToGeo( worldSpaceVertices[size*size-1] ) );
 
 	this.geoBound.computeFromCoordinates( corners );
 
@@ -242,9 +247,9 @@ GlobWeb.HEALPixTile.prototype.generateVertices = function()
 	this.inverseMatrix = invMatrix;
 	
 	// Compute tile matrix
-	/*var center = GlobWeb.HEALPixBase.fxyf((ix+0.5)/this.nside, (iy+0.5)/this.nside, face);
-	var geoCenter = GlobWeb.CoordinateSystem.from3DToGeo(center);
-	this.matrix = GlobWeb.CoordinateSystem.getLHVTransform( geoCenter );
+	/*var center = HEALPixBase.fxyf((ix+0.5)/this.nside, (iy+0.5)/this.nside, face);
+	var geoCenter = CoordinateSystem.from3DToGeo(center);
+	this.matrix = CoordinateSystem.getLHVTransform( geoCenter );
 	var invMatrix = mat4.create();
 	mat4.inverse( this.matrix, invMatrix );
 	this.inverseMatrix = invMatrix;*/
@@ -265,3 +270,7 @@ GlobWeb.HEALPixTile.prototype.generateVertices = function()
 }
 
 /**************************************************************************************************************/
+
+return HEALPixTiling;
+
+});

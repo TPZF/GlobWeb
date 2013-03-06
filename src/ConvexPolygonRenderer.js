@@ -17,14 +17,15 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-
+define(['./Program','./CoordinateSystem','./RendererTileData','./FeatureStyle', './VectorRendererManager'],
+	function(Program,CoordinateSystem,RendererTileData,FeatureStyle,VectorRendererManager) {
 
 /**************************************************************************************************************/
 
 /** @constructor
 	ConvexPolygonRenderer constructor
  */
-GlobWeb.ConvexPolygonRenderer = function(tileManager)
+var ConvexPolygonRenderer = function(tileManager)
 {
 	// Store object for rendering
 	this.renderContext = tileManager.renderContext;
@@ -131,7 +132,7 @@ GlobWeb.ConvexPolygonRenderer = function(tileManager)
 	Renderable constructor
 	Attach to a bucket
  */
-GlobWeb.ConvexPolygonRenderer.Renderable = function(bucket) 
+var Renderable = function(bucket) 
 {
 	this.bucket = bucket;
 	this.geometry2vb = {};
@@ -150,7 +151,7 @@ GlobWeb.ConvexPolygonRenderer.Renderable = function(bucket)
 /**
 	Add the geometry to the renderable
  */
-GlobWeb.ConvexPolygonRenderer.Renderable.prototype.add = function(geometry)
+Renderable.prototype.add = function(geometry)
 {
 	var coords = geometry['coordinates'][0];
 	var numPoints = coords.length-1;
@@ -170,7 +171,7 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.add = function(geometry)
 	var startIndex = this.vertices.length / 3;
 	for ( var i = 0; i < numPoints; i++ ) 
 	{
-		var pt = GlobWeb.CoordinateSystem.fromGeoTo3D( coords[i] );
+		var pt = CoordinateSystem.fromGeoTo3D( coords[i] );
 		this.vertices.push( pt[0], pt[1], pt[2] );
 		this.lineIndices.push( startIndex + i, startIndex + ((i+1) % numPoints) );
 	}
@@ -196,7 +197,7 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.add = function(geometry)
 /**
 	Remove the geometry from the renderable
  */
-GlobWeb.ConvexPolygonRenderer.Renderable.prototype.remove = function(geometry)
+Renderable.prototype.remove = function(geometry)
 {
 	if ( this.geometry2vb.hasOwnProperty(geometry.gid) )
 	{
@@ -245,7 +246,7 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.remove = function(geometry)
 /**
 	Dispose the renderable : remove all buffers
  */
- GlobWeb.ConvexPolygonRenderer.Renderable.prototype.dispose = function(renderContext)
+Renderable.prototype.dispose = function(renderContext)
 {
 	if ( this.vertexBuffer ) 
 	{
@@ -266,17 +267,17 @@ GlobWeb.ConvexPolygonRenderer.Renderable.prototype.remove = function(geometry)
 /**
 	Add a geometry to the renderer
  */
-GlobWeb.ConvexPolygonRenderer.prototype.addGeometryToTile = function(bucket,geometry,tile)
+ConvexPolygonRenderer.prototype.addGeometryToTile = function(bucket,geometry,tile)
 {
 	var tileData = tile.extension.polygon;
 	if (!tileData)
 	{
-		tileData = tile.extension.polygon = new GlobWeb.RendererTileData();
+		tileData = tile.extension.polygon = new RendererTileData();
 	}
 	var renderable = tileData.getRenderable(bucket);
 	if (!renderable) 
 	{
-		renderable = new GlobWeb.ConvexPolygonRenderer.Renderable(bucket);
+		renderable = new Renderable(bucket);
 		tileData.renderables.push(renderable);
 	}
 	renderable.add(geometry);
@@ -288,7 +289,7 @@ GlobWeb.ConvexPolygonRenderer.prototype.addGeometryToTile = function(bucket,geom
 /**
 	Remove a point from the renderer
  */
-GlobWeb.ConvexPolygonRenderer.prototype.removeGeometryFromTile = function(geometry,tile)
+ConvexPolygonRenderer.prototype.removeGeometryFromTile = function(geometry,tile)
 {
 	var tileData = tile.extension.polygon;
 	if (tileData)
@@ -312,12 +313,12 @@ GlobWeb.ConvexPolygonRenderer.prototype.removeGeometryFromTile = function(geomet
 /**
  	Add a geometry to the renderer
  */
-GlobWeb.ConvexPolygonRenderer.prototype.addGeometry = function(geometry, layer, style)
+ConvexPolygonRenderer.prototype.addGeometry = function(geometry, layer, style)
 {
 	var bucket = this.getOrCreateBucket(layer,style);
 	if (!bucket.mainRenderable)
 	{
-		bucket.mainRenderable = new GlobWeb.ConvexPolygonRenderer.Renderable(bucket);
+		bucket.mainRenderable = new Renderable(bucket);
 	}
 	
 	bucket.mainRenderable.add(geometry);
@@ -328,7 +329,7 @@ GlobWeb.ConvexPolygonRenderer.prototype.addGeometry = function(geometry, layer, 
 /**
  	Remove a geometry from the renderer
  */
-GlobWeb.ConvexPolygonRenderer.prototype.removeGeometry = function(geometry)
+ConvexPolygonRenderer.prototype.removeGeometry = function(geometry)
 {
 	for ( var n = 0; n < this.buckets.length; n++ )
 	{
@@ -350,9 +351,9 @@ GlobWeb.ConvexPolygonRenderer.prototype.removeGeometry = function(geometry)
 /**
  	Create program from fillShader object	
  */
-GlobWeb.ConvexPolygonRenderer.prototype.createProgram = function(fillShader)
+ConvexPolygonRenderer.prototype.createProgram = function(fillShader)
 {
-	var program = new GlobWeb.Program(this.renderContext);
+	var program = new Program(this.renderContext);
 	program.createFromSource(fillShader.vertexCode, fillShader.fragmentCode);
 	
     // Add program
@@ -370,7 +371,7 @@ GlobWeb.ConvexPolygonRenderer.prototype.createProgram = function(fillShader)
 /**
  	Get program if known by renderer, create otherwise
  */
-GlobWeb.ConvexPolygonRenderer.prototype.getProgram = function(fillShader) {
+ConvexPolygonRenderer.prototype.getProgram = function(fillShader) {
 
 	var program;
 
@@ -395,7 +396,7 @@ GlobWeb.ConvexPolygonRenderer.prototype.getProgram = function(fillShader) {
 /**
 	Get or create bucket to render a polygon
  */
-GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style)
+ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style)
 {
 	// Find an existing bucket for the given style, except if label is set, always create a new one
 	for ( var i = 0; i < this.buckets.length; i++ )
@@ -420,7 +421,7 @@ GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style
 
 	// Create a bucket
 	var bucket = {
-		style: new GlobWeb.FeatureStyle(style),
+		style: new FeatureStyle(style),
 		layer: layer,
 		polygonProgram: null,
 		texture: null,
@@ -485,7 +486,7 @@ GlobWeb.ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style
 /*
 	Render all the POIs
  */
-GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
+ConvexPolygonRenderer.prototype.render = function(tiles)
 {	
 	var renderContext = this.renderContext;
 	var gl = this.renderContext.gl;
@@ -645,8 +646,14 @@ GlobWeb.ConvexPolygonRenderer.prototype.render = function(tiles)
 /**************************************************************************************************************/
 
 // Register the renderer
-GlobWeb.VectorRendererManager.registerRenderer({
-			id: "ConvexPolygon",
-			creator: function(globe) { return new GlobWeb.ConvexPolygonRenderer(globe.tileManager); },
-			canApply: function(type,style) {return (style.rendererHint == "Basic") && type == "Polygon"; }
-		});
+VectorRendererManager.registerRenderer({
+	id: "ConvexPolygon",
+	creator: function(globe) { return new ConvexPolygonRenderer(globe.tileManager); },
+	canApply: function(type,style) {return (style.rendererHint == "Basic") && type == "Polygon"; }
+});
+
+/**************************************************************************************************************/
+
+return ConvexPolygonRenderer;
+
+});

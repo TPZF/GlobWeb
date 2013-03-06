@@ -17,6 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
+define(['./Utils','./Animation'], function(Utils,Animation) {
+
 /**************************************************************************************************************/
 
 /** @constructor
@@ -25,10 +27,10 @@
   interpolateFunction(t, startValue, endValue) (t [0,1])
   The interpolated value is then given to the setFunction(value)
   */
-GlobWeb.InterpolatedAnimation = function(duration, startValue, endValue, interpolationFunction, setFunction)
+var InterpolatedAnimation = function(duration, startValue, endValue, interpolationFunction, setFunction)
 {
     // Call ancestor constructor
-    GlobWeb.Animation.prototype.constructor.call(this);
+    Animation.prototype.constructor.call(this);
 
     this.values = [[0.0, startValue], [1.0, endValue]];
     this.duration = duration;
@@ -38,7 +40,7 @@ GlobWeb.InterpolatedAnimation = function(duration, startValue, endValue, interpo
 
 /**************************************************************************************************************/
 
-GlobWeb.inherits(GlobWeb.Animation,GlobWeb.InterpolatedAnimation);
+Utils.inherits(Animation, InterpolatedAnimation);
 
 /**************************************************************************************************************/
 
@@ -46,7 +48,7 @@ GlobWeb.inherits(GlobWeb.Animation,GlobWeb.InterpolatedAnimation);
 	Adds a new value to the animation
 	't' is the value [0, 1] at which the animation value must reach 'value'
 */
-GlobWeb.InterpolatedAnimation.prototype.addValue = function(t, value)
+InterpolatedAnimation.prototype.addValue = function(t, value)
 {
     var count = this.values.length;
     var upper = 0;
@@ -57,17 +59,17 @@ GlobWeb.InterpolatedAnimation.prototype.addValue = function(t, value)
 
 /**************************************************************************************************************/
 
-GlobWeb.InterpolatedAnimation.prototype.start = function()
+InterpolatedAnimation.prototype.start = function()
 {
-    GlobWeb.Animation.prototype.start.call(this);
+    Animation.prototype.start.call(this);
     this.setFunction(this.startValue);
 }
 
 /**************************************************************************************************************/
 
-GlobWeb.InterpolatedAnimation.prototype.stop = function()
+InterpolatedAnimation.prototype.stop = function()
 {
-    GlobWeb.Animation.prototype.stop.call(this);
+    Animation.prototype.stop.call(this);
     this.setFunction(this.endValue);
 }
 
@@ -76,7 +78,7 @@ GlobWeb.InterpolatedAnimation.prototype.stop = function()
 /*
 	Animation update method
 */
-GlobWeb.InterpolatedAnimation.prototype.update = function(now)
+InterpolatedAnimation.prototype.update = function(now)
 {
     var t = Numeric.map01(now, this.startTime, this.startTime + this.duration);
     if (t >= 1)
@@ -101,3 +103,7 @@ GlobWeb.InterpolatedAnimation.prototype.update = function(now)
 }
 
 /**************************************************************************************************************/
+
+return InterpolatedAnimation;
+
+});

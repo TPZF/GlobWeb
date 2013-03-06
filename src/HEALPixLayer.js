@@ -16,6 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
+
+define(['./Utils', './HEALPixTiling', './RasterLayer'], 
+	function(Utils, HEALPixTiling, RasterLayer) {
+
 /**************************************************************************************************************/
 
 /** @export
@@ -23,12 +27,12 @@
 	HEALPixLayer constructor
 */
 
-GlobWeb.HEALPixLayer = function(options)
+var HEALPixLayer = function(options)
 {
-	GlobWeb.RasterLayer.prototype.constructor.call( this, options );
+	RasterLayer.prototype.constructor.call( this, options );
 	
 	this.tilePixelSize = options.tilePixelSize || 512;
-	this.tiling = new GlobWeb.HEALPixTiling( options.baseLevel || 3 );
+	this.tiling = new HEALPixTiling( options.baseLevel || 3 );
 	this.numberOfLevels = options.numberOfLevels || 10;
 	this.type = "ImageryRaster";
 	this.baseUrl = options['baseUrl'];
@@ -62,16 +66,16 @@ GlobWeb.HEALPixLayer = function(options)
 
 /**************************************************************************************************************/
 
-GlobWeb.inherits(GlobWeb.RasterLayer,GlobWeb.HEALPixLayer);
+Utils.inherits(RasterLayer, HEALPixLayer);
 
 /**************************************************************************************************************/
 
 /** 
   Attach the raster layer to the globe
  */
-GlobWeb.HEALPixLayer.prototype._attach = function( g )
+HEALPixLayer.prototype._attach = function( g )
 {
-	GlobWeb.RasterLayer.prototype._attach.call( this, g );
+	RasterLayer.prototype._attach.call( this, g );
 
 	// Load level zero image now
 	this.levelZeroImage.src = this.baseUrl + "/Norder3/Allsky.jpg";
@@ -82,7 +86,7 @@ GlobWeb.HEALPixLayer.prototype._attach = function( g )
 /**
  *	Get url from a given tile
  */
-GlobWeb.HEALPixLayer.prototype.getUrl = function(tile)
+HEALPixLayer.prototype.getUrl = function(tile)
 {
 	var url = this.baseUrl;
 	
@@ -101,3 +105,7 @@ GlobWeb.HEALPixLayer.prototype.getUrl = function(tile)
 }
 
 /**************************************************************************************************************/
+
+return HEALPixLayer;
+
+});

@@ -211,7 +211,7 @@ var FeatureStyle = function(style)
 /**
  * Convert a color from a string to RGB
  */
-FeatureStyle.fromStringToColor = function()
+FeatureStyle.fromStringToColor = function(color_string)
 {
 	var r = 0, g = 0, b = 0, a = 255;
 	var match;
