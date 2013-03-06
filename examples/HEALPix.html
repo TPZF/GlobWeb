@@ -1,43 +1,37 @@
 <html>
 
 <head>
-<title>GlobWeb example</title>
+<title>AstroWeb example</title>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
-<link rel="stylesheet" href="GlobWeb.css">
-
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
-
+<script  src="require.min.js"></script>
 <script type="text/javascript">
 	
+require(['../src/AstroWeb'], function (AstroWeb) 
+{		
+	var globe = new AstroWeb.Globe( { canvas: "AstroWebCanvas", 
+		showWireframe: false, 
+		continuousRendering: true } );
 	
-    function webGLStart() 
-	{	
-		
-		var globe = new GlobWeb.Globe( { canvas: "GlobWebCanvas", 
-			showWireframe: false, 
-			continuousRendering: true } );
-		
-		var astroNavigator = new GlobWeb.AstroNavigation(globe, { inertia: true });
-		
-		new GlobWeb.Stats(globe,{element: "fps",verbose: true});
-		
-		var cdsLayer = new GlobWeb.HEALPixLayer( { baseUrl: "/Alasky/DssColor/"} );
-		globe.setBaseImagery( cdsLayer );
+	var astroNavigator = new AstroWeb.AstroNavigation(globe, { inertia: true });
+	
+	new AstroWeb.Stats(globe,{element: "fps",verbose: true});
+	
+	var cdsLayer = new AstroWeb.HEALPixLayer( { baseUrl: "/Alasky/DssColor/"} );
+	globe.setBaseImagery( cdsLayer );
 
- 		window.onkeypress = function(event)
-		{
-			globe.tileManager.freeze = !globe.tileManager.freeze;
-		}
-   }
-
+		window.onkeypress = function(event)
+	{
+		globe.tileManager.freeze = !globe.tileManager.freeze;
+	}
+});
 
 </script>
 
 </head>
 
 
-<body onload="webGLStart();">
-    <canvas id="GlobWebCanvas" style="border: none;" width="1280" height="500"></canvas> 
+<body>
+    <canvas id="AstroWebCanvas" style="border: none;" width="1280" height="500"></canvas> 
   	<br/>
 	<div id="fps" style="font-weight:bold"></div>
 </body>
