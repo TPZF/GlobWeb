@@ -125,8 +125,8 @@ var Frustum = function()
 {
 	// The frustum does not contains near and far plane, because near and far are computed during rendering.
 	// Some tests have been done with a near plane but are not really useful
-	//this.planes = [ new Plane(), new Plane(), new Plane(), new Plane(), new Plane() ];
-	this.planes = [ new Plane(), new Plane(), new Plane(), new Plane() ];
+	this.planes = [ new Plane(), new Plane(), new Plane(), new Plane(), new Plane() ];
+	//this.planes = [ new Plane(), new Plane(), new Plane(), new Plane() ];
 }
 
 /**************************************************************************************************************/
@@ -150,7 +150,7 @@ Frustum.prototype.compute = function(projectionMatrix)
 	this.planes[3].init( [0.0,0.0,0.0], bottomright, bottomleft );
 	
 	// A plane for near plane if needed
-	//this.planes[4].init( bottomleft, topleft, topright );
+	this.planes[4].init( bottomleft, topleft, topright );
 }
 
 /**************************************************************************************************************/
