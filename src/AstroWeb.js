@@ -21,7 +21,7 @@
  define( ["./Globe",
 		"./VectorLayer", "./HEALPixLayer", "./OpenSearchLayer", "./TileWireframeLayer", // Layers
 		"./AstroNavigation", "./FeatureStyle", "./Stats", // Others
-		"./LineStringRenderable", "./PointSpriteRenderer", "./ConvexPolygonRenderer"], // Renderers
+		"./PointSpriteRenderer", "./ConvexPolygonRenderer"], // Renderers
 	function(Globe, VectorLayer, HEALPixLayer, OpenSearchLayer, TileWireframeLayer, AstroNavigation, FeatureStyle, Stats) {
 
 // Declare AstroWeb 
