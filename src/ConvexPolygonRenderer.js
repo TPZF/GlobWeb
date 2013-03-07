@@ -153,43 +153,71 @@ var Renderable = function(bucket)
  */
 Renderable.prototype.add = function(geometry)
 {
-	var coords = geometry['coordinates'][0];
-	var numPoints = coords.length-1;
-	
-	// Store information for the geometry in the buffers used for rendering
-	var data = {
-		vertexStart: this.vertices.length,
-		vertexCount: 3 * numPoints,
-		lineIndexStart: this.lineIndices.length,
-		lineIndexCount: 2 * numPoints,
-		triIndexStart: 0,
-		triIndexCount: 0
-	};
-	this.geometry2vb[ geometry.gid ] = data;
-	
-	// Compute vertices and indices and store them in the buffers
-	var startIndex = this.vertices.length / 3;
-	for ( var i = 0; i < numPoints; i++ ) 
+	var rings = [];
+	if ( geometry['type'] == 'MultiPolygon' )
 	{
-		var pt = CoordinateSystem.fromGeoTo3D( coords[i] );
-		this.vertices.push( pt[0], pt[1], pt[2] );
-		this.lineIndices.push( startIndex + i, startIndex + ((i+1) % numPoints) );
-	}
-	
-	// If fill, build the triangle indices
-	if ( this.bucket.style.fill ) 
-	{
-		data.triIndexStart = this.triangleIndices.length;
-		data.triIndexCount = 3 * (numPoints-2);
-		
-		for ( var i = 0; i < numPoints-2; i++ ) 
+		for ( var i=0; i<geometry['coordinates'].length; i++ )
 		{
-			this.triangleIndices.push( startIndex, startIndex + i+1, startIndex + i+2 );
+			rings.push( geometry['coordinates'][i][0] );
 		}
 	}
-	
-	this.bufferDirty = true;
-	this.triBufferDirty = true;
+	else
+	{
+		rings.push( geometry['coordinates'][0] );
+	}
+
+	for ( var r=0; r<rings.length; r++ )
+	{
+		var coords = rings[r];
+		// var coords = geometry['coordinates'][0];
+		var numPoints = coords.length-1;
+		
+		// Store information for the geometry in the buffers used for rendering
+		var data = {
+			vertexStart: this.vertices.length,
+			vertexCount: 3 * numPoints,
+			lineIndexStart: this.lineIndices.length,
+			lineIndexCount: 2 * numPoints,
+			triIndexStart: 0,
+			triIndexCount: 0
+		};
+
+		
+		// Compute vertices and indices and store them in the buffers
+		var startIndex = this.vertices.length / 3;
+		for ( var i = 0; i < numPoints; i++ ) 
+		{
+			var pt = CoordinateSystem.fromGeoTo3D( coords[i] );
+			this.vertices.push( pt[0], pt[1], pt[2] );
+			this.lineIndices.push( startIndex + i, startIndex + ((i+1) % numPoints) );
+		}
+		
+		// If fill, build the triangle indices
+		if ( this.bucket.style.fill ) 
+		{
+			data.triIndexStart = this.triangleIndices.length;
+			data.triIndexCount = 3 * (numPoints-2);
+			
+			for ( var i = 0; i < numPoints-2; i++ ) 
+			{
+				this.triangleIndices.push( startIndex, startIndex + i+1, startIndex + i+2 );
+			}
+		}
+
+		if ( this.geometry2vb[ geometry.gid ] )
+		{
+			this.geometry2vb[ geometry.gid ].vertexCount += data.vertexCount;
+			this.geometry2vb[ geometry.gid ].lineIndexCount += data.lineIndexCount;
+			this.geometry2vb[ geometry.gid ].triIndexCount += data.triIndexCount;
+		}
+		else
+		{
+			this.geometry2vb[ geometry.gid ] = data;
+		}
+		
+		this.bufferDirty = true;
+		this.triBufferDirty = true;
+	}
 }
 
 /**************************************************************************************************************/
@@ -649,7 +677,7 @@ ConvexPolygonRenderer.prototype.render = function(tiles)
 VectorRendererManager.registerRenderer({
 	id: "ConvexPolygon",
 	creator: function(globe) { return new ConvexPolygonRenderer(globe.tileManager); },
-	canApply: function(type,style) {return (style.rendererHint == "Basic") && type == "Polygon"; }
+	canApply: function(type,style) {return (style.rendererHint == "Basic") && (type == "Polygon" || type == "MultiPolygon"); }
 });
 
 /**************************************************************************************************************/
