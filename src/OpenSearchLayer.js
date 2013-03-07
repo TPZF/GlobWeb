@@ -38,6 +38,7 @@ var OpenSearchLayer = function(options){
 	
 	this.serviceUrl = options.serviceUrl;
 	this.minOrder = options.minOrder || 5;
+	this.maxRequests = options.maxRequests || 2;
 	this.requestProperties = "";
 
 	// Set style
@@ -61,7 +62,7 @@ var OpenSearchLayer = function(options){
 	this.freeRequests = [];
 	
 	// Build the request objects
-	for ( var i =0; i < 2; i++ )
+	for ( var i =0; i < this.maxRequests; i++ )
 	{
 		var xhr = new XMLHttpRequest();
 		this.freeRequests.push( xhr );
@@ -156,8 +157,13 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 		url += '&' + this.requestProperties;
 	}
 		
+	// Pusblish the start load event, only if there is no pending requests
+	if ( this.maxRequests == this.freeRequests.length )
+	{
+		this.globe.publish("startLoad",this.id);
+	}
+	
 	var xhr = this.freeRequests.pop();
-	this.globe.publish("startLoad",this.id);
 	
 	var self = this;
 	xhr.onreadystatechange = function(e)
@@ -198,7 +204,12 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 			
 			tileData.state = OpenSearchLayer.TileState.LOADED;
 			self.freeRequests.push( xhr );
-			self.globe.publish("endLoad",self.id);
+			
+			// Publish the end load event, only if there is no pending requests
+			if ( self.maxRequests == self.freeRequests.length )
+			{
+				self.globe.publish("endLoad",self.id);
+			}
 		}
 	};
 	xhr.open("GET", url );
