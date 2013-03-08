@@ -32,7 +32,7 @@ var HEALPixLayer = function(options)
 	RasterLayer.prototype.constructor.call( this, options );
 	
 	this.tilePixelSize = options.tilePixelSize || 512;
-	this.tiling = new HEALPixTiling( options.baseLevel || 3 );
+	this.tiling = new HEALPixTiling( options.baseLevel || 3, options );
 	this.numberOfLevels = options.numberOfLevels || 10;
 	this.type = "ImageryRaster";
 	this.baseUrl = options['baseUrl'];

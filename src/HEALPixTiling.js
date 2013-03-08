@@ -17,18 +17,19 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Tile', './HEALPixBase', './GeoBound', './CoordinateSystem'], 
-	function(Tile, HEALPixBase, GeoBound, CoordinateSystem) {
+define(['./Tile', './HEALPixBase', './GeoBound', './CoordinateSystem', './Numeric', './AstroCoordTransform'], 
+	function(Tile, HEALPixBase, GeoBound, CoordinateSystem, Numeric, AstroCoordTransform) {
 
 /**************************************************************************************************************/
  
 /** @constructor
 	HEALPixTiling constructor
  */
-var HEALPixTiling = function(order)
+var HEALPixTiling = function(order, options)
 {
 	this.order = order;
 	this.nside = Math.pow(2,this.order);
+	this.coordSystem = options.coordSystem || "EQUATORIAL";
 }
 
 /**************************************************************************************************************/
@@ -41,6 +42,7 @@ HEALPixTiling.prototype.generateLevelZeroTiles = function( config, tilePool )
 	config.skirt = false;
 	config.cullSign = -1;
 	config.tesselation = 5;
+	config.coordSystem = this.coordSystem;
 
 	var level0Tiles = [];
 	
@@ -225,7 +227,18 @@ HEALPixTile.prototype.generateVertices = function()
 	// Compute array of worldspace coordinates
 	for(var u = 0; u < size; u++){
 		for(var v = 0; v < size; v++){
-			worldSpaceVertices[u*size + v] = HEALPixBase.fxyf((ix+u*step)/this.nside, (iy+v*step)/this.nside, this.face);
+			if ( this.config.coordSystem == 'GALACTIC' )
+			{
+				var vertice = HEALPixBase.fxyf((ix+u*step)/this.nside, (iy+v*step)/this.nside, this.face);
+				var geo = CoordinateSystem.from3DToGeo( vertice );
+				var eq = AstroCoordTransform.transformInDeg( geo, AstroCoordTransform.Type.GAL2EQ );
+				
+				worldSpaceVertices[u*size + v] = CoordinateSystem.fromGeoTo3D( eq );
+			}
+			else
+			{
+				worldSpaceVertices[u*size + v] = HEALPixBase.fxyf((ix+u*step)/this.nside, (iy+v*step)/this.nside, this.face);
+			}
 		}
 	}
 	
