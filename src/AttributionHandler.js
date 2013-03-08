@@ -53,7 +53,6 @@ var AttributionHandler = function(options, style)
 	// CSS initialisation
 	var sheet = document.createElement('style');
 	sheet.innerHTML = "#" + this.id + " {text-align: right; position: absolute; right: 0px; bottom: 2px; }\
-				#"+this.id+" img {background-color: white; border-radius: 10px;}\
 				#"+this.id+" div {color: white}";
 				
 	document.body.appendChild(sheet);
