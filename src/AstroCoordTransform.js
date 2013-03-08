@@ -95,7 +95,6 @@ var AstroCoordTransform = {
        */
     transformInDeg: function(pos, trType) 
 	{
-		trType = transformMap[trType];
 		var ao,bo,a,b,sb,cb,cbsa;
 		var J2000 = 1;
 		//by setting J2000 = 0, RA-Dec are intended in Equinox 1950.
