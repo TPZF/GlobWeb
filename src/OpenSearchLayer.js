@@ -160,7 +160,7 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 	// Pusblish the start load event, only if there is no pending requests
 	if ( this.maxRequests == this.freeRequests.length )
 	{
-		this.globe.publish("startLoad",this.id);
+		this.globe.publish("startLoad",this);
 	}
 	
 	var xhr = this.freeRequests.pop();
@@ -208,7 +208,7 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 			// Publish the end load event, only if there is no pending requests
 			if ( self.maxRequests == self.freeRequests.length )
 			{
-				self.globe.publish("endLoad",self.id);
+				self.globe.publish("endLoad",self);
 			}
 		}
 	};
