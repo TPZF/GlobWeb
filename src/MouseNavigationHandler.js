@@ -37,7 +37,7 @@ GlobWeb.MouseNavigationHandler = function(options){
 	 */
 	var _handleMouseWheel = function(event)
 	{
-		_navigation.globe.publish("start_navigation");
+		_navigation.globe.publish("startNavigation");
 		
 		var factor;
 
@@ -69,7 +69,7 @@ GlobWeb.MouseNavigationHandler = function(options){
 		}
 		event.returnValue = false;
 		
-		_navigation.globe.publish("end_navigation");
+		_navigation.globe.publish("endNavigation");
 		_navigation.globe.renderContext.requestFrame();
 			
 		// Return false to stop mouse wheel to be propagated when using onmousewheel
@@ -129,7 +129,7 @@ GlobWeb.MouseNavigationHandler = function(options){
 		{
 
 			if (_needsEndEvent ) {
-				_navigation.globe.publish("end_navigation");
+				_navigation.globe.publish("endNavigation");
 			}
 
 			_needsStartEvent = false;
@@ -162,7 +162,7 @@ GlobWeb.MouseNavigationHandler = function(options){
 		if ( _pressedButton == 0 )
 		{
 			if ( _needsStartEvent ) { 
-				_navigation.globe.publish("start_navigation");
+				_navigation.globe.publish("startNavigation");
 				_needsStartEvent  = false;
 				_needsEndEvent = true;
 			}

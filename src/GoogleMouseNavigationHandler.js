@@ -35,7 +35,7 @@ GlobWeb.GoogleMouseNavigationHandler = function(options){
 	 */
 	var _handleMouseWheel = function(event)
 	{
-		_navigation.globe.publish("start_navigation");
+		_navigation.globe.publish("startNavigation");
 		
 		var factor;
 
@@ -88,7 +88,7 @@ GlobWeb.GoogleMouseNavigationHandler = function(options){
 		}
 		event.returnValue = false;
 		
-		_navigation.globe.publish("end_navigation");
+		_navigation.globe.publish("endNavigation");
 		_navigation.globe.renderContext.requestFrame();
 			
 		// Return false to stop mouse wheel to be propagated when using onmousewheel
@@ -177,7 +177,7 @@ GlobWeb.GoogleMouseNavigationHandler = function(options){
 		_slower = 0;
 		
 		if (_needsEndEvent ) {
-			_navigation.globe.publish("end_navigation");
+			_navigation.globe.publish("endNavigation");
 		}
 
 		_needsStartEvent = false;
@@ -207,7 +207,7 @@ GlobWeb.GoogleMouseNavigationHandler = function(options){
 		if ( _pressedButton == 0 )
 		{
 			if ( _needsStartEvent ) { 
-				_navigation.globe.publish("start_navigation");
+				_navigation.globe.publish("startNavigation");
 				_needsStartEvent  = false;
 				_needsEndEvent = true;
 			}
@@ -255,7 +255,7 @@ GlobWeb.GoogleMouseNavigationHandler = function(options){
 			_slower++;
 			if((_slower % 3 == 0) && ( _slower > 1 )){
 			
-				_navigation.globe.publish("start_navigation");
+				_navigation.globe.publish("startNavigation");
 				
 				_navigation.zoom(-_dy/10);
 				
@@ -278,7 +278,7 @@ GlobWeb.GoogleMouseNavigationHandler = function(options){
 				// Stop all animations when an event is received
 				_navigation.stopAnimations();
 				
-				_navigation.globe.publish("end_navigation");
+				_navigation.globe.publish("endNavigation");
 				_navigation.globe.renderContext.requestFrame();
 			}
 			
