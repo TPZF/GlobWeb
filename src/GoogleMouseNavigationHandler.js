@@ -1,10 +1,13 @@
+
+define( function() {
+
 /**************************************************************************************************************/
 
 /** @export
 	@constructor
 	GoogleMouseNavigationHandler constructor
  */
-GlobWeb.GoogleMouseNavigationHandler = function(options){
+var GoogleMouseNavigationHandler = function(options){
 	
 	/**************************************************************************************************************/
 	
@@ -371,3 +374,8 @@ GlobWeb.GoogleMouseNavigationHandler = function(options){
 		canvas.removeEventListener("mousewheel", _handleMouseWheel);
 	};
 };
+
+return GoogleMouseNavigationHandler;
+
+});
+
