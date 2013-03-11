@@ -22,9 +22,14 @@ define(['./Utils', './BaseLayer', './FeatureStyle'],
 
 /**************************************************************************************************************/
 
-/** 
-	@constructor
-	Function constructor for VectorLayer
+/** @name VectorLayer
+	@class
+	Create a layer to display vector data in GeoJSON format.
+	@augments BaseLayer
+	@param options Configuration properties for VectorLayer. See {@link BaseLayer} for base properties :
+		<ul>
+			<li>style : the style to use. See {@link FeatureStyle}</li>
+		</ul>
  */
 var VectorLayer = function( options )
 {
@@ -37,7 +42,6 @@ var VectorLayer = function( options )
 		this.style = new FeatureStyle();
 	
 	this.features = [];
-	this.type = "Vector";
 }
 
 /**************************************************************************************************************/

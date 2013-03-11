@@ -22,9 +22,18 @@
 /**************************************************************************************************************/
 
 
-/** @export
-	@constructor
-	BaseLayer constructor
+/** @name BaseLayer
+	@class
+	Base class for layer.
+	@param options Configuration properties for a BaseLayer:
+		<ul>
+			<li>name : the layer name</li>
+			<li>description :  its description</li>
+			<li>attribution : its attribution</li>
+			<li>icon : an icon to represent the layer</li>
+			<li>visible : a boolean flag to set the layer visible, default is true </li>
+			<li>opacity : an oapcity value, default is 1.0</li>
+		</ul>
  */
 var BaseLayer = function(options)
 {
@@ -69,7 +78,7 @@ BaseLayer.prototype._detach = function()
 /**************************************************************************************************************/
 
 /**
-  Set the layer visible
+  Get/Set the layer visible
  */
 BaseLayer.prototype.visible = function( arg )
 {
@@ -84,7 +93,7 @@ BaseLayer.prototype.visible = function( arg )
 /**************************************************************************************************************/
 
 /**
-  Set the opacity of the layer
+  Get/Set the opacity of the layer
  */
 BaseLayer.prototype.opacity = function( arg )
 {

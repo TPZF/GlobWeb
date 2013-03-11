@@ -23,9 +23,17 @@ define(['./Utils', './RasterLayer', './GeoTiling'],
 /**************************************************************************************************************/
 
 
-/** @export
-	@constructor
-	WMSLayer constructor
+/** @name WMSLayer
+	@class
+	A layer to display WMS (Web Map Service) data.
+	@augments RasterLayer
+	@param options Configuration properties for the WMSLayer. See {@link RasterLayer} for base properties :
+		<ul>
+			<li>baseUrl : the base Url to access the WMS server</li>
+			<li>layers : the list of layers to request (WMS parameter)</li>
+			<li>srs : the spatial system reference to use, default is EPSG:4326 (WMS parameter)</li>
+			<li>format : the file format to request, default is image/jpeg (WMS parameter)</li>
+		</ul>
  */
 var WMSLayer = function( options )
 {
@@ -35,7 +43,6 @@ var WMSLayer = function( options )
 	this.tilePixelSize = options['tilePixelSize'] || 256;
 	this.tiling = new GeoTiling( 4, 2 );
 	this.numberOfLevels = options['numberOfLevels'] || 21;
-	this.type = "ImageryRaster";
 	
 	// Build the base GetMap URL
 	var url = this.baseUrl;

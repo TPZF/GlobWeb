@@ -19,8 +19,18 @@
 
  define(['./Utils', './BaseLayer', './Program','./CoordinateSystem'], function(Utils,BaseLayer,Program,CoordinateSystem) {
 
-/** @constructor
-	Atmosphere constructor
+/** @name AtmosphereLayer
+	@class
+	A layer to BaseLayer an atmosphere on the globe.
+	@augments RasterLayer
+	@param options Configuration properties for the layer. See {@link BaseLayer} for base properties :
+		<ul>
+			<li>kr : the raylength parameter, default is 0.0025</li>
+			<li>km : the mie parameter, default is 0.0015</li>
+			<li>sunBrightness : the mie parameter, default is 0.0015</li>
+			<li>exposure : the exposure, use for basic high dynamic range, default is 2.0</li>
+			<li>wavelength : the RGB color of the sun, default is [0.650,0.570,0.475]</li>
+		</ul>
  */
 var AtmosphereLayer = function(options)
 {

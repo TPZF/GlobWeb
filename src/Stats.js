@@ -22,8 +22,14 @@
 /**************************************************************************************************************/
 
 /** 
-	@constructor
-	Function constructor for Stats
+	@name Stats
+	@class
+	Display some rendering statistics in a HTML element
+	@param options Configuration properties for Stats.
+		<ul>
+			<li>element : the HTML element to receivce statistcs, can be a string (the ID) or the DOM element itself</li>
+			<li>verbose : the verbosity of the stats, default is false</li>
+		</ul>
  */
 var Stats = function(globe,options)
 {

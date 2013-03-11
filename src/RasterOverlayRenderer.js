@@ -117,7 +117,7 @@ var RasterOverlayRenderer = function(tileManager)
 	Create a renderable for the overlay.
 	There is one renderable per overlay and per tile.
  */
-RasterOverlayRenderable = function( overlay )
+var RasterOverlayRenderable = function( overlay )
 {
 	this.overlay = overlay;
 	this.texture = null;

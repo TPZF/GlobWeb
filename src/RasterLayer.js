@@ -23,10 +23,17 @@
 /**************************************************************************************************************/
 
 
-/** @export
-	@constructor
-	RasterLayer constructor
- */
+/** @name RasterLayer
+	@class
+	Base class for raster layer
+	@augments BaseLayer
+	@param options Configuration properties for the RasterLayer. See {@link BaseLayer} for base properties :
+		<ul>
+			<li>tilePixelSize : the image size for a tile, default is 256.</li>
+			<li>numberOfLevels : the maximum number of levels</li> 
+			<li>geoBound : the extent of the layer</li> 
+		</ul>
+*/
 var RasterLayer = function( options )
 {
 	BaseLayer.prototype.constructor.call( this, options );

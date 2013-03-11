@@ -49,7 +49,7 @@ Utils.inherits(Animation,SegmentedAnimation);
 /** @constructor
   Segment struct
 */
-SegmentedAnimation.Segment = function(start, startValue, end, endValue, interpolator)
+var Segment = function(start, startValue, end, endValue, interpolator)
 {
     this.start = start;
     this.startValue = startValue;
@@ -72,7 +72,7 @@ SegmentedAnimation.prototype.addSegment = function(start, startValue, end, endVa
     var index = 0;
     while (index < count && this.segments[index].end <= start) index++;
     // Insert new segment at position 'index'
-    this.segments.splice(index, 0, new SegmentedAnimation.Segment(start, startValue, end, endValue, interpolator));
+    this.segments.splice(index, 0, new Segment(start, startValue, end, endValue, interpolator));
 }
 
 /**************************************************************************************************************/

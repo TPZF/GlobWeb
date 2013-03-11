@@ -23,9 +23,18 @@ define(['./Utils', './RasterLayer', './GeoTiling'],
 /**************************************************************************************************************/
 
 
-/** @export
-	@constructor
-	WCSElevationLayer constructor
+/** @name WCSElevationLayer
+	@class
+	Create a layer for elevation data using WCS protocol.
+	The only supported format is right now image/x-aaigrid. It is an ASCII format that is easily parsed in Javascript.
+	@augments RasterLayer
+	@param options Configuration properties for the WCSElevationLayer. See {@link RasterLayer} for base properties :
+		<ul>
+			<li>baseUrl : the base Url to access the WCS server</li>
+			<li>coverage : the name of the coverage to use (WCS parameter)</li>
+			<li>crs : the coordinate reference system to use (WCS parameter)</li>
+			<li>version : 2.0.x or 1.0.x is supported</li>
+		</ul>
  */
 var WCSElevationLayer = function( options )
 {
@@ -35,7 +44,6 @@ var WCSElevationLayer = function( options )
 	this.tilePixelSize = options['tilePixelSize'] || 33;
 	this.tiling = new GeoTiling( 4, 2 );
 	this.numberOfLevels = options['numberOfLevels'] || 21;
-	this.type = "ImageryRaster";
 	this.version = options['version'] || '2.0.0';
 	this.format = options['format'] || 'image/x-aaigrid';
 	this.minElevation = options['minElevation'] || 0;

@@ -31,7 +31,7 @@ define(['./Utils', './CoordinateSystem', './BaseNavigation', './SegmentedAnimati
 			<li>maxFov : The maximum field of view in degrees</li>
 		</ul>
  */
-AstroNavigation = function(globe, options)
+var AstroNavigation = function(globe, options)
 {
 	// Default values for fov (in degrees)
 	this['minFov'] = 0.25;

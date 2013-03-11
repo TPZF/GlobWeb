@@ -21,9 +21,9 @@ define( ['./MouseNavigationHandler', './KeyboardNavigationHandler', './InertiaAn
 
 /**************************************************************************************************************/
 
-/** @export
+/** @name BaseNavigation
 	@constructor
-	BaseNavigation constructor
+	Base class for navigation object
 
 	@param globe Globe
 	@param options Configuration options

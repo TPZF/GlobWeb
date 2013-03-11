@@ -21,13 +21,15 @@
 
 /**************************************************************************************************************/
 
-/** @export
-	@constructor
-	Navigation constructor
+/** @name Navigation
+	@class
+	@augments BaseNavigation
+
+	Manages the navigation in the Globe.
+	
 	@param globe Globe
-	@param options Configuration properties for the AstroNavigation :
+	@param options Configuration properties for the Navigation :
 		<ul>
-			<li>handlers : Array of objects defining navigation events</li>
 			<li>minDistance : The minimum distance</li>
 			<li>maxDistance : The maximum distance</li>
 		</ul>
@@ -194,7 +196,7 @@ Navigation.prototype.computeInverseViewMatrix = function()
 /**************************************************************************************************************/
 
 /**
-	Event handler for mouse wheel
+	Zoom to the current observed location
 	@param delta Delta zoom
  */
 Navigation.prototype.zoom = function(delta)

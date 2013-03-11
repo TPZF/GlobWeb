@@ -248,10 +248,15 @@ var BingTileSystem = (function()
 /**************************************************************************************************************/
 
 
-/** 
-	@constructor BingLayer constructor
-	@class A layer to supports Bing imagery.
-	@extends RasterLayer
+/** @name BingLayer
+	@class
+	A layer to display Bing imagery data.
+	@augments RasterLayer
+	@param options Configuration properties. See {@link RasterLayer} for base properties :
+		<ul>
+			<li>imageSet : the image set to use, can be Aerial, Road</li>
+			<li>key : the bing key to use</li>
+		</ul>
  */
 var BingLayer = function( options )
 {
@@ -261,7 +266,6 @@ var BingLayer = function( options )
 	this.tilePixelSize = 256;
 	this.tiling = new MercatorTiling( options.baseLevel || 2 );
 	this.numberOfLevels = 18;
-	this.type = "ImageryRaster";
 	this.ready = false;
 	this.baseUrl = "";
 	this.baseUrlSubDomains = [];

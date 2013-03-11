@@ -84,7 +84,7 @@ MercatorTiling.tile2lat = function(y,z) {
 /** @constructor
 	Tile constructor
  */
-MercatorTile = function( level, x, y )
+var MercatorTile = function( level, x, y )
 {
     // Call ancestor constructor
     Tile.prototype.constructor.call(this);

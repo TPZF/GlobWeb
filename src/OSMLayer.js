@@ -22,9 +22,14 @@
 /**************************************************************************************************************/
 
 
-/** @export
-	@constructor
-	OSMLayer constructor
+/** @name OSMLayer
+	@class
+	A layer to display data coming from OpenStreetMap server.
+	@augments RasterLayer
+	@param options Configuration properties for the OSMLayer. See {@link RasterLayer} for base properties :
+		<ul>
+			<li>baseUrl : the base Url to access the OSM server</li>
+		</ul>
  */
 var OSMLayer = function( options )
 {
@@ -32,7 +37,6 @@ var OSMLayer = function( options )
 	this.tilePixelSize = options.tilePixelSize || 256;
 	this.tiling = new MercatorTiling( options.baseLevel || 2 );
 	this.numberOfLevels = options.numberOfLevels || 21;
-	this.type = "ImageryRaster";
 	this.baseUrl = options.baseUrl;
 }
 

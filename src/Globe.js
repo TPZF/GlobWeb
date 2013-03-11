@@ -23,9 +23,9 @@
 /**************************************************************************************************************/
 
 /** 
-	@constructor
+	@name Globe
 	@class
-	Add a virtual globe in a canvas element.
+	Create a virtual globe in a HTML canvas element, passed in options parameter.
 	The virtual globe data is set using setBaseImage/addLayer methods.
 	
 	@param options Configuration properties for the Globe :

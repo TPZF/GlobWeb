@@ -174,8 +174,18 @@ var parseRgba = /^rgba\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3},\s*(\d{1,3}))\)$/;
 
 /**************************************************************************************************************/
 
-/** @constructor
-	FeatureStyle construtor
+/** @name FeatureStyle
+	@class
+	The style to display a Feature
+	@param style an object containing the following style properties
+		<ul>
+			<li>strokeColor : the color for line, or polygon outline</li>
+			<li>strokeWidth : the width of a line</li>
+			<li>fillColor : the color for solid polygon or point</li>
+			<li>fillTextureUrl : the texture for solid polygon</li>
+			<li>iconUrl : the icon to be used for point</li>
+			<li>pointMaxSize : maximum size (in meter) for a point</li>
+		</ul>
  */
 var FeatureStyle = function(style)
 {
