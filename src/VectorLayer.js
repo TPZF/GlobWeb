@@ -131,8 +131,6 @@ VectorLayer.prototype._addFeatureToRenderers = function( feature )
 	if ( props && props['style'] )
 	{
 		style = props['style'];
-		// Renderer hint always taken from the layer
-		style['rendererHint'] = this.style['rendererHint'];
 	}
 
 	// Manage geometry collection

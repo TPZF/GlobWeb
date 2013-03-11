@@ -677,7 +677,7 @@ ConvexPolygonRenderer.prototype.render = function(tiles)
 VectorRendererManager.registerRenderer({
 	id: "ConvexPolygon",
 	creator: function(globe) { return new ConvexPolygonRenderer(globe.tileManager); },
-	canApply: function(type,style) {return (style.rendererHint == "Basic") && (type == "Polygon" || type == "MultiPolygon"); }
+	canApply: function(type,style) {return type == "Polygon" || type == "MultiPolygon"; }
 });
 
 /**************************************************************************************************************/

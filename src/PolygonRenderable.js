@@ -379,7 +379,7 @@ VectorRendererManager.registerRenderer({
 			polygonRenderer.renderableConstuctor = PolygonRenderable;
 			return polygonRenderer;
 	},
-	canApply: function(type,style) {return style.rendererHint == "Tiled" && type == "Polygon" && style.fill; }
+	canApply: function(type,style) {return type == "Polygon" && style.fill; }
 });
 				
 });
