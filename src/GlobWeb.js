@@ -92,8 +92,9 @@ var GlobWeb = GlobWeb || {};
 		"WMSLayer.js",
 		"WMTSLayer.js",
 		"WCSElevationLayer.js",
+		"WMSElevationLayer.js",
 		"OSMLayer.js",
-		//"BasicElevationLayer.js",
+		"BasicElevationLayer.js",
 		"BingLayer.js",
 		"HEALPixLayer.js",
 		"TileWireframeLayer.js",
@@ -104,7 +105,11 @@ var GlobWeb = GlobWeb || {};
 		"HEALPixBase.js",
 		"Long.js",
 		"InertiaAnimation.js",
-		"OpenSearchLayer.js"
+		"OpenSearchLayer.js",
+		"GoogleMouseNavigationHandler.js",
+		"GoogleKeyboardNavigationHandler.js",
+        "TouchNavigation.js",
+        "KMLParser.js"
 		];
 
 	// use "parser-inserted scripts" for guaranteed execution order

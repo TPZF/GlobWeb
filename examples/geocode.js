@@ -38,7 +38,6 @@ function main()
 	// Initialize webgl
 	globe = new GlobWeb.Globe({ canvas: 'GlobWebCanvas'});
 	nav = new GlobWeb.Navigation(globe);
-	nav.setupMouseEventHandlers(true);
 	
 	var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble,esat" });
 	globe.setBaseImagery( blueMarbleLayer );
