@@ -56,43 +56,80 @@ GlobWeb.KeyboardNavigationHandler = function(options){
 	var _handleKeyDown = function(event)
 	{
 		switch( event.keyCode ){
-			case 33 :
-				// Page Up
+			case 32 :
+				// space bar
+				// Stop all animations when an event is received
+				_navigation.stopAnimations();
+				break;
+			case 187 :
+				// + on Safari
+			case 61 :
+				// +(=) on Firefox and Opera
+			case 107 :
+				// + on other
 				_navigation.zoom(-self.zoomFactor);
 				break;
-			case 34 :
-				// Page Down
+			case 189 :
+				// - on Safari
+			case 54 :
+				// -(6) on Firefox and Opera
+			case 109 :
+				// - on other
 				_navigation.zoom(self.zoomFactor);
 				break;
+			case 81 :
+				// q
 			case 37 :
 				// Left arrow
-				if ( event.ctrlKey )
+				if ( event.shiftKey )
 				{
-					_navigation.rotate( -self.panFactor, 0 );
+					_navigation.rotate( self.panFactor, 0 );
 				}
 				else
 				{
 					_navigation.pan( self.panFactor, 0 );
 				}
 				break;
+			case 90 :
+				// z
 			case 38 :
 				// Up arrow
-				_navigation.pan( 0, self.panFactor );
+				if ( event.shiftKey )
+				{
+					_navigation.rotate( 0, self.panFactor );
+				}
+				else
+				{
+
+					_navigation.pan( 0, self.panFactor );
+				}
 				break;
+			case 68 :
+				// d
 			case 39 :
 				// Right arrow
-				if ( event.ctrlKey )
+				if ( event.shiftKey )
 				{
-					_navigation.rotate( self.panFactor, 0 );
+					_navigation.rotate( -self.panFactor, 0 );
 				}
 				else
 				{
 					_navigation.pan( -self.panFactor, 0 );
 				}
 				break;
+			case 83 :
+				// s
 			case 40 :
 				// Down arrow
-				_navigation.pan( 0, -self.panFactor );
+				if ( event.shiftKey )
+				{
+					_navigation.rotate( 0, -self.panFactor );
+				}
+				else
+				{
+
+					_navigation.pan( 0, -self.panFactor );
+				}
 				break;
 		}
 		_navigation.globe.renderContext.requestFrame();
