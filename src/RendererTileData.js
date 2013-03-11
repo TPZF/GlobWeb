@@ -35,11 +35,11 @@ RendererTileData.prototype.getRenderable = function(bucket)
 /**
 	Dispose renderable data from tile
  */
-RendererTileData.prototype.dispose = function(renderContext)
+RendererTileData.prototype.dispose = function(renderContext,tilePool)
 {
 	for ( var i=0; i < this.renderables.length; i++ )
 	{
-		this.renderables[i].dispose(renderContext);
+		this.renderables[i].dispose(renderContext,tilePool);
 	}
 	this.renderables.length = 0;
 }
