@@ -42,12 +42,12 @@ var RasterLayer = function( options )
 	this.tilePixelSize = -1;
 	this.tiling = null;
 	this.numberOfLevels = -1;
-	this.overlay = options && options.hasOwnProperty('overlay') ? options['overlay'] : true;
 	this.geoBound = options['geoBound'] || null;
 	this.coordinates = options['coordinates'] || null;
 	
 	// Internal
-	this.ready = true;
+	this._overlay = true; 
+	this._ready = true; // Ready is use by TileManager
 }
 
 /**************************************************************************************************************/
@@ -61,7 +61,7 @@ Utils.inherits( BaseLayer,RasterLayer );
  */
 RasterLayer.prototype._attach = function( g )
 {
-	if ( !this.overlay )
+	if ( !this._overlay )
 	{
 		// Override id of background layer because of unicity of background not overlayed layer
 		this.id = 0;
@@ -69,7 +69,7 @@ RasterLayer.prototype._attach = function( g )
 
 	BaseLayer.prototype._attach.call( this, g );
 		
-	if ( this.overlay )
+	if ( this._overlay )
 	{
 		// Create the renderer if needed
 		if ( !g.rasterOverlayRenderer )
@@ -90,7 +90,7 @@ RasterLayer.prototype._attach = function( g )
 RasterLayer.prototype._detach = function()
 {
 	// Remove raster from overlay renderer if needed
-	if ( this.overlay && this.globe.rasterOverlayRenderer )
+	if ( this._overlay && this.globe.rasterOverlayRenderer )
 	{
 		this.globe.rasterOverlayRenderer.removeOverlay(this);
 	}

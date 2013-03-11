@@ -266,9 +266,9 @@ var BingLayer = function( options )
 	this.tilePixelSize = 256;
 	this.tiling = new MercatorTiling( options.baseLevel || 2 );
 	this.numberOfLevels = 18;
-	this.ready = false;
 	this.baseUrl = "";
 	this.baseUrlSubDomains = [];
+	this._ready = false;
 	
 	var self = this;
 	

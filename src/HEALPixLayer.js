@@ -43,7 +43,7 @@ var HEALPixLayer = function(options)
 	this.levelZeroImage.crossOrigin = '';
 	this.levelZeroImage.onload = function () 
 	{
-		self.ready = true;
+		self._ready = true;
 		
 		// Call callback if set
 		if (options.onready && options.onready instanceof Function)
@@ -61,7 +61,7 @@ var HEALPixLayer = function(options)
 		console.log("Cannot load " + self.levelZeroImage.src );
 	}
 	
-	this.ready = false;
+	this._ready = false;
 }
 
 /**************************************************************************************************************/

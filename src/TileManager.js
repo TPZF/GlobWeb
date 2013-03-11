@@ -296,7 +296,7 @@ TileManager.prototype.launchRequest = function(tile)
 				else if ( tile.state == Tile.State.ERROR )
 				{
 					this.globe.publish("baseLayersError");
-					this.imageryProvider.ready = false;
+					this.imageryProvider._ready = false;
 				}
 			}
 		}
@@ -592,7 +592,7 @@ TileManager.prototype.processTile = function(tile,level)
 TileManager.prototype.render = function()
 {
 	if ( this.imageryProvider == null
-		|| !this.imageryProvider.ready )
+		|| !this.imageryProvider._ready )
 	{
 		return;
 	}
