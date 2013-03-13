@@ -113,7 +113,7 @@ Globe.prototype.setBaseImagery = function(layer)
 	this.tileManager.setImageryProvider(layer);
 	if ( layer )
 	{
-		layer.overlay = false;
+		layer._overlay = false;
 		this.addLayer(layer);
 	}
 }
@@ -134,7 +134,7 @@ Globe.prototype.setBaseElevation = function(layer)
 	this.tileManager.setElevationProvider(layer);
 	if ( layer )
 	{
-		layer.overlay = false;
+		layer._overlay = false;
 		this.addLayer(layer);
 	}
 }
