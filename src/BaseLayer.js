@@ -54,7 +54,7 @@ var BaseLayer = function(options)
 BaseLayer.prototype._attach = function( g )
 {
 	this.globe = g;
-	if ( this.attribution )
+	if ( this.attribution && this.globe.attributionHandler )
 	{
 		this.globe.attributionHandler.addAttribution(this);
 	}
@@ -67,7 +67,7 @@ BaseLayer.prototype._attach = function( g )
  */
 BaseLayer.prototype._detach = function()
 {
-	if ( this.attribution )
+	if ( this.attribution && this.globe.attributionHandler )
 	{
 		this.globe.attributionHandler.removeAttribution(this);
 	}

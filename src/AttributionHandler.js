@@ -26,41 +26,28 @@
 	@constructor
 	Function constructor for AttributionHandler
 	
-	@param options Different options
+	@param globe
+	@param options Configuration properties
 		<ul>
-			<li>id : id of attribution HTML element</li>
+			<li>element : the HTML element to show attributions, can be a string (the ID) or the DOM element itself</li>
 		</ul>
-	@param styles CSS style parameters
 */
 
-var AttributionHandler = function(options, style)
+var AttributionHandler = function(globe, options)
 {
-	// Default options
-	this.id = "attributions";
-	
-	for (var x in options)
-	{
-		this[x] = options[x];
-	}
-	
-	// HTML initialisation
-	this.attributionDiv = document.createElement("div");
-	this.attributionDiv.id = this.id;
-	
-	var body = document.getElementsByTagName("body")[0];
-	body.appendChild(this.attributionDiv);
-	
-	// CSS initialisation
-	var sheet = document.createElement('style');
-	sheet.innerHTML = "#" + this.id + " {text-align: right; position: absolute; right: 0px; bottom: 2px; }\
-				#"+this.id+" div {color: white}";
-				
-	document.body.appendChild(sheet);
-	
-	// Apply style parameters
-	for (var x in style)
-	{
-		document.getElementById(this.id).style[x]=style[x];
+	globe.attributionHandler = this;
+
+	var elt = options ? options['element'] : undefined;
+	if ( elt )
+	{	
+		if (typeof elt == "string") 
+		{
+			this.element = document.getElementById(elt);
+		}
+		else
+		{
+			this.element = elt;
+		}
 	}
 }
 
@@ -74,7 +61,7 @@ AttributionHandler.prototype.removeAttribution = function( layer )
 {
 	var div = document.getElementById( "attribution_"+layer.id );
 	if ( div )
-		this.attributionDiv.removeChild( div );
+		this.element.removeChild( div );
 }
 
 /**************************************************************************************************************/
@@ -92,11 +79,11 @@ AttributionHandler.prototype.addAttribution = function(layer)
 	if(layer.id == 0)
 	{
 		// Background layer
-		this.attributionDiv.insertBefore( div, this.attributionDiv.firstChild );
+		this.element.insertBefore( div, this.element.firstChild );
 	}
 	else
 	{
-		this.attributionDiv.appendChild( div );
+		this.element.appendChild( div );
 	}
 	
 	
