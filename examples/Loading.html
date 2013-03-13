@@ -44,6 +44,13 @@ require(['../src/GlobWeb'], function (GlobWeb)
 	globe.subscribe('endBackgroundLoad', function() {
 		backgroundMessageElt.innerHTML = "";
 	});
+	var overlayElement = document.getElementById("overlayMessage");
+	globe.subscribe('startLoad', function() {
+		overlayElement.innerHTML = "Loading overlay...";
+	});
+	globe.subscribe('endLoad', function() {
+		overlayElement.innerHTML = "";
+	});
 });
 
 
@@ -58,6 +65,7 @@ require(['../src/GlobWeb'], function (GlobWeb)
   	<br/>
 	<div id="fps"><span style="font-weight:bold">FPS : 0</span></div>
 	<div id="backgroundMessage"></div>
+	<div id="overlayMessage"></div>
 </body>
 
 </html>

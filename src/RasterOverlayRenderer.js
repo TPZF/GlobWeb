@@ -32,9 +32,7 @@ var RasterOverlayRenderer = function(tileManager)
 	uniform mat4 modelViewMatrix;\n\
 	uniform mat4 projectionMatrix;\n\
 	uniform vec4 textureTransform; \n\
-	\
 	varying vec2 texCoord;\n\
-	\
 	void main(void) \n\
 	{\n\
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(vertex, 1.0);\n\
@@ -43,14 +41,10 @@ var RasterOverlayRenderer = function(tileManager)
 	";
 
 	var fragmentShader = "\
-	#ifdef GL_ES\n\
-	precision highp float;\n\
-	#endif\n\
-	\n\
+	precision lowp float;\n\
 	varying vec2 texCoord;\n\
 	uniform sampler2D overlayTexture;\n\
 	uniform float opacity; \n\
-	\n\
 	void main(void)\n\
 	{\n\
 		gl_FragColor.rgba = texture2D(overlayTexture, texCoord.xy); \n\
@@ -77,19 +71,19 @@ var RasterOverlayRenderer = function(tileManager)
 		image.crossOrigin = '';
 		image.onload = function() 
 		{
-			//console.log("Load " + this.src);
-			this.renderable.texture = tileManager.tilePool.createGLTexture(this);
-			this.renderable.request = null;
-			this.renderable.requestFinished = true;
-			this.renderable = null;
-			self.tileManager.renderContext.requestFrame();
+			if ( this.renderable )
+			{
+				this.renderable.texture = tileManager.tilePool.createGLTexture(this);
+				this.renderable.onRequestFinished(true);
+				this.renderable = null;
+				self.tileManager.renderContext.requestFrame();
+			}
 		};
 		image.onerror = function()
 		{
 			if ( this.renderable )
 			{
-				this.renderable.request = null;
-				this.renderable.requestFinished = true;
+				this.renderable.onRequestFinished(true);
 				this.renderable = null;
 			}
 		};
@@ -98,7 +92,7 @@ var RasterOverlayRenderer = function(tileManager)
 			console.log("Raster overlay request abort.");
 			if ( this.renderable )
 			{
-				this.renderable.request = null;
+				this.renderable.onRequestFinished(false);
 				this.renderable = null;
 			}
 		};
@@ -117,12 +111,48 @@ var RasterOverlayRenderer = function(tileManager)
 	Create a renderable for the overlay.
 	There is one renderable per overlay and per tile.
  */
-var RasterOverlayRenderable = function( overlay )
+var RasterOverlayRenderable = function( layer )
 {
-	this.bucket = overlay;
+	this.bucket = layer;
 	this.texture = null;
 	this.request = null;
 	this.requestFinished = false;
+}
+
+/**************************************************************************************************************/
+
+/** 
+	Called when a request is started
+ */
+RasterOverlayRenderable.prototype.onRequestStarted = function(request)
+{
+	this.request = request;
+	this.requestFinished = false;
+	// Bucket is in fact the layer!
+	var layer = this.bucket;
+	if ( layer._numRequests == 0 )
+	{
+		layer.globe.publish('startLoad',layer);
+	}
+	layer._numRequests++;
+}
+
+/**************************************************************************************************************/
+
+/** 
+	Called when a request is finished
+ */
+RasterOverlayRenderable.prototype.onRequestFinished = function(completed)
+{
+	this.request = null;
+	this.requestFinished = completed;
+	// Bucket is in fact the layer!
+	var layer = this.bucket;
+	layer._numRequests--;
+	if ( layer._numRequests == 0 )
+	{
+		layer.globe.publish('endLoad',layer);
+	}
 }
 
 /**************************************************************************************************************/
@@ -147,6 +177,9 @@ RasterOverlayRenderable.prototype.dispose = function(renderContext,tilePool)
  */
 RasterOverlayRenderer.prototype.addOverlay = function( overlay )
 {
+	// Initialize num requests to 0
+	overlay._numRequests = 0;
+
 	this.overlays.push( overlay );
 	for ( var i = 0; i < this.tileManager.level0Tiles.length; i++ )
 	{
@@ -225,7 +258,7 @@ RasterOverlayRenderer.prototype.addOverlayToTile = function( tile, overlay )
 /**
 	Create an interpolated for polygon clipping
  */	
-RasterOverlayRenderer.prototype.createInterpolatedVertex = function( t, p1, p2 )
+var _createInterpolatedVertex = function( t, p1, p2 )
 {
 	return [ p1[0] + t * (p2[0] - p1[0]), p1[1] + t * (p2[1] - p1[1]) ];
 }
@@ -255,7 +288,7 @@ RasterOverlayRenderer.prototype.clipPolygonToSide = function( coord, sign, value
 		if ( !firstInside && secondInside )
 		{
 			var t = (value - val1) / (val2- val1);
-			var newPoint = this.createInterpolatedVertex( t, p1, p2 );
+			var newPoint = _createInterpolatedVertex( t, p1, p2 );
 			clippedPolygon.push( newPoint );
 			clippedPolygon.push( p2 );
 		}
@@ -266,7 +299,7 @@ RasterOverlayRenderer.prototype.clipPolygonToSide = function( coord, sign, value
 		else if ( firstInside && !secondInside )
 		{
 			var t = (value - val1) / (val2- val1);
-			var newPoint = this.createInterpolatedVertex( t, p1, p2 );
+			var newPoint = _createInterpolatedVertex( t, p1, p2 );
 			clippedPolygon.push( newPoint );
 		}
 	}
@@ -352,8 +385,8 @@ RasterOverlayRenderer.prototype.requestOverlayTextureForTile = function( tile, r
 		
 		if ( imageRequest )
 		{
+			renderable.onRequestStarted(imageRequest);
 			imageRequest.renderable = renderable;
-			renderable.request = imageRequest;
 			imageRequest.frameNumber = this.frameNumber;
 			imageRequest.src = renderable.bucket.getUrl(tile);
 		}
@@ -504,7 +537,7 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 		var iq = this.imageRequests[i];
 		if ( iq.renderable && iq.frameNumber < this.frameNumber )
 		{
-			iq.renderable.request = null;
+			iq.renderable.onRequestFinished(false);
 			iq.renderable = null;
 			iq.src = '';
 		}
