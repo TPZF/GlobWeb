@@ -37,13 +37,13 @@ var TileManager = function( globe )
 	this.levelZeroTexture = null;
 	
 	// Tile requests : limit to 4 at a given time
-	var renderContext = this.renderContext;
-	var callback = function() { renderContext.requestFrame(); };
-	this.tileRequests = [];
-	for ( var i=0; i < 4; i++ )
+	this.maxRequests = 4;
+	this.availableRequests = [];
+	for ( var i=0; i < this.maxRequests; i++ )
 	{
-		this.tileRequests[i] = new TileRequest(callback);
+		this.availableRequests[i] = new TileRequest(this);
 	}
+	this.completedRequests = [];
 				
 	this.level0TilesLoaded = false;
 	
@@ -226,44 +226,6 @@ TileManager.prototype.visitTiles = function( callback )
 /**************************************************************************************************************/
 
 /**
-	Launch the HTTP request for a tile
- */
-TileManager.prototype.launchRequest = function(tile)
-{
-	var tileRequest = null;
-	
-	// Find a 'free' request
-	for ( var i = 0; i < this.tileRequests.length; i++ )
-	{
-		if ( !this.tileRequests[i].tile )
-		{
-			tileRequest = this.tileRequests[i];
-			break;
-		}
-	}
-	
-	// Process the request
-	if ( tileRequest )
-	{
-		tileRequest.tile = tile;
-		var elevationUrl = null;
-		if ( this.elevationProvider )
-		{
-			elevationUrl = this.elevationProvider.getUrl(tile)
-		}
-		tileRequest.launch( this.imageryProvider.getUrl(tile), elevationUrl );
-
-		tile.state = Tile.State.LOADING;
-	}
-	else
-	{
-		tile.state = Tile.State.NONE;
-	}
-}
-
-/**************************************************************************************************************/
-
-/**
 	Traverse tiless tiles
  */
  TileManager.prototype.traverseTiles = function()
@@ -390,45 +352,41 @@ TileManager.prototype.processTile = function(tile,level)
  */
  TileManager.prototype.generateReceivedTiles = function()
  {
-	for ( var i = 0; i < this.tileRequests.length; i++ )
+	while ( this.completedRequests.length > 0 )
 	{
-		var tileRequest = this.tileRequests[i];
+		var tileRequest = this.completedRequests.pop();
 		var tile = tileRequest.tile;
-		if ( tile && tileRequest.successfull )
+		if ( tile.frameNumber == this.frameNumber )
 		{
-			if ( tile.frameNumber == this.frameNumber )
+			// Generate the tile using data from tileRequest
+			if ( this.elevationProvider )
 			{
-				// Generate the tile using data from tilRequest
-				if ( this.elevationProvider )
-				{
-					tile.generate( this.tilePool, tileRequest.image, this.elevationProvider.parseElevations( tileRequest.elevations ) );
-				}
-				else
-					tile.generate( this.tilePool, tileRequest.image );
-								
-				// Now post renderers can generate their data on the new tile
-				for (var i=0; i < this.postRenderers.length; i++ )
-				{
-					if ( this.postRenderers[i].generate )
-						this.postRenderers[i].generate(tile);
-				}
-				
-				this.numTilesGenerated++;
-				this.renderContext.requestFrame();
+				tile.generate( this.tilePool, tileRequest.image, this.elevationProvider.parseElevations( tileRequest.elevations ) );
 			}
 			else
+				tile.generate( this.tilePool, tileRequest.image );
+							
+			// Now post renderers can generate their data on the new tile
+			for (var i=0; i < this.postRenderers.length; i++ )
 			{
-				tile.state = Tile.State.NONE;			
+				if ( this.postRenderers[i].generate )
+					this.postRenderers[i].generate(tile);
 			}
 			
-			tileRequest.tile = null;
+			this.numTilesGenerated++;
+			this.renderContext.requestFrame();
 		}
-		else if ( tile && tileRequest.failed )
+		else
 		{
-			tile.state = Tile.State.ERROR;
-			tileRequest.tile = null;
+			tile.state = Tile.State.NONE;			
 		}
+		this.availableRequests.push(tileRequest);
 	}
+	
+	// All requests have been processed, send endBackgroundLoad event
+	if ( this.availableRequests.length == this.maxRequests )
+		this.globe.publish("endBackgroundLoad");
+
 }
 
 /**************************************************************************************************************/
@@ -559,6 +517,12 @@ TileManager.prototype.processTile = function(tile,level)
 	}
 }
 
+// Internal function to sort tiles
+var _sortTilesByDistance = function(t1,t2)
+{
+	return t1.distance - t2.distance;
+};
+
 /**************************************************************************************************************/
 
 /**
@@ -567,15 +531,21 @@ TileManager.prototype.processTile = function(tile,level)
  TileManager.prototype.launchRequests = function()
  {
 	// Process request
-	this.tilesToRequest.sort( function(a,b) { return a.distance - b.distance; } );
+	this.tilesToRequest.sort( _sortTilesByDistance );
 	
 	var trl = this.tilesToRequest.length; 
 	for ( var i = 0; i < trl; i++ )
 	{
 		var tile = this.tilesToRequest[i];
-		if ( tile.frameNumber == this.frameNumber )
+		if ( this.availableRequests.length > 0 ) // Check to limit the number of requests done per frame
 		{
-			this.launchRequest( tile );
+			// First launch request, send an event
+			if ( this.availableRequests.length == this.maxRequests )
+				this.globe.publish("startBackgroundLoad");
+			
+			var tileRequest = this.availableRequests.pop();
+			tileRequest.launch( tile );
+			tile.state = Tile.State.LOADING;
 		}
 		else
 		{

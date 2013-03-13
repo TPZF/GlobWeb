@@ -24,14 +24,12 @@
 /** @constructor
 	TileRequest constructor
  */
-var TileRequest = function(cb)
+var TileRequest = function(tileManager)
 {
-	this.successfull = false;
-	this.failed = false;
 	this.tile = null;
 	this.imageLoaded = false;
 	this.elevationLoaded = true;
-	this.callback = cb;
+	this.tileManager = tileManager;
 
 	var that = this;
 	
@@ -39,18 +37,21 @@ var TileRequest = function(cb)
 	this.image.crossOrigin = '';
 	this.image.onload = function() { that.handleLoadedImage(); };
 	this.image.onerror = function()  { that.handleErrorImage(); };
+	this.image.onabort = function()  { that.handleAbort(); };
 
 	this.xhr = new XMLHttpRequest();
 	this.xhr.onreadystatechange = function(e)
 	{
-		if ( that.xhr.readyState == 4 && that.xhr.status == 200)
+		if ( that.xhr.readyState == 4 )
 		{
-			that.handleLoadedElevation( that );
-		}
-
-		if ( that.xhr.status >= 400)
-		{
-			that.handleErrorElevation( that );
+			if ( that.xhr.status == 200 )
+			{
+				that.handleLoadedElevation();
+			}
+			else
+			{
+				that.handleErrorElevation();
+			}
 		}
 	};
 }
@@ -65,8 +66,8 @@ TileRequest.prototype.handleLoadedImage = function()
 	this.imageLoaded = true;
 	if ( this.elevationLoaded )
 	{
-		this.successfull = true;
-		this.callback();
+		this.tileManager.completedRequests.push(this);
+		this.tileManager.renderContext.requestFrame();
 	}
 }
 
@@ -78,7 +79,19 @@ TileRequest.prototype.handleLoadedImage = function()
 TileRequest.prototype.handleErrorImage = function() 
 {
 	console.log( "Error while loading " + this.image.src );
-	this.failed = true;
+	this.tile.state = Tile.State.ERROR;
+	this.tileManager.availableRequests.push(this);
+}
+
+/**************************************************************************************************************/
+
+/**
+	Abort request
+ */
+TileRequest.prototype.handleAbort = function() 
+{
+	this.tile.state = Tile.State.NONE;
+	this.tileManager.availableRequests.push(this);
 }
 
 /**************************************************************************************************************/
@@ -94,8 +107,8 @@ TileRequest.prototype.handleLoadedElevation = function()
 	
 	if ( this.imageLoaded )
 	{
-		this.successfull = true;
-		this.callback();
+		this.tileManager.completedRequests.push(this);
+		this.tileManager.renderContext.requestFrame();
 	}
 }
 
@@ -111,8 +124,8 @@ TileRequest.prototype.handleErrorElevation = function()
 	
 	if ( this.imageLoaded )
 	{
-		this.successfull = true;
-		this.callback();
+		this.tileManager.completedRequests.push(this);
+		this.tileManager.renderContext.requestFrame();
 	}
 }
 
@@ -121,21 +134,23 @@ TileRequest.prototype.handleErrorElevation = function()
 /**
 	Launch the HTTP request for a tile
  */
-TileRequest.prototype.launch = function(imageUrl,elevationUrl)
+TileRequest.prototype.launch = function(tile)
 {
-	this.successfull = false;
-	this.failed = false;
-	
-	this.imageLoaded = false;
-	this.image.src = imageUrl;
+	this.tile = tile;
 	
 	// Request the elevation if needed
-	if ( elevationUrl )
+	if ( this.tileManager.elevationProvider )
 	{
 		this.elevationLoaded = false;
-		this.xhr.open("GET", elevationUrl );
+		this.xhr.open("GET", this.tileManager.elevationProvider.getUrl(tile) );
 		this.xhr.send();
 	}
+	else
+	{
+		this.elevationLoaded = true;
+	}
+	this.imageLoaded = false;
+	this.image.src = this.tileManager.imageryProvider.getUrl(tile);
 }
 
 /**************************************************************************************************************/
