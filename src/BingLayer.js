@@ -277,7 +277,7 @@ var BingLayer = function( options )
 	
 			self.baseUrl = result.resourceSets[0].resources[0].imageUrl;
 			self.baseUrlSubDomains = result.resourceSets[0].resources[0].imageUrlSubdomains;
-			self.ready = true;
+			self._ready = true;
 			
 			// Call callback if set
 			if (options.onready && options.onready instanceof Function)
