@@ -11,25 +11,33 @@ GlobWeb supports the following features:
  * Manipulation of vector data through GeoJSON interface: add/remove/select/style modification
  * Overlay WMS layer on top of existing base layers
  * High performance vector rendering  : automatic tiling of vector data
-
+ 
 ### Demos ###
 
 <a href="http://demonstrator.telespazio.com/GlobWeb/">Demonstration with earth observation data</a>  
 <a href="http://demonstrator.telespazio.com/AstroWeb/">Demonstration with astronomic data</a>  
 <a href="http://demonstrator.telespazio.com/EoliWebGL/">Prototype done for ESA</a>  
 
+### Quick start ###
+
+Pre-build stable version can be downloaded here :
+<a href="http://tpzf.github.com/GlobWeb/download/GlobWeb.min.js">GlobWeb v1.0.0</a>  
+<a href="http://tpzf.github.com/GlobWeb/download/AstroWeb.min.js">AstroWeb v1.0.0</a>
+See the following example for basic usage.
+<a href="https://raw.github.com/TPZF/GlobWeb/master/examples/Basic_api.html">Basic usage</a>
+
+Internally, GlobWeb is using Standard Asynchronous Module Definition (AMD) modules.
+You can also use GlobWeb using any AMD loader such as RequireJS or Dojo.
+See the following example for using GlobWeb with Require.js :
+https://github.com/TPZF/GlobWeb/tree/master/demo/client
+<a href="https://github.com/TPZF/GlobWeb/tree/master/demo/client">Demo with Require.js</a>
+
 ### Documentation ###
 <a href="http://tpzf.github.com/GlobWeb/api/index.html">API Documentation</a>  
 
-### Getting started ###
-
-See the examples to show basic usage.
-
 ### Build ###
 
-To build a minified version of GlobWeb, Python and Java is needed.
-Google Closure Compiler is used in Advanced mode to produce a lightweight library.
-To build, just execute the python script build.py in build/.
+GlobWeb use Require.js optimizer to build a minified version of GlobWeb.
 
 ### License ###
 

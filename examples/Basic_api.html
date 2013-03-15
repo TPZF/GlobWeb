@@ -12,17 +12,23 @@
 		
     function webGLStart() 
 	{
+		// Create the globe
 		var globe = new GlobWeb.Globe( {canvas :"GlobWebCanvas"} );
+		
+		// Add stats
+		var stats = new GlobWeb.Stats( globe, {element: 'fps', verbose: false} );
 
+		// Add mouse navigation
 		var nav = new GlobWeb.Navigation(globe);
 		
-		var publicWMSProvider = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub",
+		// Set background layers
+		var bmLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub",
 					 layers: "BlueMarble,esat" } );
-		globe.setBaseImagery( publicWMSProvider );
+		globe.setBaseImagery( bmLayer );
 		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
 		globe.setBaseElevation( elevationLayer );
 		
-		
+		// Add some vector layer
 		$.ajax({
 			  url: "europe.json",
 			  success: function(data)
@@ -45,8 +51,6 @@
     <canvas id="GlobWebCanvas" style="border: none;" width="1400" height="1050"></canvas> 
   	<br/>
 	<div id="fps"><span style="font-weight:bold">FPS : 0</span></div>
-  	
-<!--	<image src="http://s0.tileservice.worldwindcentral.com/getTile?interface=map&version=1&dataset=bmng.topo.bathy.200401&level=2&x=0&y=1" /> -->
 
 </body>
 
