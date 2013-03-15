@@ -30,6 +30,9 @@ define( ['./MouseNavigationHandler', './KeyboardNavigationHandler', './InertiaAn
 		<ul>
 			<li>handlers : Array of objects defining navigation events for different supports(mouse, keyboard..)</li>
 			<li>inertia : Boolean for inertia effect</li>
+			<li>panFactor : Pan factor</li>
+			<li>rotateFactor : Rotate factor</li>
+			<li>zoomFactor : Zoom factor</li>
 		</ul>
 
  */
@@ -52,7 +55,7 @@ var BaseNavigation = function(globe, options)
 	// Inertia effect
 	if( options && options.inertia )
 	{
-		this.inertia = new InertiaAnimation(this);
+		this.inertia = new InertiaAnimation(this, options);
 	}
 	// ZoomTo animation
 	this.zoomToAnimation = null;

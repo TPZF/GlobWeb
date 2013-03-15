@@ -9,7 +9,6 @@ define( function() {
 	@param options Configuration properties for the Mouse_navigationHandler :
 			<ul>
 				<li>zoomOnDblClick : if true defines animation on double click</li>
-				<li>inertia: boolean value of inertia effect</li>
 			</ul>
  */
 var MouseNavigationHandler = function(options){

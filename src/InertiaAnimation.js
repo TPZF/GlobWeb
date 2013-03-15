@@ -21,16 +21,30 @@
  
 /**************************************************************************************************************/
 
+var epsilon = 0.1;
+
 /**	@constructor
  *	Animation simulating inertia for camera navigation
  *
  *	@param nav Navigation
+ *	@param options Configuration of navigation
+ *			<ul>
+ *				<li>panFactor : Pan factor</li>
+ *				<li>rotateFactor : Rotate factor</li>
+ *				<li>zoomFactor : Zoom factor</li>
+ *			</ul>
  */
-var InertiaAnimation = function(nav)
+var InertiaAnimation = function(nav, options)
 {
     Animation.prototype.constructor.call(this);
 
-	this.factor = 0.95;
+    if ( options )
+    {
+		this.panFactor = options.hasOwnProperty('panFactor') ? options['panFactor'] : 0.95;
+		this.rotateFactor = options.hasOwnProperty('rotateFactor') ? options['rotateFactor'] : 0.95;
+		this.zoomFactor = options.hasOwnProperty('zoomFactor') ? options['zoomFactor'] : 0.95;
+	}
+
 	this.type = null;
 	this.dx = 0;
 	this.dy = 0;
@@ -46,30 +60,33 @@ Utils.inherits(Animation,InertiaAnimation);
 
 InertiaAnimation.prototype.update = function(now)
 {
-	if ( this.factor > 0 )
-	{		
-		switch(this.type)
-		{
-			case "pan":
-				this.navigation.pan(this.dx,this.dy);
-				break;
-			case "rotate":
-				this.navigation.rotate(this.dx,this.dy);
-				break;
-			case "zoom":
-				this.navigation.zoom(this.dx);
-				break;
-			default:
-		}
-		this.dx *= this.factor;
-		if (this.dy) this.dy *= this.factor;
-		this.navigation.globe.renderContext.requestFrame();
-	}
-	else
+	var hasToStop = false;
+	
+	switch(this.type)
 	{
-		this.stop();
-        return;
+		case "pan":
+			this.navigation.pan(this.dx,this.dy);
+			this.dx *= this.panFactor;
+			this.dy *= this.panFactor;
+			hasToStop = (Math.abs(this.dx) < epsilon && Math.abs(this.dy) < epsilon);
+			break;
+		case "rotate":
+			this.navigation.rotate(this.dx,this.dy);
+			this.dx *= this.rotateFactor;
+			this.dy *= this.rotateFactor;
+			hasToStop = (Math.abs(this.dx) < epsilon && Math.abs(this.dy) < epsilon);
+			break;
+		case "zoom":
+			this.navigation.zoom(this.dx);
+			this.dx *= this.zoomFactor;
+			hasToStop = (Math.abs(this.dx) < epsilon);
+			break;
+		default:
 	}
+	this.navigation.globe.renderContext.requestFrame();
+
+	if ( hasToStop )
+		this.stop();
 }
 
 /**************************************************************************************************************/
