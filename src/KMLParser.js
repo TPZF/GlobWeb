@@ -60,16 +60,16 @@ var KMLParser = (function()
 		var coords = coordsText.trim().split(/[\s,]+/);
 		for ( var i = 0; i < coords.length; i += 3 )
 		{
-			coordinates.push( [ parseFloat(coords[i]), parseFloat(coords[i+1]) ] );
+			coordinates.push( [ parseFloat(coords[i]), parseFloat(coords[i+1]), parseFloat(coords[i+2]) ] );
 		}
 		return coordinates;
-	}
+	};
 	
 	/*
 	 * Parse KML geometry, return a GeoJSON geometry
 	 * @param node : a candiate node for geoemtry
 	 */
-	var checkAndParseGeometry = function(node)
+	var checkAndParseGeometry = function(node,style)
 	{
 		switch ( node.nodeName )
 		{
@@ -80,7 +80,7 @@ var KMLParser = (function()
 				var children = node.childNodes;
 				for (var i = 0; i < children.length; i++)
 				{
-					var geometry = checkAndParseGeometry(children[i]);
+					var geometry = checkAndParseGeometry(children[i],style);
 					if ( geometry )
 					{
 						geoms.push( geometry );
@@ -102,8 +102,18 @@ var KMLParser = (function()
 			break;
 			case "Polygon":
 			{
+				// Take into accout extresion
+				var extrude = node.getElementsByTagName("extrude");
+				if ( extrude.length == 1 )
+				{
+					style.extrude = parseInt( extrude[0].childNodes[0].nodeValue ) != 0;
+				}
+				
+				style.fill = true;
+				
 				// TODO : manage holes
-				var coordNode = node.firstElementChild.getElementsByTagName("coordinates");
+				var outerBoundary = node.getElementsByTagName("outerBoundaryIs");
+				var coordNode = outerBoundary[0].getElementsByTagName("coordinates");
 				if ( coordNode.length == 1 )
 				{
 					return { type: "Polygon",
@@ -158,7 +168,7 @@ var KMLParser = (function()
 				break;
 			case "Style":
 				{
-					var style = parseStyle(child,feature.properties.name);
+					var style = parseStyle(child,feature.properties.name,feature.properties.style);
 					if ( style )
 					{
 						feature.properties.style = style;
@@ -169,7 +179,7 @@ var KMLParser = (function()
 				// Try with geometry
 				if ( feature.geometry == null )
 				{
-					feature.geometry = checkAndParseGeometry(child);
+					feature.geometry = checkAndParseGeometry(child,style);
 				}
 			}
 			child = child.nextElementSibling;
@@ -212,6 +222,24 @@ var KMLParser = (function()
 				break;
 			default:
 				checkAndParseFeature(child);
+			}
+			child = child.nextElementSibling;
+		}
+	}
+	
+	/*
+	 * Parse poly style
+	 */
+	var parsePolyStyle = function(node,style)
+	{
+		var child = node.firstElementChild;
+		while ( child )
+		{
+			switch ( child.nodeName )
+			{
+			case "color":
+				style.fillColor = fromStringToColor( child.childNodes[0].nodeValue );
+				break;
 			}
 			child = child.nextElementSibling;
 		}
@@ -290,15 +318,15 @@ var KMLParser = (function()
 			child = child.nextElementSibling;
 		}
 	}
-	
+		
 	/*
 	 * Parse style
 	 */
-	var parseStyle = function(node)
+	var parseStyle = function(node,parentStyle)
 	{
 		var id = '#' + node.getAttribute("id");
 
-		var style = new FeatureStyle();
+		var style = new FeatureStyle(parentStyle);
 		styles[id] = style;
 		
 		// Iterate through child to manage all different style element
@@ -307,6 +335,9 @@ var KMLParser = (function()
 		{
 			switch ( child.nodeName )
 			{
+			case "PolyStyle":
+				parsePolyStyle(child,style);
+				break;
 			case "LineStyle":
 				parseLineStyle(child,style);
 				break;
@@ -330,6 +361,9 @@ var KMLParser = (function()
 	{
 		switch ( node.nodeName )
 		{
+		case "Style":
+			parseStyle( node );
+			break
 		case "Placemark":
 			parsePlacemark( node );
 			break
