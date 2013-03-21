@@ -9,7 +9,7 @@ Through a partnership with CNES and CDS, GlobWeb also supports visualization of 
 GlobWeb supports the following features:
  * Base raster layer using WMS, Bing Map REST API, WorldWind Tile Service, HEALPix
  * Manipulation of vector data through GeoJSON interface: add/remove/select/style modification
- * Overlay WMS layer on top of existing base layers
+ * Overlay raster layer on top of existing base layers
  * High performance vector rendering  : automatic tiling of vector data
  
 ### Demos ###
@@ -20,16 +20,17 @@ GlobWeb supports the following features:
 
 ### Quick start ###
 
-Pre-build stable version can be downloaded here :
-<a href="http://tpzf.github.com/GlobWeb/download/GlobWeb.min.js">GlobWeb v1.0.0</a>  
-<a href="http://tpzf.github.com/GlobWeb/download/AstroWeb.min.js">AstroWeb v1.0.0</a>
+Pre-build stable version can be downloaded here :<br>
+<a href="http://tpzf.github.com/GlobWeb/download/v1.0.0/GlobWeb.min.js">GlobWeb v1.0.0</a>  
+<a href="http://tpzf.github.com/GlobWeb/download/v1.0.0/AstroWeb.min.js">AstroWeb v1.0.0</a>
+
 See the following example for basic usage.
 <a href="https://raw.github.com/TPZF/GlobWeb/master/examples/Basic_api.html">Basic usage</a>
 
 Internally, GlobWeb is using Standard Asynchronous Module Definition (AMD) modules.
 You can also use GlobWeb using any AMD loader such as RequireJS or Dojo.
+
 See the following example for using GlobWeb with Require.js :
-https://github.com/TPZF/GlobWeb/tree/master/demo/client
 <a href="https://github.com/TPZF/GlobWeb/tree/master/demo/client">Demo with Require.js</a>
 
 ### Documentation ###
@@ -38,6 +39,9 @@ https://github.com/TPZF/GlobWeb/tree/master/demo/client
 ### Build ###
 
 GlobWeb use Require.js optimizer to build a minified version of GlobWeb.
+See <a href="http://requirejs.org/docs/optimization.html">RequireJS Optimizer</a> for more information on how to build a minified version of GlobWeb.
+
+
 
 ### License ###
 

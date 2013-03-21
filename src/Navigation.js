@@ -23,9 +23,8 @@
 
 /** @name Navigation
 	@class
-	@augments BaseNavigation
-
 	Manages the navigation in the Globe.
+	@augments BaseNavigation
 	
 	@param globe Globe
 	@param options Configuration properties for the Navigation :

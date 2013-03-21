@@ -359,8 +359,10 @@ Globe.prototype.render = function()
 			<li>endNavigation : called when navigation is ended (by the user or through animation)t</li>
 			<li>baseLayersReady : called when the base layers are ready to be displayed</li>
 			<li>baseLayersError : called when the base layers are not valid, or not accessible, in that case nothing is displayed so this event is useful to provide an error message to the user</li>
-			<li>startBackgroundLoad : called when background layers (imagery and/or elevation) start to be loaded by GlobWeb</li>
-			<li>endBackgroundLoad : called when background layers (imagery and/or elevation) end loadinh by GlobWeb</li>
+			<li>startBackgroundLoad : called when background layers (imagery and/or elevation) start to be loaded</li>
+			<li>endBackgroundLoad : called when background layers (imagery and/or elevation) end loading</li>
+			<li>startLoad : called when a layer start to be loaded</li>
+			<li>endLoad : called whena layer end loading</li>
 		</ul>
 	@param callback Callback function
 */
