@@ -14,7 +14,7 @@
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with  If not, see <http://www.gnu.org/licenses/>.
+ * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
  
 define( ['./CoordinateSystem','./VectorRendererManager','./FeatureStyle','./Program','./Triangulator'], 
