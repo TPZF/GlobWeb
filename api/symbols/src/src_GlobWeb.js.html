@@ -1,0 +1,55 @@
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"> <style>
+	.KEYW {color: #933;}
+	.COMM {color: #bbb; font-style: italic;}
+	.NUMB {color: #393;}
+	.STRN {color: #393;}
+	.REGX {color: #339;}
+	.line {border-right: 1px dotted #666; color: #666; font-style: normal;}
+	</style></head><body><pre><span class='line'>  1</span> <span class="COMM">/***************************************
+<span class='line'>  2</span>  * Copyright 2011, 2012 GlobWeb contributors.
+<span class='line'>  3</span>  *
+<span class='line'>  4</span>  * This file is part of GlobWeb.
+<span class='line'>  5</span>  *
+<span class='line'>  6</span>  * GlobWeb is free software: you can redistribute it and/or modify
+<span class='line'>  7</span>  * it under the terms of the GNU Lesser General Public License as published by
+<span class='line'>  8</span>  * the Free Software Foundation, version 3 of the License, or
+<span class='line'>  9</span>  * (at your option) any later version.
+<span class='line'> 10</span>  *
+<span class='line'> 11</span>  * GlobWeb is distributed in the hope that it will be useful,
+<span class='line'> 12</span>  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+<span class='line'> 13</span>  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+<span class='line'> 14</span>  * GNU Lesser General Public License for more details.
+<span class='line'> 15</span>  *
+<span class='line'> 16</span>  * You should have received a copy of the GNU General Public License
+<span class='line'> 17</span>  * along with GlobWeb. If not, see &lt;http://www.gnu.org/licenses/>.
+<span class='line'> 18</span>  ***************************************/</span><span class="WHIT">
+<span class='line'> 19</span> </span><span class="WHIT"> </span><span class="WHIT">
+<span class='line'> 20</span> </span><span class="NAME">define</span><span class="PUNC">(</span><span class="WHIT"> </span><span class="PUNC">[</span><span class="STRN">"./Globe"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"./GeoBound"</span><span class="PUNC">,</span><span class="WHIT">
+<span class='line'> 21</span> </span><span class="WHIT">		</span><span class="STRN">"./WMSLayer"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"./WMTSLayer"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"./WCSElevationLayer"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"./OSMLayer"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"./BingLayer"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"./VectorLayer"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"./AtmosphereLayer"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="COMM">// Layers</span><span class="WHIT">
+<span class='line'> 22</span> </span><span class="WHIT">		</span><span class="STRN">"./Navigation"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"./FeatureStyle"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"./Stats"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"./KMLParser"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="COMM">// Others</span><span class="WHIT">
+<span class='line'> 23</span> </span><span class="WHIT">		</span><span class="STRN">"./PointRenderer"</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="STRN">"./LineStringRenderable"</span><span class="PUNC">]</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="COMM">// Renderers</span><span class="WHIT">
+<span class='line'> 24</span> </span><span class="WHIT">	</span><span class="KEYW">function</span><span class="PUNC">(</span><span class="NAME">Globe</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">GeoBound</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">WMSLayer</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">WMTSLayer</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">WCSElevationLayer</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">OSMLayer</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">BingLayer</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">VectorLayer</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">AtmosphereLayer</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">Navigation</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">FeatureStyle</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">Stats</span><span class="PUNC">,</span><span class="WHIT"> </span><span class="NAME">KMLParser</span><span class="PUNC">)</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="WHIT">
+<span class='line'> 25</span> 
+<span class='line'> 26</span> </span><span class="COMM">// Declare GlobWeb </span><span class="WHIT">
+<span class='line'> 27</span> </span><span class="KEYW">var</span><span class="WHIT"> </span><span class="NAME">GlobWeb</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="PUNC">{</span><span class="PUNC">}</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 28</span> 
+<span class='line'> 29</span> </span><span class="NAME">GlobWeb.Globe</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Globe</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 30</span> </span><span class="NAME">GlobWeb.GeoBound</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">GeoBound</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 31</span> </span><span class="NAME">GlobWeb.WMSLayer</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">WMSLayer</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 32</span> </span><span class="NAME">GlobWeb.WMTSLayer</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">WMTSLayer</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 33</span> </span><span class="NAME">GlobWeb.WCSElevationLayer</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">WCSElevationLayer</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 34</span> </span><span class="NAME">GlobWeb.OSMLayer</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">OSMLayer</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 35</span> </span><span class="NAME">GlobWeb.BingLayer</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">BingLayer</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 36</span> </span><span class="NAME">GlobWeb.VectorLayer</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">VectorLayer</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 37</span> </span><span class="NAME">GlobWeb.FeatureStyle</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">FeatureStyle</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 38</span> </span><span class="NAME">GlobWeb.AtmosphereLayer</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">AtmosphereLayer</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 39</span> </span><span class="NAME">GlobWeb.Navigation</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Navigation</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 40</span> </span><span class="NAME">GlobWeb.Stats</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">Stats</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 41</span> </span><span class="NAME">GlobWeb.KMLParser</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">KMLParser</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 42</span> 
+<span class='line'> 43</span> </span><span class="NAME">window.GlobWeb</span><span class="WHIT"> </span><span class="PUNC">=</span><span class="WHIT"> </span><span class="NAME">GlobWeb</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 44</span> 
+<span class='line'> 45</span> </span><span class="KEYW">return</span><span class="WHIT"> </span><span class="NAME">GlobWeb</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 46</span> 
+<span class='line'> 47</span> </span><span class="PUNC">}</span><span class="PUNC">)</span><span class="PUNC">;</span><span class="WHIT">
+<span class='line'> 48</span> </span></pre></body></html>
