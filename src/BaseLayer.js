@@ -54,7 +54,7 @@ var BaseLayer = function(options)
 BaseLayer.prototype._attach = function( g )
 {
 	this.globe = g;
-	if ( this.attribution && this.globe.attributionHandler )
+	if ( this.attribution && this.globe.attributionHandler && this._visible )
 	{
 		this.globe.attributionHandler.addAttribution(this);
 	}
@@ -84,6 +84,11 @@ BaseLayer.prototype.visible = function( arg )
 {
 	if ( typeof arg == "boolean" )
 	{
+		if (  this.attribution && this.globe.attributionHandler )
+		{
+			this.globe.attributionHandler.toggleAttribution(this);
+		}
+
 		this._visible = arg;
 		if ( this.globe ) this.globe.renderContext.requestFrame();
 	}

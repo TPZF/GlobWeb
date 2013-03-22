@@ -85,8 +85,25 @@ AttributionHandler.prototype.addAttribution = function(layer)
 	{
 		this.element.appendChild( div );
 	}
-	
-	
+}
+
+/**************************************************************************************************************/
+
+/**
+*	Toggle attribution
+* 	@param layer Selected layer
+*/
+AttributionHandler.prototype.toggleAttribution = function(layer)
+{
+	var div = document.getElementById("attribution_"+layer.id);
+	if ( div )
+	{
+		this.removeAttribution(layer);
+	}
+	else
+	{
+		this.addAttribution(layer);
+	}
 }
 
 /**************************************************************************************************************/
