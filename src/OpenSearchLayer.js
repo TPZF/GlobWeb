@@ -527,6 +527,12 @@ OpenSearchLayer.prototype.buildUrl = function( tile )
 
 /**************************************************************************************************************/
 
+// Internal function to sort tiles
+function _sortTilesByDistance(t1,t2)
+{
+	return t1.distance - t2.distance;
+};
+
 /**
 	Render function
 	
@@ -536,7 +542,10 @@ OpenSearchLayer.prototype.render = function( tiles )
 {
 	if (!this._visible)
 		return;
-		
+	
+	// Sort tiles
+	tiles.sort( _sortTilesByDistance );
+
 	// Load data for the tiles if needed
 	for ( var i = 0; i < tiles.length && this.freeRequests.length > 0; i++ )
 	{
