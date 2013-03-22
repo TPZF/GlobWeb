@@ -58,6 +58,9 @@ var HEALPixLayer = function(options)
 		}
 	}
 	this.levelZeroImage.onerror = function(event) {
+		self.globe.publish("baseLayersError");
+		self._ready = false;
+		
 		console.log("Cannot load " + self.levelZeroImage.src );
 	}
 	
