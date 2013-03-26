@@ -109,7 +109,10 @@ var KMLParser = (function()
 					style.extrude = parseInt( extrude[0].childNodes[0].nodeValue ) != 0;
 				}
 				
-				style.fill = true;
+				// TODO : check how to manage fill property
+				if ( style ) {
+					style.fill = true;
+				}
 				
 				// TODO : manage holes
 				var outerBoundary = node.getElementsByTagName("outerBoundaryIs");
