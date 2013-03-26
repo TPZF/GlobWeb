@@ -93,7 +93,11 @@ TiledVectorRenderer.prototype.getOrCreateBucket = function( layer, style )
  */
 TiledVectorRenderer.prototype.removeGeometryFromTile = function( bucket, geometry, tile )
 {
-	var renderable = this.findRenderable( bucket, tile );
+	var renderable;
+	if ( tile.extension[this.id] )
+	{
+		renderable = tile.extension[this.id].getRenderable( bucket );
+	}
 	if ( renderable && renderable.removeGeometry( geometry ) && tile.children )
 	{
 		// Remove the geometry from loaded children
