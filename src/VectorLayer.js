@@ -222,7 +222,7 @@ VectorLayer.prototype.removeAllFeatures = function()
 	{
 		for ( var i = 0; i < this.features.length; i++ )
 		{
-			this._removeFeatureFromRenderers( feature );
+			this._removeFeatureFromRenderers( this.features[i] );
 		}
 	}
 	this.features.length = 0;
