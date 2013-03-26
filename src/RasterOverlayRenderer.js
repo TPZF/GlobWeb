@@ -149,7 +149,7 @@ RasterOverlayRenderable.prototype.onRequestFinished = function(completed)
 	// Bucket is in fact the layer!
 	var layer = this.bucket;
 	layer._numRequests--;
-	if ( layer._numRequests == 0 )
+	if ( layer.globe && layer._numRequests == 0 )
 	{
 		layer.globe.publish('endLoad',layer);
 	}
