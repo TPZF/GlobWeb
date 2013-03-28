@@ -58,6 +58,9 @@ Utils.inherits(Animation,InertiaAnimation);
 
 /**************************************************************************************************************/
 
+/**
+ * Update inertia
+ */
 InertiaAnimation.prototype.update = function(now)
 {
 	var hasToStop = false;

@@ -167,7 +167,7 @@ AtmosphereLayer.prototype._initUniforms = function( uniforms )
 	var g = -0.95;		// The Mie phase asymmetry factor
 	var scale = 1.0 / ( this.outerRadius - this.innerRadius );
 	var rayleighScaleDepth = 0.25;
-	var mieScaleDepth = 0.1;
+	//var mieScaleDepth = 0.1;
 
 	var lightDir = [1.0,1.0,1.0];
 	vec3.normalize( lightDir );
@@ -186,9 +186,9 @@ AtmosphereLayer.prototype._initUniforms = function( uniforms )
 	gl.uniform1f( uniforms["fInnerRadius2"], this._innerRadius*this._innerRadius );
 	gl.uniform1f( uniforms["fOuterRadius"], this._outerRadius );
 	gl.uniform1f( uniforms["fOuterRadius2"], this._outerRadius*this._outerRadius );
-	gl.uniform1f( uniforms["fScale"], 1.0 / (this._outerRadius - this._innerRadius) );
+	gl.uniform1f( uniforms["fScale"], scale );
 	gl.uniform1f( uniforms["fScaleDepth"], rayleighScaleDepth );
-	gl.uniform1f( uniforms["fScaleOverScaleDepth"], (1.0 / (this._outerRadius - this._innerRadius)) / rayleighScaleDepth );
+	gl.uniform1f( uniforms["fScaleOverScaleDepth"], scale / rayleighScaleDepth );
 	gl.uniform1f( uniforms["g"], g );
 	gl.uniform1f( uniforms["g2"], g*g );
 }

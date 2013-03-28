@@ -29,7 +29,6 @@ define( ['./CoordinateSystem','./VectorRendererManager','./FeatureStyle','./Prog
 var PolygonRenderer = function(tileManager)
 {
 	this.renderContext = tileManager.renderContext;
-	var gl = this.renderContext.gl;
 	
 	this.renderables = [];
 		
@@ -42,7 +41,7 @@ var PolygonRenderer = function(tileManager)
 	}\n\
 	";
 
-var fragmentShader = "\
+	var fragmentShader = "\
 	precision lowp float; \n\
 	uniform vec4 u_color;\n\
 	void main(void)\n\
@@ -72,9 +71,6 @@ PolygonRenderer.prototype.addGeometry = function(geometry, layer, style){
 		vertexBuffer : gl.createBuffer(),
 		indexBuffer : gl.createBuffer(),
 	};
-	
-	// Create texture
-	var self = this;
 		
 	// Create vertex buffer
 	gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
@@ -254,7 +250,7 @@ VectorRendererManager.registerRenderer({
 	creator: function(globe) { 
 			return new PolygonRenderer(globe.tileManager);
 		},
-	canApply: function(type,style) {return (type == "Polygon") && (style.fill == true); }
+	canApply: function(type,style) {return (type == "Polygon") && style.fill; }
 });
 
 });

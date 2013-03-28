@@ -394,8 +394,8 @@
     };
 
     // Pre-allocated to prevent unecessary garbage collection
-    var unprojectMat = null;
-    var unprojectVec = new MatrixArray(4);
+    //var unprojectMat = null;
+    //var unprojectVec = new MatrixArray(4);
     /**
      * Projects the specified vec3 from screen space into object space
      * Based on the <a href="http://webcvs.freedesktop.org/mesa/Mesa/src/glu/mesa/project.c?revision=1.4&view=markup">Mesa gluUnProject implementation</a>
@@ -1673,7 +1673,7 @@
         return dest;
     };
 
-    var identityQuat4 = quat4.identity();
+    //var identityQuat4 = quat4.identity();
 
     /**
      * Calculates the W component of a quat4 from the X, Y, and Z components.

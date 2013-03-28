@@ -514,7 +514,6 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 				
 				if ( textureTile && renderable.texture )
 				{
-					var tileGeoBound = isTileLoaded ? tile.geoBound : tile.parent.geoBound;
 					gl.uniform1f(this.program.uniforms["opacity"], renderable.bucket._opacity );
 					gl.uniform4f(this.program.uniforms["textureTransform"], uvScale, uvScale, uTrans, vTrans );
 					
