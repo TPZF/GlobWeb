@@ -427,8 +427,8 @@ TileManager.prototype.processTile = function(tile,level)
 		{
 			var tile = this.tilesToRender[i];
 			// Update near/far to take into account the tile
-			nr = Math.min( nr, tile.distance - 2.0 * tile.radius );
-			fr = Math.max( fr, tile.distance + 2.0 * tile.radius );
+			nr = Math.min( nr, tile.distance - 1.5 * tile.radius );
+			fr = Math.max( fr, tile.distance + 1.5 * tile.radius );
 		}
 	}
 	rc.near = Math.max( rc.minNear, Math.min(nr,rc.near) );
