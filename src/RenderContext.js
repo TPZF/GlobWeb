@@ -66,7 +66,7 @@ var RenderContext = function(options)
 	// Check canvas is valid
 	if (!canvas instanceof HTMLCanvasElement)
 		throw "GlobWeb : invalid canvas";
-
+		
 	// Create the webl context
 	var names = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
 	var gl = null;
@@ -74,7 +74,7 @@ var RenderContext = function(options)
 	{
 		try 
 		{
-		  gl = canvas.getContext(names[ii], options['contextAttribs']);
+		  gl = canvas.getContext(names[ii], RenderContext.contextAttributes);
 		} 
 		catch(e) {}
 	}
@@ -128,6 +128,14 @@ var RenderContext = function(options)
 			} )();
 	}
 }
+
+/**************************************************************************************************************/
+
+/** 
+	The context attributes used when creating WebGL context, see WebGL specification.
+	Can be changed by the renderers if needed, or by an external interface.
+*/
+RenderContext.contextAttributes = {};
 
 /**************************************************************************************************************/
 

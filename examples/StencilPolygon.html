@@ -1,0 +1,75 @@
+<html>
+
+<head>
+<title>GlobWeb example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+<script  src="require.min.js"></script>
+<script type="text/javascript">
+	
+require(['../src/Globe','../src/WMSLayer','../src/WCSElevationLayer','../src/Navigation','../src/Stats','../src/VectorLayer','../src/FeatureStyle','../src/StencilPolygonRenderer'], 
+	function (Globe,WMSLayer,WCSElevationLayer,Navigation,Stats,VectorLayer,FeatureStyle) 
+{	
+		var cvs = document.getElementById("GlobWebCanvas");
+		//cvs.width = window.innerWidth;
+		//cvs.height = window.innerHeight;
+		
+		// Create the globe
+		var globe = new Globe( { canvas: cvs, 
+				lighting: false,
+				tileErrorTreshold: 3, 
+				continuousRendering: true
+			} );
+
+		// Add mouse navigation
+		var navigation = new Navigation(globe, { inertia: true });
+		
+		//var navData = {"geoCenter":[-2.050829335546452,-1.1804780783509154,-7.057412781064087e-10],"heading":192.53838665156997,"tilt":23.177643951015238,"distance":0.09638196637373264};
+		var navData = {"geoCenter":[-1.5795999481270446,-2.5233781479239004,-7.057412781064087e-10],"heading":366.39282908515713,"tilt":92.03512922926878,"distance":0.8094985272874878};
+		//navigation.restore(navData);
+				
+		// Add stats
+		var stats = new Stats( globe, {element: 'fps', verbose: false} );
+	
+		var blueMarbleLayer = new WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble" });
+		globe.setBaseImagery( blueMarbleLayer );
+				
+		var elevationLayer = new WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
+		//globe.setBaseElevation( elevationLayer );
+		
+		var style  = new FeatureStyle();
+		style.fill = true;
+		style.fillColor = [ 1.0, 0.0, 0.0, 0.2 ];
+		var polygon = { type: "Feature",
+						geometry: { type: "Polygon",
+							coordinates: [ [ [-5, -5], [5, -4], [3, 3], [-1, 2], [-5, -5] ] ]
+						}
+					};
+		var vectorLayer = new VectorLayer({ style: style });
+		vectorLayer.addFeature( polygon );
+		globe.addLayer( vectorLayer );
+		
+		document.onkeypress = function(event)
+		{
+			//vectorLayer.visible( !vectorLayer.visible() );
+			
+			console.log( JSON.stringify( navigation.save() ) );
+		}
+
+});			
+
+
+</script>
+
+</head>
+
+
+<body>
+	<h1>Glob Web</h1>
+    <canvas id="GlobWebCanvas" style="border: none;" width="800" height="450"></canvas> 
+  	<br/>
+	<div id="fps"><span style="font-weight:bold">FPS : 0</span></div>
+</body>
+
+</html>
+

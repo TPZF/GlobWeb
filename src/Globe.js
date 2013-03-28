@@ -31,7 +31,6 @@
 	@param options Configuration properties for the Globe :
 		<ul>
 			<li>canvas : the canvas for WebGL, can be string (id) or a canvas element</li>
-			<li>contextAttribs : the attributes when creating WebGL context, see WebGL specification</li>
 			<li>backgroundColor : the background color of the canvas (an array of 4 floats)</li>
 			<li>shadersPath : the path to shaders file</li>
 			<li>continuousRendering: if true rendering is done continuously, otherwise it is done only if needed</li>
@@ -324,7 +323,14 @@ Globe.prototype.render = function()
 	}
 	
 	// Clear the buffer
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	if ( RenderContext.contextAttributes.stencil )
+	{
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+	}
+	else
+	{
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	}
 	
 	// Check canvas size is valid
 	if ( rc.canvas.width == 0 || rc.canvas.height == 0 )
