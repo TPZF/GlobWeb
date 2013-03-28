@@ -169,8 +169,8 @@ Tile.prototype.needsToBeRefined = function(renderContext)
 						+ pz * pixelSizeVector[2] + pixelSizeVector[3] );
 	
 	// Check if pixel radius of a texel is superior to the treshold
-//	return Math.abs(pixelSize) > renderContext.tileErrorTreshold;
-	return pixelSize > renderContext.tileErrorTreshold;
+	// The pixel size can be negative when the closest point is close to the near plane, so take absolute value
+	return Math.abs(pixelSize) > renderContext.tileErrorTreshold;
 }
 
 /**************************************************************************************************************/
