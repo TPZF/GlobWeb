@@ -63,7 +63,38 @@ Utils.inherits( BaseNavigation,Navigation );
 
 /**************************************************************************************************************/
 
-/** @export
+/** 
+	Save the current navigation state.
+	@return a JS object containing the navigation state
+*/
+Navigation.prototype.save = function()
+{
+	return {
+		geoCenter: this.geoCenter,
+		heading: this.heading,
+		tilt: this.tilt,
+		distance: this.distance
+	};
+}
+
+/**************************************************************************************************************/
+
+/** 
+	Restore the navigation state.
+	@param state a JS object containing the navigation state
+*/
+Navigation.prototype.restore = function(state)
+{
+	this.geoCenter = state.geoCenter;
+	this.heading = state.heading;
+	this.tilt = state.tilt;
+	this.distance = state.distance;
+	this.computeViewMatrix();
+}
+
+/**************************************************************************************************************/
+
+/** 
 	Zoom to a 3d position
 	@param {Float[]} geoPos Array of two floats corresponding to final Longitude and Latitude(in this order) to zoom
 	@param {Int} distance Final zooming distance in meters
