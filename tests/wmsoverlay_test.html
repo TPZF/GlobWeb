@@ -1,13 +1,13 @@
 <html>
 
 <head>
-<title>GroundOverlay tests</title>
+<title>WMSOverlay tests</title>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 
 <script src="http://code.jquery.com/jquery-latest.js"></script>
 <link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
 <script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
+<script src="../examples/require.min.js"></script>
 
 </head>
 
@@ -15,6 +15,9 @@
 <body>
 
 <script type="text/javascript">
+
+
+require(['../src/GeoBound'], function (GeoBound) {
 
 	function createInterpolatedVertex(  t, p1, p2 )
 	{
@@ -72,11 +75,9 @@
 		return c.length > 0;
 	}
 	
-	$(document).ready(function(){
-
     test("Simple Transform", function()
 	{
-		var bound = new GlobWeb.GeoBound( 4, 5, 5, 6 );
+		var bound = new GeoBound( 4, 5, 5, 6 );
 		var c1 = [ [3,5], [4.5,5], [3,4.5], [3,5] ];
 		
 		ok( intersection(bound,c1) );

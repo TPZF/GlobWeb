@@ -7,7 +7,8 @@
 <script src="http://code.jquery.com/jquery-latest.js"></script>
 <link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
 <script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
+<script type="text/javascript" src="qunit-close-enough.js"></script>
+<script src="../examples/require.min.js"></script>
 
 </head>
 
@@ -16,12 +17,13 @@
 
 <script type="text/javascript">
 
-	$(document).ready(function(){
+
+require(['../src/GroundOverlayLayer'], function (GroundOverlayLayer) {
 
     test("Simple Transform", function()
 	{
 		var quad = [ [4,5], [5,5], [5,6], [4,6] ];
-		var go = new GlobWeb.GroundOverlay( "", quad );
+		var go = new GroundOverlayLayer( { quad: quad } );
 		
 		var p = go.transformFromSquare( [0,0] );
 		deepEqual( p, [4,5] );
@@ -36,7 +38,7 @@
 	test("Simple Inverse Transform", function()
 	{
 		var quad = [ [4,5], [5,5], [5,6], [4,6] ];
-		var go = new GlobWeb.GroundOverlay( "", quad );
+		var go = new GroundOverlayLayer( { quad: quad } );
 		
 		var p = go.transformToSquare( [4,5] );
 		deepEqual( p, [0,0] );
@@ -51,7 +53,7 @@
     test("Complex Transform", function()
 	{
 		var quad = [ [4,5], [5,7], [3,8], [2,7] ];
-		var go = new GlobWeb.GroundOverlay( "", quad );
+		var go = new GroundOverlayLayer( { quad: quad } );
 		
 		var p = go.transformFromSquare( [0,0] );
 		deepEqual( p, [4,5] );
@@ -59,25 +61,30 @@
 		p = go.transformFromSquare( [1,1] );
 		deepEqual( p, [3,8] );	
  	});
+	
+	var close = function(a,b,eps) {
+		return Math.abs(a[0]-b[0]) < eps
+		 && Math.abs(a[1]-b[1]) < eps;
+	};
 
 	test("Complex Inverse Transform", function()
 	{
 		var quad = [ [4,5], [5,7], [3,8], [2,7] ];
-		var go = new GlobWeb.GroundOverlay( "", quad );
+		var go = new GroundOverlayLayer( { quad: quad } );
 		
 		var p = go.transformToSquare( [4,5] );
-		deepEqual( p, [0,0], 0.00001 );
+		ok( close(p, [0,0], 0.00001) );
 	
 		p = go.transformToSquare( [3,8] );
-		deepEqual( p, [1,1], 0.00001 );
+		ok( close(p, [1,1], 0.00001) );
 		
 		var p1 = go.transformToSquare( [4,6] );
 		var p2 = go.transformFromSquare( p1 );
-		deepEqual( [4,6], p2, 0.00001 );
+		ok( close([4,6], p2, 0.00001) );
  		
 		p1 = go.transformToSquare( [4,7] );
 		p2 = go.transformFromSquare( p1 );
-		deepEqual( [4,7], p2, 0.00001 );
+		ok( close([4,7], p2, 0.00001) );
 	});
 	
 	});

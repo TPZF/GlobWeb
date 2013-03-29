@@ -259,6 +259,9 @@ Frustum.prototype.containsBoundingBox = function( bbox )
 
 /**************************************************************************************************************/
 
+// Export plane
+Frustum.Plane = Plane;
+
 return Frustum;
 
 });

@@ -8,7 +8,7 @@
 <script src="http://code.jquery.com/jquery-latest.js"></script>
 <link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
 <script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
+<script  src="../examples/require.min.js"></script>
 
 </head>
 
@@ -17,15 +17,15 @@
 
 
 <script type="text/javascript">
-
-	$(document).ready(function(){
+	
+require(['../src/Frustum', '../src/BoundingBox'], function (Frustum,BoundingBox) {
 
     test("Plane", function()
 	{
 		var v = vec3.subtract( [0,0,0], [1,0,0], [] );
 		deepEqual( v, [-1,0,0] );
 		
-		var plane = new GlobWeb.Plane();
+		var plane = new Frustum.Plane();
 		plane.init( [0,0,0], [1,0,0], [0,1,0] );
 		
 		ok( plane.intersectSphere( [0,0,5], 2 ) == 1 );
@@ -46,7 +46,7 @@
    
 	test("Bounding Box", function() 
 	{
-		var bbox = new GlobWeb.BoundingBox();
+		var bbox = new BoundingBox();
 		bbox.min = [-1,-1,-1];
 		bbox.max = [1,1,1];
 		deepEqual( bbox.getCenter(), [0,0,0] );
@@ -59,7 +59,7 @@
 		deepEqual( bbox.getCorner(6), [-1,1,1] );
 		deepEqual( bbox.getCorner(7), [1,1,1] );
 		
-		var plane = new GlobWeb.Plane();
+		var plane = new Frustum.Plane();
 		plane.init( [3,0,0], [4,-1,1], [4,1,1] );
 		ok( plane.intersectBoundingBox( bbox ) == 1 );
 		plane.init( [1,0,0], [4,-1,1], [4,1,1] );
@@ -67,7 +67,7 @@
 		plane.init( [1,0,5], [4,-1,1], [4,1,1] );
 		ok( plane.intersectBoundingBox( bbox ) == -1 );
 		
-		bbox = new GlobWeb.BoundingBox();
+		bbox = new BoundingBox();
 		var vertices = [ -1, -1, -1, 1, 1, 1 ];
 		bbox.compute(vertices);
 		deepEqual( bbox.min, [-1,-1,-1] );
@@ -89,7 +89,7 @@
 		var vec = [0, 0, 0];
 		mat4.multiplyVec3(invViewMatrix,vec);
 		
-		var frustum = new GlobWeb.Frustum();
+		var frustum = new Frustum();
 		frustum.compute(projectionMatrix);
 		frustum.transform(frustum,invViewMatrix);
 		
@@ -99,13 +99,13 @@
 		ok( frustum.containsSphere( [1,0,0], 0.5 ) == 1 );
 		ok( frustum.containsSphere( [-6,0,4], 3.0 ) == -1 );
 		
-		var bbox = new GlobWeb.BoundingBox( [1,0,2], [2,0,3] );
+		var bbox = new BoundingBox( [1,0,2], [2,0,3] );
 		ok( frustum.containsBoundingBox( bbox ) );
-		bbox = new GlobWeb.BoundingBox( [1,0,3.1], [2,0,4] );
+		bbox = new BoundingBox( [1,0,3.1], [2,0,4] );
 		ok( frustum.containsBoundingBox( bbox ) == false );
-		bbox = new GlobWeb.BoundingBox( [-6,0,0], [-5,0,1] );
+		bbox = new BoundingBox( [-6,0,0], [-5,0,1] );
 		ok( frustum.containsBoundingBox( bbox ) == false );
-		bbox = new GlobWeb.BoundingBox( [-6,0,-1], [-5,0,1] );
+		bbox = new BoundingBox( [-6,0,-1], [-5,0,1] );
 		ok( frustum.containsBoundingBox( bbox ) );
 	});
 	

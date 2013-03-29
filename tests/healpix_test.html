@@ -1,13 +1,13 @@
 <html>
 
 <head>
-<title>GroundOverlay tests</title>
+<title>HEALPix tests</title>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 
 <script src="http://code.jquery.com/jquery-latest.js"></script>
 <link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
 <script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
+<script  src="../examples/require.min.js"></script>
 
 </head>
 
@@ -15,6 +15,8 @@
 <body>
 
 <script type="text/javascript">
+
+require(['../src/HealPixTables','../src/HEALPixBase','../src/Long'], function (HealPixTables,HEALPixBase,Long) {
 	
     var lonLat2ang = function(lon, lat)
     {
@@ -42,8 +44,8 @@
 
 	var spread_bits = function(v)
 	{
-	return (GlobWeb.HealPixTables.utab[ v      &0xff])      | ((GlobWeb.HealPixTables.utab[(v>>> 8)&0xff])<<16)
-		| ((GlobWeb.HealPixTables.utab[(v>>>16)&0xff])<<32) | ((GlobWeb.HealPixTables.utab[(v>>>24)&0xff])<<48);
+	return (HealPixTables.utab[ v      &0xff])      | ((HealPixTables.utab[(v>>> 8)&0xff])<<16)
+		| ((HealPixTables.utab[(v>>>16)&0xff])<<32) | ((HealPixTables.utab[(v>>>24)&0xff])<<48);
 	}
 
 	var xyf2nest = function(ix, iy, face_num, order)
@@ -78,14 +80,14 @@
 			var temp1 = nside*(0.5+tt);
 	        var temp2 = nside*(z*0.75);
 
-	        var jp = GlobWeb.Long.fromNumber(temp1 - temp2); // index of  ascending edge line
-	        var jm = GlobWeb.Long.fromNumber(temp1 + temp2); // index of descending edge line
+	        var jp = Long.fromNumber(temp1 - temp2); // index of  ascending edge line
+	        var jm = Long.fromNumber(temp1 + temp2); // index of descending edge line
 	        var ifp = jp.shiftRightUnsigned(order);
 	        var ifm = jm.shiftRightUnsigned(order);
 	        var face_num;
 	        if ( ifp.equals(ifm) )
 	        {
-	        	face_num = ifp.or(GlobWeb.Long.fromInt(4));
+	        	face_num = ifp.or(Long.fromInt(4));
 	        }
 	        else
 	        {
@@ -95,11 +97,11 @@
 	        	}
 	        	else
 	        	{
-	        		face_num = ifm.add(GlobWeb.Long.fromInt(8));
+	        		face_num = ifm.add(Long.fromInt(8));
 	        	}
 	        }
 
-	        var nSideMinusOne = GlobWeb.Long.fromNumber(nside-1);
+	        var nSideMinusOne = Long.fromNumber(nside-1);
 	        var ix = jm.and( nSideMinusOne );
 	        var iy = nSideMinusOne.subtract( jp.and(nSideMinusOne) );
 
@@ -113,11 +115,11 @@
 			var tmp = ( (za < (9./10.)) || (!loc.have_sth) ) ?
 							nside*Math.sqrt(3*(1-za)) :
 							nside*loc.sth/Math.sqrt((1.+za)/3.);
-			var jp = GlobWeb.Long.fromNumber(tp*tmp);
-			var jm = GlobWeb.Long.fromNumber((1.0-tp)*tmp);
-			var lNside = GlobWeb.Long.fromNumber(nside);
-			var nSideMinusOne = GlobWeb.Long.fromNumber(nside-1.);
-			var lOne = GlobWeb.Long.fromInt(1);
+			var jp = Long.fromNumber(tp*tmp);
+			var jm = Long.fromNumber((1.0-tp)*tmp);
+			var lNside = Long.fromNumber(nside);
+			var nSideMinusOne = Long.fromNumber(nside-1.);
+			var lOne = Long.fromInt(1);
 			if ( jp.greaterThanOrEqual(lNside) )
 				jp = nSideMinusOne;
 			if ( jm.greaterThanOrEqual(lNside) )
@@ -138,18 +140,18 @@
 		// Compute vertices
 		var nside = Math.pow(2, order);
 		var pix = pixelIndex & (nside*nside-1);
-		var ix = GlobWeb.HEALPixBase.compress_bits(pix);
-		var iy = GlobWeb.HEALPixBase.compress_bits(pix>>>1);
+		var ix = HEALPixBase.compress_bits(pix);
+		var iy = HEALPixBase.compress_bits(pix>>>1);
 		var face = (pixelIndex>>>(2*order));
 
 		var corners = [];
-		var vert = GlobWeb.HEALPixBase.fxyf(ix/nside, iy/nside, face);
+		var vert = HEALPixBase.fxyf(ix/nside, iy/nside, face);
 		corners.push( vert );
-		vert =  GlobWeb.HEALPixBase.fxyf((ix + 1)/nside, iy/nside, face);
+		vert =  HEALPixBase.fxyf((ix + 1)/nside, iy/nside, face);
 		corners.push( vert );
-		vert =  GlobWeb.HEALPixBase.fxyf((ix + 1)/nside, (iy + 1)/nside, face);
+		vert =  HEALPixBase.fxyf((ix + 1)/nside, (iy + 1)/nside, face);
 		corners.push( vert );
-		vert =  GlobWeb.HEALPixBase.fxyf(ix/nside, (iy + 1)/nside, face);
+		vert =  HEALPixBase.fxyf(ix/nside, (iy + 1)/nside, face);
 		corners.push( vert );
 		
 		return corners;
@@ -271,8 +273,6 @@
 			
 		}
 	};
-	
-	$(document).ready(function(){
 
 	test("loc2pix", function()
 	{
@@ -527,8 +527,6 @@
 	});		
   });
 
-
-	
 </script>
 
 <h1 id="qunit-header">QUnit GlobWeb</h1>

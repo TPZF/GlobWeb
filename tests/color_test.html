@@ -8,7 +8,7 @@
 <script src="http://code.jquery.com/jquery-latest.js"></script>
 <link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
 <script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
+<script  src="../examples/require.min.js"></script>
 
 </head>
 
@@ -18,42 +18,42 @@
 
 <script type="text/javascript">
 
-	$(document).ready(function(){
+require(['../src/FeatureStyle'], function (FeatureStyle) {
 
     test("litteral", function()
 	{
-		var white = GlobWeb.FeatureStyle.fromStringToColor('white');
+		var white = FeatureStyle.fromStringToColor('white');
 		deepEqual( [ 1.0, 1.0, 1.0, 1.0], white );
 		
-		var red = GlobWeb.FeatureStyle.fromStringToColor('red');
+		var red = FeatureStyle.fromStringToColor('red');
 		deepEqual( [ 1.0, 0.0, 0.0, 1.0], red );
 	});
 	
      test("hexa", function()
 	{
-		var white = GlobWeb.FeatureStyle.fromStringToColor('#ffffff');
+		var white = FeatureStyle.fromStringToColor('#ffffff');
 		deepEqual( [ 1.0, 1.0, 1.0, 1.0], white );
 		
-		var red = GlobWeb.FeatureStyle.fromStringToColor('#ff0000');
+		var red = FeatureStyle.fromStringToColor('#ff0000');
 		deepEqual( [ 1.0, 0.0, 0.0, 1.0], red );
 	});
  	
      test("rgb", function()
 	{
-		var white = GlobWeb.FeatureStyle.fromStringToColor('rgb(255,255,255)');
+		var white = FeatureStyle.fromStringToColor('rgb(255,255,255)');
 		deepEqual( [ 1.0, 1.0, 1.0, 1.0], white );
 		
-		var red = GlobWeb.FeatureStyle.fromStringToColor('rgb(255,0,0)');
+		var red = FeatureStyle.fromStringToColor('rgb(255,0,0)');
 		deepEqual( [ 1.0, 0.0, 0.0, 1.0], red );
 	});
  
 	
      test("rgba", function()
 	{
-		var white = GlobWeb.FeatureStyle.fromStringToColor('rgba(255,255,255,0)');
+		var white = FeatureStyle.fromStringToColor('rgba(255,255,255,0)');
 		deepEqual( [ 1.0, 1.0, 1.0, 0.0], white );
 		
-		var red = GlobWeb.FeatureStyle.fromStringToColor('rgba(255,0,0,0)');
+		var red = FeatureStyle.fromStringToColor('rgba(255,0,0,0)');
 		deepEqual( [ 1.0, 0.0, 0.0, 0.0], red );
 	});
 

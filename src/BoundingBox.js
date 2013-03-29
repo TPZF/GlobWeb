@@ -106,7 +106,7 @@ BoundingBox.prototype.compute = function(vertices,length,stride)
 	var st = stride || 3;
 	var ll = length || vertices.length;
 	
-	for (var i=stride; i < ll; i += st)
+	for (var i=st; i < ll; i += st)
 	{
 		for (var j=0; j < 3; j++)
 		{
