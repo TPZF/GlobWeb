@@ -166,8 +166,6 @@ RenderContext.prototype.updateViewDependentProperties = function()
 	vec3.set( [ 0.0, 0.0, -1.0 ], this.eyeDirection );
 	mat4.rotateVec3( inverseViewMatrix, this.eyeDirection );
 	
-	this.pixelSizeVector = this.computePixelSizeVector();
-	
 	// Init projection matrix
 	mat4.perspective(this.fov, this.canvas.width / this.canvas.height, this.minNear, this.far, this.projectionMatrix);
 	
@@ -177,9 +175,8 @@ RenderContext.prototype.updateViewDependentProperties = function()
 	// Compute the world frustum
 	this.worldFrustum.inverseTransform( this.frustum, this.viewMatrix );
 	
-	// Init near and far to 'invalid' values
-	this.near = 1e9;
-	this.far = 0.0;
+	// Compute the pixel size vector from the current view/projection matrix
+	this.pixelSizeVector = this.computePixelSizeVector();
 }
 
 /**************************************************************************************************************/
