@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define( ['../glMatrix'], function() {
+ define( ['./Ray','../glMatrix'], function(Ray) {
 
 /**************************************************************************************************************/
 
@@ -25,7 +25,7 @@
 	@constructor
 	Navigation constructor
  */
-var ColladaNavigator = function(renderContext)
+var ColladaNavigator = function(renderContext,model)
 {
 	this.renderContext = renderContext;
     this.pressX = -1;
@@ -46,6 +46,8 @@ var ColladaNavigator = function(renderContext)
 	
 	this.renderContext.near = 0.1;
 	this.renderContext.far = 5000;
+	
+	this.model = model;
 
 	// Update the view matrix now
 	this.computeViewMatrix();
@@ -165,6 +167,7 @@ ColladaNavigator.prototype.handleMouseDown = function(event)
         this.pressY = event.clientY;
 		this.lastMouseX = event.clientX;
 		this.lastMouseY = event.clientY;
+		this.previousEvent = event;
 			
         // Return false to stop mouse down to be propagated when using onmousedown
 		return false;
@@ -180,8 +183,46 @@ ColladaNavigator.prototype.handleMouseDown = function(event)
 /*
 	Pan the navigator
  */
-ColladaNavigator.prototype.pan = function(dx,dy)
+ColladaNavigator.prototype.pan = function(event)
 {
+	var ray = Ray.createFromEvent(this.renderContext,event);
+	var prevRay = Ray.createFromEvent(this.renderContext,this.previousEvent);
+	
+	// Compute plane normal and d
+	var normal = vec3.create();
+	vec3.subtract( ray.orig, this.center, normal );
+	vec3.normalize( normal );
+	var d = vec3.dot( this.center, normal );	
+	
+	var t = ( d - vec3.dot( ray.orig, normal ) ) / vec3.dot( ray.dir, normal );
+	var tPrev = ( d - vec3.dot( prevRay.orig, normal ) ) / vec3.dot( prevRay.dir, normal );
+	
+	var point = ray.computePoint(t);
+	var prevPoint = prevRay.computePoint(tPrev);
+	var dir = vec3.subtract(  point, prevPoint, vec3.create() );
+	vec3.subtract( this.center, dir );
+		
+	this.previousEvent = event;
+	
+	this.computeViewMatrix();
+	
+	// Recompute center
+	var dir = vec3.subtract( this.center, ray.orig, vec3.create() );
+	vec3.normalize( dir );
+	var ray = new Ray( ray.orig, dir);
+	var intersections = ray.lodNodeIntersect(this.node);
+	if ( intersections.length > 0 )
+	{	
+		intersections.sort( function(a,b) {
+			return a.t - b.t;
+		});
+		var newCenter = ray.computePoint( intersections[0].t );
+		this.distance = intersections[0].t;
+		this.center = newCenter;
+	
+		this.computeViewMatrix();
+	}
+	
 }
 
 /**************************************************************************************************************/
@@ -220,24 +261,29 @@ ColladaNavigator.prototype.handleMouseMove = function(event)
 
 	var dx = (event.clientX - this.lastMouseX);
 	var dy = (event.clientY - this.lastMouseY);
-	
-	this.lastMouseX = event.clientX;
-	this.lastMouseY = event.clientY;
+		
+	var ret = false;
 	
 	// Pan
     if ( this.pressedButton == 0 )
     {
-		this.pan( dx, dy );
-		return true;
+		this.pan( event );
+		ret = true;
 	}
 	// Rotate
     else if ( this.pressedButton == 1 )
     {
+		var dx = (event.clientX - this.lastMouseX);
+		var dy = (event.clientY - this.lastMouseY);
 		this.rotate(dx,dy);
-		return true;
-    }
+		ret = true;
+   }
 	
-	return false;
+
+	this.lastMouseX = event.clientX;
+	this.lastMouseY = event.clientY;
+	
+	return ret;
 }
 
 /**************************************************************************************************************/
