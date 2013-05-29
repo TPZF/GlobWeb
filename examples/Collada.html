@@ -77,8 +77,8 @@ $(function()
 	{
 		if ( xhr.readyState == 4 )// && xhr.status == 200)
 		{
-			var model = ColladaParser.parse( xhr.responseXML );
-			sgRenderer = new ModelRenderer(renderContext,model);
+			var node = ColladaParser.parse( xhr.responseXML );
+			sgRenderer = new ModelRenderer(renderContext,node);
 		}
 	};
 	xhr.open("GET", "models/warehouse_model.dae");
