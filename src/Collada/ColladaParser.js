@@ -22,7 +22,7 @@
 /**
  * The scene graph built by the parser
  */
-var model = null;
+var root = null;
 
 /**
  * The material map
@@ -518,8 +518,7 @@ var parseLibraryVisualScenes = function(library)
 	var visual_scene = library.firstElementChild;
 	var child = visual_scene.firstElementChild;
 	
-	var root = new Model.Node();
-	model = new Model(root);
+	root = new Model.Node();
 	
 	while ( child )
 	{
@@ -547,6 +546,21 @@ var parse = function(doc)
 {
 	baseURI = doc.documentURI.substr( 0, doc.documentURI.lastIndexOf('/') + 1 );
 	rootElement = doc.documentElement;
+	
+	// First parse materials
+	var lib_mat = rootElement.getElementsByTagName('library_materials');
+	if ( lib_mat )
+	{
+		parseLibraryMaterials( lib_mat[0] );
+	}
+	
+	// Then parse geometries
+	var lib_geom = rootElement.getElementsByTagName('library_geometries');
+	if ( lib_geom )
+	{
+		parseLibraryGeometries( lib_geom[0] );
+	}
+
 	var child = rootElement.firstElementChild;
 	while ( child )
 	{
@@ -555,12 +569,6 @@ var parse = function(doc)
 		case "library_effects":
 			break;
 		case "library_images":
-			break;
-		case "library_materials":
-			parseLibraryMaterials( child );
-			break;
-		case "library_geometries":
-			parseLibraryGeometries( child );
 			break;
 		case "library_nodes":
 			parseLibraryNodes( child );
@@ -574,7 +582,7 @@ var parse = function(doc)
 		child = child.nextElementSibling;
 	}
 	
-	return model;
+	return root;
 }
 
 return { 
