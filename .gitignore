@@ -1,5 +1,7 @@
 generated/
 api_doc/
+data/
+
 *~
 ############
 ## Windows
