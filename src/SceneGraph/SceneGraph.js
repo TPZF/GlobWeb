@@ -19,16 +19,9 @@
 
  define( ["../BoundingBox"], function(BoundingBox) {
   
-/**************************************************************************************************************/
-
-/**
- *	@constructor Model
- *	
- */
-var Model = function(root)
-{
-	this.root = root;
-}
+  
+// Namespace for SceneGraph
+var SceneGraph = {};
  
 /**************************************************************************************************************/
 
@@ -36,7 +29,7 @@ var Model = function(root)
  *	@constructor Model Node
  *	
  */
-Model.Node = function()
+SceneGraph.Node = function()
 {
 	this.geometries = [];
 	this.children = [];
@@ -96,7 +89,7 @@ BoundingBox.prototype.transform = function(matrix)
 /**
  * Compute the BBox of a node
  */
-Model.Node.prototype.computeBBox = function()
+SceneGraph.Node.prototype.computeBBox = function()
 {
 	this.bbox = new BoundingBox();
 	
@@ -118,13 +111,22 @@ Model.Node.prototype.computeBBox = function()
 	return this.bbox;
 }
 
+/**************************************************************************************************************/
+
+/**
+ *	Intersect a node with a ray
+ */
+SceneGraph.Node.prototype.intersectWith = function(ray)
+{
+	return ray.nodeIntersect(this);
+}
 
 /**************************************************************************************************************/
 
 /**
  *	Render a node
  */
-Model.Node.prototype.render = function(renderer)
+SceneGraph.Node.prototype.render = function(renderer)
 {
 	// render the sub nodes (maybe culling?)
 	for (var i=0; i < this.children.length; i++)
@@ -156,7 +158,7 @@ Model.Node.prototype.render = function(renderer)
  *	@constructor Model Material
  *	
  */
-Model.Material = function()
+SceneGraph.Material = function()
 {
 	this.diffuse = [ 1.0, 1.0, 1.0, 1.0 ];
 	this.texture = null;
@@ -167,7 +169,7 @@ Model.Material = function()
 /**
  * Bind the material in the gl context
  */
-Model.Material.prototype.bind = function(gl,program,renderer)
+SceneGraph.Material.prototype.bind = function(gl,program,renderer)
 {
 	gl.uniform4fv( program.uniforms["diffuse"], this.diffuse );
 	if ( this.texture )
@@ -182,7 +184,7 @@ Model.Material.prototype.bind = function(gl,program,renderer)
  *	@constructor Model Texture
  *	
  */
-Model.Texture = function(url)
+SceneGraph.Texture = function(url)
 {
 	var self = this;
 	this.glTexture = null;
@@ -214,7 +216,7 @@ var _nextHighestPowerOfTwo = function(x)
 /**
  * Bind the texture in the gl context
  */
-Model.Texture.prototype.bind = function(gl)
+SceneGraph.Texture.prototype.bind = function(gl)
 {
 	if ( this.glTexture )
 	{
@@ -258,7 +260,7 @@ Model.Texture.prototype.bind = function(gl)
  *	@constructor Model Geometry
  *	
  */
-Model.Geometry = function()
+SceneGraph.Geometry = function()
 {
 	this.material = null;
 	this.mesh = null;
@@ -269,7 +271,7 @@ Model.Geometry = function()
 /**
  *	@constructor Model Mesh
  */
-Model.Mesh = function()
+SceneGraph.Mesh = function()
 {
 	this.vertices = null;
 	this.tcoords = null;
@@ -282,7 +284,7 @@ Model.Mesh = function()
 /**
  *	Render the mesh
  */
-Model.Mesh.prototype.render = function(gl,program)
+SceneGraph.Mesh.prototype.render = function(gl,program)
 {
 	var numVertices = this.vertices.length / 3;
 	if (!this.glVertexBuffer)
@@ -329,6 +331,6 @@ Model.Mesh.prototype.render = function(gl,program)
  
 /**************************************************************************************************************/
 
-return Model;
+return SceneGraph;
 
 });

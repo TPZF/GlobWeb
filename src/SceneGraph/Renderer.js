@@ -22,9 +22,9 @@ define(['../Program','../glMatrix'], function(Program) {
 /**************************************************************************************************************/
 
 /**
- *	@constructor ModelRenderer
+ *	@constructor SceneGraph Renderer
  */
-var ModelRenderer = function(renderContext,node)
+var SceneGraphRenderer = function(renderContext,node)
 {
 	var vertexShader = "\
 	attribute vec3 vertex; \n\
@@ -81,7 +81,7 @@ var ModelRenderer = function(renderContext,node)
 /**
  *	Recursive method to render node
  */
-ModelRenderer.prototype.renderNode = function(node,parent)
+SceneGraphRenderer.prototype.renderNode = function(node,parent)
 {
 	var rc = this.renderContext;
 	var gl = rc.gl;
@@ -107,7 +107,7 @@ ModelRenderer.prototype.renderNode = function(node,parent)
 /**
  *	Main render
  */
-ModelRenderer.prototype.render = function()
+SceneGraphRenderer.prototype.render = function()
 {
 	var rc = this.renderContext;
 	var gl = rc.gl;
@@ -142,6 +142,6 @@ ModelRenderer.prototype.render = function()
 
 /**************************************************************************************************************/
 
-return ModelRenderer;
+return SceneGraphRenderer;
 
 });

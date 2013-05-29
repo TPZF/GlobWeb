@@ -17,12 +17,12 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./ColladaParser','./Model','../BoundingBox'], function(ColladaParser,Model,BoundingBox) {
+define(['./ColladaParser','../BoundingBox'], function(ColladaParser,BoundingBox) {
  
 /**************************************************************************************************************/
 
 /**
- *	@constructor ModelRenderer
+ *	@constructor LODNode
  */
 var LODNode = function()
 {
@@ -145,6 +145,18 @@ LODNode.prototype.computeBBox = function()
 	return this.bbox;
 }
 
+/**************************************************************************************************************/
+
+/**
+ *	Intersect a node with a ray
+ */
+LODNode.prototype.intersectWith = function(ray)
+{
+	return ray.lodNodeIntersect(this);
+}
+
+/**************************************************************************************************************/
+
 /**
  *	Recursive method to render node
  */
@@ -252,14 +264,13 @@ LODNode.load = function( path, callback )
 	var xhr = new XMLHttpRequest();
 	xhr.onreadystatechange = function(e)
 	{
-		if ( xhr.readyState == 4 )// && xhr.status == 200)
+		if ( xhr.readyState == 4 && xhr.status == 200)
 		{
 			var node = parseLOD( xhr.responseXML );
 							
 			if ( callback )
 			{
 				callback( node );
-				
 			}
 		}
 	};

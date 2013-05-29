@@ -44,8 +44,8 @@
 
 <script>
 
-require(['../src/RenderContext','../src/Collada/ColladaNavigator','../src/Collada/ColladaParser','../src/Collada/ModelRenderer'], 
-	function (RenderContext,ColladaNavigator,ColladaParser,ModelRenderer)  {
+require(['../src/RenderContext','../src/SceneGraph/Navigation','../src/SceneGraph/ColladaParser','../src/SceneGraph/Renderer'], 
+	function (RenderContext,Navigation,ColladaParser,SceneGraphRenderer)  {
 
 var fpsElement = null;
 var renderContext;
@@ -67,7 +67,7 @@ $(function()
 	
 	renderContext = new RenderContext( { canvas: "ColladaCanvas" });
 
-	var nav = new ColladaNavigator(renderContext);
+	var nav = new Navigation(renderContext);
 	nav.setupDefaultEventHandlers();
 		
 	var sgRenderer;
@@ -78,7 +78,8 @@ $(function()
 		if ( xhr.readyState == 4 )// && xhr.status == 200)
 		{
 			var node = ColladaParser.parse( xhr.responseXML );
-			sgRenderer = new ModelRenderer(renderContext,node);
+			nav.node = node;
+			sgRenderer = new SceneGraphRenderer(renderContext,node);
 		}
 	};
 	xhr.open("GET", "models/warehouse_model.dae");

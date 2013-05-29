@@ -44,8 +44,8 @@
 
 <script>
 
-require(['../src/RenderContext','../src/Collada/ColladaNavigator','../src/Collada/ColladaParser','../src/Collada/ModelRenderer','../src/Collada/LODNode'], 
-	function (RenderContext,ColladaNavigator,ColladaParser,ModelRenderer,LODNode)  {
+require(['../src/RenderContext','../src/SceneGraph/Navigation','../src/SceneGraph/ColladaParser','../src/SceneGraph/Renderer','../src/SceneGraph/SceneGraph','../src/SceneGraph/LODNode'], 
+	function (RenderContext,Navigation,ColladaParser,SceneGraphRenderer,SceneGraph,LODNode)  {
 
 var fpsElement = null;
 var renderContext;
@@ -62,6 +62,7 @@ var stats = function()
 	renderContext.numFrames = 0;
 }
 
+
 $(function()
 {	
 	fpsElement = document.getElementById("fps");
@@ -69,67 +70,38 @@ $(function()
 	
 	renderContext = new RenderContext( { canvas: "ColladaCanvas" });
 
-	nav = new ColladaNavigator(renderContext);
+	var root = new SceneGraph.Node();
+	
+	nav = new Navigation(renderContext,root);
 	nav.setupDefaultEventHandlers();
 	
 	
-	sgRenderer = new ModelRenderer(renderContext);
+	sgRenderer = new SceneGraphRenderer(renderContext,root);
 	sgRenderer.postFrame = function() { LODNode.Loader.postFrame() };
 	
-	LODNode.load("Data/Collada-ecef/Data/Tile_-009_-006/Tile_-009_-006.xml", function(node) {
-	
-		nav.node = node;
+	var addToRoot = function(node) {
 		nav.center = vec3.create( node.center );
 		nav.distance = 3 * node.radius;
 		nav.computeViewMatrix();
 		
-		sgRenderer.nodes.push( node );
-	});
+		root.children.push( node );
+	};
 	
-/*	LODNode.load("Collada-ecef/Data/Tile_-009_-007/Tile_-009_-007.xml", function(model) {
-		nav.center = vec3.create( model.root.center );
-		nav.distance = 3 * model.root.radius;
-		nav.computeViewMatrix();
-		
-		sgRenderer.models.push( model );
-	});
+	LODNode.load("Data/Collada-ecef/Data/Tile_-009_-006/Tile_-009_-006.xml", addToRoot );
+
+	LODNode.load("Data/Collada-ecef/Data/Tile_-009_-007/Tile_-009_-007.xml", addToRoot );
 	
-	LODNode.load("Collada-ecef/Data/Tile_-009_-008/Tile_-009_-008.xml", function(model) {
-		nav.center = vec3.create( model.root.center );
-		nav.distance = 3 * model.root.radius;
-		nav.computeViewMatrix();
-		
-		sgRenderer.models.push( model );
-	});
+	LODNode.load("Data/Collada-ecef/Data/Tile_-009_-008/Tile_-009_-008.xml", addToRoot );
 	
-	LODNode.load("Collada-ecef/Data/Tile_-010_-006/Tile_-010_-006.xml", function(model) {
-		nav.center = vec3.create( model.root.center );
-		nav.distance = 3 * model.root.radius;
-		nav.computeViewMatrix();
-		
-		sgRenderer.models.push( model );
-	});
+	LODNode.load("Data/Collada-ecef/Data/Tile_-010_-006/Tile_-010_-006.xml", addToRoot );
 	
-	LODNode.load("Collada-ecef/Data/Tile_-010_-007/Tile_-010_-007.xml", function(model) {
-		nav.center = vec3.create( model.root.center );
-		nav.distance = 3 * model.root.radius;
-		nav.computeViewMatrix();
-		
-		sgRenderer.models.push( model );
-	});
+	LODNode.load("Data/Collada-ecef/Data/Tile_-010_-007/Tile_-010_-007.xml", addToRoot );
 	
-	LODNode.load("Collada-ecef/Data/Tile_-010_-008/Tile_-010_-008.xml", function(model) {
-		nav.center = vec3.create( model.root.center );
-		nav.distance = 3 * model.root.radius;
-		nav.computeViewMatrix();
-		
-		sgRenderer.models.push( model );
-	});*/
+	LODNode.load("Data/Collada-ecef/Data/Tile_-010_-008/Tile_-010_-008.xml",addToRoot );
 	
 	
 	var tick = function() {
         requestAnimationFrame(tick);
-       // colladaRenderer.render();
 		if ( sgRenderer )
 			sgRenderer.render();
 		renderContext.numFrames++;

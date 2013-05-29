@@ -25,7 +25,7 @@
 	@constructor
 	Navigation constructor
  */
-var ColladaNavigator = function(renderContext,model)
+var SceneGraphNavigation = function(renderContext,node)
 {
 	this.renderContext = renderContext;
     this.pressX = -1;
@@ -47,7 +47,7 @@ var ColladaNavigator = function(renderContext,model)
 	this.renderContext.near = 0.1;
 	this.renderContext.far = 5000;
 	
-	this.model = model;
+	this.node = node;
 
 	// Update the view matrix now
 	this.computeViewMatrix();
@@ -58,7 +58,7 @@ var ColladaNavigator = function(renderContext,model)
 /** 
  Setup the default event handlers for the navigator
  */
-ColladaNavigator.prototype.setupDefaultEventHandlers = function(zoomOnDblClick)
+SceneGraphNavigation.prototype.setupDefaultEventHandlers = function(zoomOnDblClick)
 {
 	// Setup the mouse event handlers
 	var self = this;
@@ -77,7 +77,7 @@ ColladaNavigator.prototype.setupDefaultEventHandlers = function(zoomOnDblClick)
 /*
 	Compute the inverse view matrix
  */
-ColladaNavigator.prototype.applyLocalRotation = function(matrix)
+SceneGraphNavigation.prototype.applyLocalRotation = function(matrix)
 {
 	mat4.rotate( matrix, (this.heading) * Math.PI / 180.0, [ 0.0, 0.0, 1.0 ] );
 	mat4.rotate( matrix, (90 - this.tilt) * Math.PI / 180.0, [ 1.0, 0.0, 0.0 ] );
@@ -88,7 +88,7 @@ ColladaNavigator.prototype.applyLocalRotation = function(matrix)
 /*
 	Compute the view matrix
  */
-ColladaNavigator.prototype.computeViewMatrix = function()
+SceneGraphNavigation.prototype.computeViewMatrix = function()
 {
     this.computeInverseViewMatrix();
 	mat4.inverse( this.inverseViewMatrix, this.renderContext.viewMatrix );
@@ -99,7 +99,7 @@ ColladaNavigator.prototype.computeViewMatrix = function()
 /*
 	Compute the inverse view matrix
  */
-ColladaNavigator.prototype.computeInverseViewMatrix = function()
+SceneGraphNavigation.prototype.computeInverseViewMatrix = function()
 {	
 	mat4.identity( this.inverseViewMatrix );
 	mat4.translate( this.inverseViewMatrix, this.center );
@@ -112,7 +112,7 @@ ColladaNavigator.prototype.computeInverseViewMatrix = function()
 /*
 	Event handler for mouse wheel
  */
-ColladaNavigator.prototype.handleMouseWheel = function(event)
+SceneGraphNavigation.prototype.handleMouseWheel = function(event)
 {
 	var previousDistance = this.distance;
 	
@@ -154,7 +154,7 @@ ColladaNavigator.prototype.handleMouseWheel = function(event)
 /*
 	Event handler for mouse down
  */
-ColladaNavigator.prototype.handleMouseDown = function(event)
+SceneGraphNavigation.prototype.handleMouseDown = function(event)
 {
 	//console.log("button " + event.button);
 	//console.log("modifiers " + event.altKey);
@@ -183,7 +183,7 @@ ColladaNavigator.prototype.handleMouseDown = function(event)
 /*
 	Pan the navigator
  */
-ColladaNavigator.prototype.pan = function(event)
+SceneGraphNavigation.prototype.pan = function(event)
 {
 	var ray = Ray.createFromEvent(this.renderContext,event);
 	var prevRay = Ray.createFromEvent(this.renderContext,this.previousEvent);
@@ -210,7 +210,7 @@ ColladaNavigator.prototype.pan = function(event)
 	var dir = vec3.subtract( this.center, ray.orig, vec3.create() );
 	vec3.normalize( dir );
 	var ray = new Ray( ray.orig, dir);
-	var intersections = ray.lodNodeIntersect(this.node);
+	var intersections = this.node.intersectWith(ray);
 	if ( intersections.length > 0 )
 	{	
 		intersections.sort( function(a,b) {
@@ -230,7 +230,7 @@ ColladaNavigator.prototype.pan = function(event)
 /*
 	Rotate the navigator
  */
-ColladaNavigator.prototype.rotate = function(dx,dy)
+SceneGraphNavigation.prototype.rotate = function(dx,dy)
 {
 	var previousHeading = this.heading;
 	var previousTilt = this.tilt;
@@ -253,7 +253,7 @@ ColladaNavigator.prototype.rotate = function(dx,dy)
 /*
 	Event handler for mouse move
  */
-ColladaNavigator.prototype.handleMouseMove = function(event)
+SceneGraphNavigation.prototype.handleMouseMove = function(event)
 {
     // No button pressed
     if (this.pressedButton < 0)
@@ -291,7 +291,7 @@ ColladaNavigator.prototype.handleMouseMove = function(event)
 /*
 	Event handler for mouse up
  */
-ColladaNavigator.prototype.handleMouseUp = function(event)
+SceneGraphNavigation.prototype.handleMouseUp = function(event)
 {
     // No button pressed anymore
 	this.pressedButton = -1;
@@ -305,6 +305,6 @@ ColladaNavigator.prototype.handleMouseUp = function(event)
     return true;
 }
 
-return ColladaNavigator
+return SceneGraphNavigation
 
 });

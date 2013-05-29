@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define( ['./Model'], function(Model) {
+ define( ['./SceneGraph'], function(SceneGraph) {
 
 /**
  * The scene graph built by the parser
@@ -123,7 +123,7 @@ var parseTexture = function(effect,node)
 	{
 		image = findElementByUrl(rootElement,"image",'#' + textureId);
 	}
-	return new Model.Texture( baseURI + findElementByTag( image, "init_from" ).textContent.trim() );
+	return new SceneGraph.Texture( baseURI + findElementByTag( image, "init_from" ).textContent.trim() );
 }
 
 /**
@@ -131,7 +131,7 @@ var parseTexture = function(effect,node)
  */
 var parseShader = function(effect,shader)
 {
-	var material = new Model.Material();
+	var material = new SceneGraph.Material();
 	
 	var child = shader.firstElementChild;
 	while ( child )
@@ -298,7 +298,7 @@ var parsePolygons = function(node,colladaGeometry)
 		child = child.nextElementSibling;
 	}
 
-	var mesh = new Model.Mesh();
+	var mesh = new SceneGraph.Mesh();
 	mesh.vertices = meshVerts;
 	if ( meshTexCoords ) mesh.tcoords = meshTexCoords;
 	colladaGeometry.meshes[ node.getAttribute("material") ] = mesh;
@@ -351,7 +351,7 @@ var parseTriangles = function(node,colladaGeometry)
 					meshTexCoords[ 2*i+1 ] = texCoords[ 2*tci+1 ];
 				}
 			}
-			var mesh = new Model.Mesh();
+			var mesh = new SceneGraph.Mesh();
 			mesh.vertices = meshVerts;
 			if ( meshTexCoords ) mesh.tcoords = meshTexCoords;
 			colladaGeometry.meshes[ node.getAttribute("material") ] = mesh;
@@ -434,7 +434,7 @@ var parseLibraryGeometries = function(node)
  */
 var parseNode = function(element)
 {
-	var node = new Model.Node();
+	var node = new SceneGraph.Node();
 	
 	var child = element.firstElementChild;
 	while ( child )
@@ -457,7 +457,7 @@ var parseNode = function(element)
 				var instance_materials = child.getElementsByTagName("instance_material");
 				for ( var i = 0; i < instance_materials.length; i++ )
 				{
-					var geometry = new Model.Geometry();
+					var geometry = new SceneGraph.Geometry();
 					geometry.mesh = colladaGeometry.meshes[ instance_materials[i].getAttribute("symbol") ];						
 					geometry.material = materials[ instance_materials[i].getAttribute("target") ];
 					
@@ -518,7 +518,7 @@ var parseLibraryVisualScenes = function(library)
 	var visual_scene = library.firstElementChild;
 	var child = visual_scene.firstElementChild;
 	
-	root = new Model.Node();
+	root = new SceneGraph.Node();
 	
 	while ( child )
 	{
