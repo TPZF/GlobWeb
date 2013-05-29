@@ -1,0 +1,194 @@
+<html>
+
+<head>
+<title>ColladaRenderer example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+<script  src="require.min.js"></script>
+
+<style type="text/css">
+	
+	.fps
+	{
+		position: absolute;
+		z-index: 0;
+		border: 1px solid black;
+		background-color: rgb(255,255,255);
+		opacity: 0.8;
+		border-radius: 10px;
+		padding: 5px;
+		left: 20px;
+		top: 70px;
+	}
+	
+	.canvas
+	{
+		border : 1px;
+		solid black;
+	#	position: relative;
+		width: 70%;
+		height: 70%;
+	#	float: left;
+	}
+
+	#colladaRenderer {
+		font-family:Georgia,serif;
+		color:#4E443C;
+		font-size:2em;
+		font-variant: small-caps; text-transform: none; font-weight: 100; margin-bottom: 10;
+	}
+
+</style>
+
+<script>
+
+require(['../src/RenderContext','../src/Collada/ColladaNavigator','../src/Collada/ColladaParser','../src/Collada/ModelRenderer',
+		'../src/Collada/Model','../src/Collada/Ray'], 
+	function (RenderContext,ColladaNavigator,ColladaParser,ModelRenderer,Model,Ray)  {
+
+var fpsElement = null;
+var renderContext;
+var sgRenderer;
+var nav;
+
+var stats = function()
+{
+	if ( fpsElement != null )
+	{
+		fpsElement.innerHTML = "<span style=\"font-weight:bold\">FPS : " + renderContext.numFrames + "</span>";
+	}
+
+	renderContext.numFrames = 0;
+}
+
+var createGeometry = function(vertices,color)
+{
+	var geometry = new Model.Geometry();
+	geometry.material = new Model.Material();
+	geometry.material.diffuse = color;
+	geometry.mesh = new Model.Mesh();
+	geometry.mesh.vertices = vertices;
+	return geometry;
+};
+
+var createCube = function()
+{
+	var node = new Model.Node();
+	
+	node.geometries.push( createGeometry([
+		-1.0, -1.0, -1.0,
+		-1.0, 1.0, -1.0,
+		1.0, 1.0, -1.0,
+		1.0, 1.0, -1.0,
+		1.0, -1.0, -1.0,
+		-1.0, -1.0, -1.0
+	], [1.0, 0, 0, 1.0] ) );
+	
+	node.geometries.push( createGeometry([
+		-1.0, -1.0, 1.0,
+		-1.0, 1.0, 1.0,
+		1.0, 1.0, 1.0,
+		1.0, 1.0, 1.0,
+		1.0, -1.0, 1.0,
+		-1.0, -1.0, 1.0
+	], [0, 1.0, 0, 1.0] ) );
+	
+	node.geometries.push( createGeometry([
+		-1.0, -1.0, -1.0,
+		-1.0, -1.0, 1.0,
+		1.0, -1.0, 1.0,
+		1.0, -1.0, 1.0,
+		1.0, -1.0, -1.0,
+		-1.0, -1.0, -1.0
+	], [0, 0, 1.0, 1.0] ) );
+	
+	node.geometries.push( createGeometry([
+		-1.0, 1.0, -1.0,
+		-1.0, 1.0, 1.0,
+		1.0, 1.0, 1.0,
+		1.0, 1.0, 1.0,
+		1.0, 1.0, -1.0,
+		-1.0, 1.0, -1.0
+	], [1.0, 1.0, 0, 1.0] ) );
+	
+	node.geometries.push( createGeometry([
+		-1.0, -1.0, -1.0,
+		-1.0, -1.0, 1.0,
+		-1.0, 1.0, 1.0,
+		-1.0, 1.0, 1.0,
+		-1.0, 1.0, -1.0,
+		-1.0, -1.0, -1.0
+	], [0, 1.0, 1.0, 1.0] ) );
+	
+	node.geometries.push( createGeometry([
+		1.0, -1.0, -1.0,
+		1.0, -1.0, 1.0,
+		1.0, 1.0, 1.0,
+		1.0, 1.0, 1.0,
+		1.0, 1.0, -1.0,
+		1.0, -1.0, -1.0
+	], [1.0, 0, 1.0, 1.0] ) );
+	
+	
+	return node;
+}
+
+$(function()
+{	
+	fpsElement = document.getElementById("fps");
+	window.setInterval(stats,1000);
+	
+	renderContext = new RenderContext( { canvas: "ColladaCanvas" });
+
+	nav = new ColladaNavigator(renderContext);
+	nav.setupDefaultEventHandlers();
+		
+	var cube = createCube();
+	sgRenderer = new ModelRenderer(renderContext, cube );
+
+	
+	$(window).dblclick( function(event) {
+		
+		var ray = Ray.createFromEvent( renderContext, event );
+		
+		var intersections = ray.nodeIntersect( cube );
+		
+		if ( intersections.length > 0 )
+		{
+			console.log( intersections[0].geometry.material.diffuse );
+		}
+	});
+	
+	var tick = function() {
+        requestAnimationFrame(tick);
+		if ( sgRenderer )
+			sgRenderer.render();
+		renderContext.numFrames++;
+    }
+	window.requestAnimationFrame(tick);
+
+});
+
+});
+
+</script>
+
+</head>
+
+<body>
+	<h1 id="colladaRenderer" align="center">COLLADARenderer</h1>
+	
+    <div align = "center"><canvas id="ColladaCanvas" align="center" style="border: none;" width="800" height="600"></canvas>
+	</div>
+	
+	<div align="left"><span id="fps" class="fps" style="font-weight:bold">FPS : 0</span><br/>
+	</div>
+	
+    <br/>
+
+</body>
+
+</html>
+
