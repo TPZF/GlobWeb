@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(function() {
+ define( ["../BoundingBox"], function(BoundingBox) {
   
 /**************************************************************************************************************/
 
@@ -42,6 +42,113 @@ Model.Node = function()
 	this.children = [];
 	this.matrix = null;
 }
+
+BoundingBox.prototype.merge = function(bbox)
+{
+	if ( !bbox.min || !bbox.max )
+		return;
+	
+	if (this.min)
+	{
+		if (bbox.min[0] < this.min[0])
+			this.min[0] = bbox.min[0];
+		if (bbox.min[1] < this.min[1])
+			this.min[1] = bbox.min[1];
+		if (bbox.min[2] < this.min[2])
+			this.min[2] = bbox.min[2];
+	}
+	else
+	{
+		this.min = vec3.create(bbox.min);
+	}
+		
+	if (this.max)
+	{
+		if (bbox.max[0] > this.max[0])
+			this.max[0] = bbox.max[0];
+		if (bbox.max[1] > this.max[1])
+			this.max[1] = bbox.max[1];
+		if (bbox.max[2] > this.max[2])
+			this.max[2] = bbox.max[2];
+	}
+	else
+	{
+		this.max = vec3.create(bbox.max);
+	}
+}
+
+BoundingBox.prototype.transform = function(matrix)
+{
+	var vertices = [];
+	
+	for ( var i = 0; i < 8; i++ )
+	{
+		var vec = mat4.multiplyVec3( matrix, this.getCorner(i) );
+		vertices.push( vec[0], vec[1], vec[2] );
+	}
+	
+	this.compute( vertices );
+}
+ 
+
+/**************************************************************************************************************/
+
+/**
+ * Compute the BBox of a node
+ */
+Model.Node.prototype.computeBBox = function()
+{
+	this.bbox = new BoundingBox();
+	
+	for ( var i = 0; i < this.geometries.length; i++ )
+	{
+		var bbox = new BoundingBox();
+		bbox.compute( this.geometries[i].mesh.vertices );
+		this.bbox.merge(bbox);
+	}
+	
+	for ( var i = 0; i < this.children.length; i++ )
+	{
+		this.bbox.merge( this.children[i].computeBBox() );
+	}
+	
+	if (this.matrix)
+		this.bbox.transform(this.matrix);
+	
+	return this.bbox;
+}
+
+
+/**************************************************************************************************************/
+
+/**
+ *	Render a node
+ */
+Model.Node.prototype.render = function(renderer)
+{
+	// render the sub nodes (maybe culling?)
+	for (var i=0; i < this.children.length; i++)
+	{
+		renderer.renderNode( this.children[i] );
+	}
+	
+	// Render geometries if any
+	if ( this.geometries.length > 0 )
+	{	
+		var rc = renderer.renderContext;
+		var gl = rc.gl;
+		
+		gl.uniformMatrix4fv( renderer.program.uniforms["modelViewMatrix"], false, renderer.matrixStack[ renderer.matrixStack.length-1 ] );
+		
+		for (var i=0; i < this.geometries.length; i++)
+		{
+			var geom = this.geometries[i];
+			geom.material.bind(gl,renderer.program,renderer);			
+			geom.mesh.render(gl,renderer.program);
+		}
+	}
+}
+
  
 /**************************************************************************************************************/
 
@@ -60,11 +167,13 @@ Model.Material = function()
 /**
  * Bind the material in the gl context
  */
-Model.Material.prototype.bind = function(gl,program)
+Model.Material.prototype.bind = function(gl,program,renderer)
 {
 	gl.uniform4fv( program.uniforms["diffuse"], this.diffuse );
 	if ( this.texture )
-		this.texture.bind( gl );
+		this.texture.bind( gl,renderer );
+	else
+		gl.bindTexture(gl.TEXTURE_2D, renderer.defaultTexture);
 }
   
 /**************************************************************************************************************/
@@ -111,32 +220,35 @@ Model.Texture.prototype.bind = function(gl)
 	{
 		gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
 	}
-	else if ( this.image.complete 
-		&& this.image.width > 0 && this.image.height > 0 )
+	else
 	{
-		this.glTexture = gl.createTexture();
-		gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
-		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-		
-		if (!_isPowerOfTwo(this.image.width) || !_isPowerOfTwo(this.image.height)) 
+		if ( this.image.complete 
+			&& this.image.width > 0 && this.image.height > 0 )
 		{
-			// Scale up the texture to the next highest power of two dimensions.
-			var canvas = document.createElement("canvas");
-			canvas.width = _nextHighestPowerOfTwo(this.image.width);
-			canvas.height = _nextHighestPowerOfTwo(this.image.height);
-			var ctx = canvas.getContext("2d");
-			ctx.drawImage(this.image, 0, 0, canvas.width, canvas.height);
-			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+			this.glTexture = gl.createTexture();
+			gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
+			gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+			
+			if (!_isPowerOfTwo(this.image.width) || !_isPowerOfTwo(this.image.height)) 
+			{
+				// Scale up the texture to the next highest power of two dimensions.
+				var canvas = document.createElement("canvas");
+				canvas.width = _nextHighestPowerOfTwo(this.image.width);
+				canvas.height = _nextHighestPowerOfTwo(this.image.height);
+				var ctx = canvas.getContext("2d");
+				ctx.drawImage(this.image, 0, 0, canvas.width, canvas.height);
+				gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+			}
+			else
+			{
+				gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image);
+			}
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, this.wrap[0]);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, this.wrap[1]);
+			gl.generateMipmap(gl.TEXTURE_2D);
 		}
-		else
-		{
-			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image);
-		}
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, this.wrap[0]);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, this.wrap[1]);
-		gl.generateMipmap(gl.TEXTURE_2D);
 	}
 }
  
@@ -178,7 +290,8 @@ Model.Mesh.prototype.render = function(gl,program)
 		var vb = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, vb);
 		
-		var numElements = this.tcoords ? 5 : 3;
+		// TODO : manage tcoords in the ModelRenderer
+		var numElements = 5; //this.tcoords ? 5 : 3;
 		this.vbStride = numElements * 4;
 		var verts = new Float32Array( numVertices * numElements  );
 		for ( var n = 0; n < numVertices; n++ )
@@ -194,6 +307,11 @@ Model.Mesh.prototype.render = function(gl,program)
 				verts[on+3] = this.tcoords[tn];
 				verts[on+4] = this.tcoords[tn+1];
 			}
+			else
+			{
+				verts[on+3] = 0.0;
+				verts[on+4] = 0.0;
+			}
 		}
 		gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
 		
@@ -203,8 +321,7 @@ Model.Mesh.prototype.render = function(gl,program)
 	// Bind the vertex buffer
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.glVertexBuffer);
 	gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, this.vbStride, 0);
-	if ( this.tcoords )
-		gl.vertexAttribPointer(program.attributes['tcoord'], 2, gl.FLOAT, false, this.vbStride, 12);
+	gl.vertexAttribPointer(program.attributes['tcoord'], 2, gl.FLOAT, false, this.vbStride, 12);
 	
 	// Draw arrays
 	gl.drawArrays(gl.TRIANGLES, 0, numVertices);

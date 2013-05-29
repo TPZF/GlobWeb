@@ -24,7 +24,7 @@ define(['../Program','../glMatrix'], function(Program) {
 /**
  *	@constructor ModelRenderer
  */
-var ModelRenderer = function(renderContext,model)
+var ModelRenderer = function(renderContext,node)
 {
 	var vertexShader = "\
 	attribute vec3 vertex; \n\
@@ -52,13 +52,28 @@ var ModelRenderer = function(renderContext,model)
 	} \n\
 	";
 	
+	var gl = renderContext.gl;
+	this.defaultTexture = gl.createTexture();
+	gl.bindTexture(gl.TEXTURE_2D, this.defaultTexture);
+	var whitePixel = new Uint8Array([255, 255, 255, 255]);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, whitePixel);
+
 	this.renderContext = renderContext;
 	
 	this.program = new Program(renderContext);
 	this.program.createFromSource(vertexShader,fragmentShader);
-	this.models = [ model ];
+	this.nodes = [];
+	if ( node )
+	{
+		this.nodes.push( node );
+	}
 	
 	this.matrixStack = [];
+	
+	renderContext.minNear = 0.1;
+	renderContext.far = 5000;
+	renderContext.fov = 60;
+
 }
 
 /**************************************************************************************************************/
@@ -66,7 +81,7 @@ var ModelRenderer = function(renderContext,model)
 /**
  *	Recursive method to render node
  */
-ModelRenderer.prototype.renderNode = function(node)
+ModelRenderer.prototype.renderNode = function(node,parent)
 {
 	var rc = this.renderContext;
 	var gl = rc.gl;
@@ -78,20 +93,8 @@ ModelRenderer.prototype.renderNode = function(node)
 		mat4.multiply(mat, node.matrix);
 		this.matrixStack.push( mat );
 	}
-		
-	for (var i=0; i < node.children.length; i++)
-	{
-		this.renderNode( node.children[i] );
-	}
 	
-	gl.uniformMatrix4fv( this.program.uniforms["modelViewMatrix"], false, this.matrixStack[ this.matrixStack.length-1 ] );
-	
-	for (var i=0; i < node.geometries.length; i++)
-	{
-		var geom = node.geometries[i];
-		geom.material.bind(gl,this.program);			
-		geom.mesh.render(gl,this.program);
-	}
+	node.render(this);
 	
 	if (node.matrix)
 	{
@@ -113,21 +116,27 @@ ModelRenderer.prototype.render = function()
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	gl.disable(gl.CULL_FACE);
 	gl.enable(gl.DEPTH_TEST);
+	gl.depthFunc(gl.LESS);
 	gl.activeTexture(gl.TEXTURE0);
 
 	// Setup program
 	this.program.apply();
-	
-	mat4.perspective(60, rc.canvas.width / rc.canvas.height, rc.near, rc.far, rc.projectionMatrix);
+		
+	rc.updateViewDependentProperties();
 	gl.uniformMatrix4fv( this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
 	gl.uniform1i(this.program.uniforms["texture"], 0);
 	
 	this.matrixStack.length = 0;
 	this.matrixStack.push( rc.viewMatrix );
 	
-	for ( var i = 0; i < this.models.length; i++ )
+	for ( var i = 0; i < this.nodes.length; i++ )
 	{
-		this.renderNode(this.models[i].root);
+		this.renderNode(this.nodes[i]);
+	}
+	
+	if ( this.postFrame ) 
+	{
+		this.postFrame();
 	}
 }
 
