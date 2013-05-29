@@ -116,9 +116,9 @@ SceneGraph.Node.prototype.computeBBox = function()
 /**
  *	Intersect a node with a ray
  */
-SceneGraph.Node.prototype.intersectWith = function(ray)
+SceneGraph.Node.prototype.intersectWith = function(ray,intersects)
 {
-	return ray.nodeIntersect(this);
+	return ray.nodeIntersect(this,intersects);
 }
 
 /**************************************************************************************************************/

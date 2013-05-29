@@ -150,9 +150,9 @@ LODNode.prototype.computeBBox = function()
 /**
  *	Intersect a node with a ray
  */
-LODNode.prototype.intersectWith = function(ray)
+LODNode.prototype.intersectWith = function(ray,intersects)
 {
-	return ray.lodNodeIntersect(this);
+	return ray.lodNodeIntersect(this,intersects);
 }
 
 /**************************************************************************************************************/

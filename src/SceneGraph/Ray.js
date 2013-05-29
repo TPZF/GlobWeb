@@ -23,6 +23,11 @@ Ray.prototype.nodeIntersect = function( node, intersects )
 {
 	var intersects = intersects || [];
 	
+	for ( var i = 0; i < node.children.length; i++ ) 
+	{
+		 node.children[i].intersectWith( this, intersects );
+	}
+	
 	for ( var i = 0; i < node.geometries.length; i++ ) 
 	{
 		this.geometryIntersect( node.geometries[i], intersects );
