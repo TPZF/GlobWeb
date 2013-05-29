@@ -195,9 +195,9 @@ Frustum.prototype.inverseTransform = function(frustum,matrix)
 
 /**
 	Intersection test between frustum and bounding sphere.
-	   return 1 if the bs is completely outside the frustum,
+	   return 1 if the bs is completely inside the frustum,
 		return 0 if the bs intersects the frustum,
-		return -1 if the bs is completely inside the frustum.
+		return -1 if the bs is completely outside the frustum.
  */
 Frustum.prototype.containsSphere = function( center, radius )
 {
