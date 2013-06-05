@@ -258,12 +258,22 @@ SceneGraph.Texture.prototype.bind = function(gl)
 
 /**
  *	@constructor Model Geometry
- *	
  */
 SceneGraph.Geometry = function()
 {
 	this.material = null;
 	this.mesh = null;
+}
+ 
+/**************************************************************************************************************/
+
+/**
+ *	Dispose the geometry
+ */
+SceneGraph.Geometry.prototype.dispose = function()
+{
+	this.material.dispose();
+	this.mesh.dispose();
 }
  
 /**************************************************************************************************************/

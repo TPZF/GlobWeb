@@ -36,11 +36,13 @@ var LODNode = function()
 	
 	this.loaded = false;
 	this.loading = false;
+	this.imagesToLoad = 0;
 	this.childToLoad = 0;
 }
 
 /**************************************************************************************************************/
 
+// Function to collect geometries from the COLLADA nodes
 var findGeometry = function( geometries, node)
 {
 	for ( var i = 0; i < node.geometries.length; i++ )
@@ -54,11 +56,19 @@ var findGeometry = function( geometries, node)
 	}
 }
 
+/**
+ * The singleton loader
+ */
 LODNode.Loader = {
 	freeRequests : [ new XMLHttpRequest(), new XMLHttpRequest() ],
-	nodesToLoad : []
+	nodesToLoad : [],
+	numRendered: 0,
+	numFrames: 0
 };
 
+/**
+ * Function called at the end of each frame
+ */
 LODNode.Loader.postFrame = function() {
 	this.nodesToLoad.sort( function(a,b) {
 		return b.pixelSize - a.pixelSize;
@@ -67,6 +77,14 @@ LODNode.Loader.postFrame = function() {
 		this.load( this.nodesToLoad[i].node, this.nodesToLoad[i].parent );
 	}
 	this.nodesToLoad.length = 0;
+	
+	this.numFrames++;
+	if ( this.numFrames > 60 )
+	{
+		console.log('# render ' + this.numRendered );
+		this.numFrames = 0;
+	}
+	this.numRendered = 0;
 };
 
 LODNode.Loader.push = function(n,p,s) {
@@ -79,6 +97,63 @@ LODNode.Loader.push = function(n,p,s) {
 		parent: p,
 		pixelSize: s
 	});
+};
+
+
+var onImageLoad = function(node,parent)
+{
+	node.imagesToLoad--;
+	if ( node.imagesToLoad == 0 )
+	{
+		node.loading = false;
+		node.loaded = true;
+		if (parent)
+		{
+			parent.childToLoad--;
+		}
+	}
+};
+
+LODNode.Loader.loadImages = function(node,parent) {
+	node.imagesToLoad = node.geometries.length; 
+	for ( var i=0; i < node.geometries.length; i++ )
+	{
+		var image = node.geometries[i].material.texture.image;
+		if ( image.complete )
+		{
+			onImageLoad(node,parent);
+		}
+		else
+		{
+			image.onload = function() { 
+				onImageLoad(node,parent); 
+			};
+		}
+	}
+};
+
+var optimizeGeometries = function( geoms )
+{
+	for ( var i = 0; i < geoms.length; i++ )
+	{
+		var mat = geoms[i].material;
+		var mesh = geoms[i].mesh; 
+		
+		var j = i+1;
+		while ( j < geoms.length )
+		{
+			if ( geoms[j].material == mat )
+			{
+				mesh.vertices = mesh.vertices.concat( geoms[j].mesh.vertices );
+				mesh.tcoords = mesh.tcoords.concat( geoms[j].mesh.tcoords );
+				geoms.splice(j,1);
+			}
+			else
+			{
+				j++;
+			}
+		}
+	}
 };
 
 LODNode.Loader.load = function(node,parent) {
@@ -94,17 +169,24 @@ LODNode.Loader.load = function(node,parent) {
 		{
 			if ( xhr.readyState == 4  && xhr.status == 200)
 			{
-				console.log("Load " + node.modelPath);
+				//console.log("Load " + node.modelPath);
 				var root = ColladaParser.parse( xhr.responseXML );
 				
 				findGeometry( node.geometries, root );
-				node.loading = false;
+				
+				optimizeGeometries( node.geometries );
+				
+				node.childToLoad = node.children.length;
+				
+				self.loadImages(node,parent);
+				
+				/*node.loading = false;
 				node.loaded = true;
 				node.childToLoad = node.children.length;
 				if (parent)
 				{
 					parent.childToLoad--;
-				}
+				}*/
 /*				var bbox = node.computeBBox();
 				console.log("Sphere Center " + node.center[0] + " " + node.center[1] + " " + node.center[2] );
 				console.log("BBox Center " + bbox.getCenter()[0] + " " + bbox.getCenter()[1] + " " + bbox.getCenter()[2] );
@@ -174,7 +256,7 @@ LODNode.prototype.render = function(renderer)
 	else
 	{
 		var pixelSizeVector = renderer.renderContext.pixelSizeVector;
-		var pixelSize = Math.abs( this.radius / ( this.center[0] * pixelSizeVector[0] + this.center[1] * pixelSizeVector[1]
+		var pixelSize = 0.25 * Math.abs( this.radius / ( this.center[0] * pixelSizeVector[0] + this.center[1] * pixelSizeVector[1]
 							+ this.center[2] * pixelSizeVector[2] + pixelSizeVector[3] ) );
 		
 		if ( pixelSize > this.minRange && this.children.length != 0  )
@@ -208,13 +290,14 @@ LODNode.prototype.render = function(renderer)
 				geom.material.bind(gl,renderer.program);			
 				geom.mesh.render(gl,renderer.program);
 			}
+			
+			LODNode.Loader.numRendered++;
 		}
 	}
 }
 
 var parseLODNode = function(elt, baseURI)
 {
-
 	var node = new LODNode();
 	
 	var child = elt.firstElementChild;
