@@ -37,7 +37,45 @@ var LODNode = function()
 	this.loaded = false;
 	this.loading = false;
 	this.imagesToLoad = 0;
-	this.childToLoad = 0;
+}
+
+
+/**************************************************************************************************************/
+
+/**
+ *	Unload the children.
+ * Call by rendering method when there are not needed anymore
+ */
+LODNode.prototype.unloadChildren = function(renderContext)
+{
+	for (var i=0; i < this.children.length; i++)
+	{
+		this.children[i].dispose(renderContext);
+	}
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Dispose the node ressources
+ */
+ LODNode.prototype.dispose = function(renderContext)
+{
+	if (this.loaded)
+	{
+		// Remove the geometries
+		for ( var i = 0; i < this.geometries.length; i++ )
+		{
+			this.geometries[i].dispose(renderContext);
+		}
+		this.geometries.length = 0;
+		
+		// Unload the children
+		this.unloadChildren(renderContext);
+		
+		this.loaded = false;
+		this.imagesToLoad = 0;
+	}
 }
 
 /**************************************************************************************************************/
@@ -56,6 +94,8 @@ var findGeometry = function( geometries, node)
 	}
 }
 
+/**************************************************************************************************************/
+
 /**
  * The singleton loader
  */
@@ -66,6 +106,8 @@ LODNode.Loader = {
 	numFrames: 0
 };
 
+/**************************************************************************************************************/
+
 /**
  * Function called at the end of each frame
  */
@@ -74,7 +116,7 @@ LODNode.Loader.postFrame = function() {
 		return b.pixelSize - a.pixelSize;
 	});
 	for ( var i = 0; i < this.nodesToLoad.length; i++ ) {
-		this.load( this.nodesToLoad[i].node, this.nodesToLoad[i].parent );
+		this.load( this.nodesToLoad[i].node );
 	}
 	this.nodesToLoad.length = 0;
 	
@@ -87,51 +129,51 @@ LODNode.Loader.postFrame = function() {
 	this.numRendered = 0;
 };
 
-LODNode.Loader.push = function(n,p,s) {
+/**************************************************************************************************************/
 
-	if ( n.loading || n.loaded )
-		return;	
-		
-	this.nodesToLoad.push({
-		node: n,
-		parent: p,
-		pixelSize: s
-	});
-};
-
-
-var onImageLoad = function(node,parent)
+/**
+ * Internal function call when an image is loaded
+ */
+var onImageLoad = function(node)
 {
 	node.imagesToLoad--;
 	if ( node.imagesToLoad == 0 )
 	{
 		node.loading = false;
 		node.loaded = true;
-		if (parent)
-		{
-			parent.childToLoad--;
-		}
 	}
 };
 
-LODNode.Loader.loadImages = function(node,parent) {
+
+/**************************************************************************************************************/
+
+/**
+ * Load the images of a node.
+ * A node is considered as loaded when all its images are loaded to avoid flickering
+ */
+LODNode.Loader.loadImages = function(node) {
 	node.imagesToLoad = node.geometries.length; 
 	for ( var i=0; i < node.geometries.length; i++ )
 	{
 		var image = node.geometries[i].material.texture.image;
 		if ( image.complete )
 		{
-			onImageLoad(node,parent);
+			onImageLoad(node);
 		}
 		else
 		{
 			image.onload = function() { 
-				onImageLoad(node,parent); 
+				onImageLoad(node); 
 			};
 		}
 	}
 };
 
+/**************************************************************************************************************/
+
+/**
+ * Internal function to merge geometries with the same texture
+ */
 var optimizeGeometries = function( geoms )
 {
 	for ( var i = 0; i < geoms.length; i++ )
@@ -156,7 +198,13 @@ var optimizeGeometries = function( geoms )
 	}
 };
 
-LODNode.Loader.load = function(node,parent) {
+
+/**************************************************************************************************************/
+
+/**
+ * Load a LOD node
+ */
+LODNode.Loader.load = function(node) {
 		
 	if ( node.loading || node.loaded )
 		return;		
@@ -176,21 +224,8 @@ LODNode.Loader.load = function(node,parent) {
 				
 				optimizeGeometries( node.geometries );
 				
-				node.childToLoad = node.children.length;
+				self.loadImages(node);
 				
-				self.loadImages(node,parent);
-				
-				/*node.loading = false;
-				node.loaded = true;
-				node.childToLoad = node.children.length;
-				if (parent)
-				{
-					parent.childToLoad--;
-				}*/
-/*				var bbox = node.computeBBox();
-				console.log("Sphere Center " + node.center[0] + " " + node.center[1] + " " + node.center[2] );
-				console.log("BBox Center " + bbox.getCenter()[0] + " " + bbox.getCenter()[1] + " " + bbox.getCenter()[2] );
-				node.bbox = bbox;*/
 				self.freeRequests.push(xhr);
 			}
 		};
@@ -200,6 +235,7 @@ LODNode.Loader.load = function(node,parent) {
 		xhr.send();
 	}
 };
+
 /**************************************************************************************************************/
 
 /**
@@ -246,6 +282,8 @@ LODNode.prototype.render = function(renderer)
 {	
 	if ( renderer.renderContext.worldFrustum.containsSphere( this.center, this.radius ) < 0 )
 	{
+		// Remove not needed children
+		this.unloadChildren(renderer.renderContext);
 		return;
 	}
 
@@ -259,16 +297,26 @@ LODNode.prototype.render = function(renderer)
 		var pixelSize = 0.25 * Math.abs( this.radius / ( this.center[0] * pixelSizeVector[0] + this.center[1] * pixelSizeVector[1]
 							+ this.center[2] * pixelSizeVector[2] + pixelSizeVector[3] ) );
 		
+		var allChildrenLoaded = true;
 		if ( pixelSize > this.minRange && this.children.length != 0  )
 		{
-			if ( this.childToLoad > 0 )
+			// Check children all loaded
+			// Only render children when everything is loaded
+			for (var i=0; i < this.children.length; i++)
 			{
-				for (var i=0; i < this.children.length; i++)
+				var c = this.children[i];
+				allChildrenLoaded &= c.loaded;
+				if (!c.loaded && !c.loading)
 				{
-					LODNode.Loader.push(this.children[i],this,pixelSize);
-				}
+					LODNode.Loader.nodesToLoad.push({ 
+						node: this.children[i], 
+						pixelSize: pixelSize 
+					});
+				}			
 			}
-			else
+			
+			// Ok all children are loaded so render them recursively
+			if (allChildrenLoaded)
 			{
 				for (var i=0; i < this.children.length; i++)
 				{
@@ -277,7 +325,13 @@ LODNode.prototype.render = function(renderer)
 			}
 		}
 		
-		if ( pixelSize < this.minRange || this.childToLoad > 0 || this.children.length == 0 )
+		// Remove not needed children
+		/*if ( pixelSize < this.minRange )
+		{
+			this.unloadChildren(renderer.renderContext);
+		}*/
+		
+		if ( pixelSize < this.minRange || !allChildrenLoaded || this.children.length == 0 )
 		{
 			var rc = renderer.renderContext;
 			var gl = rc.gl;
@@ -296,6 +350,11 @@ LODNode.prototype.render = function(renderer)
 	}
 }
 
+/**************************************************************************************************************/
+
+/**
+ *	Parse a LOD node in the LODTree parser
+ */
 var parseLODNode = function(elt, baseURI)
 {
 	var node = new LODNode();
@@ -327,7 +386,12 @@ var parseLODNode = function(elt, baseURI)
 	return node;
 };
 
-var parseLOD = function(doc)
+/**************************************************************************************************************/
+
+/**
+ *	Parse a LODTree
+ */
+var parseLODTree = function(doc)
 {
 	var rootElement = doc.documentElement;
 	var baseURI = doc.documentURI.substr( 0, doc.documentURI.lastIndexOf('/') + 1 );
@@ -342,6 +406,8 @@ var parseLOD = function(doc)
 	return null;
 };
 
+/**************************************************************************************************************/
+
 LODNode.load = function( path, callback )
 {
 	var xhr = new XMLHttpRequest();
@@ -349,7 +415,7 @@ LODNode.load = function( path, callback )
 	{
 		if ( xhr.readyState == 4 && xhr.status == 200)
 		{
-			var node = parseLOD( xhr.responseXML );
+			var node = parseLODTree( xhr.responseXML );
 							
 			if ( callback )
 			{

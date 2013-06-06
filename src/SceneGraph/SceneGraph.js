@@ -253,6 +253,20 @@ SceneGraph.Texture.prototype.bind = function(gl)
 		}
 	}
 }
+
+  
+/**************************************************************************************************************/
+
+/**
+ *	Dispose the texture
+ */
+SceneGraph.Texture.prototype.dispose = function(renderContext)
+{
+	if ( this.glTexture )
+	{
+		renderContext.gl.deleteTexture(this.glTexture);
+	}
+}
  
 /**************************************************************************************************************/
 
@@ -270,10 +284,13 @@ SceneGraph.Geometry = function()
 /**
  *	Dispose the geometry
  */
-SceneGraph.Geometry.prototype.dispose = function()
+SceneGraph.Geometry.prototype.dispose = function(renderContext)
 {
-	this.material.dispose();
-	this.mesh.dispose();
+	if ( this.material.texture )
+	{
+		this.material.texture.dispose(renderContext);
+	}
+	this.mesh.dispose(renderContext);
 }
  
 /**************************************************************************************************************/
@@ -288,7 +305,20 @@ SceneGraph.Mesh = function()
 	this.glVertexBuffer = null;
 	this.vbStride = 0;
 }
- 
+  
+/**************************************************************************************************************/
+
+/**
+ *	Dispose the mesh
+ */
+SceneGraph.Mesh.prototype.dispose = function(renderContext)
+{
+	if ( this.glVertexBuffer )
+	{
+		renderContext.gl.deleteBuffer(this.glVertexBuffer);
+	}
+}
+
 /**************************************************************************************************************/
 
 /**
