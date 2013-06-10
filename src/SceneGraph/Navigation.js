@@ -63,13 +63,15 @@ SceneGraphNavigation.prototype.setupDefaultEventHandlers = function(zoomOnDblCli
 	// Setup the mouse event handlers
 	var self = this;
 	var canvas = this.renderContext.canvas;
-	canvas.addEventListener("mousedown",function(e) { self.handleMouseDown(e||window.event); },false);
-	document.addEventListener("mouseup",function(e) { self.handleMouseUp(e||window.event); },false);
-	canvas.addEventListener("mousemove",function(e) { self.handleMouseMove(e||window.event); },false);
+	canvas.addEventListener("mousedown",function(e) { return self.handleMouseDown(e||window.event); },false);
+	document.addEventListener("mouseup",function(e) { return self.handleMouseUp(e||window.event); },false);
+	canvas.addEventListener("mousemove",function(e) { return self.handleMouseMove(e||window.event); },false);
+	
+	canvas.addEventListener("contextmenu", function(e) { e.preventDefault(); return false; }, false);
 			
 	// For Firefox
-	canvas.addEventListener("DOMMouseScroll",function(e) { self.handleMouseWheel(e||window.event); },false);
-	canvas.addEventListener("mousewheel",function(e) { self.handleMouseWheel(e||window.event); },false);
+	canvas.addEventListener("DOMMouseScroll",function(e) { return self.handleMouseWheel(e||window.event); },false);
+	canvas.addEventListener("mousewheel",function(e) { return self.handleMouseWheel(e||window.event); },false);
 }
 
 /**************************************************************************************************************/
@@ -161,14 +163,14 @@ SceneGraphNavigation.prototype.handleMouseDown = function(event)
 
     this.pressedButton = event.button;
 	
-	if ( event.button == 0 || event.button == 1 )
+	if ( event.button == 0 || event.button == 2 )
 	{
         this.pressX = event.clientX;
         this.pressY = event.clientY;
 		this.lastMouseX = event.clientX;
 		this.lastMouseY = event.clientY;
 		this.previousEvent = event;
-			
+				
         // Return false to stop mouse down to be propagated when using onmousedown
 		return false;
 	}
@@ -271,7 +273,7 @@ SceneGraphNavigation.prototype.handleMouseMove = function(event)
 		ret = true;
 	}
 	// Rotate
-    else if ( this.pressedButton == 1 )
+    else if ( this.pressedButton == 2 )
     {
 		var dx = (event.clientX - this.lastMouseX);
 		var dy = (event.clientY - this.lastMouseY);
@@ -296,9 +298,10 @@ SceneGraphNavigation.prototype.handleMouseUp = function(event)
     // No button pressed anymore
 	this.pressedButton = -1;
 
-	if ( event.button == 0 || event.button == 1 )
+	if ( event.button == 0 || event.button == 2 )
 	{		
-       // Stop mouse up event
+		// Stop mouse event
+		event.preventDefault();
         return false;
 	}
 
