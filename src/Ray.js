@@ -165,7 +165,10 @@ Ray.prototype.triangleIntersectOptimized = function( verts, i0, i1, i2 )
 		return null;
 		
 	var t = (e2x * qx + e2y * qy + e2z * qz) * inv_det;
-	return new Ray.Intersection(t);
+	if ( t >= 0 )
+		return new Ray.Intersection(t);
+	else
+		return null;
 }
 
 	
