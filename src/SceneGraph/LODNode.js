@@ -120,13 +120,13 @@ LODNode.Loader.postFrame = function() {
 	}
 	this.nodesToLoad.length = 0;
 	
-	this.numFrames++;
+/*	this.numFrames++;
 	if ( this.numFrames > 60 )
 	{
 		console.log('# render ' + this.numRendered );
 		this.numFrames = 0;
 	}
-	this.numRendered = 0;
+	this.numRendered = 0;*/
 };
 
 /**************************************************************************************************************/
@@ -232,6 +232,7 @@ LODNode.Loader.load = function(node) {
 		
 		node.loading = true;
 		xhr.open("GET", node.modelPath);
+		xhr.overrideMimeType('text/xml');
 		xhr.send();
 	}
 };
@@ -326,10 +327,10 @@ LODNode.prototype.render = function(renderer)
 		}
 		
 		// Remove not needed children
-		/*if ( pixelSize < this.minRange )
+		if ( pixelSize < this.minRange )
 		{
 			this.unloadChildren(renderer.renderContext);
-		}*/
+		}
 		
 		if ( pixelSize < this.minRange || !allChildrenLoaded || this.children.length == 0 )
 		{
@@ -349,84 +350,6 @@ LODNode.prototype.render = function(renderer)
 		}
 	}
 }
-
-/**************************************************************************************************************/
-
-/**
- *	Parse a LOD node in the LODTree parser
- */
-var parseLODNode = function(elt, baseURI)
-{
-	var node = new LODNode();
-	
-	var child = elt.firstElementChild;
-	while ( child )
-	{
-		switch ( child.nodeName )
-		{
-		case "ModelPath":
-			node.modelPath = baseURI + child.textContent;
-			break;
-		case "Center":
-			node.center = [ parseFloat(child.getAttribute('x')), parseFloat(child.getAttribute('y')), parseFloat(child.getAttribute('z')) ];
-			break;
-		case "Radius":
-			node.radius = parseFloat( child.textContent );
-			break;
-		case "MinRange":
-			node.minRange = parseFloat( child.textContent );
-			break;
-		case "Node":
-			node.children.push( parseLODNode( child, baseURI ) );
-			break;
-		}
-		child = child.nextElementSibling;
-	}
-	
-	return node;
-};
-
-/**************************************************************************************************************/
-
-/**
- *	Parse a LODTree
- */
-var parseLODTree = function(doc)
-{
-	var rootElement = doc.documentElement;
-	var baseURI = doc.documentURI.substr( 0, doc.documentURI.lastIndexOf('/') + 1 );
-	
-	// First parse tile
-	var node = rootElement.getElementsByTagName('Node');
-	if ( node )
-	{
-		return parseLODNode( node[0], baseURI  );
-	}
-	
-	return null;
-};
-
-/**************************************************************************************************************/
-
-LODNode.load = function( path, callback )
-{
-	var xhr = new XMLHttpRequest();
-	xhr.onreadystatechange = function(e)
-	{
-		if ( xhr.readyState == 4 && xhr.status == 200)
-		{
-			var node = parseLODTree( xhr.responseXML );
-							
-			if ( callback )
-			{
-				callback( node );
-			}
-		}
-	};
-	
-	xhr.open("GET", path);
-	xhr.send();
-};
 
 /**************************************************************************************************************/
 
