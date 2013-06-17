@@ -165,7 +165,7 @@ AtmosphereLayer.prototype._initUniforms = function( uniforms )
 	var gl = this.globe.renderContext.gl;
 	
 	var g = -0.95;		// The Mie phase asymmetry factor
-	var scale = 1.0 / ( this.outerRadius - this.innerRadius );
+	var scale = 1.0 / ( this._outerRadius - this._innerRadius );
 	var rayleighScaleDepth = 0.25;
 	//var mieScaleDepth = 0.1;
 
