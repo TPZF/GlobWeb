@@ -229,11 +229,15 @@ Navigation.prototype.computeInverseViewMatrix = function()
 	Zoom to the current observed location
 	@param delta Delta zoom
  */
-Navigation.prototype.zoom = function(delta)
+Navigation.prototype.zoom = function(delta,scale)
 {
 	var previousDistance = this.distance;
 	
-	this.distance *= (1 + delta * 0.1);
+	// TODO : improve zoom, using scale or delta ? We should use scale always
+	if (scale)
+		this.distance *= scale;
+	else
+		this.distance *= (1 + delta * 0.1);
 		
 	if ( this.distance > this.maxDistance )
 	{
