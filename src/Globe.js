@@ -215,9 +215,13 @@ Globe.prototype.getElevation = function(lon,lat)
 
 /** 
 	Get the viewport geo bound
+
+	@param transformCallback
+		Callback transforming the frustum/globe intersection coordinates if needed
+
     @return the geo bound of the viewport
 */
-Globe.prototype.getViewportGeoBound = function()
+Globe.prototype.getViewportGeoBound = function(transformCallback)
 {
 	var rc = this.renderContext;
 	var tmpMat = mat4.create();
@@ -247,6 +251,10 @@ Globe.prototype.getViewportGeoBound = function()
 			return null;
 			
 		points[i] = CoordinateSystem.from3DToGeo( Numeric.pointOnRay(eye, points[i], t, tmpPt) );
+		if (transformCallback) 
+		{
+			points[i] = transformCallback(points[i]);
+		}
 	}
 
 	var geoBound = new GeoBound();

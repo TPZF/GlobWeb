@@ -17,16 +17,24 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define( ['./BaseLayer', './Utils', './Program', './Mesh', './CoordinateSystem'],
-		function(BaseLayer, Utils, Program, Mesh, CoordinateSystem) {
+define( ['./BaseLayer', './Utils', './Program', './Mesh', './CoordinateSystem', "./AstroCoordTransform"],
+		function(BaseLayer, Utils, Program, Mesh, CoordinateSystem, AstroCoordTransform) {
  
 /**************************************************************************************************************/
 
 /** 
 	@constructor
-	Function constructor for EquatorialGridLayer
+	Function constructor for CoordinateGridLayer
+
+	@param options Options of coordinate grid layer :
+		<ul>
+			<li>longitudeSample : Longitude sampling</li>
+			<li>latitudeSample : Latitude sampling</li>
+			<li>strokeColor : Stroke color of grid</li>
+			<li>coordSystem: The coordinate system which is represented by grid("EQ" or "GAL" for now)</li>
+		</ul>
  */
-var EquatorialGridLayer = function( options )
+var CoordinateGridLayer = function( options )
 {
 	BaseLayer.prototype.constructor.call( this, options );
 	this.globe = null;
@@ -48,11 +56,14 @@ var EquatorialGridLayer = function( options )
 	// Grid buffers
 	this.vertexBuffer = null;
 	this.indexBuffer = null;
+
+	this.color = options.strokeColor || [1., 1., 1.];
+	this.coordSystem = options.coordSystem ? options.coordSystem : "EQ";
 }
 
 /**************************************************************************************************************/
 
-Utils.inherits( BaseLayer, EquatorialGridLayer );
+Utils.inherits( BaseLayer, CoordinateGridLayer );
 
 /**************************************************************************************************************/
 
@@ -61,7 +72,7 @@ Utils.inherits( BaseLayer, EquatorialGridLayer );
  *
  *	@param {String} text Text generated in canvas
  */
-EquatorialGridLayer.prototype.generateImageData = function(text)
+CoordinateGridLayer.prototype.generateImageData = function(text)
 {
 	var ctx = this.canvas2d.getContext("2d");
 	ctx.clearRect(0,0, this.canvas2d.width, this.canvas2d.height);
@@ -81,7 +92,7 @@ EquatorialGridLayer.prototype.generateImageData = function(text)
 /** 
 	Attach the layer to the globe
  */
-EquatorialGridLayer.prototype._attach = function( g )
+CoordinateGridLayer.prototype._attach = function( g )
 {
 	BaseLayer.prototype._attach.call( this, g );
 	
@@ -104,9 +115,10 @@ EquatorialGridLayer.prototype._attach = function( g )
 		var fragmentShader = "\
 		precision highp float; \n\
 		uniform float alpha; \n\
+		uniform vec3 color; \n\
 		void main(void)\n\
 		{\n\
-			gl_FragColor = vec4(1.0,1.0,1.0,alpha);\n\
+			gl_FragColor = vec4(color,alpha);\n\
 		}\n\
 		";
 		
@@ -178,7 +190,7 @@ EquatorialGridLayer.prototype._attach = function( g )
 /** 
 	Detach the layer from the globe
  */
-EquatorialGridLayer.prototype._detach = function()
+CoordinateGridLayer.prototype._detach = function()
 {
 	var gl = this.globe.renderContext.gl;
 	gl.deleteBuffer( this.vertexBuffer );
@@ -200,7 +212,7 @@ EquatorialGridLayer.prototype._detach = function()
 /**
 	Render the grid
  */
-EquatorialGridLayer.prototype.render = function( tiles )
+CoordinateGridLayer.prototype.render = function( tiles )
 {
 	var renderContext = this.globe.renderContext;
 	var gl = renderContext.gl;
@@ -211,7 +223,20 @@ EquatorialGridLayer.prototype.render = function( tiles )
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
 	/*** Render grid ***/
-	var geoBound = this.globe.getViewportGeoBound();
+	var geoBound;
+	// Transform geoBound to coordinate system of current grid if different
+	if ( this.coordSystem != CoordinateSystem.type )
+	{
+		var self = this;
+		geoBound = this.globe.getViewportGeoBound(function(coordinate) {
+			return CoordinateSystem.convertFromDefault(coordinate, self.coordSystem);
+		});
+	}
+	else
+	{
+		geoBound = this.globe.getViewportGeoBound();
+	}
+
 	this.computeSamples(geoBound)
 	this.generateGridBuffers(geoBound);
 	
@@ -219,6 +244,7 @@ EquatorialGridLayer.prototype.render = function( tiles )
 	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
 	gl.uniformMatrix4fv(this.gridProgram.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
 	gl.uniform1f(this.gridProgram.uniforms["alpha"], this._opacity );
+	gl.uniform3f(this.gridProgram.uniforms["color"], this.color[0], this.color[1], this.color[2] );  // use whiteColor
 	
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
 	gl.vertexAttribPointer(this.gridProgram.attributes['vertex'], this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -274,7 +300,7 @@ EquatorialGridLayer.prototype.render = function( tiles )
 /**
  * 	Set visibility of the layer
  */
-EquatorialGridLayer.prototype.visible = function( arg )
+CoordinateGridLayer.prototype.visible = function( arg )
 {
 	if ( typeof arg == "boolean" && this._visible != arg )
 	{
@@ -298,7 +324,7 @@ EquatorialGridLayer.prototype.visible = function( arg )
 /**
  * 	Set opacity of the layer
  */
-EquatorialGridLayer.prototype.opacity = function( arg )
+CoordinateGridLayer.prototype.opacity = function( arg )
 {
 	return BaseLayer.prototype.opacity.call( this, arg );
 }
@@ -308,7 +334,7 @@ EquatorialGridLayer.prototype.opacity = function( arg )
 /**
  * 	Compute samples depending on geoBound
  */
-EquatorialGridLayer.prototype.computeSamples = function(geoBound)
+CoordinateGridLayer.prototype.computeSamples = function(geoBound)
 {
 	var dlong = geoBound.east - geoBound.west;
 	var dlat = geoBound.north - geoBound.south;
@@ -333,7 +359,7 @@ EquatorialGridLayer.prototype.computeSamples = function(geoBound)
 /**
  * 	Generate buffers object of the grid
  */
-EquatorialGridLayer.prototype.generateGridBuffers = function(geoBound)
+CoordinateGridLayer.prototype.generateGridBuffers = function(geoBound)
 {
 	// Clamp min/max longitudes to sample
 	var west = (Math.floor(geoBound.west / this.longitudeSample))*this.longitudeSample;
@@ -342,6 +368,19 @@ EquatorialGridLayer.prototype.generateGridBuffers = function(geoBound)
 	var phiStart = Math.min( west, east );
 	var phiStop = Math.max( west, east );
 	
+	// var north = [0,0,1];
+	// var south = [0,0,-1];
+	// if ( this.coordSystem == "GALACTIC" )
+	// {
+	// 	var northGeo = AstroCoordTransform.transformInDeg( [0, 90], AstroCoordTransform.Type.EQ2GAL );
+	// 	var southGeo = AstroCoordTransform.transformInDeg( [0, -90], AstroCoordTransform.Type.EQ2GAL );
+	// 	north = CoordinateSystem.fromGeoTo3D( northGeo );
+	// 	south = CoordinateSystem.fromGeoTo3D( southGeo );
+	// }
+
+	// if ( this.globe.renderContext.worldFrustum.containsSphere(north,-0.01) >= 0 || this.globe.renderContext.worldFrustum.containsSphere(south,-0.01) >= 0 )
+	// 	console.log("North or south is in frustum");
+
 	// Difference is larger than hemisphere
 	if ( (east - west) > 180. )
 	{
@@ -354,7 +393,6 @@ EquatorialGridLayer.prototype.generateGridBuffers = function(geoBound)
 		phiStart = west;
 		phiStop = east;
 	}
-
 
 	// TODO adaptative generation of theta value
 	// for (var theta = geoBound.south; theta <= geoBound.north; theta+=latStep) {
@@ -380,9 +418,16 @@ EquatorialGridLayer.prototype.generateGridBuffers = function(geoBound)
 			var y = sinPhi * sinTheta;
 			var z = cosTheta;
 
-			vertexPositionData.push(x);
-			vertexPositionData.push(y);
-			vertexPositionData.push(z);
+			if ( this.coordSystem != CoordinateSystem.type ) {
+				var geo = CoordinateSystem.from3DToGeo( [x, y, z] );
+				geo = CoordinateSystem.convertToDefault(geo, this.coordSystem);
+				var eq = CoordinateSystem.fromGeoTo3D( geo );
+				vertexPositionData.push(eq[0], eq[1], eq[2]);				
+			} else {
+				vertexPositionData.push(x, y, z);	
+			}
+
+			
 		}
 	}
 
@@ -427,7 +472,7 @@ EquatorialGridLayer.prototype.generateGridBuffers = function(geoBound)
 /**
  * 	Generate text of the grid
  */
-EquatorialGridLayer.prototype.generateText = function(geoBound)
+CoordinateGridLayer.prototype.generateText = function(geoBound)
 {
 	// Clamp min/max longitudes to sample
 	var west = (Math.floor(geoBound.west / this.longitudeSample))*this.longitudeSample;
@@ -455,6 +500,9 @@ EquatorialGridLayer.prototype.generateText = function(geoBound)
 	var posX3d = this.globe.renderContext.get3DFromPixel( this.globe.renderContext.canvas.width / 2. , this.globe.renderContext.canvas.height / 2. );
 	var posXgeo = [];
 	CoordinateSystem.from3DToGeo( posX3d, posXgeo );
+	if ( this.coordSystem != CoordinateSystem.type ) {
+		posXgeo = CoordinateSystem.convertFromDefault( posXgeo, this.coordSystem );
+	}
 
 	for ( var phi = phiStart; phi <= phiStop; phi+=this.longitudeSample )
 	{
@@ -471,6 +519,11 @@ EquatorialGridLayer.prototype.generateText = function(geoBound)
 		
 		// Compute position of label
 		var posGeo = [ phi, posXgeo[1] ];
+
+		if ( this.coordSystem != CoordinateSystem.type ) {
+			posGeo = CoordinateSystem.convertToDefault( posGeo, this.coordSystem );
+		}
+
 		var pos3d = CoordinateSystem.fromGeoTo3D( posGeo );
 		var vertical = vec3.create();
 		vec3.normalize(pos3d, vertical);
@@ -501,6 +554,11 @@ EquatorialGridLayer.prototype.generateText = function(geoBound)
 		
 		// Compute position of label
 		var posGeo = [ posXgeo[0], theta ];
+
+		if ( this.coordSystem != CoordinateSystem.type ) {
+			posGeo = CoordinateSystem.convertToDefault( posGeo, this.coordSystem );
+		}
+
 		var pos3d = CoordinateSystem.fromGeoTo3D( posGeo );
 		var vertical = vec3.create();
 		vec3.normalize(pos3d, vertical);
@@ -527,7 +585,7 @@ EquatorialGridLayer.prototype.generateText = function(geoBound)
 /*
 	Build a texture from an image and store in a renderable
  */
-EquatorialGridLayer.prototype._buildTextureFromImage = function(renderable,image)
+CoordinateGridLayer.prototype._buildTextureFromImage = function(renderable,image)
 {  	
 	renderable.texture = this.texturePool.createGLTexture(image);
 	renderable.textureWidth = image.width;
@@ -608,6 +666,6 @@ var TexturePool = function(gl)
 
 /**************************************************************************************************************/
 
-return EquatorialGridLayer;
+return CoordinateGridLayer;
 
 });
