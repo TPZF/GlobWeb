@@ -34,13 +34,22 @@ define(['./Utils', './CoordinateSystem', './BaseNavigation', './SegmentedAnimati
 var AstroNavigation = function(globe, options)
 {
 	// Default values for fov (in degrees)
-	this['minFov'] = 0.25;
+	this['minFov'] = 0.001;
 	this['maxFov'] = 100;
 	
 	BaseNavigation.prototype.constructor.call( this, globe, options );
 
 	// Initialize the navigator
 	this.center3d = [1.0, 0.0, 0.0];
+	if ( options.initTarget ) {
+		CoordinateSystem.fromGeoTo3D(options.initTarget, this.center3d );
+	}
+
+	if ( options.initFov ) {
+		this.globe.renderContext.fov = options.initFov;
+		this._clampFov();
+	}
+	
 	this.up = [0., 0., 1.]
 	
 	// Update the view matrix now
@@ -252,15 +261,7 @@ AstroNavigation.prototype.zoom = function(delta)
 	
 	// Check differences between firefox and the rest of the world 
 	this.globe.renderContext.fov *= delta;
-	
-	if ( this.globe.renderContext.fov > this['maxFov'] )
-	{
-		this.globe.renderContext.fov = this['maxFov'];
-	}
-	if ( this.globe.renderContext.fov < this['minFov'] )
-	{
-		this.globe.renderContext.fov = this['minFov'];
-	}
+	this._clampFov();
 	
 	this.computeViewMatrix();
 	
@@ -299,6 +300,20 @@ AstroNavigation.prototype.rotate = function(dx,dy)
 	quat4.multiplyVec3( rot, this.up );
 
 	this.computeViewMatrix();
+}
+
+/**
+ *	Clamping of fov
+ */
+AstroNavigation.prototype._clampFov = function() {
+	if ( this.globe.renderContext.fov > this['maxFov'] )
+	{
+		this.globe.renderContext.fov = this['maxFov'];
+	}
+	if ( this.globe.renderContext.fov < this['minFov'] )
+	{
+		this.globe.renderContext.fov = this['minFov'];
+	}
 }
 
 /**************************************************************************************************************/
