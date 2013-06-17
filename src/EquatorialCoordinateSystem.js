@@ -17,9 +17,12 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define( ['./CoordinateSystem', './Numeric'], function(CoordinateSystem, Numeric) {
+define( ['./CoordinateSystem', './Numeric', './AstroCoordTransform'], function(CoordinateSystem, Numeric, AstroCoordTransform) {
 
 /**************************************************************************************************************/
+
+// Default coordinate system: ("EQ" or "GAL")
+CoordinateSystem.type = "EQ";
 
 /**
 *	Convert a 3D position to equatorial coordinates
@@ -160,6 +163,60 @@ CoordinateSystem.fromDegreesToHMS = function(degree)
 	var sec = (decimal - min) * 60;
 	
 	return hours+"h "+min+"m "+ Numeric.roundNumber(sec, 2) +"s";
+}
+
+/**
+ *	Convert to default coordinate system
+ *
+ *	@param {Float[]} geo Geographic coordinates
+ *	@param type Type of coordinate system to convert :
+ *		<ul>
+ *			<li>"EQ" : Equatorial</li>
+ *			<li>"GAL" : Galactic</li>
+ *		</ul>
+ */
+CoordinateSystem.convertToDefault = function(geo, type) {
+	var convertType;
+	switch ( type+"2"+CoordinateSystem.type ) {
+		case "GAL2EQ" :
+			convertType = AstroCoordTransform.Type.GAL2EQ;
+			break;
+		case "EQ2GAL" :
+			convertType = AstroCoordTransform.Type.EQ2GAL;
+			break;
+		default:
+			console.error("Not implemented");
+			return null;
+	}
+
+	return AstroCoordTransform.transformInDeg( geo, convertType );
+}
+
+/**
+ *	Convert from default coordinate system
+ *
+ *	@param {Float[]} geo Geographic coordinates
+ *	@param type Type of coordinate system to convert :
+ *		<ul>
+ *			<li>"EQ" : Equatorial</li>
+ *			<li>"GAL" : Galactic</li>
+ *		</ul>
+ */
+CoordinateSystem.convertFromDefault = function(geo, type) {
+	var convertType;
+	switch ( CoordinateSystem.type+"2"+type ) {
+		case "GAL2EQ" :
+			convertType = AstroCoordTransform.Type.GAL2EQ;
+			break;
+		case "EQ2GAL" :
+			convertType = AstroCoordTransform.Type.EQ2GAL;
+			break;
+		default:
+			console.error("Not implemented");
+			return null;
+	}
+
+	return AstroCoordTransform.transformInDeg( geo, convertType );
 }
 
 });
