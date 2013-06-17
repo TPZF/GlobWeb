@@ -73,7 +73,10 @@ var SceneGraphRenderer = function(renderContext,node)
 	renderContext.minNear = 0.1;
 	renderContext.far = 5000;
 	renderContext.fov = 60;
-
+	
+	var self = this;
+	renderContext.render = function() { self.render(); };
+	renderContext.requestFrame();	
 }
 
 /**************************************************************************************************************/
@@ -112,8 +115,6 @@ SceneGraphRenderer.prototype.render = function()
 	var rc = this.renderContext;
 	var gl = rc.gl;
 	
-	gl.clearColor(1.,1.,1.,1.);
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	gl.disable(gl.CULL_FACE);
 	gl.enable(gl.DEPTH_TEST);
 	gl.depthFunc(gl.LESS);
@@ -122,7 +123,6 @@ SceneGraphRenderer.prototype.render = function()
 	// Setup program
 	this.program.apply();
 		
-	rc.updateViewDependentProperties();
 	gl.uniformMatrix4fv( this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
 	gl.uniform1i(this.program.uniforms["texture"], 0);
 	

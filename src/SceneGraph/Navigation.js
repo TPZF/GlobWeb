@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define( ['./Ray','../glMatrix'], function(Ray) {
+ define( ['../Utils','../BaseNavigation','./Ray','../glMatrix'], function(Utils,BaseNavigation,Ray) {
 
 /**************************************************************************************************************/
 
@@ -25,14 +25,10 @@
 	@constructor
 	Navigation constructor
  */
-var SceneGraphNavigation = function(renderContext,node)
+var Navigation = function(renderContext,node)
 {
-	this.renderContext = renderContext;
-    this.pressX = -1;
-    this.pressY = -1;
-	this.lastMouseX = -1;
-	this.lastMouseY = -1;
-    this.pressedButton = -1;
+	BaseNavigation.prototype.constructor.call( this, renderContext );
+
 	this.inverseViewMatrix = mat4.create();
 	
 	this.minDistance = 0.005; //01;
@@ -55,33 +51,14 @@ var SceneGraphNavigation = function(renderContext,node)
 
 /**************************************************************************************************************/
 
-/** 
- Setup the default event handlers for the navigator
- */
-SceneGraphNavigation.prototype.setupDefaultEventHandlers = function(zoomOnDblClick)
-{
-	// Setup the mouse event handlers
-	var self = this;
-	var canvas = this.renderContext.canvas;
-	canvas.addEventListener("mousedown",function(e) { return self.handleMouseDown(e||window.event); },false);
-	document.addEventListener("mouseup",function(e) { return self.handleMouseUp(e||window.event); },false);
-	canvas.addEventListener("mousemove",function(e) { return self.handleMouseMove(e||window.event); },false);
-	
-	canvas.onselectstart = function() { return false; };
-	
-	canvas.addEventListener("contextmenu", function(e) { e.preventDefault(); return false; }, false);
-			
-	// For Firefox
-	canvas.addEventListener("DOMMouseScroll",function(e) { return self.handleMouseWheel(e||window.event); },false);
-	canvas.addEventListener("mousewheel",function(e) { return self.handleMouseWheel(e||window.event); },false);
-}
+Utils.inherits( BaseNavigation,Navigation );
 
 /**************************************************************************************************************/
 
 /*
 	Compute the inverse view matrix
  */
-SceneGraphNavigation.prototype.applyLocalRotation = function(matrix)
+Navigation.prototype.applyLocalRotation = function(matrix)
 {
 	mat4.rotate( matrix, (this.heading) * Math.PI / 180.0, [ 0.0, 0.0, 1.0 ] );
 	mat4.rotate( matrix, (90 - this.tilt) * Math.PI / 180.0, [ 1.0, 0.0, 0.0 ] );
@@ -92,7 +69,7 @@ SceneGraphNavigation.prototype.applyLocalRotation = function(matrix)
 /*
 	Compute the view matrix
  */
-SceneGraphNavigation.prototype.computeViewMatrix = function()
+Navigation.prototype.computeViewMatrix = function()
 {
     this.computeInverseViewMatrix();
 	mat4.inverse( this.inverseViewMatrix, this.renderContext.viewMatrix );
@@ -103,82 +80,12 @@ SceneGraphNavigation.prototype.computeViewMatrix = function()
 /*
 	Compute the inverse view matrix
  */
-SceneGraphNavigation.prototype.computeInverseViewMatrix = function()
+Navigation.prototype.computeInverseViewMatrix = function()
 {	
 	mat4.identity( this.inverseViewMatrix );
 	mat4.translate( this.inverseViewMatrix, this.center );
 	this.applyLocalRotation(this.inverseViewMatrix);
 	mat4.translate( this.inverseViewMatrix, [0.0, 0.0, this.distance] );
-}
-
-/**************************************************************************************************************/
-
-/*
-	Event handler for mouse wheel
- */
-SceneGraphNavigation.prototype.handleMouseWheel = function(event)
-{
-	var previousDistance = this.distance;
-	
-	// Check differences between firefox and the rest of the world 
-	if ( event.wheelDelta === undefined)
-	{
-		this.distance *= (1 + event.detail * 0.1);
-	}
-	else
-	{
-		this.distance *= (1 + (-event.wheelDelta / 120.0) * 0.1);
-	}
-	
-	if ( this.distance > this.maxDistance )
-	{
-		this.distance = this.maxDistance;
-	}
-	if ( this.distance < this.minDistance )
-	{
-		this.distance = this.minDistance;
-	}
-
-	this.computeViewMatrix();
-		
-	// Stop mouse wheel to be propagated, because default is to scroll the page
-	// This is need when using Firefox event listener on DOMMouseScroll
-	if ( event.preventDefault )
-	{
-		event.preventDefault();
-	}
-	event.returnValue = false;
-		
-	// Return false to stop mouse wheel to be propagated when using onmousewheel
-	return false;
-}
-
-/**************************************************************************************************************/
-
-/*
-	Event handler for mouse down
- */
-SceneGraphNavigation.prototype.handleMouseDown = function(event)
-{
-	//console.log("button " + event.button);
-	//console.log("modifiers " + event.altKey);
-
-    this.pressedButton = event.button;
-	
-	if ( event.button == 0 || event.button == 2 )
-	{
-        this.pressX = event.clientX;
-        this.pressY = event.clientY;
-		this.lastMouseX = event.clientX;
-		this.lastMouseY = event.clientY;
-		this.previousEvent = event;
-				
-        // Return false to stop mouse down to be propagated when using onmousedown
-		return false;
-	}
-
-	return true;
-
 }
 
 
@@ -187,10 +94,12 @@ SceneGraphNavigation.prototype.handleMouseDown = function(event)
 /*
 	Pan the navigator
  */
-SceneGraphNavigation.prototype.pan = function(event)
+Navigation.prototype.pan = function(dx,dy)
 {
-	var ray = Ray.createFromEvent(this.renderContext,event);
-	var prevRay = Ray.createFromEvent(this.renderContext,this.previousEvent);
+	var cx = this.renderContext.canvas.width / 2;
+	var cy = this.renderContext.canvas.height / 2;
+	var ray = Ray.createFromPixel(this.renderContext,cx+dx,cy+dy);
+	var prevRay = Ray.createFromPixel(this.renderContext,cx,cy);
 	
 	// Compute plane normal and d
 	var normal = vec3.create();
@@ -205,8 +114,6 @@ SceneGraphNavigation.prototype.pan = function(event)
 	var prevPoint = prevRay.computePoint(tPrev);
 	var dir = vec3.subtract(  point, prevPoint, vec3.create() );
 	vec3.subtract( this.center, dir );
-		
-	this.previousEvent = event;
 	
 	this.computeViewMatrix();
 	
@@ -231,10 +138,40 @@ SceneGraphNavigation.prototype.pan = function(event)
 
 /**************************************************************************************************************/
 
+/**
+	Zoom to the current observed location
+	@param delta Delta zoom
+ */
+Navigation.prototype.zoom = function(delta)
+{
+	var previousDistance = this.distance;
+	
+	this.distance *= (1 + delta * 0.1);
+		
+	if ( this.distance > this.maxDistance )
+	{
+		this.distance = this.maxDistance;
+	}
+	if ( this.distance < this.minDistance )
+	{
+		this.distance = this.minDistance;
+	}
+
+	this.computeViewMatrix();
+	
+/*	if ( this.hasCollision() )
+	{
+		this.distance = previousDistance;
+		this.computeViewMatrix();
+	}*/
+}
+
+/**************************************************************************************************************/
+
 /*
 	Rotate the navigator
  */
-SceneGraphNavigation.prototype.rotate = function(dx,dy)
+Navigation.prototype.rotate = function(dx,dy)
 {
 	var previousHeading = this.heading;
 	var previousTilt = this.tilt;
@@ -252,64 +189,7 @@ SceneGraphNavigation.prototype.rotate = function(dx,dy)
 	// }
 }
 
-/**************************************************************************************************************/
 
-/*
-	Event handler for mouse move
- */
-SceneGraphNavigation.prototype.handleMouseMove = function(event)
-{
-    // No button pressed
-    if (this.pressedButton < 0)
-        return;
-
-	var dx = (event.clientX - this.lastMouseX);
-	var dy = (event.clientY - this.lastMouseY);
-		
-	var ret = false;
-	
-	// Pan
-    if ( this.pressedButton == 0 )
-    {
-		this.pan( event );
-		ret = true;
-	}
-	// Rotate
-    else if ( this.pressedButton == 2 )
-    {
-		var dx = (event.clientX - this.lastMouseX);
-		var dy = (event.clientY - this.lastMouseY);
-		this.rotate(dx,dy);
-		ret = true;
-   }
-	
-
-	this.lastMouseX = event.clientX;
-	this.lastMouseY = event.clientY;
-	
-	return ret;
-}
-
-/**************************************************************************************************************/
-
-/*
-	Event handler for mouse up
- */
-SceneGraphNavigation.prototype.handleMouseUp = function(event)
-{
-    // No button pressed anymore
-	this.pressedButton = -1;
-
-	if ( event.button == 0 || event.button == 2 )
-	{		
-		// Stop mouse event
-		event.preventDefault();
-        return false;
-	}
-
-    return true;
-}
-
-return SceneGraphNavigation
+return Navigation
 
 });

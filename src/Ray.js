@@ -29,16 +29,14 @@ var Ray = function(orig,dir)
 }
 
  /**
-  * Create a ray from an event
+  * Create a ray from a pixel
   */
-Ray.createFromEvent = function( renderContext, event )
+Ray.createFromPixel = function( renderContext, x, y )
 {
-	var pos = renderContext.getXYRelativeToCanvas(event);
-	
 	// reverse y because (0,0) is top left but opengl's normalized
 	// device coordinate (-1,-1) is bottom left
-	var nx = ((pos[0] / renderContext.canvas.width) * 2.0) - 1.0;
-	var ny = -(((pos[1] / renderContext.canvas.height) * 2.0) - 1.0);
+	var nx = ((x / renderContext.canvas.width) * 2.0) - 1.0;
+	var ny = -(((y / renderContext.canvas.height) * 2.0) - 1.0);
 	
 	var tmpMat = mat4.create();
 	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, tmpMat);
@@ -62,6 +60,15 @@ Ray.createFromEvent = function( renderContext, event )
 	vec3.normalize(dir);
 	
 	return new Ray(orig,dir);
+};
+
+ /**
+  * Create a ray from an event
+  */
+Ray.createFromEvent = function( renderContext, event )
+{
+	var pos = renderContext.getXYRelativeToCanvas(event);
+	return Ray.createFromPixel( pos[0], pos[1] );
 };
 
 /**

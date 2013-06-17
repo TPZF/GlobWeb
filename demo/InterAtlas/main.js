@@ -30,13 +30,14 @@ var canvas = document.getElementById('WebGLCanvas');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-var renderContext = new RenderContext( { canvas: canvas });
+var renderContext = new RenderContext({ canvas: canvas, backgroundColor: [1.0,1.0,1.0,1.0], continuousRendering: true });
 var root = new SceneGraph.Node();
 
 var nav = new Navigation(renderContext,root);
 
 var sgRenderer = new SceneGraphRenderer(renderContext,root);
 sgRenderer.postFrame = function() { LODNode.Loader.postFrame() };
+
 
 var addToRoot = function(node) {
 	nav.center = vec3.create( node.center );
@@ -58,13 +59,5 @@ loadLODTree("Data/Collada-ecef/Data/Tile_-010_-007/Tile_-010_-007.xml", addToRoo
 
 loadLODTree("Data/Collada-ecef/Data/Tile_-010_-008/Tile_-010_-008.xml",addToRoot );
 
-
-var tick = function() {
-	requestAnimationFrame(tick);
-	if ( sgRenderer )
-		sgRenderer.render();
-	renderContext.numFrames++;
-}
-window.requestAnimationFrame(tick);
 
 });
