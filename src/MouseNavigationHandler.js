@@ -43,8 +43,8 @@ var MouseNavigationHandler = function(options){
 	var _lastMouseY = -1;
 	var _dx = 0;
 	var _dy = 0;
-	var _panButton = options.panButton || 0;
-	var _rotateButton = options.rotateButton || 1;
+	var _panButton = (options && options.panButton) || 0;
+	var _rotateButton = (options && options.rotateButton) || 1;
 
 	/**************************************************************************************************************/
 	
@@ -220,7 +220,7 @@ var MouseNavigationHandler = function(options){
 		canvas.addEventListener("mousedown", _handleMouseDown);
 		canvas.addEventListener("mousemove", _handleMouseMove);
 		
-		if ( options.zoomOnDblClick )
+		if ( options && options.zoomOnDblClick )
 			canvas.addEventListener("dblclick", _handleMouseDblClick);
 			
 		// For Firefox

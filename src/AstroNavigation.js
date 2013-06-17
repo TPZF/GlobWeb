@@ -33,11 +33,14 @@ define(['./Utils', './CoordinateSystem', './BaseNavigation', './SegmentedAnimati
  */
 var AstroNavigation = function(globe, options)
 {
-	// Default values for fov (in degrees)
-	this['minFov'] = 0.25;
-	this['maxFov'] = 100;
 	
-	BaseNavigation.prototype.constructor.call( this, globe, options );
+	BaseNavigation.prototype.constructor.call( this, globe.renderContext, options );
+	
+	this.globe = globe;
+	
+	// Default values for fov (in degrees)
+	this.minFov = (options && options.minFov) || 0.25;
+	this.maxFov = (options && options.maxFov) || 100;
 
 	// Initialize the navigator
 	this.center3d = [1.0, 0.0, 0.0];
