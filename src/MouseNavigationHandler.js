@@ -41,8 +41,6 @@ var MouseNavigationHandler = function(options){
 	var _pressedButton = -1;
 	var _lastMouseX = -1;
 	var _lastMouseY = -1;
-	var _needsStartEvent = false;
-	var _needsEndEvent = false;
 	var _dx = 0;
 	var _dy = 0;
 
@@ -56,9 +54,7 @@ var MouseNavigationHandler = function(options){
 		Event handler for mouse wheel
 	 */
 	var _handleMouseWheel = function(event)
-	{
-		_navigation.globe.publish("startNavigation");
-		
+	{	
 		var factor;
 
 		// Check differences between firefox and the rest of the world
@@ -88,10 +84,7 @@ var MouseNavigationHandler = function(options){
 			event.preventDefault();
 		}
 		event.returnValue = false;
-		
-		_navigation.globe.publish("endNavigation");
-		_navigation.globe.renderContext.requestFrame();
-			
+					
 		// Return false to stop mouse wheel to be propagated when using onmousewheel
 		return false;
 	};
@@ -113,9 +106,7 @@ var MouseNavigationHandler = function(options){
 			_lastMouseY = event.clientY;
 			_dx = 0;
 			_dy = 0;
-			
-			_needsStartEvent = true;
-			
+						
 			// Return false to stop mouse down to be propagated when using onmousedown
 			return false;
 		}
@@ -146,15 +137,7 @@ var MouseNavigationHandler = function(options){
 		}
 
 		if ( event.button == 0 || event.button == 1 )
-		{
-
-			if (_needsEndEvent ) {
-				_navigation.globe.publish("endNavigation");
-			}
-
-			_needsStartEvent = false;
-			_needsEndEvent = false;
-			
+		{			
 			// Stop mouse up event
 			return false;
 		}
@@ -181,20 +164,13 @@ var MouseNavigationHandler = function(options){
 		// Pan
 		if ( _pressedButton == 0 )
 		{
-			if ( _needsStartEvent ) { 
-				_navigation.globe.publish("startNavigation");
-				_needsStartEvent  = false;
-				_needsEndEvent = true;
-			}
 			_navigation.pan( _dx, _dy );
-			_navigation.globe.renderContext.requestFrame();
 			ret = true;
 		}
 		// Rotate
 		else if ( _pressedButton == 1 )
 		{
 			_navigation.rotate(_dx,_dy);
-			_navigation.globe.renderContext.requestFrame();
 			ret = true;
 		}
 		
@@ -234,7 +210,7 @@ var MouseNavigationHandler = function(options){
 	{
 		_navigation = nav;
 		
-		var canvas = _navigation.globe.renderContext.canvas;
+		var canvas = _navigation.renderContext.canvas;
 		
 		// Setup the mouse event handlers
 		canvas.addEventListener("mousedown", _handleMouseDown);
@@ -246,6 +222,7 @@ var MouseNavigationHandler = function(options){
 		// For Firefox
 		canvas.addEventListener("DOMMouseScroll", _handleMouseWheel);
 		canvas.addEventListener("mousewheel", _handleMouseWheel);
+		//canvas.onselectstart = function() { return false; };
 	};
 
 	/** 
@@ -254,7 +231,7 @@ var MouseNavigationHandler = function(options){
 	this.uninstall = function()
 	{
 		// Setup the mouse event handlers
-		var canvas = _navigation.globe.renderContext.canvas;
+		var canvas = _navigation.renderContext.canvas;
 
 		canvas.removeEventListener("mousedown", _handleMouseDown);
 		canvas.removeEventListener("mousemove", _handleMouseMove);

@@ -153,7 +153,6 @@ var KeyboardNavigationHandler = function(options){
 				}
 				break;
 		}
-		_navigation.globe.renderContext.requestFrame();
 	};
 
 	/**************************************************************************************************************/
@@ -176,7 +175,7 @@ var KeyboardNavigationHandler = function(options){
 		}
 		else
 		{
-			var canvas = _navigation.globe.renderContext.canvas;
+			var canvas = _navigation.renderContext.canvas;
 			canvas.addEventListener("keydown", _handleKeyDown);
 			// Setup focus handling to receive keyboard event on canvas
 			canvas.tabIndex = "0";
@@ -195,7 +194,7 @@ var KeyboardNavigationHandler = function(options){
 		}
 		else
 		{
-			var canvas = _navigation.globe.renderContext.canvas;
+			var canvas = _navigation.renderContext.canvas;
 			canvas.removeEventListener("keydown", _handleKeyDown);
 			canvas.removeEventListener("mousedown", _setFocus);
 		}

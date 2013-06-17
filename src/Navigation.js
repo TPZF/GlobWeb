@@ -35,11 +35,13 @@
  */
 var Navigation = function(globe,options)
 {
+	BaseNavigation.prototype.constructor.call( this, globe.renderContext, options );
+
+	this.globe = globe;
+		
 	// Default values for min and max distance (in meter)
-	this.minDistance = 1.0;
-	this.maxDistance = 3.0 * CoordinateSystem.realEarthRadius;
-	
-	BaseNavigation.prototype.constructor.call( this, globe, options );
+	this.minDistance = (options && options.minDistance) || 1.0;
+	this.maxDistance = (options && options.maxDistance) || 3.0 * CoordinateSystem.realEarthRadius;
 	
 	// Initialize the navigation
 	this.geoCenter = [0.0, 0.0, 0.0];
@@ -180,13 +182,8 @@ Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt )
 		});
 	}
 
-	this.zoomToAnimation.onstop = function() {
-		navigation.globe.publish("endNavigation");
-	}
 	this.globe.addAnimation(this.zoomToAnimation);
 	this.zoomToAnimation.start();
-	
-	this.globe.publish("startNavigation");
 }
 
 /**************************************************************************************************************/
@@ -208,7 +205,9 @@ Navigation.prototype.applyLocalRotation = function(matrix)
 Navigation.prototype.computeViewMatrix = function()
 {
     this.computeInverseViewMatrix();
-	mat4.inverse( this.inverseViewMatrix, this.globe.renderContext.viewMatrix );
+	mat4.inverse( this.inverseViewMatrix, this.renderContext.viewMatrix );
+	this.publish("modified");
+	this.renderContext.requestFrame();
 }
 
 /**************************************************************************************************************/
@@ -308,8 +307,8 @@ Navigation.prototype.pan = function(dx, dy)
 	vec3.normalize(y, y);
 	
 	//Normalize dx and dy
-	dx = dx / this.globe.renderContext.canvas.width;
-	dy = dy / this.globe.renderContext.canvas.height;
+	dx = dx / this.renderContext.canvas.width;
+	dy = dy / this.renderContext.canvas.height;
 	
 	// Move accordingly
 	var position = vec3.create();

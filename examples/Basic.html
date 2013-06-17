@@ -39,7 +39,8 @@ require(['../src/GlobWeb'], function (GlobWeb)
 	
 	document.onkeypress = function(event)
 	{
-		atmosphere.visible( !atmosphere.visible() );
+		if (event.which == 97)
+			atmosphere.visible( !atmosphere.visible() );
 		//globe.tileManager.freeze = !globe.tileManager.freeze;
 	}
 });

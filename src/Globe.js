@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./CoordinateSystem', './RenderContext','./TileManager','./Tile' , './VectorRendererManager', './Numeric', './GeoBound' ], 
-	function(CoordinateSystem, RenderContext, TileManager, Tile, VectorRendererManager, Numeric, GeoBound) {
+ define(['./CoordinateSystem', './RenderContext', './TileManager', './Tile', './VectorRendererManager', './Numeric', './GeoBound', './Event', './Utils' ], 
+	function(CoordinateSystem, RenderContext, TileManager, Tile, VectorRendererManager, Numeric, GeoBound, Event, Utils) {
 
 /**************************************************************************************************************/
 
@@ -39,40 +39,23 @@
  */
 var Globe = function(options)
 {
+	Event.prototype.constructor.call( this );
+
 	this.renderContext = new RenderContext(options);
 	this.tileManager = new TileManager( this );
 	this.vectorRendererManager = new VectorRendererManager( this );
 	this.attributionHandler = null;
-	this.activeAnimations = [];
 	this.preRenderers = [];
 	this.nbCreatedLayers = 0;
 	
-	// Event callbacks
-	this.callbacks = {};
-	
 	var glob = this;	
-	this.renderContext.frame = function() 
-	{		
-		// Resest frame requested flag first
-		glob.renderContext.frameRequested = false;
-				
-		// Render the globe
-		glob.render();
-		
-		// Request next frame
-		if ( glob.renderContext.continuousRendering )
-		{
-			glob.renderContext.requestFrame();
-		}
-		else if ( glob.activeAnimations.length > 0 )
-		{
-			glob.renderContext.requestFrame();
-		}
-		
-	};
-	
+	this.renderContext.render =  function() { glob.render(); };
 	this.renderContext.requestFrame();
 }
+
+/**************************************************************************************************************/
+
+Utils.inherits( Event, Globe );
 
 /**************************************************************************************************************/
 
@@ -177,7 +160,7 @@ Globe.prototype.removeLayer = function(layer)
 */
 Globe.prototype.addAnimation = function(anim)
 {
-	anim.globe = this;
+	anim.renderContext = this.renderContext;
 }
 
 /**************************************************************************************************************/
@@ -189,7 +172,7 @@ Globe.prototype.addAnimation = function(anim)
 */
 Globe.prototype.removeAnimation = function(anim)
 {
-	anim.globe = null;
+	anim.renderContext = null;
 }
 
 /**************************************************************************************************************/
@@ -306,117 +289,12 @@ Globe.prototype.getPixelFromLonLat = function(lon,lat)
  */
 Globe.prototype.render = function()
 {
-	var rc = this.renderContext;
-	var stats = rc.stats;
-	var gl = rc.gl;
-		
-	if (stats) stats.start("globalRenderTime");
-	
-	// Update active animations
-	if ( this.activeAnimations.length > 0)
-	{
-		var time = Date.now();
-		for (var i = 0; i < this.activeAnimations.length; i++)
-		{
-			this.activeAnimations[i].update(time);
-		}
-	}
-	
-	// Clear the buffer
-	if ( RenderContext.contextAttributes.stencil )
-	{
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
-	}
-	else
-	{
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	}
-	
-	// Check canvas size is valid
-	if ( rc.canvas.width == 0 || rc.canvas.height == 0 )
-		return;
-		
-	gl.viewport(0, 0, rc.canvas.width, rc.canvas.height);
-
-	// Update view dependent properties to be used during rendering : view matrix, frustum, projection, etc...
-	rc.updateViewDependentProperties();
-	
 	// Call pre-renderers
 	for ( var i = 0 ; i < this.preRenderers.length; i++ )
 		this.preRenderers[i].preRender();
 		
 	// Render tiles
 	this.tileManager.render();
-	
-	if ( this.tileManager.tilesToRender.length == 0 )
-		return;
-		
-	if (stats) stats.end("globalRenderTime");
-}
-
-/**************************************************************************************************************/
-
-/** 
-	Subscribe to an event
-	
-	@param name Event name
-		<ul>
-			<li>startNavigation : called when navigation is started (by the user or through animation)</li>
-			<li>endNavigation : called when navigation is ended (by the user or through animation)t</li>
-			<li>baseLayersReady : called when the base layers are ready to be displayed</li>
-			<li>baseLayersError : called when the base layers are not valid, or not accessible, in that case nothing is displayed so this event is useful to provide an error message to the user</li>
-			<li>startBackgroundLoad : called when background layers (imagery and/or elevation) start to be loaded</li>
-			<li>endBackgroundLoad : called when background layers (imagery and/or elevation) end loading</li>
-			<li>startLoad : called when a layer start to be loaded</li>
-			<li>endLoad : called whena layer end loading</li>
-		</ul>
-	@param callback Callback function
-*/
-Globe.prototype.subscribe = function(name,callback)
-{
-	if( !this.callbacks[name] ) {
-		this.callbacks[name] = [ callback ];
-	} else {
-		this.callbacks[name].push( callback );
-	}
-}
-
-/**************************************************************************************************************/
-
-/** 
-	Unsubscribe to an event 
-	
-	@param name Event name {@link Globe#subscribe}
-	@param callback Callback function
-*/
-Globe.prototype.unsubscribe = function(name,callback)
-{
-	if( this.callbacks[name] ) {
-		var i = this.callbacks[name].indexOf( callback );
-		if ( i != -1 ) {
-			this.callbacks[name].splice(i,1);
-		}
-	}
-}
-
-/**************************************************************************************************************/
-
-/**
-	Publish an event
-	
-	@param name Event name
-	@param context Context
-	
-	@private
-*/
-Globe.prototype.publish = function(name,context)
-{
-	if ( this.callbacks[name] ) {
-		var cbs = this.callbacks[name];
-		for ( var i = 0; i < cbs.length; i++ ) {
-			cbs[i](context);
-		}
-	}
 }
 
 return Globe;

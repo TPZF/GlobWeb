@@ -17,7 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define( ['./MouseNavigationHandler', './KeyboardNavigationHandler', './InertiaAnimation' ], function(MouseNavigationHandler,KeyboardNavigationHandler,InertiaAnimation) {
+define( ['./Utils', './Event', './MouseNavigationHandler', './KeyboardNavigationHandler', './InertiaAnimation' ], 
+	function(Utils,Event,MouseNavigationHandler,KeyboardNavigationHandler,InertiaAnimation) {
 
 /**************************************************************************************************************/
 
@@ -36,18 +37,18 @@ define( ['./MouseNavigationHandler', './KeyboardNavigationHandler', './InertiaAn
 		</ul>
 
  */
-var BaseNavigation = function(globe, options)
+var BaseNavigation = function(renderContext, options)
 {
-	this.globe = globe;
-
-	// Copy options
-	for (var x in options)
-	{
-		this[x] = options[x];
-	}
+	Event.prototype.constructor.call( this );
 	
+	this.renderContext = renderContext;
+
 	// Create default handlers if none are created in options
-	if ( !this.handlers ) 
+	if ( options && options.handlers ) 
+	{
+		this.handlers = options.handlers;
+	}
+	else
 	{
 		this.handlers = [new MouseNavigationHandler({ zoomOnDblClick : true }), new KeyboardNavigationHandler()];
 	}
@@ -63,6 +64,10 @@ var BaseNavigation = function(globe, options)
 	// Automatically start
 	this.start();
 }
+
+/**************************************************************************************************************/
+
+Utils.inherits( Event, BaseNavigation );
 
 /**************************************************************************************************************/
 
@@ -119,8 +124,8 @@ BaseNavigation.prototype.stopAnimations = function()
 */
 BaseNavigation.prototype.getFov = function()
 {
-	var aspect = this.globe.renderContext.canvas.width / this.globe.renderContext.canvas.height;
-	return [ aspect * this.globe.renderContext.fov, this.globe.renderContext.fov ];
+	var aspect = this.renderContext.canvas.width / this.renderContext.canvas.height;
+	return [ aspect * this.renderContext.fov, this.renderContext.fov ];
 }
 
 /**************************************************************************************************************/

@@ -30,7 +30,7 @@ var Animation = function()
 {
     this.startTime = -1;
 	this.pauseTime = -1;
-	this.globe = null;
+	this.renderContext = null;
 }
 
 /**************************************************************************************************************/
@@ -40,8 +40,8 @@ var Animation = function()
 */
 Animation.prototype._unregisterActive = function()
 {
-	var index = this.globe.activeAnimations.indexOf(this);
-	this.globe.activeAnimations.splice(index,1);
+	var index = this.renderContext.activeAnimations.indexOf(this);
+	this.renderContext.activeAnimations.splice(index,1);
 }
 
 /**************************************************************************************************************/
@@ -65,7 +65,7 @@ Animation.prototype.getStatus = function()
 */
 Animation.prototype.start = function()
 {
-	if ( !this.globe )
+	if ( !this.renderContext )
 		return;
 	
 	if ( this.startTime == -1 || this.pauseTime != - 1 )
@@ -83,8 +83,8 @@ Animation.prototype.start = function()
 		}
 		
 		// Register animation as active
-		this.globe.activeAnimations.push(this);
-		this.globe.renderContext.requestFrame();
+		this.renderContext.activeAnimations.push(this);
+		this.renderContext.requestFrame();
 	}
 }
 
@@ -95,7 +95,7 @@ Animation.prototype.start = function()
 */
 Animation.prototype.pause = function()
 {	
-	if ( !this.globe )
+	if ( !this.renderContext )
 		return;
 		
 	if ( this.startTime != -1 && this.pauseTime == -1 )

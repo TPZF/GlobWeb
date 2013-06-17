@@ -34,7 +34,6 @@ var renderContext = new RenderContext( { canvas: canvas });
 var root = new SceneGraph.Node();
 
 var nav = new Navigation(renderContext,root);
-nav.setupDefaultEventHandlers();
 
 var sgRenderer = new SceneGraphRenderer(renderContext,root);
 sgRenderer.postFrame = function() { LODNode.Loader.postFrame() };
