@@ -67,6 +67,8 @@ SceneGraphNavigation.prototype.setupDefaultEventHandlers = function(zoomOnDblCli
 	document.addEventListener("mouseup",function(e) { return self.handleMouseUp(e||window.event); },false);
 	canvas.addEventListener("mousemove",function(e) { return self.handleMouseMove(e||window.event); },false);
 	
+	canvas.onselectstart = function() { return false; };
+	
 	canvas.addEventListener("contextmenu", function(e) { e.preventDefault(); return false; }, false);
 			
 	// For Firefox
