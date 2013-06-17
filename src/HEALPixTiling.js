@@ -29,7 +29,7 @@ var HEALPixTiling = function(order, options)
 {
 	this.order = order;
 	this.nside = Math.pow(2,this.order);
-	this.coordSystem = options.coordSystem || "EQUATORIAL";
+	this.coordSystem = options.coordSystem || "EQ";
 }
 
 /**************************************************************************************************************/
@@ -83,6 +83,13 @@ HEALPixTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
  */
 HEALPixTiling.prototype.findInsideTile = function(lon, lat, tiles)
 {
+	if ( this.coordSystem != CoordinateSystem.type )
+	{
+		var geo = CoordinateSystem.convertFromDefault( [lon, lat], this.coordSystem );
+		lon = geo[0];
+		lat = geo[1];
+	}
+
 	for ( var i=0; i<tiles.length; i++ )
 	{
 		var tile = tiles[i];
@@ -227,12 +234,13 @@ HEALPixTile.prototype.generateVertices = function()
 	// Compute array of worldspace coordinates
 	for(var u = 0; u < size; u++){
 		for(var v = 0; v < size; v++){
-			if ( this.config.coordSystem == 'GALACTIC' )
+
+
+			if ( this.config.coordSystem != CoordinateSystem.type )
 			{
 				var vertice = HEALPixBase.fxyf((ix+u*step)/this.nside, (iy+v*step)/this.nside, this.face);
 				var geo = CoordinateSystem.from3DToGeo( vertice );
-				var eq = AstroCoordTransform.transformInDeg( geo, AstroCoordTransform.Type.GAL2EQ );
-				
+				var eq = CoordinateSystem.convertToDefault(geo, this.config.coordSystem);
 				worldSpaceVertices[u*size + v] = CoordinateSystem.fromGeoTo3D( eq );
 			}
 			else
