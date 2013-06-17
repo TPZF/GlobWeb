@@ -14,6 +14,12 @@ body {
 	left: 255px;
 	bottom: 5px;
 }
+#a3 {
+	position: absolute;
+	left: 500px;
+	bottom: 5px;
+}
+
 
 #stats {
 	position: absolute;

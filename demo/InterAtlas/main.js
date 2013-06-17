@@ -4,16 +4,22 @@ requirejs.config({
 	}
 });
 
-require(['gw/RenderContext','gw/SceneGraph/Navigation','gw/SceneGraph/Renderer', 'gw/SceneGraph/SceneGraph', 'gw/SceneGraph/LODNode'], 
-	function(RenderContext,Navigation,SceneGraphRenderer,SceneGraph,LODNode) {
+require(['gw/RenderContext','gw/SceneGraph/Navigation','gw/SceneGraph/Renderer', 'gw/SceneGraph/SceneGraph', 'gw/SceneGraph/LODNode', 'gw/SceneGraph/LODTreeLoader'], 
+	function(RenderContext,Navigation,SceneGraphRenderer,SceneGraph,LODNode,loadLODTree) {
 
 var stats = function()
 {
 	if ( fpsElement != null )
 	{
-		fpsElement.innerHTML = "FPS : " + renderContext.numFrames + "<br># rendered node : " + LODNode.Loader.numRendered;
+		var numRender = 0;
+		if ( renderContext.numFrames > 0 )
+		{
+			numRender = (LODNode.Loader.numRendered / renderContext.numFrames).toFixed(2);
+		}
+		fpsElement.innerHTML = "FPS : " + renderContext.numFrames + "<br># rendered node : " + numRender;
 	}
 
+	LODNode.Loader.numRendered = 0;
 	renderContext.numFrames = 0;
 }
 
@@ -41,17 +47,17 @@ var addToRoot = function(node) {
 	root.children.push( node );
 };
 
-LODNode.load("Data/Collada-ecef/Data/Tile_-009_-006/Tile_-009_-006.xml", addToRoot );
+loadLODTree("Data/Collada-ecef/Data/Tile_-009_-006/Tile_-009_-006.xml", addToRoot );
 
-LODNode.load("Data/Collada-ecef/Data/Tile_-009_-007/Tile_-009_-007.xml", addToRoot );
+loadLODTree("Data/Collada-ecef/Data/Tile_-009_-007/Tile_-009_-007.xml", addToRoot );
 
-LODNode.load("Data/Collada-ecef/Data/Tile_-009_-008/Tile_-009_-008.xml", addToRoot );
+loadLODTree("Data/Collada-ecef/Data/Tile_-009_-008/Tile_-009_-008.xml", addToRoot );
 
-LODNode.load("Data/Collada-ecef/Data/Tile_-010_-006/Tile_-010_-006.xml", addToRoot );
+loadLODTree("Data/Collada-ecef/Data/Tile_-010_-006/Tile_-010_-006.xml", addToRoot );
 
-LODNode.load("Data/Collada-ecef/Data/Tile_-010_-007/Tile_-010_-007.xml", addToRoot );
+loadLODTree("Data/Collada-ecef/Data/Tile_-010_-007/Tile_-010_-007.xml", addToRoot );
 
-LODNode.load("Data/Collada-ecef/Data/Tile_-010_-008/Tile_-010_-008.xml",addToRoot );
+loadLODTree("Data/Collada-ecef/Data/Tile_-010_-008/Tile_-010_-008.xml",addToRoot );
 
 
 var tick = function() {
