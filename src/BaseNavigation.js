@@ -50,7 +50,7 @@ var BaseNavigation = function(renderContext, options)
 	}
 	else
 	{
-		this.handlers = [new MouseNavigationHandler({ zoomOnDblClick : true }), new KeyboardNavigationHandler()];
+		this.handlers = [ new MouseNavigationHandler(options ? options.mouse : null), new KeyboardNavigationHandler(options ? options.keyboard : null) ];
 	}
 	
 	// Inertia effect

@@ -43,6 +43,8 @@ var MouseNavigationHandler = function(options){
 	var _lastMouseY = -1;
 	var _dx = 0;
 	var _dy = 0;
+	var _panButton = options.panButton || 0;
+	var _rotateButton = options.rotateButton || 1;
 
 	/**************************************************************************************************************/
 	
@@ -100,7 +102,7 @@ var MouseNavigationHandler = function(options){
 		// Stop all animations when an event is received
 		_navigation.stopAnimations();
 
-		if ( event.button == 0 || event.button == 1 )
+		if ( event.button == _panButton || event.button == _rotateButton )
 		{		
 			_lastMouseX = event.clientX;
 			_lastMouseY = event.clientY;
@@ -125,19 +127,21 @@ var MouseNavigationHandler = function(options){
 
 		if ( _navigation.inertia && (_dx != 0 || _dy != 0)  )
 		{	
-			if ( event.button == 0 )
+			if ( event.button == _panButton )
 			{
 				_navigation.inertia.launch("pan", _dx, _dy );
 			
 			}
-			if ( event.button == 1 )
+			if ( event.button == _rotateButton )
 			{
 				_navigation.inertia.launch("rotate", _dx, _dy );
 			}
 		}
 
-		if ( event.button == 0 || event.button == 1 )
-		{			
+		if ( event.button == _panButton || event.button == _rotateButton )
+		{
+			event.preventDefault();
+			
 			// Stop mouse up event
 			return false;
 		}
@@ -162,13 +166,13 @@ var MouseNavigationHandler = function(options){
 		
 		var ret = false;
 		// Pan
-		if ( _pressedButton == 0 )
+		if ( _pressedButton == _panButton )
 		{
 			_navigation.pan( _dx, _dy );
 			ret = true;
 		}
 		// Rotate
-		else if ( _pressedButton == 1 )
+		else if ( _pressedButton == _rotateButton )
 		{
 			_navigation.rotate(_dx,_dy);
 			ret = true;
@@ -222,7 +226,15 @@ var MouseNavigationHandler = function(options){
 		// For Firefox
 		canvas.addEventListener("DOMMouseScroll", _handleMouseWheel);
 		canvas.addEventListener("mousewheel", _handleMouseWheel);
-		//canvas.onselectstart = function() { return false; };
+		
+		if ( _rotateButton == 2 ) 
+		{
+			canvas.addEventListener("contextmenu", function(e) { e.preventDefault(); return false; }, false);
+		}
+		
+		// Fix for Google Chrome : avoid dragging
+		// TODO : a hack, should be more robust (restore on uninstall?)
+		canvas.onselectstart = function() { return false; };
 	};
 
 	/** 

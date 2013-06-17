@@ -25,9 +25,9 @@
 	@constructor
 	Navigation constructor
  */
-var Navigation = function(renderContext,node)
+var Navigation = function(renderContext,options)
 {
-	BaseNavigation.prototype.constructor.call( this, renderContext );
+	BaseNavigation.prototype.constructor.call( this, renderContext, options );
 
 	this.inverseViewMatrix = mat4.create();
 	
@@ -43,7 +43,7 @@ var Navigation = function(renderContext,node)
 	this.renderContext.near = 0.1;
 	this.renderContext.far = 5000;
 	
-	this.node = node;
+	this.node = options ? options.node : null;
 
 	// Update the view matrix now
 	this.computeViewMatrix();

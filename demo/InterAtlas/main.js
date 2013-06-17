@@ -33,7 +33,12 @@ canvas.height = window.innerHeight;
 var renderContext = new RenderContext({ canvas: canvas, backgroundColor: [1.0,1.0,1.0,1.0], continuousRendering: true });
 var root = new SceneGraph.Node();
 
-var nav = new Navigation(renderContext,root);
+var nav = new Navigation(renderContext, { node: root, 
+		inertia: false,
+		mouse: {
+			rotateButton: 2
+		}
+	});
 
 var sgRenderer = new SceneGraphRenderer(renderContext,root);
 sgRenderer.postFrame = function() { LODNode.Loader.postFrame() };
