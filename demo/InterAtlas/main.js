@@ -4,8 +4,8 @@ requirejs.config({
 	}
 });
 
-require(['gw/RenderContext','gw/SceneGraph/Navigation','gw/SceneGraph/Renderer', 'gw/SceneGraph/SceneGraph', 'gw/SceneGraph/LODNode', 'gw/SceneGraph/LODTreeLoader'], 
-	function(RenderContext,Navigation,SceneGraphRenderer,SceneGraph,LODNode,loadLODTree) {
+require(['gw/RenderContext','gw/SceneGraph/Navigation','gw/SceneGraph/LODTreeRenderer', 'gw/SceneGraph/SceneGraph', 'gw/SceneGraph/LODNode', 'gw/SceneGraph/LODTreeLoader'], 
+	function(RenderContext,Navigation,LODTreeRenderer,SceneGraph,LODNode,loadLODTree) {
 
 var stats = function()
 {
@@ -40,9 +40,7 @@ var nav = new Navigation(renderContext, { node: root,
 		}
 	});
 
-var sgRenderer = new SceneGraphRenderer(renderContext,root);
-sgRenderer.postFrame = function() { LODNode.Loader.postFrame() };
-
+var renderer = new LODTreeRenderer(renderContext,root);
 
 var addToRoot = function(node) {
 	nav.center = vec3.create( node.center );

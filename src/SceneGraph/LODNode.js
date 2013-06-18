@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./ColladaParser','../BoundingBox'], function(ColladaParser,BoundingBox) {
+define(['../BoundingBox'], function(BoundingBox) {
  
 /**************************************************************************************************************/
 
@@ -78,164 +78,6 @@ LODNode.prototype.unloadChildren = function(renderContext)
 	}
 }
 
-/**************************************************************************************************************/
-
-// Function to collect geometries from the COLLADA nodes
-var findGeometry = function( geometries, node)
-{
-	for ( var i = 0; i < node.geometries.length; i++ )
-	{
-		geometries.push( node.geometries[i] );
-	}
-	
-	for ( var i = 0; i < node.children.length; i++ )
-	{
-		findGeometry( geometries, node.children[i] );
-	}
-}
-
-/**************************************************************************************************************/
-
-/**
- * The singleton loader
- */
-LODNode.Loader = {
-	freeRequests : [ new XMLHttpRequest(), new XMLHttpRequest() ],
-	nodesToLoad : [],
-	numRendered: 0,
-	numFrames: 0
-};
-
-/**************************************************************************************************************/
-
-/**
- * Function called at the end of each frame
- */
-LODNode.Loader.postFrame = function() {
-	this.nodesToLoad.sort( function(a,b) {
-		return b.pixelSize - a.pixelSize;
-	});
-	for ( var i = 0; i < this.nodesToLoad.length; i++ ) {
-		this.load( this.nodesToLoad[i].node );
-	}
-	this.nodesToLoad.length = 0;
-	
-/*	this.numFrames++;
-	if ( this.numFrames > 60 )
-	{
-		console.log('# render ' + this.numRendered );
-		this.numFrames = 0;
-	}
-	this.numRendered = 0;*/
-};
-
-/**************************************************************************************************************/
-
-/**
- * Internal function call when an image is loaded
- */
-var onImageLoad = function(node)
-{
-	node.imagesToLoad--;
-	if ( node.imagesToLoad == 0 )
-	{
-		node.loading = false;
-		node.loaded = true;
-	}
-};
-
-
-/**************************************************************************************************************/
-
-/**
- * Load the images of a node.
- * A node is considered as loaded when all its images are loaded to avoid flickering
- */
-LODNode.Loader.loadImages = function(node) {
-	node.imagesToLoad = node.geometries.length; 
-	for ( var i=0; i < node.geometries.length; i++ )
-	{
-		var image = node.geometries[i].material.texture.image;
-		if ( image.complete )
-		{
-			onImageLoad(node);
-		}
-		else
-		{
-			image.onload = function() { 
-				onImageLoad(node); 
-			};
-		}
-	}
-};
-
-/**************************************************************************************************************/
-
-/**
- * Internal function to merge geometries with the same texture
- */
-var optimizeGeometries = function( geoms )
-{
-	for ( var i = 0; i < geoms.length; i++ )
-	{
-		var mat = geoms[i].material;
-		var mesh = geoms[i].mesh; 
-		
-		var j = i+1;
-		while ( j < geoms.length )
-		{
-			if ( geoms[j].material == mat )
-			{
-				mesh.vertices = mesh.vertices.concat( geoms[j].mesh.vertices );
-				mesh.tcoords = mesh.tcoords.concat( geoms[j].mesh.tcoords );
-				geoms.splice(j,1);
-			}
-			else
-			{
-				j++;
-			}
-		}
-	}
-};
-
-
-/**************************************************************************************************************/
-
-/**
- * Load a LOD node
- */
-LODNode.Loader.load = function(node) {
-		
-	if ( node.loading || node.loaded )
-		return;		
-		
-	var self = this;
-	var xhr = this.freeRequests.pop();
-	if ( xhr )
-	{
-		xhr.onreadystatechange = function(e)
-		{
-			if ( xhr.readyState == 4  && xhr.status == 200)
-			{
-				//console.log("Load " + node.modelPath);
-				var root = ColladaParser.parse( xhr.responseXML );
-				
-				findGeometry( node.geometries, root );
-				
-				optimizeGeometries( node.geometries );
-				
-				self.loadImages(node);
-				
-				self.freeRequests.push(xhr);
-			}
-		};
-		
-		node.loading = true;
-		xhr.open("GET", node.modelPath);
-		xhr.overrideMimeType('text/xml');
-		xhr.send();
-	}
-};
 
 /**************************************************************************************************************/
 
@@ -290,7 +132,7 @@ LODNode.prototype.render = function(renderer)
 
 	if (!this.loaded)
 	{
-		LODNode.Loader.load(this);
+		renderer.load(this);
 	}
 	else
 	{
@@ -309,7 +151,7 @@ LODNode.prototype.render = function(renderer)
 				allChildrenLoaded &= c.loaded;
 				if (!c.loaded && !c.loading)
 				{
-					LODNode.Loader.nodesToLoad.push({ 
+					renderer.nodesToLoad.push({ 
 						node: this.children[i], 
 						pixelSize: pixelSize 
 					});
@@ -346,7 +188,7 @@ LODNode.prototype.render = function(renderer)
 				geom.mesh.render(gl,renderer.program);
 			}
 			
-			LODNode.Loader.numRendered++;
+			renderer.numRendered++;
 		}
 	}
 }
