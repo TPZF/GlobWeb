@@ -201,8 +201,8 @@ RenderContext.prototype.frame = function()
 	// Update view dependent properties to be used during rendering : view matrix, frustum, projection, etc...
 	this.updateViewDependentProperties();
 			
-	// Render the globe
-	this.render();
+	// Call renderer
+	this.renderer.render();
 	
 	if (stats) stats.end("globalRenderTime");
 	

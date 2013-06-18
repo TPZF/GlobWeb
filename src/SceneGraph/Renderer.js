@@ -74,8 +74,7 @@ var SceneGraphRenderer = function(renderContext,node)
 	renderContext.far = 5000;
 	renderContext.fov = 60;
 	
-	var self = this;
-	renderContext.render = function() { self.render(); };
+	renderContext.renderer = this;
 	renderContext.requestFrame();	
 }
 
@@ -132,11 +131,6 @@ SceneGraphRenderer.prototype.render = function()
 	for ( var i = 0; i < this.nodes.length; i++ )
 	{
 		this.renderNode(this.nodes[i]);
-	}
-	
-	if ( this.postFrame ) 
-	{
-		this.postFrame();
 	}
 }
 

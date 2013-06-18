@@ -31,7 +31,6 @@ var LODTreeRenderer = function(renderContext,node)
 	this.freeRequests = [ new XMLHttpRequest(), new XMLHttpRequest() ];
 	this.nodesToLoad = [];
 	this.numRendered = 0;
-	this.numFrames = 0;
 }
 
 /**************************************************************************************************************/
@@ -45,6 +44,8 @@ Utils.inherits( Renderer, LODTreeRenderer );
  */
 LODTreeRenderer.prototype.render = function()
 {
+	this.numRendered = 0;
+	
 	Renderer.prototype.render.call( this );
 
 	// Load the needed nodes
@@ -55,14 +56,6 @@ LODTreeRenderer.prototype.render = function()
 		this.load( this.nodesToLoad[i].node );
 	}
 	this.nodesToLoad.length = 0;
-	
-/*	this.numFrames++;
-	if ( this.numFrames > 60 )
-	{
-		console.log('# render ' + this.numRendered );
-		this.numFrames = 0;
-	}
-	this.numRendered = 0;*/
 }
 
 /**************************************************************************************************************/
@@ -188,6 +181,17 @@ LODTreeRenderer.prototype.load = function(node)
 		xhr.send();
 	}
 };
+
+/**************************************************************************************************************/
+
+/**
+	Display some render statistics
+	@private
+ */
+LODTreeRenderer.prototype.getRenderStats = function()
+{
+	return "# rendered nodes : " +  this.numRendered;
+}
 
 /**************************************************************************************************************/
 

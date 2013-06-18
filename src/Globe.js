@@ -48,8 +48,7 @@ var Globe = function(options)
 	this.preRenderers = [];
 	this.nbCreatedLayers = 0;
 	
-	var glob = this;	
-	this.renderContext.render =  function() { glob.render(); };
+	this.renderContext.renderer = glob;
 	this.renderContext.requestFrame();
 }
 
@@ -284,7 +283,6 @@ Globe.prototype.getPixelFromLonLat = function(lon,lat)
 /**
 	Render the globe
 	TODO : private for now because it is automatically called in requestAnimationFrame.
-	
 	@private
  */
 Globe.prototype.render = function()
@@ -296,6 +294,19 @@ Globe.prototype.render = function()
 	// Render tiles
 	this.tileManager.render();
 }
+
+/**************************************************************************************************************/
+
+/**
+	Display some render statistics
+	@private
+ */
+Globe.prototype.getRenderStats = function()
+{
+	return "# rendered tiles : " + this.tileManager.tilesToRender.length;
+}
+
+/**************************************************************************************************************/
 
 return Globe;
 
