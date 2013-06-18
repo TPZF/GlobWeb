@@ -66,13 +66,11 @@ Ray.prototype.lodNodeIntersect = function( node, intersects )
 
 Ray.prototype.geometryIntersect = function( geometry, intersects )
 {
-	var verts = geometry.mesh.vertices;
-	for ( var i = 0; i < verts.length; i +=9 ) 
+	var indices = geometry.mesh.indices;
+	for ( var i = 0; i < indices.length; i += 3 ) 
 	{
-		/*var intersect = this.triangleIntersect( [ verts[i], verts[i+1], verts[i+2] ],
-					[ verts[i+3], verts[i+4], verts[i+5] ],
-					[ verts[i+6], verts[i+7], verts[i+8] ] );*/
-		var intersect = this.triangleIntersectOptimized( verts, i, i+3, i+6 );
+		var intersect = this.triangleIntersectOptimized( geometry.mesh.vertices, geometry.mesh.numElements * indices[i], 
+					geometry.mesh.numElements * indices[i+1], geometry.mesh.numElements * indices[i+2] );
 		
 		if (intersect)
 		{

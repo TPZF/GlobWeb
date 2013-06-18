@@ -139,8 +139,7 @@ var optimizeGeometries = function( geoms )
 		{
 			if ( geoms[j].material == mat )
 			{
-				mesh.vertices = mesh.vertices.concat( geoms[j].mesh.vertices );
-				mesh.tcoords = mesh.tcoords.concat( geoms[j].mesh.tcoords );
+				mesh.merge( geoms[j].mesh );
 				geoms.splice(j,1);
 			}
 			else

@@ -65,10 +65,8 @@ $(function()
 	fpsElement = document.getElementById("fps");
 	window.setInterval(stats,1000);
 	
-	renderContext = new RenderContext( { canvas: "ColladaCanvas" });
-
+	renderContext = new RenderContext( { canvas: "ColladaCanvas", backgroundColor: [1.0,1.0,1.0,1.0], continuousRendering: true  });
 	var nav = new Navigation(renderContext);
-	nav.setupDefaultEventHandlers();
 		
 	var sgRenderer;
 	
@@ -82,21 +80,12 @@ $(function()
 			sgRenderer = new SceneGraphRenderer(renderContext,node);
 		}
 	};
-	xhr.open("GET", "models/warehouse_model.dae");
+	//xhr.open("GET", "models/warehouse_model.dae");
 	//xhr.open("GET", "models/worms-cathedral.dae");
 	//xhr.open("GET", "duck_triangulate.dae");
-	//xhr.open("GET", "models/soldier.dae");
+	xhr.open("GET", "models/soldier.dae");
 	xhr.send();
 	
-	
-	var tick = function() {
-        requestAnimationFrame(tick);
-       // colladaRenderer.render();
-		if ( sgRenderer )
-			sgRenderer.render();
-		renderContext.numFrames++;
-    }
-	window.requestAnimationFrame(tick);
 
 });
 

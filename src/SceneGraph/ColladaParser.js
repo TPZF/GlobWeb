@@ -247,8 +247,9 @@ var parsePolygons = function(node,colladaGeometry)
 	var vertexOffset = -1;
 	var texCoordOffset = -1;
 	
-	var meshVerts = [];
-	var meshTexCoords = [];
+	var meshVerts = null;
+	var indexMap = null;
+	var indices = null;
 	
 	var child = node.firstElementChild;
 	while ( child )
@@ -270,22 +271,48 @@ var parsePolygons = function(node,colladaGeometry)
 			numberOfInputs++;
 			break;
 		case "p":
-			var indices = child.textContent.trim().split(/\s+/);
-			var numVerts = indices.length / numberOfInputs;
+			if (!meshVerts)
+			{
+				meshVerts = texCoords ?  [] : vertices;
+				numElements = texCoords ? 5 : 3;
+				indexMap = {};
+				indices = [];
+			}
+			
+			var colladaIndices = child.textContent.trim().split(/\s+/);
+			var numVerts = colladaIndices.length / numberOfInputs;
 			if ( numVerts == 3 )
 			{
 				for ( var i = 0; i < numVerts; i++ )
 				{
-					var vi = parseInt( indices[i*numberOfInputs+vertexOffset] );
-					meshVerts.push( vertices[ 3*vi ] );
-					meshVerts.push( vertices[ 3*vi+1 ] );
-					meshVerts.push( vertices[ 3*vi+2 ] );
+					var vi = parseInt( colladaIndices[i*numberOfInputs+vertexOffset] );
 					
 					if ( texCoords )
 					{
-						var tci = parseInt( indices[i*numberOfInputs+texCoordOffset] );
-						meshTexCoords.push( texCoords[ 2*tci ] );
-						meshTexCoords.push( texCoords[ 2*tci+1 ] );
+						var tci = parseInt( colladaIndices[i*numberOfInputs+texCoordOffset] );
+						var key = vi + '_' + tci;
+						if ( indexMap.hasOwnProperty(key) )
+						{
+							indices.push( indexMap[key] );
+						}
+						else
+						{
+							var index = meshVerts.length / numElements;
+							
+							meshVerts.push( vertices[ 3*vi ] );
+							meshVerts.push( vertices[ 3*vi+1 ] );
+							meshVerts.push( vertices[ 3*vi+2 ] );					
+							meshVerts.push( texCoords[ 2*tci ] );
+							meshVerts.push( texCoords[ 2*tci+1 ] );
+							
+							indexMap[key] = index;
+							
+							indices.push( index );
+						}
+					}
+					else
+					{
+						indices.push( vi );
 					}
 				}
 			}
@@ -300,7 +327,8 @@ var parsePolygons = function(node,colladaGeometry)
 
 	var mesh = new SceneGraph.Mesh();
 	mesh.vertices = meshVerts;
-	if ( meshTexCoords ) mesh.tcoords = meshTexCoords;
+	mesh.indices = indices;
+	mesh.numElements = numElements;
 	colladaGeometry.meshes[ node.getAttribute("material") ] = mesh;
 }	
 /**
@@ -334,27 +362,54 @@ var parseTriangles = function(node,colladaGeometry)
 			numberOfInputs++;
 			break;
 		case "p":
-			var indices = child.textContent.trim().split(/\s+/);
-			var meshVerts = [];
-			var meshTexCoords = texCoords ? [] : null;
-			for ( var i = 0; i < indices.length / numberOfInputs; i++ )
+		
+			var colladaIndices = child.textContent.trim().split(/\s+/);
+						
+			var indices = [];
+			var indexMap = {};
+			
+			var meshVerts = texCoords ? [] : vertices;
+			var numElements = texCoords ? 5 : 3;
+			
+			for ( var i = 0; i < colladaIndices.length / numberOfInputs; i++ )
 			{
-				var vi = parseInt( indices[i*numberOfInputs+vertexOffset] );
-				meshVerts[ 3*i ] = vertices[ 3*vi ];
-				meshVerts[ 3*i+1 ] = vertices[ 3*vi+1 ];
-				meshVerts[ 3*i+2 ] = vertices[ 3*vi+2 ];
+				var vi = parseInt( colladaIndices[i*numberOfInputs+vertexOffset] );
 				
 				if ( texCoords )
 				{
-					var tci = parseInt( indices[i*numberOfInputs+texCoordOffset] );
-					meshTexCoords[ 2*i ] = texCoords[ 2*tci ];
-					meshTexCoords[ 2*i+1 ] = texCoords[ 2*tci+1 ];
+					var tci = parseInt( colladaIndices[i*numberOfInputs+texCoordOffset] );
+					var key = vi + '_' + tci;
+					if ( indexMap.hasOwnProperty(key) )
+					{
+						indices.push( indexMap[key] );
+					}
+					else
+					{
+						var index = meshVerts.length / numElements;
+						
+						meshVerts.push( vertices[ 3*vi ] );
+						meshVerts.push( vertices[ 3*vi+1 ] );
+						meshVerts.push( vertices[ 3*vi+2 ] );					
+						meshVerts.push( texCoords[ 2*tci ] );
+						meshVerts.push( texCoords[ 2*tci+1 ] );
+						
+						indexMap[key] = index;
+						
+						indices.push( index );
+					}
+				}
+				else
+				{
+					indices.push( vi );
 				}
 			}
+			
 			var mesh = new SceneGraph.Mesh();
 			mesh.vertices = meshVerts;
-			if ( meshTexCoords ) mesh.tcoords = meshTexCoords;
+			mesh.indices = indices;
+			mesh.numElements = numElements;
 			colladaGeometry.meshes[ node.getAttribute("material") ] = mesh;
+
 			break;
 		}
 		child = child.nextElementSibling;

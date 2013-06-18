@@ -301,9 +301,10 @@ SceneGraph.Geometry.prototype.dispose = function(renderContext)
 SceneGraph.Mesh = function()
 {
 	this.vertices = null;
-	this.tcoords = null;
+	this.indices = null;
 	this.glVertexBuffer = null;
-	this.vbStride = 0;
+	this.glIndexBuffer = null;
+	this.numElements = 0;
 }
   
 /**************************************************************************************************************/
@@ -317,6 +318,10 @@ SceneGraph.Mesh.prototype.dispose = function(renderContext)
 	{
 		renderContext.gl.deleteBuffer(this.glVertexBuffer);
 	}
+	if ( this.glIndexBuffer )
+	{
+		renderContext.gl.deleteBuffer(this.glIndexBuffer);
+	}
 }
 
 /**************************************************************************************************************/
@@ -326,49 +331,53 @@ SceneGraph.Mesh.prototype.dispose = function(renderContext)
  */
 SceneGraph.Mesh.prototype.render = function(gl,program)
 {
-	var numVertices = this.vertices.length / 3;
 	if (!this.glVertexBuffer)
 	{
 		var vb = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, vb);
-		
-		// TODO : manage tcoords in the ModelRenderer
-		var numElements = 5; //this.tcoords ? 5 : 3;
-		this.vbStride = numElements * 4;
-		var verts = new Float32Array( numVertices * numElements  );
-		for ( var n = 0; n < numVertices; n++ )
-		{
-			var vn = 3 * n;
-			var on = numElements * n
-			verts[on] = this.vertices[vn];
-			verts[on+1] = this.vertices[vn+1];
-			verts[on+2] = this.vertices[vn+2];
-			if ( this.tcoords )
-			{
-				var tn = 2 * n;
-				verts[on+3] = this.tcoords[tn];
-				verts[on+4] = this.tcoords[tn+1];
-			}
-			else
-			{
-				verts[on+3] = 0.0;
-				verts[on+4] = 0.0;
-			}
-		}
-		gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
-		
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
 		this.glVertexBuffer = vb;
+		
+		var ib = gl.createBuffer();
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indices), gl.STATIC_DRAW);
+		this.glIndexBuffer = ib;
 	}
 	
 	// Bind the vertex buffer
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.glVertexBuffer);
-	gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, this.vbStride, 0);
-	gl.vertexAttribPointer(program.attributes['tcoord'], 2, gl.FLOAT, false, this.vbStride, 12);
+	gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, this.numElements * 4, 0);
+	if ( this.numElements == 5 )
+	{
+		gl.vertexAttribPointer(program.attributes['tcoord'], 2, gl.FLOAT, false, this.numElements * 4, 12);
+	}
+
+	// Bind the index buffer
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.glIndexBuffer);
 	
-	// Draw arrays
-	gl.drawArrays(gl.TRIANGLES, 0, numVertices);
+	// Draw element
+	gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);
 }
- 
+
+/**************************************************************************************************************/
+
+/**
+ * Merge two indexed mesh
+ */
+SceneGraph.Mesh.prototype.merge = function(input)
+{
+	var indexOffset = this.vertices.length / this.numElements;
+	
+	for ( var n = 0; n < input.vertices.length; n++ )
+	{
+		this.vertices.push( input.vertices[n] );
+	}
+	for ( var n = 0; n < input.indices.length; n++ )
+	{
+		this.indices.push( input.indices[n] + indexOffset );
+	}
+};
+
 /**************************************************************************************************************/
 
 return SceneGraph;
