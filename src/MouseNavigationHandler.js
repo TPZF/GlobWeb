@@ -246,6 +246,10 @@ var MouseNavigationHandler = function(options){
 		// For Firefox
 		canvas.addEventListener("DOMMouseScroll", _handleMouseWheel);
 		canvas.addEventListener("mousewheel", _handleMouseWheel);
+		
+		// Fix for Google Chrome : avoid dragging
+		// TODO : a hack, should be more robust (restore on uninstall?)
+		canvas.addEventListener("dragstart", function(event){event.preventDefault(); return false;});
 	};
 
 	/** 
