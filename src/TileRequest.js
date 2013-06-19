@@ -63,11 +63,15 @@ var TileRequest = function(tileManager)
  */
 TileRequest.prototype.handleLoadedImage = function() 
 {
-	this.imageLoaded = true;
-	if ( this.elevationLoaded )
+	// The method can be called twice when the image is in the cache (see launch())
+	if (!this.imageLoaded)
 	{
-		this.tileManager.completedRequests.push(this);
-		this.tileManager.renderContext.requestFrame();
+		this.imageLoaded = true;
+		if ( this.elevationLoaded )
+		{
+			this.tileManager.completedRequests.push(this);
+			this.tileManager.renderContext.requestFrame();
+		}
 	}
 }
 
@@ -151,6 +155,12 @@ TileRequest.prototype.launch = function(tile)
 	}
 	this.imageLoaded = false;
 	this.image.src = this.tileManager.imageryProvider.getUrl(tile);
+	// Directly call the handleLoadImage callback if the image is already comple (i.e. in the cache)
+	// Sometimes on Chrome the onload callback is not always called when the image is complete
+	if (this.image.complete)
+	{
+		this.handleLoadedImage();
+	}
 }
 
 /**************************************************************************************************************/
