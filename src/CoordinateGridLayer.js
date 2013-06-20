@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define( ['./BaseLayer', './Utils', './Program', './Mesh', './CoordinateSystem', "./AstroCoordTransform"],
-		function(BaseLayer, Utils, Program, Mesh, CoordinateSystem, AstroCoordTransform) {
+define( ['./BaseLayer', './Utils', './Program', './Mesh', './CoordinateSystem', './AstroCoordTransform', './FeatureStyle'],
+		function(BaseLayer, Utils, Program, Mesh, CoordinateSystem, AstroCoordTransform, FeatureStyle) {
  
 /**************************************************************************************************************/
 
@@ -30,8 +30,11 @@ define( ['./BaseLayer', './Utils', './Program', './Mesh', './CoordinateSystem', 
 		<ul>
 			<li>longitudeSample : Longitude sampling</li>
 			<li>latitudeSample : Latitude sampling</li>
-			<li>strokeColor : Stroke color of grid</li>
+			<li>color : Stroke color of grid</li>
 			<li>coordSystem: The coordinate system which is represented by grid("EQ" or "GAL" for now)</li>
+			<li>longFormat: Representation of longitude axe(HMS, DMS, Deg)</li>
+			<li>latFormat: Representation of latitude axe(HMS, DMS, Deg)</li>
+			<li>tesselation: Tesselation order (only for latitude bands currently)</li>
 		</ul>
  */
 var CoordinateGridLayer = function( options )
@@ -57,8 +60,14 @@ var CoordinateGridLayer = function( options )
 	this.vertexBuffer = null;
 	this.indexBuffer = null;
 
-	this.color = options.strokeColor || [1., 1., 1.];
+	this.color = options.color || [1., 1., 1.];
 	this.coordSystem = options.coordSystem ? options.coordSystem : "EQ";
+	this.longFormat = options.longFormat ? options.longFormat : "Deg";
+	this.latFormat = options.latFormat ? options.latFormat : "Deg";
+	
+	// Keep trace on geoBound
+	this.geoBound = {};
+	this.tesselation = options.tesselation || 2;
 }
 
 /**************************************************************************************************************/
@@ -76,7 +85,7 @@ CoordinateGridLayer.prototype.generateImageData = function(text)
 {
 	var ctx = this.canvas2d.getContext("2d");
 	ctx.clearRect(0,0, this.canvas2d.width, this.canvas2d.height);
-	ctx.fillStyle = '#fff';
+	ctx.fillStyle = FeatureStyle.fromColorToString(this.color);
 	ctx.font = '18px sans-serif';
 	ctx.textBaseline = 'top';
 	ctx.textAlign = 'center';
@@ -122,7 +131,7 @@ CoordinateGridLayer.prototype._attach = function( g )
 		}\n\
 		";
 		
-		var vertexTextShader = "\
+		var vertexLabelShader = "\
 		attribute vec3 vertex; // vertex have z = 0, spans in x,y from -0.5 to 0.5 \n\
 		uniform mat4 viewProjectionMatrix; \n\
 		uniform vec3 poiPosition; // world position \n\
@@ -143,7 +152,7 @@ CoordinateGridLayer.prototype._attach = function( g )
 		} \n\
 		";
 	
-		var fragmentTextShader = "\
+		var fragmentLabelShader = "\
 		#ifdef GL_ES \n\
 		precision highp float; \n\
 		#endif \n\
@@ -160,20 +169,20 @@ CoordinateGridLayer.prototype._attach = function( g )
 		";
 		
 		this.gridProgram = new Program(this.globe.renderContext);
-		this.textProgram = new Program(this.globe.renderContext);
+		this.labelProgram = new Program(this.globe.renderContext);
 		this.gridProgram.createFromSource( vertexShader, fragmentShader );
-		this.textProgram.createFromSource( vertexTextShader, fragmentTextShader );
+		this.labelProgram.createFromSource( vertexLabelShader, fragmentLabelShader );
 	}
 	
 	// Texture used to show the equatorial coordinates
-	this.textMesh = new Mesh(this.globe.renderContext);
+	this.labelMesh = new Mesh(this.globe.renderContext);
 	var vertices = [-0.5, -0.5, 0.0,
 			-0.5,  0.5, 0.0,
 			0.5,  0.5, 0.0,
 			0.5, -0.5, 0.0];
 	var indices = [0, 3, 1, 1, 3, 2];
-	this.textMesh.setVertices(vertices);
-	this.textMesh.setIndices(indices);
+	this.labelMesh.setVertices(vertices);
+	this.labelMesh.setIndices(indices);
 
 	// Init grid buffers	
 	var gl = this.globe.renderContext.gl;
@@ -210,6 +219,18 @@ CoordinateGridLayer.prototype._detach = function()
 /**************************************************************************************************************/
 
 /**
+ *	Clamp geoBound to longitude/latitude samples
+ */
+CoordinateGridLayer.prototype.clampGeoBound = function( geoBound )
+{
+	geoBound.west = Math.floor(geoBound.west / this.longitudeSample)*this.longitudeSample;
+	geoBound.east = Math.ceil(geoBound.east / this.longitudeSample)*this.longitudeSample;
+	geoBound.north = Math.ceil(geoBound.north / this.latitudeSample)*this.latitudeSample;
+	geoBound.south = Math.floor(geoBound.south / this.latitudeSample)*this.latitudeSample;
+	return geoBound;
+}
+
+/**
 	Render the grid
  */
 CoordinateGridLayer.prototype.render = function( tiles )
@@ -222,11 +243,11 @@ CoordinateGridLayer.prototype.render = function( tiles )
 	gl.blendEquation(gl.FUNC_ADD);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-	/*** Render grid ***/
+	// Compute current geoBound
 	var geoBound;
-	// Transform geoBound to coordinate system of current grid if different
 	if ( this.coordSystem != CoordinateSystem.type )
 	{
+		// Transform geoBound computed in default coordinate system to coordinate system of current grid if different
 		var self = this;
 		geoBound = this.globe.getViewportGeoBound(function(coordinate) {
 			return CoordinateSystem.convertFromDefault(coordinate, self.coordSystem);
@@ -237,14 +258,28 @@ CoordinateGridLayer.prototype.render = function( tiles )
 		geoBound = this.globe.getViewportGeoBound();
 	}
 
-	this.computeSamples(geoBound)
-	this.generateGridBuffers(geoBound);
+	// Clamp geoBound angles to longitude/latitude samples
+	geoBound = this.clampGeoBound(geoBound);
+
+	// Regenerate grid & labels only if geoBound has changed
+	if (this.geoBound.west != geoBound.west || this.geoBound.east != geoBound.east || this.geoBound.north != geoBound.north || this.geoBound.south != geoBound.south )
+	{
+		this.geoBound = geoBound;
+		this.computeSamples()
+		this.generateGridBuffers();
+		this.generateLabels();
+	}
+	else
+	{
+		this.updateLabels();	
+	}
 	
+	/*** Render grid ***/
 	this.gridProgram.apply();
 	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
 	gl.uniformMatrix4fv(this.gridProgram.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
 	gl.uniform1f(this.gridProgram.uniforms["alpha"], this._opacity );
-	gl.uniform3f(this.gridProgram.uniforms["color"], this.color[0], this.color[1], this.color[2] );  // use whiteColor
+	gl.uniform3f(this.gridProgram.uniforms["color"], this.color[0], this.color[1], this.color[2] );
 	
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
 	gl.vertexAttribPointer(this.gridProgram.attributes['vertex'], this.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -252,16 +287,14 @@ CoordinateGridLayer.prototype.render = function( tiles )
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 	gl.drawElements( gl.LINES, this.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 	
-	/*** Render label ***/
-	this.generateText(geoBound);
-	this.textProgram.apply();
+	/*** Render labels ***/
+	this.labelProgram.apply();
 	
 	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
-	gl.uniformMatrix4fv(this.textProgram.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
-	gl.uniform1i(this.textProgram.uniforms["texture"], 0);
+	gl.uniformMatrix4fv(this.labelProgram.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
+	gl.uniform1i(this.labelProgram.uniforms["texture"], 0);
 	
 	var pixelSizeVector = renderContext.computePixelSizeVector();
-	// for ( var n = 0; n < this.labels.length; n++ )
 	for ( var n in this.labels )
 	{
 		var label = this.labels[n];
@@ -273,8 +306,8 @@ CoordinateGridLayer.prototype.render = function( tiles )
 		var scale = [2.0 * label.textureWidth / renderContext.canvas.width,
 					 2.0 * label.textureHeight / renderContext.canvas.height];
 					 
-		gl.uniform2fv(this.textProgram.uniforms["poiScale"], scale);
-		// gl.uniform2fv(this.textProgram.uniforms["tst"], [ 0.5 / (label.textureWidth), 0.5 / (label.textureHeight)  ]);
+		gl.uniform2fv(this.labelProgram.uniforms["poiScale"], scale);
+		// gl.uniform2fv(this.labelProgram.uniforms["tst"], [ 0.5 / (label.textureWidth), 0.5 / (label.textureHeight)  ]);
 		
 		// Poi culling
 		var worldPoi = label.pos3d;
@@ -285,10 +318,10 @@ CoordinateGridLayer.prototype.render = function( tiles )
 		var y = poiVec[1] * scale + worldPoi[1];
 		var z = poiVec[2] * scale + worldPoi[2];
 			
-		gl.uniform3f(this.textProgram.uniforms["poiPosition"], x, y, z);
-		gl.uniform1f(this.textProgram.uniforms["alpha"], 1.);
+		gl.uniform3f(this.labelProgram.uniforms["poiPosition"], x, y, z);
+		gl.uniform1f(this.labelProgram.uniforms["alpha"], 1.);
 			
-		this.textMesh.render(this.textProgram.attributes);
+		this.labelMesh.render(this.labelProgram.attributes);
 		label.needed = false;	
 	}
 	gl.enable(gl.DEPTH_TEST);
@@ -334,20 +367,20 @@ CoordinateGridLayer.prototype.opacity = function( arg )
 /**
  * 	Compute samples depending on geoBound
  */
-CoordinateGridLayer.prototype.computeSamples = function(geoBound)
+CoordinateGridLayer.prototype.computeSamples = function()
 {
-	var dlong = geoBound.east - geoBound.west;
-	var dlat = geoBound.north - geoBound.south;
+	var dlong = this.geoBound.east - this.geoBound.west;
+	var dlat = this.geoBound.north - this.geoBound.south;
 	
 	// if under-sampled and not divergent
-	if ( dlong / this.longitudeSample < 3. && this.longitudeSample > 1. )
+	while ( dlong / this.longitudeSample < 3. && this.longitudeSample > 1. )
 	{
 		this.longitudeSample /= 2;
 		this.latitudeSample /= 2;
 	}
 	
 	// if over-sampled and not exceed the initial value
-	if ( dlong / this.longitudeSample > 7. && this.longitudeSample < 15. )
+	while ( dlong / this.longitudeSample > 7. && this.longitudeSample < 15. )
 	{
 		this.longitudeSample *= 2;
 		this.latitudeSample *= 2;
@@ -359,30 +392,10 @@ CoordinateGridLayer.prototype.computeSamples = function(geoBound)
 /**
  * 	Generate buffers object of the grid
  */
-CoordinateGridLayer.prototype.generateGridBuffers = function(geoBound)
+CoordinateGridLayer.prototype.generateGridBuffers = function()
 {
-	// Clamp min/max longitudes to sample
-	var west = (Math.floor(geoBound.west / this.longitudeSample))*this.longitudeSample;
-	var east = (Math.ceil(geoBound.east / this.longitudeSample))*this.longitudeSample;
-
-	var phiStart = Math.min( west, east );
-	var phiStop = Math.max( west, east );
-	
-	// var north = [0,0,1];
-	// var south = [0,0,-1];
-	// if ( this.coordSystem == "GALACTIC" )
-	// {
-	// 	var northGeo = AstroCoordTransform.transformInDeg( [0, 90], AstroCoordTransform.Type.EQ2GAL );
-	// 	var southGeo = AstroCoordTransform.transformInDeg( [0, -90], AstroCoordTransform.Type.EQ2GAL );
-	// 	north = CoordinateSystem.fromGeoTo3D( northGeo );
-	// 	south = CoordinateSystem.fromGeoTo3D( southGeo );
-	// }
-
-	// if ( this.globe.renderContext.worldFrustum.containsSphere(north,-0.01) >= 0 || this.globe.renderContext.worldFrustum.containsSphere(south,-0.01) >= 0 )
-	// 	console.log("North or south is in frustum");
-
 	// Difference is larger than hemisphere
-	if ( (east - west) > 180. )
+	if ( (this.geoBound.east - this.geoBound.west) > 180. )
 	{
 		// pole in the viewport
 		phiStart = 0;
@@ -390,8 +403,8 @@ CoordinateGridLayer.prototype.generateGridBuffers = function(geoBound)
 	}
 	else
 	{
-		phiStart = west;
-		phiStop = east;
+		phiStart = this.geoBound.west;
+		phiStop = this.geoBound.east;
 	}
 
 	// TODO adaptative generation of theta value
@@ -408,25 +421,28 @@ CoordinateGridLayer.prototype.generateGridBuffers = function(geoBound)
 		
 		for ( var phi = phiStart; phi <= phiStop ; phi+=this.longitudeSample )
 		{
-			var radPhi = phi * Math.PI / 180;
+			// Tesselation
+			var step = this.longitudeSample/this.tesselation;
+			for ( var i=0; i<this.tesselation; i++ ) {
+				var radPhi = (phi + i*step) * Math.PI / 180;
 			
-			var sinPhi = Math.sin(radPhi);
-			var cosPhi = Math.cos(radPhi);
-			
-			// z is the up vector
-			var x = cosPhi * sinTheta;
-			var y = sinPhi * sinTheta;
-			var z = cosTheta;
+				var sinPhi = Math.sin(radPhi);
+				var cosPhi = Math.cos(radPhi);
+				
+				// z is the up vector
+				var x = cosPhi * sinTheta;
+				var y = sinPhi * sinTheta;
+				var z = cosTheta;
 
-			if ( this.coordSystem != CoordinateSystem.type ) {
-				var geo = CoordinateSystem.from3DToGeo( [x, y, z] );
-				geo = CoordinateSystem.convertToDefault(geo, this.coordSystem);
-				var eq = CoordinateSystem.fromGeoTo3D( geo );
-				vertexPositionData.push(eq[0], eq[1], eq[2]);				
-			} else {
-				vertexPositionData.push(x, y, z);	
+				if ( this.coordSystem != CoordinateSystem.type ) {
+					var geo = CoordinateSystem.from3DToGeo( [x, y, z] );
+					geo = CoordinateSystem.convertToDefault(geo, this.coordSystem);
+					var eq = CoordinateSystem.fromGeoTo3D( geo );
+					vertexPositionData.push(eq[0], eq[1], eq[2]);				
+				} else {
+					vertexPositionData.push(x, y, z);
+				}
 			}
-
 			
 		}
 	}
@@ -441,20 +457,26 @@ CoordinateGridLayer.prototype.generateGridBuffers = function(geoBound)
 	var indexData = [];
 	var longitudeBands = (phiStop - phiStart)/this.longitudeSample + 1;
 
+	// Tesselation
+	longitudeBands *= this.tesselation;
+
 	for ( var latNumber = 0; latNumber < latitudeBands; latNumber++ )
 	{
-		for ( var phi = phiStart, longNumber = 0; phi < phiStop ; phi+=this.longitudeSample, longNumber++ )
+		for ( var phi = phiStart, longNumber = 0; phi < phiStop ; phi+=this.longitudeSample, longNumber+=this.tesselation )
 		{
 			var first = (latNumber * (longitudeBands)) + longNumber % (longitudeBands - 1);
 			var second = first + longitudeBands;
-			indexData.push(first);
-			indexData.push(first + 1);
+
+			// Horizontal lines
+			for ( var i=0; i<this.tesselation; i++ ) 
+			{
+				indexData.push(first + i);
+				indexData.push(first + i + 1);
+			}
 			
-			indexData.push(first + 1);
-			indexData.push(second + 1);
-			
-			indexData.push(second + 1);
-			indexData.push(second);
+			// Vertical lines
+			indexData.push(first + this.tesselation);
+			indexData.push(second + this.tesselation);
 			
 			indexData.push(second);
 			indexData.push(first);
@@ -470,102 +492,159 @@ CoordinateGridLayer.prototype.generateGridBuffers = function(geoBound)
 /**************************************************************************************************************/
 
 /**
- * 	Generate text of the grid
+ *	Build angle representation
+ *
+ *	@param {String} format The building format("HMS", "DMS" or "Deg")
+ *	@param angle The angle to build
  */
-CoordinateGridLayer.prototype.generateText = function(geoBound)
-{
-	// Clamp min/max longitudes to sample
-	var west = (Math.floor(geoBound.west / this.longitudeSample))*this.longitudeSample;
-	var east = (Math.ceil(geoBound.east / this.longitudeSample))*this.longitudeSample;
+ function _buildAngle( format, angle ) {
+ 	var label;
+	switch ( format ) {
+		case "Deg":
+			label = angle+"°";
+			break;
+		case "HMS":
+			// convert to positive [0..360]
+			angle = (angle < 0) ? angle+360 : angle;
+			label = CoordinateSystem.fromDegreesToHMS( angle );
+			break;
+		case "DMS":
+			label = CoordinateSystem.fromDegreesToDMS( angle );
+			break;
+		default:
+			console.error(format + " : format not supported");
+			return null;
+	}
+	return label;
+ }
 
-	phiStart = Math.min( west, east );
-	phiStop = Math.max( west, east );
+/**************************************************************************************************************/
+
+/**
+ *	Compute geographic center of canvas in grid's coordinate system
+ */
+CoordinateGridLayer.prototype.computeGeoCenter = function() {
+	var center3d = this.globe.renderContext.get3DFromPixel( this.globe.renderContext.canvas.width / 2. , this.globe.renderContext.canvas.height / 2. );
+	var geoCenter = [];
+	CoordinateSystem.from3DToGeo( center3d, geoCenter );
+
+	// Convert geoCenter into grid's coordinate system
+	if ( this.coordSystem != CoordinateSystem.type ) {
+		geoCenter = CoordinateSystem.convertFromDefault( geoCenter, this.coordSystem );
+	}
+	return geoCenter;
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Update 3D position of given label
+ *
+ *	@param {String} label The label id in labels object
+ *	@param {Float[]} posGeo Updated geographic position of label
+ */
+CoordinateGridLayer.prototype.updateLabel = function(label, posGeo) {
+	if ( this.coordSystem != CoordinateSystem.type ) {
+		posGeo = CoordinateSystem.convertToDefault( posGeo, this.coordSystem );
+	}
+
+	var pos3d = CoordinateSystem.fromGeoTo3D( posGeo );
+	var vertical = vec3.create();
+	vec3.normalize(pos3d, vertical);
 	
+	this.labels[label].pos3d = pos3d;
+	this.labels[label].vertical = vertical;
+	this.labels[label].needed = true;
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Update position of all labels
+ */
+CoordinateGridLayer.prototype.updateLabels = function() {
+
+	var geoCenter = this.computeGeoCenter();
+	for ( var x in this.labels ) {
+		// Compute position of label
+		var posGeo;
+		if ( this.labels[x].type == "lat" ) 
+		{
+			posGeo = [ this.labels[x].angle, geoCenter[1] ];
+		}
+		else if ( this.labels[x].type == "long" )
+		{
+			posGeo = [ geoCenter[0], this.labels[x].angle ];
+		}
+		this.updateLabel(x, posGeo);
+	}
+}
+
+/**************************************************************************************************************/
+
+/**
+ * 	Generate labels of the grid
+ */
+CoordinateGridLayer.prototype.generateLabels = function()
+{
+	var phiStop, phiStart;
 	// Difference is larger than hemisphere
-	if ( (east - west) > 180. )
+	if ( (this.geoBound.east - this.geoBound.west) > 180. )
 	{
 		// pole in the viewport => generate all longitude bands
-// 		phiStart = east - 360;
-// 		phiStop = west;
 		phiStart = 0;
 		phiStop = 360;
 	}
 	else
 	{
-		phiStart = west;
-		phiStop = east;
+		phiStart = this.geoBound.west;
+		phiStop = this.geoBound.east;
 	}
 
-	// Compute geographic position of center of canvas
-	var posX3d = this.globe.renderContext.get3DFromPixel( this.globe.renderContext.canvas.width / 2. , this.globe.renderContext.canvas.height / 2. );
-	var posXgeo = [];
-	CoordinateSystem.from3DToGeo( posX3d, posXgeo );
-	if ( this.coordSystem != CoordinateSystem.type ) {
-		posXgeo = CoordinateSystem.convertFromDefault( posXgeo, this.coordSystem );
-	}
-
-	for ( var phi = phiStart; phi <= phiStop; phi+=this.longitudeSample )
+	var geoCenter = this.computeGeoCenter();
+	var label;
+	for ( var phi = phiStart; phi < phiStop; phi+=this.longitudeSample )
 	{
-		// convert to RA [0..360]
-		var RA = (phi < 0) ? phi+360 : phi;
-		var stringRA = CoordinateSystem.fromDegreesToHMS( RA );
+		label = _buildAngle(this.longFormat, phi);
 
-		if ( !this.labels[stringRA] )
+		if ( !this.labels["lat_"+label] )
 		{
-			this.labels[stringRA] = {};
-			var imageData = this.generateImageData( stringRA );
-			this._buildTextureFromImage(this.labels[stringRA],imageData);
+			this.labels["lat_"+label] = {
+				angle: phi,
+				type: "lat"
+			};
+			var imageData = this.generateImageData( label );
+			this._buildTextureFromImage(this.labels["lat_"+label],imageData);
 		}
 		
 		// Compute position of label
-		var posGeo = [ phi, posXgeo[1] ];
-
-		if ( this.coordSystem != CoordinateSystem.type ) {
-			posGeo = CoordinateSystem.convertToDefault( posGeo, this.coordSystem );
-		}
-
-		var pos3d = CoordinateSystem.fromGeoTo3D( posGeo );
-		var vertical = vec3.create();
-		vec3.normalize(pos3d, vertical);
-		
-		this.labels[stringRA].pos3d = pos3d;
-		this.labels[stringRA].vertical = vertical;
-		this.labels[stringRA].needed = true;
+		var posGeo = [ phi, geoCenter[1] ];
+		this.updateLabel("lat_"+label, posGeo);
 	}
 	
 	// TODO <!> Adaptative rendering isn't totally implemented for theta due to difficulty to compute extrem latitude using geoBound <!>
-	var north = (Math.ceil(geoBound.north / this.latitudeSample))*this.latitudeSample;
-	var south = (Math.floor(geoBound.south / this.latitudeSample))*this.latitudeSample;
-	
-	thetaStart = Math.min( north, south );
-	thetaStop = Math.max( north, south );
+	thetaStart = Math.min( this.geoBound.north, this.geoBound.south );
+	thetaStop = Math.max( this.geoBound.north, this.geoBound.south );
 	
 	for ( var theta = thetaStart; theta <= thetaStop; theta+=this.latitudeSample )
 	{
 // 	for (var theta = -90; theta < 90; theta+=this.latitudeSample) {
 
-		var stringTheta = CoordinateSystem.fromDegreesToDMS( theta );
-		if ( !this.labels[stringTheta] )
+		label = _buildAngle(this.latFormat, theta);
+
+		if ( !this.labels["long_"+label] )
 		{
-			this.labels[stringTheta] = {};
-			var imageData = this.generateImageData( stringTheta );
-			this._buildTextureFromImage(this.labels[stringTheta], imageData);
+			this.labels["long_"+label] = {
+				angle: theta,
+				type: "long"
+			};
+			var imageData = this.generateImageData( label );
+			this._buildTextureFromImage(this.labels["long_"+label], imageData);
 		}
 		
 		// Compute position of label
-		var posGeo = [ posXgeo[0], theta ];
-
-		if ( this.coordSystem != CoordinateSystem.type ) {
-			posGeo = CoordinateSystem.convertToDefault( posGeo, this.coordSystem );
-		}
-
-		var pos3d = CoordinateSystem.fromGeoTo3D( posGeo );
-		var vertical = vec3.create();
-		vec3.normalize(pos3d, vertical);
-		
-		this.labels[stringTheta].pos3d = pos3d;
-		this.labels[stringTheta].vertical = vertical;
-		this.labels[stringTheta].needed = true;
+		var posGeo = [ geoCenter[0], theta ];
+		this.updateLabel("long_"+label, posGeo);
 	}
 
 	// Dispose texture if not needed
