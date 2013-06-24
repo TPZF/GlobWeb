@@ -19,6 +19,8 @@
 
  define( ['./glMatrix'], function() {
  
+/**************************************************************************************************************/
+
 /**
  * Ray constructor
  */
@@ -27,6 +29,8 @@ var Ray = function(orig,dir)
 	this.orig = orig;
 	this.dir = dir;
 }
+
+/**************************************************************************************************************/
 
  /**
   * Create a ray from a pixel
@@ -62,6 +66,8 @@ Ray.createFromPixel = function( renderContext, x, y )
 	return new Ray(orig,dir);
 };
 
+/**************************************************************************************************************/
+
  /**
   * Create a ray from an event
   */
@@ -71,6 +77,8 @@ Ray.createFromEvent = function( renderContext, event )
 	return Ray.createFromPixel( pos[0], pos[1] );
 };
 
+/**************************************************************************************************************/
+
 /**
  * Intersection object returned
  */
@@ -79,6 +87,8 @@ Ray.Intersection = function( t )
 	this.t = t;
 	this.geometry = null;
 };
+
+/**************************************************************************************************************/
 
  /**
   * Compute a point on the ray given its t parameter
@@ -90,6 +100,8 @@ Ray.prototype.computePoint = function( t )
 	vec3.add( pt, this.orig );
 	return pt;
 };
+
+/**************************************************************************************************************/
 
  /**
   * Compute intersection between a sphere and ray
@@ -130,6 +142,8 @@ Ray.prototype.sphereIntersect = function( center, radius )
 };
 
 var EPS = 1e-6;
+
+/**************************************************************************************************************/
 	
  /**
   * Ray triangle intersection optimized
@@ -178,11 +192,12 @@ Ray.prototype.triangleIntersectOptimized = function( verts, i0, i1, i2 )
 		return null;
 }
 
+/**************************************************************************************************************/
 	
  /**
   * Ray triangle intersection
   */
-Ray.prototype.triangleIntersect = function( vert0, vert1, vert2 )
+/*Ray.prototype.triangleIntersect = function( vert0, vert1, vert2 )
 {
 	var edge1 = vec3.subtract( vert1, vert0, vec3.create() );
 	var edge2 = vec3.subtract( vert2, vert0, vec3.create() );
@@ -212,7 +227,9 @@ Ray.prototype.triangleIntersect = function( vert0, vert1, vert2 )
 	
 	return new Ray.Intersection(t);
 	
-};
+};*/
+
+/**************************************************************************************************************/
 
 return Ray;
 
