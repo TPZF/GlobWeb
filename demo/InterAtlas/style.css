@@ -1,0 +1,33 @@
+
+body {
+	margin:	0;
+	padding: 0;
+}
+
+#tpz {
+	position: absolute;
+	left: 5px;
+	bottom: 5px;
+}
+#ia {
+	position: absolute;
+	left: 255px;
+	bottom: 5px;
+}
+#a3 {
+	position: absolute;
+	left: 500px;
+	bottom: 5px;
+}
+
+
+#stats {
+	position: absolute;
+	right: 5px;
+	bottom: 5px;
+	border-radius: 5px;
+	border: 1px solid black;
+	background: white;
+	opacity: 0.5;
+	padding: 5px;
+}

@@ -44,11 +44,13 @@
 
 <script>
 
-require(['../src/RenderContext','../src/SceneGraph/Navigation','../src/SceneGraph/ColladaParser','../src/SceneGraph/Renderer'], 
-	function (RenderContext,Navigation,ColladaParser,SceneGraphRenderer)  {
+require(['../src/RenderContext','../src/SceneGraph/Navigation','../src/SceneGraph/ColladaParser','../src/SceneGraph/Renderer','../src/SceneGraph/SceneGraph','../src/SceneGraph/LODNode'], 
+	function (RenderContext,Navigation,ColladaParser,SceneGraphRenderer,SceneGraph,LODNode)  {
 
 var fpsElement = null;
 var renderContext;
+var sgRenderer;
+var nav;
 
 var stats = function()
 {
@@ -60,32 +62,51 @@ var stats = function()
 	renderContext.numFrames = 0;
 }
 
+
 $(function()
 {	
 	fpsElement = document.getElementById("fps");
 	window.setInterval(stats,1000);
 	
-	renderContext = new RenderContext( { canvas: "ColladaCanvas", backgroundColor: [1.0,1.0,1.0,1.0], continuousRendering: true  });
-	var nav = new Navigation(renderContext);
+	renderContext = new RenderContext( { canvas: "ColladaCanvas" });
+
+	var root = new SceneGraph.Node();
+	
+	nav = new Navigation(renderContext,root);
+	nav.setupDefaultEventHandlers();
+	
+	
+	sgRenderer = new SceneGraphRenderer(renderContext,root);
+	sgRenderer.postFrame = function() { LODNode.Loader.postFrame() };
+	
+	var addToRoot = function(node) {
+		nav.center = vec3.create( node.center );
+		nav.distance = 3 * node.radius;
+		nav.computeViewMatrix();
 		
-	var sgRenderer;
-	
-	var xhr = new XMLHttpRequest();
-	xhr.onreadystatechange = function(e)
-	{
-		if ( xhr.readyState == 4 )// && xhr.status == 200)
-		{
-			var node = ColladaParser.parse( xhr.responseXML );
-			nav.node = node;
-			sgRenderer = new SceneGraphRenderer(renderContext,node);
-		}
+		root.children.push( node );
 	};
-	//xhr.open("GET", "models/warehouse_model.dae");
-	//xhr.open("GET", "models/worms-cathedral.dae");
-	//xhr.open("GET", "duck_triangulate.dae");
-	xhr.open("GET", "models/soldier.dae");
-	xhr.send();
 	
+	LODNode.load("Data/Collada-ecef/Data/Tile_-009_-006/Tile_-009_-006.xml", addToRoot );
+
+	LODNode.load("Data/Collada-ecef/Data/Tile_-009_-007/Tile_-009_-007.xml", addToRoot );
+	
+	LODNode.load("Data/Collada-ecef/Data/Tile_-009_-008/Tile_-009_-008.xml", addToRoot );
+	
+	LODNode.load("Data/Collada-ecef/Data/Tile_-010_-006/Tile_-010_-006.xml", addToRoot );
+	
+	LODNode.load("Data/Collada-ecef/Data/Tile_-010_-007/Tile_-010_-007.xml", addToRoot );
+	
+	LODNode.load("Data/Collada-ecef/Data/Tile_-010_-008/Tile_-010_-008.xml",addToRoot );
+	
+	
+	var tick = function() {
+        requestAnimationFrame(tick);
+		if ( sgRenderer )
+			sgRenderer.render();
+		renderContext.numFrames++;
+    }
+	window.requestAnimationFrame(tick);
 
 });
 

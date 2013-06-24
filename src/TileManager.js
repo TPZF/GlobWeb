@@ -360,7 +360,7 @@ TileManager.prototype.processTile = function(tile,level)
 		{
 			// Generate the tile using data from tileRequest
 			tile.generate( this.tilePool, tileRequest.image, tileRequest.elevations );
-							
+
 			// Now post renderers can generate their data on the new tile
 			for (var i=0; i < this.postRenderers.length; i++ )
 			{
@@ -426,8 +426,8 @@ TileManager.prototype.processTile = function(tile,level)
 			fr = Math.max( fr, tile.distance + 1.5 * tile.radius );
 		}
 	}
-	rc.near = Math.max( rc.minNear, Math.min(nr,rc.near) );
-	rc.far = Math.max( fr, rc.far );
+	rc.near = Math.max( rc.minNear, nr );
+	rc.far = fr;
 	
 	// Update projection matrix with new near and far values
 	mat4.perspective(rc.fov, rc.canvas.width / rc.canvas.height, rc.near, rc.far, rc.projectionMatrix);

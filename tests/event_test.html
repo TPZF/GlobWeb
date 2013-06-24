@@ -1,0 +1,69 @@
+<html>
+
+<head>
+<title>Event tests</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
+<script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
+<script  src="../examples/require.min.js"></script>
+
+</head>
+
+
+<body>
+
+<script type="text/javascript">
+
+require(['../src/Globe'], function (Globe) {
+	
+  
+	test("basic", function()
+	{
+		var globe = new Globe({canvas: "cvs"});
+		
+		var call = 0;
+		var call1 = 0;
+		var call2 = 0;
+		
+		var f1 = function() { call++; call1++; } ;
+		var f2 = function() { call++; call2++; } ;
+		
+		globe.subscribe("startLoad", f1 );
+		globe.subscribe("startLoad", f2 );
+		
+		globe.publish("startLoad");
+		
+		ok( call == 2, "Two callbacks called");
+		ok ( call1 == 1, "Callback 1 call" );
+		ok ( call2 == 1, "Callback 2 call" );
+		
+		globe.unsubscribe("startLoad", f2 );
+		globe.publish("startLoad");
+		
+		ok( call == 3, "Two callbacks called");
+		ok ( call1 == 2, "Callback 1 call" );
+		ok ( call2 == 1, "Callback 2 call" );
+		
+
+	});
+
+  });
+
+</script>
+
+<h1 id="qunit-header">QUnit GlobWeb</h1>
+<h2 id="qunit-banner"></h2>
+<div id="qunit-testrunner-toolbar"></div>
+<h2 id="qunit-userAgent"></h2>
+<ol id="qunit-tests"></ol>
+
+<div id="qunit-fixture">
+	<canvas id="cvs"></canvas>
+</div>
+
+</body>
+
+</html>
+

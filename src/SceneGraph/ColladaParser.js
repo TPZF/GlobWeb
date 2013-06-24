@@ -17,12 +17,12 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define( ['./Model'], function(Model) {
+ define( ['./SceneGraph'], function(SceneGraph) {
 
 /**
  * The scene graph built by the parser
  */
-var model = null;
+var root = null;
 
 /**
  * The material map
@@ -123,7 +123,7 @@ var parseTexture = function(effect,node)
 	{
 		image = findElementByUrl(rootElement,"image",'#' + textureId);
 	}
-	return new Model.Texture( baseURI + findElementByTag( image, "init_from" ).textContent.trim() );
+	return new SceneGraph.Texture( baseURI + findElementByTag( image, "init_from" ).textContent.trim() );
 }
 
 /**
@@ -131,7 +131,7 @@ var parseTexture = function(effect,node)
  */
 var parseShader = function(effect,shader)
 {
-	var material = new Model.Material();
+	var material = new SceneGraph.Material();
 	
 	var child = shader.firstElementChild;
 	while ( child )
@@ -247,8 +247,9 @@ var parsePolygons = function(node,colladaGeometry)
 	var vertexOffset = -1;
 	var texCoordOffset = -1;
 	
-	var meshVerts = [];
-	var meshTexCoords = [];
+	var meshVerts = null;
+	var indexMap = null;
+	var indices = null;
 	
 	var child = node.firstElementChild;
 	while ( child )
@@ -270,22 +271,48 @@ var parsePolygons = function(node,colladaGeometry)
 			numberOfInputs++;
 			break;
 		case "p":
-			var indices = child.textContent.trim().split(/\s+/);
-			var numVerts = indices.length / numberOfInputs;
+			if (!meshVerts)
+			{
+				meshVerts = texCoords ?  [] : vertices;
+				numElements = texCoords ? 5 : 3;
+				indexMap = {};
+				indices = [];
+			}
+			
+			var colladaIndices = child.textContent.trim().split(/\s+/);
+			var numVerts = colladaIndices.length / numberOfInputs;
 			if ( numVerts == 3 )
 			{
 				for ( var i = 0; i < numVerts; i++ )
 				{
-					var vi = parseInt( indices[i*numberOfInputs+vertexOffset] );
-					meshVerts.push( vertices[ 3*vi ] );
-					meshVerts.push( vertices[ 3*vi+1 ] );
-					meshVerts.push( vertices[ 3*vi+2 ] );
+					var vi = parseInt( colladaIndices[i*numberOfInputs+vertexOffset] );
 					
 					if ( texCoords )
 					{
-						var tci = parseInt( indices[i*numberOfInputs+texCoordOffset] );
-						meshTexCoords.push( texCoords[ 2*tci ] );
-						meshTexCoords.push( texCoords[ 2*tci+1 ] );
+						var tci = parseInt( colladaIndices[i*numberOfInputs+texCoordOffset] );
+						var key = vi + '_' + tci;
+						if ( indexMap.hasOwnProperty(key) )
+						{
+							indices.push( indexMap[key] );
+						}
+						else
+						{
+							var index = meshVerts.length / numElements;
+							
+							meshVerts.push( vertices[ 3*vi ] );
+							meshVerts.push( vertices[ 3*vi+1 ] );
+							meshVerts.push( vertices[ 3*vi+2 ] );					
+							meshVerts.push( texCoords[ 2*tci ] );
+							meshVerts.push( texCoords[ 2*tci+1 ] );
+							
+							indexMap[key] = index;
+							
+							indices.push( index );
+						}
+					}
+					else
+					{
+						indices.push( vi );
 					}
 				}
 			}
@@ -298,9 +325,10 @@ var parsePolygons = function(node,colladaGeometry)
 		child = child.nextElementSibling;
 	}
 
-	var mesh = new Model.Mesh();
+	var mesh = new SceneGraph.Mesh();
 	mesh.vertices = meshVerts;
-	if ( meshTexCoords ) mesh.tcoords = meshTexCoords;
+	mesh.indices = indices;
+	mesh.numElements = numElements;
 	colladaGeometry.meshes[ node.getAttribute("material") ] = mesh;
 }	
 /**
@@ -334,27 +362,54 @@ var parseTriangles = function(node,colladaGeometry)
 			numberOfInputs++;
 			break;
 		case "p":
-			var indices = child.textContent.trim().split(/\s+/);
-			var meshVerts = [];
-			var meshTexCoords = texCoords ? [] : null;
-			for ( var i = 0; i < indices.length / numberOfInputs; i++ )
+		
+			var colladaIndices = child.textContent.trim().split(/\s+/);
+						
+			var indices = [];
+			var indexMap = {};
+			
+			var meshVerts = texCoords ? [] : vertices;
+			var numElements = texCoords ? 5 : 3;
+			
+			for ( var i = 0; i < colladaIndices.length / numberOfInputs; i++ )
 			{
-				var vi = parseInt( indices[i*numberOfInputs+vertexOffset] );
-				meshVerts[ 3*i ] = vertices[ 3*vi ];
-				meshVerts[ 3*i+1 ] = vertices[ 3*vi+1 ];
-				meshVerts[ 3*i+2 ] = vertices[ 3*vi+2 ];
+				var vi = parseInt( colladaIndices[i*numberOfInputs+vertexOffset] );
 				
 				if ( texCoords )
 				{
-					var tci = parseInt( indices[i*numberOfInputs+texCoordOffset] );
-					meshTexCoords[ 2*i ] = texCoords[ 2*tci ];
-					meshTexCoords[ 2*i+1 ] = texCoords[ 2*tci+1 ];
+					var tci = parseInt( colladaIndices[i*numberOfInputs+texCoordOffset] );
+					var key = vi + '_' + tci;
+					if ( indexMap.hasOwnProperty(key) )
+					{
+						indices.push( indexMap[key] );
+					}
+					else
+					{
+						var index = meshVerts.length / numElements;
+						
+						meshVerts.push( vertices[ 3*vi ] );
+						meshVerts.push( vertices[ 3*vi+1 ] );
+						meshVerts.push( vertices[ 3*vi+2 ] );					
+						meshVerts.push( texCoords[ 2*tci ] );
+						meshVerts.push( texCoords[ 2*tci+1 ] );
+						
+						indexMap[key] = index;
+						
+						indices.push( index );
+					}
+				}
+				else
+				{
+					indices.push( vi );
 				}
 			}
-			var mesh = new Model.Mesh();
+			
+			var mesh = new SceneGraph.Mesh();
 			mesh.vertices = meshVerts;
-			if ( meshTexCoords ) mesh.tcoords = meshTexCoords;
+			mesh.indices = indices;
+			mesh.numElements = numElements;
 			colladaGeometry.meshes[ node.getAttribute("material") ] = mesh;
+
 			break;
 		}
 		child = child.nextElementSibling;
@@ -434,7 +489,7 @@ var parseLibraryGeometries = function(node)
  */
 var parseNode = function(element)
 {
-	var node = new Model.Node();
+	var node = new SceneGraph.Node();
 	
 	var child = element.firstElementChild;
 	while ( child )
@@ -457,7 +512,7 @@ var parseNode = function(element)
 				var instance_materials = child.getElementsByTagName("instance_material");
 				for ( var i = 0; i < instance_materials.length; i++ )
 				{
-					var geometry = new Model.Geometry();
+					var geometry = new SceneGraph.Geometry();
 					geometry.mesh = colladaGeometry.meshes[ instance_materials[i].getAttribute("symbol") ];						
 					geometry.material = materials[ instance_materials[i].getAttribute("target") ];
 					
@@ -518,8 +573,7 @@ var parseLibraryVisualScenes = function(library)
 	var visual_scene = library.firstElementChild;
 	var child = visual_scene.firstElementChild;
 	
-	var root = new Model.Node();
-	model = new Model(root);
+	root = new SceneGraph.Node();
 	
 	while ( child )
 	{
@@ -547,6 +601,21 @@ var parse = function(doc)
 {
 	baseURI = doc.documentURI.substr( 0, doc.documentURI.lastIndexOf('/') + 1 );
 	rootElement = doc.documentElement;
+	
+	// First parse materials
+	var lib_mat = rootElement.getElementsByTagName('library_materials');
+	if ( lib_mat )
+	{
+		parseLibraryMaterials( lib_mat[0] );
+	}
+	
+	// Then parse geometries
+	var lib_geom = rootElement.getElementsByTagName('library_geometries');
+	if ( lib_geom )
+	{
+		parseLibraryGeometries( lib_geom[0] );
+	}
+
 	var child = rootElement.firstElementChild;
 	while ( child )
 	{
@@ -555,12 +624,6 @@ var parse = function(doc)
 		case "library_effects":
 			break;
 		case "library_images":
-			break;
-		case "library_materials":
-			parseLibraryMaterials( child );
-			break;
-		case "library_geometries":
-			parseLibraryGeometries( child );
 			break;
 		case "library_nodes":
 			parseLibraryNodes( child );
@@ -574,7 +637,7 @@ var parse = function(doc)
 		child = child.nextElementSibling;
 	}
 	
-	return model;
+	return root;
 }
 
 return { 

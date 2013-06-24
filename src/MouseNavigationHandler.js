@@ -41,10 +41,10 @@ var MouseNavigationHandler = function(options){
 	var _pressedButton = -1;
 	var _lastMouseX = -1;
 	var _lastMouseY = -1;
-	var _needsStartEvent = false;
-	var _needsEndEvent = false;
 	var _dx = 0;
 	var _dy = 0;
+	var _panButton = (options && options.panButton) || 0;
+	var _rotateButton = (options && options.rotateButton) || 1;
 
 	/**************************************************************************************************************/
 	
@@ -56,9 +56,7 @@ var MouseNavigationHandler = function(options){
 		Event handler for mouse wheel
 	 */
 	var _handleMouseWheel = function(event)
-	{
-		_navigation.globe.publish("startNavigation");
-		
+	{	
 		var factor;
 
 		// Check differences between firefox and the rest of the world
@@ -88,10 +86,7 @@ var MouseNavigationHandler = function(options){
 			event.preventDefault();
 		}
 		event.returnValue = false;
-		
-		_navigation.globe.publish("endNavigation");
-		_navigation.globe.renderContext.requestFrame();
-			
+					
 		// Return false to stop mouse wheel to be propagated when using onmousewheel
 		return false;
 	};
@@ -107,15 +102,13 @@ var MouseNavigationHandler = function(options){
 		// Stop all animations when an event is received
 		_navigation.stopAnimations();
 
-		if ( event.button == 0 || event.button == 1 )
+		if ( event.button == _panButton || event.button == _rotateButton )
 		{		
 			_lastMouseX = event.clientX;
 			_lastMouseY = event.clientY;
 			_dx = 0;
 			_dy = 0;
-			
-			_needsStartEvent = true;
-			
+						
 			// Return false to stop mouse down to be propagated when using onmousedown
 			return false;
 		}
@@ -134,26 +127,20 @@ var MouseNavigationHandler = function(options){
 
 		if ( _navigation.inertia && (_dx != 0 || _dy != 0)  )
 		{	
-			if ( event.button == 0 )
+			if ( event.button == _panButton )
 			{
 				_navigation.inertia.launch("pan", _dx, _dy );
 			
 			}
-			if ( event.button == 1 )
+			if ( event.button == _rotateButton )
 			{
 				_navigation.inertia.launch("rotate", _dx, _dy );
 			}
 		}
 
-		if ( event.button == 0 || event.button == 1 )
+		if ( event.button == _panButton || event.button == _rotateButton )
 		{
-
-			if (_needsEndEvent ) {
-				_navigation.globe.publish("endNavigation");
-			}
-
-			_needsStartEvent = false;
-			_needsEndEvent = false;
+			event.preventDefault();
 			
 			// Stop mouse up event
 			return false;
@@ -179,22 +166,15 @@ var MouseNavigationHandler = function(options){
 		
 		var ret = false;
 		// Pan
-		if ( _pressedButton == 0 )
+		if ( _pressedButton == _panButton )
 		{
-			if ( _needsStartEvent ) { 
-				_navigation.globe.publish("startNavigation");
-				_needsStartEvent  = false;
-				_needsEndEvent = true;
-			}
 			_navigation.pan( _dx, _dy );
-			_navigation.globe.renderContext.requestFrame();
 			ret = true;
 		}
 		// Rotate
-		else if ( _pressedButton == 1 )
+		else if ( _pressedButton == _rotateButton )
 		{
 			_navigation.rotate(_dx,_dy);
-			_navigation.globe.renderContext.requestFrame();
 			ret = true;
 		}
 		
@@ -234,13 +214,13 @@ var MouseNavigationHandler = function(options){
 	{
 		_navigation = nav;
 		
-		var canvas = _navigation.globe.renderContext.canvas;
+		var canvas = _navigation.renderContext.canvas;
 		
 		// Setup the mouse event handlers
 		canvas.addEventListener("mousedown", _handleMouseDown);
 		canvas.addEventListener("mousemove", _handleMouseMove);
 		
-		if ( options.zoomOnDblClick )
+		if ( options && options.zoomOnDblClick )
 			canvas.addEventListener("dblclick", _handleMouseDblClick);
 			
 		// For Firefox
@@ -250,6 +230,11 @@ var MouseNavigationHandler = function(options){
 		// Fix for Google Chrome : avoid dragging
 		// TODO : a hack, should be more robust (restore on uninstall?)
 		canvas.addEventListener("dragstart", function(event){event.preventDefault(); return false;});
+
+		if ( _rotateButton == 2 ) 
+		{
+			canvas.addEventListener("contextmenu", function(e) { e.preventDefault(); return false; }, false);
+		}
 	};
 
 	/** 
@@ -258,7 +243,7 @@ var MouseNavigationHandler = function(options){
 	this.uninstall = function()
 	{
 		// Setup the mouse event handlers
-		var canvas = _navigation.globe.renderContext.canvas;
+		var canvas = _navigation.renderContext.canvas;
 
 		canvas.removeEventListener("mousedown", _handleMouseDown);
 		canvas.removeEventListener("mousemove", _handleMouseMove);

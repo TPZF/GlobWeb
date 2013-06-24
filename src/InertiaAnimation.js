@@ -49,7 +49,7 @@ var InertiaAnimation = function(nav, options)
 	this.dx = 0;
 	this.dy = 0;
 	this.navigation = nav;
-	this.navigation.globe.addAnimation(this);
+	this.renderContext = nav.renderContext;
 }
 
 /**************************************************************************************************************/
@@ -86,7 +86,7 @@ InertiaAnimation.prototype.update = function(now)
 			break;
 		default:
 	}
-	this.navigation.globe.renderContext.requestFrame();
+	this.navigation.renderContext.requestFrame();
 
 	if ( hasToStop )
 		this.stop();

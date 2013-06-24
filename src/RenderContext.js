@@ -40,6 +40,7 @@ var RenderContext = function(options)
 	/**
 	 * Constructor
 	 */
+	this.activeAnimations = [];
 	this.shadersPath = options['shadersPath'] || "../shaders/";
 	this.tileErrorTreshold = options['tileErrorTreshold'] || 4;
 	this.lighting = options['lighting'] || false;
@@ -127,6 +128,9 @@ var RenderContext = function(options)
 				function( callback, element ) { window.setTimeout( callback, 1000 / 60 );};
 			} )();
 	}
+	
+	var self = this;
+	this.frameCallback = function() { self.frame(); };
 }
 
 /**************************************************************************************************************/
@@ -146,10 +150,74 @@ RenderContext.prototype.requestFrame = function()
 {	
 	if (!this.frameRequested)
 	{
-		window.requestAnimationFrame(this.frame);
+		var self = this;
+		window.requestAnimationFrame( this.frameCallback );
 		this.frameRequested = true;
 	}
 }
+
+
+/**************************************************************************************************************/
+
+/** 
+	A frame of the application
+*/
+RenderContext.prototype.frame = function() 
+{		
+	// Resest frame requested flag first
+	this.frameRequested = false;
+	
+	var stats = this.stats;
+	var gl = this.gl;
+
+	if (stats) stats.start("globalRenderTime");
+	
+	// Update active animations
+	if ( this.activeAnimations.length > 0)
+	{
+		var time = Date.now();
+		for (var i = 0; i < this.activeAnimations.length; i++)
+		{
+			this.activeAnimations[i].update(time);
+		}
+	}
+	
+	// Clear the buffer
+	if ( RenderContext.contextAttributes.stencil )
+	{
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+	}
+	else
+	{
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	}
+	
+	// Check canvas size is valid
+	if ( this.canvas.width == 0 || this.canvas.height == 0 )
+		return;
+		
+	gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+
+	// Update view dependent properties to be used during rendering : view matrix, frustum, projection, etc...
+	this.updateViewDependentProperties();
+			
+	// Call renderer
+	this.renderer.render();
+	
+	if (stats) stats.end("globalRenderTime");
+	
+	// Request next frame
+	if ( this.continuousRendering )
+	{
+		this.requestFrame();
+	}
+	else if ( this.activeAnimations.length > 0 )
+	{
+		this.requestFrame();
+	}
+	
+};
+
 /**************************************************************************************************************/
 
 /** 
@@ -166,8 +234,6 @@ RenderContext.prototype.updateViewDependentProperties = function()
 	vec3.set( [ 0.0, 0.0, -1.0 ], this.eyeDirection );
 	mat4.rotateVec3( inverseViewMatrix, this.eyeDirection );
 	
-	this.pixelSizeVector = this.computePixelSizeVector();
-	
 	// Init projection matrix
 	mat4.perspective(this.fov, this.canvas.width / this.canvas.height, this.minNear, this.far, this.projectionMatrix);
 	
@@ -177,9 +243,8 @@ RenderContext.prototype.updateViewDependentProperties = function()
 	// Compute the world frustum
 	this.worldFrustum.inverseTransform( this.frustum, this.viewMatrix );
 	
-	// Init near and far to 'invalid' values
-	this.near = 1e9;
-	this.far = 0.0;
+	// Compute the pixel size vector from the current view/projection matrix
+	this.pixelSizeVector = this.computePixelSizeVector();
 }
 
 /**************************************************************************************************************/
