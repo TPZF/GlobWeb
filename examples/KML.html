@@ -14,7 +14,7 @@ require(['../src/GlobWeb'], function (GlobWeb)
 	var navigation = new GlobWeb.Navigation(globe);
 
 	var bmlayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub",
-				layers: "BlueMarble,esat" } );
+				layers: "BlueMarble" } );
 	globe.setBaseImagery( bmlayer );
 	
 	var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
@@ -25,14 +25,14 @@ require(['../src/GlobWeb'], function (GlobWeb)
 	var xhr = new XMLHttpRequest();
 	xhr.onreadystatechange = function(e)
 	{
-		if ( xhr.readyState == 4 )// && xhr.status == 200)
+		if ( xhr.readyState == 4 && xhr.status == 200)
 		{
 			vectorLayer.addFeatureCollection( GlobWeb.KMLParser.parse( xhr.responseXML ) );
 			globe.addLayer( vectorLayer );
 		}
 	};
 	//xhr.open("GET", "world-borders/doc.kml");
-	xhr.open("GET", "doc.kml");
+	xhr.open("GET", "pib.kml");
 	//xhr.open("GET", "testUS.kml");
 	xhr.send();
 	

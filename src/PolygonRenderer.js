@@ -34,10 +34,10 @@ var PolygonRenderer = function(tileManager)
 		
 	this.vertexShader = "\
 	attribute vec3 vertex;\n\
-	uniform mat4 viewProjectionMatrix;\n\
+	uniform mat4 mvp;\n\
 	void main(void) \n\
 	{\n\
-		gl_Position = viewProjectionMatrix * vec4(vertex, 1.0);\n\
+		gl_Position = mvp * vec4(vertex, 1.0);\n\
 	}\n\
 	";
 
@@ -68,6 +68,7 @@ PolygonRenderer.prototype.addGeometry = function(geometry, layer, style){
 		geometry : geometry,
 		style : style,
 		layer: layer,
+		matrix: mat4.create(),
 		vertexBuffer : gl.createBuffer(),
 		indexBuffer : gl.createBuffer(),
 	};
@@ -78,14 +79,17 @@ PolygonRenderer.prototype.addGeometry = function(geometry, layer, style){
 	var coords = geometry['coordinates'][0];
 	var vertices = new Float32Array( style.extrude ? coords.length * 6 : coords.length * 3 );
 	
+	var origin = vec3.create();
+	CoordinateSystem.fromGeoTo3D(coords[0], origin);
+	
 	// For polygons only
 	for ( var i=0; i < coords.length; i++)
 	{
 		var pos3d = [];
 		CoordinateSystem.fromGeoTo3D(coords[i], pos3d);
-		vertices[i*3] = pos3d[0];
-		vertices[i*3+1] = pos3d[1];
-		vertices[i*3+2] = pos3d[2];
+		vertices[i*3] = pos3d[0] - origin[0];
+		vertices[i*3+1] = pos3d[1] - origin[1];
+		vertices[i*3+2] = pos3d[2] - origin[2];
 	}
 	
 	if ( style.extrude )
@@ -96,9 +100,9 @@ PolygonRenderer.prototype.addGeometry = function(geometry, layer, style){
 			var pos3d = [];
 			var coordAtZero = [ coords[i][0], coords[i][1], 0.0 ];
 			CoordinateSystem.fromGeoTo3D( coordAtZero, pos3d);
-			vertices[offset] = pos3d[0];
-			vertices[offset+1] = pos3d[1];
-			vertices[offset+2] = pos3d[2];
+			vertices[offset] = pos3d[0] - origin[0];
+			vertices[offset+1] = pos3d[1] - origin[1];
+			vertices[offset+2] = pos3d[2] - origin[2];
 			offset += 3;
 		}
 	}
@@ -156,6 +160,9 @@ PolygonRenderer.prototype.addGeometry = function(geometry, layer, style){
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.indexBuffer);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 	
+	mat4.identity(renderable.matrix);
+	mat4.translate(renderable.matrix,origin);
+
 	this.renderables.push(renderable);
 
 }
@@ -204,13 +211,17 @@ PolygonRenderer.prototype.render = function()
 	gl.blendEquation(gl.FUNC_ADD);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 	gl.depthFunc(gl.LEQUAL);
+	//gl.enable(gl.POLYGON_OFFSET_FILL);
+	//gl.polygonOffset(-2.0,-2.0);
 	//gl.disable(gl.DEPTH_TEST);
 	
 	this.program.apply();
 	
-	// The shader only needs the viewProjection matrix, use GlobWeb.modelViewMatrix as a temporary storage
-	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, renderContext.modelViewMatrix)
-	gl.uniformMatrix4fv(this.program.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
+	// Compute the viewProj matrix
+	var viewProjMatrix = mat4.create();
+	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, viewProjMatrix);
+	
+	var modelViewProjMatrix = mat4.create();
 
 	
 	for ( var n = 0; n < this.renderables.length; n++ )
@@ -220,6 +231,9 @@ PolygonRenderer.prototype.render = function()
 		if ( !renderable.layer._visible
 			|| renderable.layer._opacity <= 0.0 )
 			continue;
+			
+		mat4.multiply(viewProjMatrix,renderable.matrix,modelViewProjMatrix);
+		gl.uniformMatrix4fv(this.program.uniforms["mvp"], false, modelViewProjMatrix);
 			
 		var style = renderable.style;
 		gl.uniform4f(this.program.uniforms["u_color"], style.fillColor[0], style.fillColor[1], style.fillColor[2], 
@@ -239,6 +253,7 @@ PolygonRenderer.prototype.render = function()
 	}
 	
 	//gl.enable(gl.DEPTH_TEST);
+	//gl.disable(gl.POLYGON_OFFSET_FILL);
 	gl.depthFunc(gl.LESS);
 	gl.disable(gl.BLEND);
 }
