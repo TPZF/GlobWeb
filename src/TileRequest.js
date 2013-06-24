@@ -26,142 +26,143 @@
  */
 var TileRequest = function(tileManager)
 {
+	// Private variables
+	var _imageLoaded = false;
+	var _elevationLoaded = true;
+	var _xhr = new XMLHttpRequest();
+
+	// Public variables
 	this.tile = null;
-	this.imageLoaded = false;
-	this.elevationLoaded = true;
-	this.tileManager = tileManager;
+	this.image = null;
+	this.elevations = null;
 
-	var that = this;
+	var self = this;
 	
-	this.image = new Image();
-	this.image.crossOrigin = '';
-	this.image.onload = function() { that.handleLoadedImage(); };
-	this.image.onerror = function()  { that.handleErrorImage(); };
-	this.image.onabort = function()  { that.handleAbort(); };
-
-	this.xhr = new XMLHttpRequest();
-	this.xhr.onreadystatechange = function(e)
+	// Setup the XHR callback
+	_xhr.onreadystatechange = function(e)
 	{
-		if ( that.xhr.readyState == 4 )
+		if ( _xhr.readyState == 4 )
 		{
-			if ( that.xhr.status == 200 )
+			if ( _xhr.status == 200 )
 			{
-				that.handleLoadedElevation();
+				_handleLoadedElevation();
 			}
 			else
 			{
-				that.handleErrorElevation();
+				_handleErrorElevation();
 			}
 		}
 	};
-}
+	
 
-/**************************************************************************************************************/
+	/**************************************************************************************************************/
 
-/**
-	Handle when image is loaded
- */
-TileRequest.prototype.handleLoadedImage = function() 
-{
-	// The method can be called twice when the image is in the cache (see launch())
-	if (!this.imageLoaded)
+	/**
+		Handle when image is loaded
+	 */
+	var _handleLoadedImage = function() 
 	{
-		this.imageLoaded = true;
-		if ( this.elevationLoaded )
+		// The method can be called twice when the image is in the cache (see launch())
+		if (!_imageLoaded)
 		{
-			this.tileManager.completedRequests.push(this);
-			this.tileManager.renderContext.requestFrame();
+			_imageLoaded = true;
+			if ( _elevationLoaded )
+			{
+				tileManager.completedRequests.push(self);
+				tileManager.renderContext.requestFrame();
+			}
+		}
+	};
+
+	/**************************************************************************************************************/
+
+	/**
+		Handle when loading image failed
+	 */
+	var _handleErrorImage = function() 
+	{
+		console.log( "Error while loading " + this.src );
+		self.tile.state = Tile.State.ERROR;
+		tileManager.availableRequests.push(self);
+	}
+
+	/**************************************************************************************************************/
+
+	/**
+		Abort request
+	 */
+	var _handleAbort = function() 
+	{
+		self.tile.state = Tile.State.NONE;
+		tileManager.availableRequests.push(self);
+	}
+
+	/**************************************************************************************************************/
+
+	/**
+		Handle when elevation is loaded
+	 */
+	var _handleLoadedElevation = function() 
+	{
+		self.elevations = tileManager.elevationProvider.parseElevations(_xhr.responseText);	
+		_elevationLoaded = true;
+		
+		if ( _imageLoaded )
+		{
+			tileManager.completedRequests.push(self);
+			tileManager.renderContext.requestFrame();
 		}
 	}
-}
 
-/**************************************************************************************************************/
+	/**************************************************************************************************************/
 
-/**
-	Handle when loading image failed
- */
-TileRequest.prototype.handleErrorImage = function() 
-{
-	console.log( "Error while loading " + this.image.src );
-	this.tile.state = Tile.State.ERROR;
-	this.tileManager.availableRequests.push(this);
-}
-
-/**************************************************************************************************************/
-
-/**
-	Abort request
- */
-TileRequest.prototype.handleAbort = function() 
-{
-	this.tile.state = Tile.State.NONE;
-	this.tileManager.availableRequests.push(this);
-}
-
-/**************************************************************************************************************/
-
-/**
-	Handle when elevation is loaded
- */
-TileRequest.prototype.handleLoadedElevation = function() 
-{
-	this.elevations = this.xhr.responseText;
+	/**
+		Handle when loading elevation failed
+	 */
+	var _handleErrorElevation = function() 
+	{
+		self.elevations = null;
+		_elevationLoaded = true;
 		
-	this.elevationLoaded = true;
+		if ( _imageLoaded )
+		{
+			tileManager.completedRequests.push(self);
+			tileManager.renderContext.requestFrame();
+		}
+	}
+
+	/**************************************************************************************************************/
+
+	/**
+		Launch the HTTP request for a tile
+	 */
+	this.launch = function(tile)
+	{
+		this.tile = tile;
+		
+		// Request the elevation if needed
+		if ( tileManager.elevationProvider )
+		{
+			_elevationLoaded = false;
+			_xhr.open("GET", tileManager.elevationProvider.getUrl(tile) );
+			_xhr.send();
+		}
+		else
+		{
+			_elevationLoaded = true;
+		}
+		
+		// Launch the image
+		_imageLoaded = false;
+		this.image = new Image();
+		this.image.crossOrigin = '';
+		this.image.onload = _handleLoadedImage;
+		this.image.onerror = _handleErrorImage;
+		this.image.onabort = _handleAbort;
+		this.image.src = tileManager.imageryProvider.getUrl(tile);
+	};
 	
-	if ( this.imageLoaded )
-	{
-		this.tileManager.completedRequests.push(this);
-		this.tileManager.renderContext.requestFrame();
-	}
-}
-
-/**************************************************************************************************************/
-
-/**
-	Handle when loading elevation failed
- */
-TileRequest.prototype.handleErrorElevation = function() 
-{
-	this.elevations = null;
-	this.elevationLoaded = true;
-	
-	if ( this.imageLoaded )
-	{
-		this.tileManager.completedRequests.push(this);
-		this.tileManager.renderContext.requestFrame();
-	}
-}
-
-/**************************************************************************************************************/
-
-/**
-	Launch the HTTP request for a tile
- */
-TileRequest.prototype.launch = function(tile)
-{
-	this.tile = tile;
-	
-	// Request the elevation if needed
-	if ( this.tileManager.elevationProvider )
-	{
-		this.elevationLoaded = false;
-		this.xhr.open("GET", this.tileManager.elevationProvider.getUrl(tile) );
-		this.xhr.send();
-	}
-	else
-	{
-		this.elevationLoaded = true;
-	}
-	this.imageLoaded = false;
-	this.image.src = this.tileManager.imageryProvider.getUrl(tile);
-	// Directly call the handleLoadImage callback if the image is already comple (i.e. in the cache)
-	// Sometimes on Chrome the onload callback is not always called when the image is complete
-	if (this.image.complete)
-	{
-		this.handleLoadedImage();
-	}
-}
+};
 
 /**************************************************************************************************************/
 

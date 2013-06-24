@@ -359,12 +359,7 @@ TileManager.prototype.processTile = function(tile,level)
 		if ( tile.frameNumber == this.frameNumber )
 		{
 			// Generate the tile using data from tileRequest
-			if ( this.elevationProvider )
-			{
-				tile.generate( this.tilePool, tileRequest.image, this.elevationProvider.parseElevations( tileRequest.elevations ) );
-			}
-			else
-				tile.generate( this.tilePool, tileRequest.image );
+			tile.generate( this.tilePool, tileRequest.image, tileRequest.elevations );
 							
 			// Now post renderers can generate their data on the new tile
 			for (var i=0; i < this.postRenderers.length; i++ )
