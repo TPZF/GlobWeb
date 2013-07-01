@@ -23,7 +23,7 @@ define(['./Utils', './CoordinateSystem', './BaseNavigation', './SegmentedAnimati
 
 /** @export
 	@constructor
-	AstroNavigator constructor
+	Astronavigation constructor
 	@param globe Globe
 	@param options Configuration properties for the AstroNavigation :
 		<ul>
@@ -41,7 +41,7 @@ var AstroNavigation = function(globe, options)
 	this.minFov = (options && options.minFov) || 0.25;
 	this.maxFov = (options && options.maxFov) || 100;
 
-	// Initialize the navigator
+	// Initialize the navigation
 	this.center3d = [1.0, 0.0, 0.0];
 	if ( options.initTarget ) {
 		CoordinateSystem.fromGeoTo3D(options.initTarget, this.center3d );
@@ -72,7 +72,7 @@ Utils.inherits( BaseNavigation, AstroNavigation );
  */
 AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 {
-	var navigator = this;
+	var navigation = this;
 	
 	// default values
 	var destFov = fov || 15.0;
@@ -99,11 +99,11 @@ AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 		// Value setter
 		function(value) {
 			var position3d = CoordinateSystem.fromGeoTo3D( [ value[0], value[1] ] );
-			navigator.center3d[0] = position3d[0];
-			navigator.center3d[1] = position3d[1];
-			navigator.center3d[2] = position3d[2];
-			this.globe.renderContext.fov = value[2];
-			navigator.computeViewMatrix();
+			navigation.center3d[0] = position3d[0];
+			navigation.center3d[1] = position3d[1];
+			navigation.center3d[2] = position3d[2];
+			navigation.globe.renderContext.fov = value[2];
+			navigation.computeViewMatrix();
 		});
 	
 	// TODO : removed two steps animation ? Not very good with astro
@@ -157,7 +157,7 @@ AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 	}
 
 	animation.onstop = function() {
-		navigator.globe.publish("endNavigation");
+		navigation.globe.publish("endNavigation");
 	}
 	
 	this.globe.addAnimation(animation);
@@ -176,7 +176,7 @@ AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
  */
 AstroNavigation.prototype.moveTo = function(geoPos, duration )
 {
-	var navigator = this;
+	var navigation = this;
 	
 	duration = duration || 5000;
 	
@@ -201,10 +201,10 @@ AstroNavigation.prototype.moveTo = function(geoPos, duration )
 		// Value setter
 		function(value) {
 			var position3d = CoordinateSystem.fromGeoTo3D( [ value[0], value[1] ] );
-			navigator.center3d[0] = position3d[0];
-			navigator.center3d[1] = position3d[1];
-			navigator.center3d[2] = position3d[2];
-			navigator.computeViewMatrix();
+			navigation.center3d[0] = position3d[0];
+			navigation.center3d[1] = position3d[1];
+			navigation.center3d[2] = position3d[2];
+			navigation.computeViewMatrix();
 		}
 	);
 	
@@ -219,7 +219,7 @@ AstroNavigation.prototype.moveTo = function(geoPos, duration )
 	);
 
 	animation.onstop = function() {
-		navigator.globe.publish("endNavigation");
+		navigation.globe.publish("endNavigation");
 	}
 	
 	this.globe.addAnimation(animation);
@@ -273,7 +273,7 @@ AstroNavigation.prototype.zoom = function(delta)
 /**************************************************************************************************************/
 
 /**
-	Pan the navigator by computing the difference between 3D centers
+	Pan the navigation by computing the difference between 3D centers
 	@param dx Window delta x
 	@param dy Window delta y
  */
@@ -289,7 +289,7 @@ AstroNavigation.prototype.pan = function(dx, dy)
 /**************************************************************************************************************/
 
 /**
-	Rotate the navigator
+	Rotate the navigation
 	@param dx Window delta x
 	@param dy Window delta y
  */
