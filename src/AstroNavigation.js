@@ -69,8 +69,9 @@ Utils.inherits( BaseNavigation, AstroNavigation );
 	@param {Float[]} geoPos Array of two floats corresponding to final Longitude and Latitude(in this order) to zoom
 	@param {Int} fov Final zooming fov in degrees
 	@param {Int} duration Duration of animation in milliseconds
+	@param {Function} callback Callback on the end of animation
  */
-AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
+AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, callback)
 {
 	var navigation = this;
 	
@@ -157,14 +158,16 @@ AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 	}
 
 	animation.onstop = function() {
-		navigation.globe.publish("endNavigation");
+		if ( callback )
+		{
+			callback();
+		}
+		navigation.zoomToAnimation = null;
 	}
 	
 	this.globe.addAnimation(animation);
 	animation.start();
 	this.zoomToAnimation = animation;
-	
-	this.globe.publish("startNavigation");
 }
 
 /**************************************************************************************************************/
@@ -173,8 +176,9 @@ AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration)
 	Move to a 3d position
 	@param {Float[]} geoPos Array of two floats corresponding to final Longitude and Latitude(in this order) to zoom
 	@param {Int} duration Duration of animation in milliseconds
+	@param {Function} callback Callback on the end of animation
  */
-AstroNavigation.prototype.moveTo = function(geoPos, duration )
+AstroNavigation.prototype.moveTo = function(geoPos, duration, callback)
 {
 	var navigation = this;
 	
@@ -219,13 +223,14 @@ AstroNavigation.prototype.moveTo = function(geoPos, duration )
 	);
 
 	animation.onstop = function() {
-		navigation.globe.publish("endNavigation");
+		if ( callback )
+		{
+			callback();
+		}
 	}
 	
 	this.globe.addAnimation(animation);
 	animation.start();
-	
-	this.globe.publish("startNavigation");
 }
 
 /**************************************************************************************************************/
@@ -246,7 +251,7 @@ AstroNavigation.prototype.computeViewMatrix = function()
 	// mat4.inverse( vm );
 
 	this.up = [ vm[1], vm[5], vm[9] ];
-
+	this.publish("modified");
 }
 
 /**************************************************************************************************************/
@@ -257,7 +262,6 @@ AstroNavigation.prototype.computeViewMatrix = function()
  */
 AstroNavigation.prototype.zoom = function(delta)
 {
-	this.globe.publish("startNavigation");
 	// Arbitrary value for smooth zooming
 	delta = 1 + delta * 0.1;
 	
@@ -266,8 +270,6 @@ AstroNavigation.prototype.zoom = function(delta)
 	this._clampFov();
 	
 	this.computeViewMatrix();
-	
-	this.globe.publish("endNavigation");
 }
 
 /**************************************************************************************************************/
