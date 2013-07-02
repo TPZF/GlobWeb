@@ -194,7 +194,8 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 				else
 				{
 					// HACK to avoid multiple rendering of parent features
-					tile.extension.pointSprite  = new RendererTileData();
+					if ( tile.extension.pointSprite == undefined )
+						tile.extension.pointSprite  = new RendererTileData();
 				}
 			}
 			else if ( xhr.status >= 400 )
