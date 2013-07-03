@@ -394,6 +394,7 @@ CoordinateGridLayer.prototype.computeSamples = function()
  */
 CoordinateGridLayer.prototype.generateGridBuffers = function()
 {
+	var phiStart, phiStop;
 	// Difference is larger than hemisphere
 	if ( (this.geoBound.east - this.geoBound.west) > 180. )
 	{
@@ -504,8 +505,6 @@ CoordinateGridLayer.prototype.generateGridBuffers = function()
 			label = angle+"°";
 			break;
 		case "HMS":
-			// convert to positive [0..360]
-			angle = (angle < 0) ? angle+360 : angle;
 			label = CoordinateSystem.fromDegreesToHMS( angle );
 			break;
 		case "DMS":
@@ -605,7 +604,10 @@ CoordinateGridLayer.prototype.generateLabels = function()
 	var label;
 	for ( var phi = phiStart; phi < phiStop; phi+=this.longitudeSample )
 	{
-		label = _buildAngle(this.longFormat, phi);
+		// convert to positive [0..360[
+		var angle = (phi < 0) ? phi+360 : phi;
+
+		label = _buildAngle(this.longFormat, angle);
 
 		if ( !this.labels["lat_"+label] )
 		{

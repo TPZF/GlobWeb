@@ -137,10 +137,10 @@ CoordinateSystem.fromDegreesToDMS = function(degree)
 	}
 	
 	var absLat = Math.abs(degree);
-	deg = Math.floor(absLat);
-	decimal = (absLat - deg) * 60;
-	min = Math.floor(decimal);
-	sec = (decimal - min) * 60;
+	var deg = Math.floor(absLat);
+	var decimal = (absLat - deg) * 60;
+	var min = Math.floor(decimal);
+	var sec = (decimal - min) * 60;
 	
 	return stringSign(degree) + deg + String.fromCharCode(176) +" "+ min +"' "+ Numeric.roundNumber(sec, 2)+"\"";
 	
