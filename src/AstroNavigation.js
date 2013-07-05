@@ -236,6 +236,47 @@ AstroNavigation.prototype.moveTo = function(geoPos, duration, callback)
 /**************************************************************************************************************/
 
 /**
+ *	Set up vector to north
+ */
+ AstroNavigation.prototype.setUpToNorth = function(duration)
+ {
+	// Create a single animation to animate up
+	var startValue = [];
+	var endValue = [];
+	CoordinateSystem.from3DToGeo(this.up, startValue);
+	CoordinateSystem.from3DToGeo([0,0,1], endValue);
+	var duration = duration || 1000;
+
+	var navigation = this;
+	var animation = new SegmentedAnimation(
+		duration,
+		// Value setter
+		function(value) {
+			var position3d = CoordinateSystem.fromGeoTo3D( [ value[0], value[1] ] );
+			navigation.up[0] = position3d[0];
+			navigation.up[1] = position3d[1];
+			navigation.up[2] = position3d[2];
+			navigation.computeViewMatrix();
+		}
+	);
+	
+	animation.addSegment(
+		0.0, startValue,
+		1.0, endValue,
+		function(t, a, b) {
+			var pt = Numeric.easeOutQuad(t);
+			return [Numeric.lerp(pt, a[0], b[0]),  // geoPos.long
+				Numeric.lerp(pt, a[1], b[1])];  // geoPos.lat
+		}
+	);
+	
+	this.globe.addAnimation(animation);
+	animation.start();
+}
+
+/**************************************************************************************************************/
+
+/**
 	Compute the view matrix
  */
 AstroNavigation.prototype.computeViewMatrix = function()
