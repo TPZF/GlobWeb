@@ -618,8 +618,8 @@ ConvexPolygonRenderer.prototype.render = function(tiles)
 		currentPolygonProgram.apply();
 		gl.uniformMatrix4fv(currentPolygonProgram.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
 
+
 		gl.uniform1i(currentPolygonProgram.uniforms["texture"], 0);
-		gl.activeTexture(gl.TEXTURE0);
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.tcoordBuffer);
 		gl.vertexAttribPointer(currentPolygonProgram.attributes['tcoord'], 2, gl.FLOAT, false, 0, 0);
 
@@ -628,7 +628,7 @@ ConvexPolygonRenderer.prototype.render = function(tiles)
 			renderable = this.programs[i].renderables[j];
 
 			if ( this.programs[i].fillShader.updateUniforms )
-				this.programs[i].fillShader.updateUniforms(gl, renderable.bucket);
+				this.programs[i].fillShader.updateUniforms(gl, renderable.bucket, currentPolygonProgram);
 
 			gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
 			gl.vertexAttribPointer(currentPolygonProgram.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
@@ -644,6 +644,7 @@ ConvexPolygonRenderer.prototype.render = function(tiles)
 				renderable.triBufferDirty = false;
 			}
 			// Add texture
+			gl.activeTexture(gl.TEXTURE0);
 			if ( renderable.bucket.texture ) 
 			{
 				gl.bindTexture(gl.TEXTURE_2D, renderable.bucket.texture); // use texture of renderable
