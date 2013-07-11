@@ -107,8 +107,8 @@ AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, callback)
 			navigation.computeViewMatrix();
 		});
 	
-	// TODO : removed two steps animation ? Not very good with astro
-	if (false) //middleFov > this.globe.renderContext.fov)
+	// TODO : maybe improve it ?
+	if (middleFov > this.globe.renderContext.fov)
 	{
 		// Two steps animation, 'rising' & 'falling'
 		
