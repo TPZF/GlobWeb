@@ -141,9 +141,9 @@ DynamicImage.prototype.updateColormap = function(transferFn, colormap, inverse)
 DynamicImage.prototype.dispose = function()
 {
 	if ( this.colormapTex )
-		this.renderContext.gl.deleteTexture( this.colormapTex );
+		this.gl.deleteTexture( this.colormapTex );
 	if ( this.texture )
-		this.renderContext.gl.deleteTexture( this.texture );
+		this.gl.deleteTexture( this.texture );
 }
 
 return DynamicImage;
