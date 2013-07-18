@@ -21,6 +21,9 @@ define(['./ColorMap'], function(ColorMap) {
  
 /**************************************************************************************************************/
 
+// TODO : Unify shader programs between TileManager and ConvexPolygonRenderer
+//		* inverse Y coordinates(if needed)
+//		* vTextureCoord name refactor
 var colormapFragShader = "\
 		precision highp float; \n\
 		varying vec2 vTextureCoord;\n\
@@ -47,7 +50,7 @@ var colorMapCallback = function(gl, renderable, program)
 
 	gl.activeTexture(gl.TEXTURE1);
 	gl.bindTexture(gl.TEXTURE_2D, renderable.style.uniformValues.colormapTex);
-	gl.uniform1i(program.uniforms["colormap"], 1);			
+	gl.uniform1i(program.uniforms["colormap"], 1);
 }
 
 /**
@@ -55,9 +58,7 @@ var colorMapCallback = function(gl, renderable, program)
  */
 var DynamicImage = function(gl, pixels, format, dataType, width, height)
 {
-	this.texture = null;
-	this.width = 0;
-	this.height = 0;
+
 	this.fragmentCode = colormapFragShader;
 	this.updateUniforms = colorMapCallback;
 	this.tmin = 0.;
@@ -68,14 +69,18 @@ var DynamicImage = function(gl, pixels, format, dataType, width, height)
 	// Create texture
 	var tex = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, tex);
+    // TODO : Flip around X axis
+    //gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 	gl.texImage2D(
 		gl.TEXTURE_2D, 0, 
 		format, width, height, 0, 
 		format, dataType, pixels);
+
+    // NPOT properties
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
 	this.texture = tex;
 	this.width = width;
