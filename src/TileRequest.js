@@ -152,14 +152,23 @@ var TileRequest = function(tileManager)
 			_elevationLoaded = true;
 		}
 		
-		// Launch the image
 		_imageLoaded = false;
-		this.image = new Image();
-		this.image.crossOrigin = '';
-		this.image.onload = _handleLoadedImage;
-		this.image.onerror = _handleErrorImage;
-		this.image.onabort = _handleAbort;
-		this.image.src = tileManager.imageryProvider.getUrl(tile);
+		// Launch the request
+		if ( tileManager.imageryProvider.customLoad )
+		{
+			tileManager.imageryProvider.customLoad(this, tileManager.imageryProvider.getUrl(tile), _handleLoadedImage, _handleErrorImage);
+		}
+		else
+		{
+			// Image by default
+			this.image = new Image();
+			this.image.crossOrigin = '';
+			this.image.onload = _handleLoadedImage;
+			this.image.onerror = _handleErrorImage;
+			this.image.onabort = _handleAbort;
+			this.image.src = tileManager.imageryProvider.getUrl(tile);
+		}
+	    
 	};
 	
 };

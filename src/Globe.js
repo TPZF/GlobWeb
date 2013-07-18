@@ -91,12 +91,14 @@ Globe.prototype.setBaseImagery = function(layer)
 	{
 		this.removeLayer( this.tileManager.imageryProvider );
 	}
-	this.tileManager.setImageryProvider(layer);
+	// Attach the layer to the globe 
 	if ( layer )
 	{
 		layer._overlay = false;
 		this.addLayer(layer);
 	}
+	// Modify the tile manager after the layer has been attached
+	this.tileManager.setImageryProvider(layer);
 }
 
 /**************************************************************************************************************/

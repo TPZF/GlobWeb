@@ -161,6 +161,16 @@ Program.prototype.apply = function()
 
 /**************************************************************************************************************/
 
+/**
+	Dispose the program
+ */
+Program.prototype.dispose = function()
+{
+	this.renderContext.gl.deleteProgram(this.glProgram);
+}
+
+/**************************************************************************************************************/
+
 /*
 	Load shader using Http request
  */

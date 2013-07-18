@@ -28,6 +28,7 @@ var TileManager = function( globe )
 	this.globe = globe;
 	this.renderContext = this.globe.renderContext;
 	this.tilePool = new TilePool(this.renderContext);
+	this.defaultTilePool = this.tilePool;
 	this.imageryProvider = null;
 	this.elevationProvider = null;
 	this.tilesToRender = [];
@@ -70,7 +71,7 @@ var TileManager = function( globe )
 	this.numTilesGenerated = 0;
 	this.frameNumber = 0;
 
-	var vertexShader = "\
+	this.vertexShader = "\
 	attribute vec3 vertex;\n\
 	attribute vec2 tcoord;\n\
 	uniform mat4 modelViewMatrix;\n\
@@ -78,37 +79,37 @@ var TileManager = function( globe )
 	uniform vec4 texTransform;\n\
 	varying vec2 texCoord;\n";
 	if ( this.renderContext.lighting )
-		vertexShader += "attribute vec3 normal;\nvarying vec3 color;\n";
-	vertexShader += "\
+		this.vertexShader += "attribute vec3 normal;\nvarying vec3 color;\n";
+	this.vertexShader += "\
 	void main(void) \n\
 	{\n\
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(vertex, 1.0);\n";
 	if ( this.renderContext.lighting )
-		vertexShader += "vec4 vn = modelViewMatrix * vec4(normal,0);\ncolor = max( vec3(-vn[2],-vn[2],-vn[2]), 0.0 );\n";
-	vertexShader += "\
+		this.vertexShader += "vec4 vn = modelViewMatrix * vec4(normal,0);\ncolor = max( vec3(-vn[2],-vn[2],-vn[2]), 0.0 );\n";
+	this.vertexShader += "\
 		texCoord = vec2(tcoord.s * texTransform.x + texTransform.z, tcoord.t * texTransform.y + texTransform.w);\n\
 	}\n\
 	";
 
-	var fragmentShader = "\
+	this.fragmentShader = "\
 	precision highp float; \n\
 	varying vec2 texCoord;\n";
 	if ( this.renderContext.lighting )
-		fragmentShader += "varying vec3 color;\n";
-	fragmentShader += "\
+		this.fragmentShader += "varying vec3 color;\n";
+	this.fragmentShader += "\
 	uniform sampler2D colorTexture;\n\
 	void main(void)\n\
 	{\n\
 		gl_FragColor.rgb = texture2D(colorTexture, texCoord).rgb;\n";
 	if ( this.renderContext.lighting )
-		fragmentShader += "gl_FragColor.rgb *= color;\n";
-	fragmentShader += "\
+		this.fragmentShader += "gl_FragColor.rgb *= color;\n";
+	this.fragmentShader += "\
 		gl_FragColor.a = 1.0;\n\
 	}\n\
 	";
 	
 	this.program = new Program(this.renderContext);
-	this.program.createFromSource( vertexShader, fragmentShader );
+	this.program.createFromSource( this.vertexShader, this.fragmentShader );
 }
 
 /**************************************************************************************************************/
@@ -152,9 +153,48 @@ TileManager.prototype.setImageryProvider = function(ip)
 	
 	if (ip)
 	{
+		// Update tile pool if customized
+		if ( this.imageryProvider.customTilePool )
+		{
+			this.tilePool.disposeAll();
+			this.tilePool = this.imageryProvider.customTilePool;
+		}
+		else
+		{
+			// Revert to default tile pool if needed
+			if ( this.tilePool != this.defaultTilePool )
+			{
+				this.tilePool.disposeAll();
+				this.tilePool = this.defaultTilePool;
+			}
+		}
+
 		// Rebuild level zero tiles
 		this.tileConfig.imageSize = ip.tilePixelSize;
 		this.level0Tiles = ip.tiling.generateLevelZeroTiles(this.tileConfig,this.tilePool);
+
+		// Update program
+		if ( ip.customShader )
+		{
+			this.program.dispose();
+			this.program = new Program(this.renderContext);
+
+			// Memorize current fragment shader
+			this.currentFragmentShader = ip.customShader.fragmentCode ? ip.customShader.fragmentCode : this.fragmentShader;
+			this.program.createFromSource( ip.customShader.vertexCode ? ip.customShader.vertexCode : this.vertexShader,
+											this.currentFragmentShader );
+		}
+		else
+		{	
+			// Revert to default if needed
+			if ( this.currentFragmentShader != null )
+			{
+				this.program.dispose();
+				this.program = new Program(this.renderContext);
+				this.program.createFromSource( this.vertexShader, this.fragmentShader );
+				this.currentFragmentShader = null;
+			}
+		}
 	}
 }
 
@@ -399,6 +439,21 @@ TileManager.prototype.processTile = function(tile,level)
 	// TODO : remove this
 	gl.disable(gl.CULL_FACE);
 	
+	// Check if the program of imagery provider changed
+	// Only for fragment shader for now
+	if ( this.currentFragmentShader && this.currentFragmentShader != this.imageryProvider.customShader.fragmentCode )
+	{
+		this.program.dispose();
+		this.program = new Program(this.renderContext);
+
+		if ( this.imageryProvider.customShader )
+		{
+			this.currentFragmentShader = this.imageryProvider.customShader.fragmentCode ? this.imageryProvider.customShader.fragmentCode : this.fragmentShader;
+			this.program.createFromSource( this.imageryProvider.customShader.vertexShader ? this.imageryProvider.customShader.vertexShader : this.vertexShader,
+										   this.currentFragmentShader );
+		}
+	}
+
     // Setup program
     this.program.apply();
 	
@@ -431,6 +486,10 @@ TileManager.prototype.processTile = function(tile,level)
 	
 	// Update projection matrix with new near and far values
 	mat4.perspective(rc.fov, rc.canvas.width / rc.canvas.height, rc.near, rc.far, rc.projectionMatrix);
+
+	// Update uniforms if needed
+	if ( this.imageryProvider.customShader )
+		this.imageryProvider.customShader.updateUniforms(gl, this.program);
 
 	// Setup state
 	gl.activeTexture(gl.TEXTURE0);
@@ -565,7 +624,14 @@ TileManager.prototype.render = function()
 	// Create the texture for level zero
 	if ( this.levelZeroTexture == null && this.imageryProvider.levelZeroImage )
 	{
-		this.levelZeroTexture = this.renderContext.createNonPowerOfTwoTextureFromImage(this.imageryProvider.levelZeroImage);
+		if ( this.imageryProvider.getLevelZeroTexture )
+		{
+			this.levelZeroTexture = this.imageryProvider.getLevelZeroTexture();
+		}
+		else
+		{
+			this.levelZeroTexture = this.renderContext.createNonPowerOfTwoTextureFromImage(this.imageryProvider.levelZeroImage);
+		}
 		this.globe.publish("baseLayersReady");
 	}
 
