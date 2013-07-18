@@ -45,14 +45,14 @@ var FitsTilePool = function(rc)
 	/**
 		Create a new GL texture
 	 */
-	var createNewGLTexture = function(data)
+	var createNewGLTexture = function(fitsData)
 	{
 		var glTexture = gl.createTexture();
 
 		// TODO: flip around X axis
 		// gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 		gl.bindTexture(gl.TEXTURE_2D, glTexture);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, data.fitsData.width, data.fitsData.height, 0, gl.LUMINANCE, gl.FLOAT, data.array);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, fitsData.width, fitsData.height, 0, gl.LUMINANCE, gl.FLOAT, fitsData.typedArray);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -68,11 +68,11 @@ var FitsTilePool = function(rc)
 	/**
 		Reuse a GL texture
 	 */
-	var reuseGLTexture = function(data)
+	var reuseGLTexture = function(fitsData)
 	{
 		var glTexture = glTextures.pop();
 		gl.bindTexture(gl.TEXTURE_2D, glTexture);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE,data.fitsData.width, data.fitsData.height, 0, gl.LUMINANCE, gl.FLOAT, data.array);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, fitsData.width, fitsData.height, 0, gl.LUMINANCE, gl.FLOAT, fitsData.typedArray);
 		
 		self.numReusedTextures++;
 		
@@ -86,15 +86,15 @@ var FitsTilePool = function(rc)
 	/**
 		Create a GL texture to be used by a tile
 	 */
-	this.createGLTexture = function(image)
+	this.createGLTexture = function(fitsData)
 	{
 		if ( glTextures.length > 0 )
 		{
-			return reuseGLTexture(image);
+			return reuseGLTexture(fitsData);
 		}
 		else
 		{
-			return createNewGLTexture(image);
+			return createNewGLTexture(fitsData);
 		}
 	};
 
