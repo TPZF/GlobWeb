@@ -21,10 +21,10 @@ define(['./ColorMap'], function(ColorMap) {
  
 /**************************************************************************************************************/
 
-// TODO : Unify shader programs between TileManager and ConvexPolygonRenderer
+// TODO : Unify shader programs between TileManager, ConvexPolygonRenderer and ImageRenderer
 //		* inverse Y coordinates(if needed)
 //		* vTextureCoord name refactor
-var colormapFragShader = "\
+var defaultFragmentCode = "\
 		precision highp float; \n\
 		varying vec2 vTextureCoord;\n\
 		uniform sampler2D texture; \n\
@@ -41,7 +41,7 @@ var colormapFragShader = "\
 		}\n\
 		";
 
-var colorMapCallback = function(gl, renderable, program)
+var defaultCallback = function(gl, renderable, program)
 {
 	if ( !program )
 		program = renderable.polygonProgram;
@@ -53,20 +53,31 @@ var colorMapCallback = function(gl, renderable, program)
 	gl.uniform1i(program.uniforms["colormap"], 1);
 }
 
+/**************************************************************************************************************/
+
 /**
  *	@constructor DynamicImage
  */
-var DynamicImage = function(gl, pixels, format, dataType, width, height)
+var DynamicImage = function(renderContext, pixels, format, dataType, width, height, options)
 {
-
-	this.fragmentCode = colormapFragShader;
-	this.updateUniforms = colorMapCallback;
+	// Initialize fragment shader and uniformsCallback if needed
+	defaultFragmentCode = (options && options.fragmentCode) ? options.fragmentCode : defaultFragmentCode;
+	defaultCallback = (options && options.updateUniforms) ? options.updateUniforms : defaultCallback;
+	
+	this.fragmentCode = defaultFragmentCode;
+	this.updateUniforms = defaultCallback;
 	this.tmin = 0.;
 	this.tmax = 1.;
 	this.colormapTex = null;
-	this.gl = gl;
+	this.renderContext = renderContext;
+
+	// Parameters for histogram generation
+	this.pixels = pixels;
+	this.transferFn = "raw";
+	this.inverse = false;
 
 	// Create texture
+	var gl = renderContext.gl;
 	var tex = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, tex);
     // TODO : Flip around X axis
@@ -87,7 +98,10 @@ var DynamicImage = function(gl, pixels, format, dataType, width, height)
 	this.height = height;
 	
 	this.computeMinMax(pixels);
+	renderContext.requestFrame();
 }
+
+/**************************************************************************************************************/
 
 /**
  *	Compute min/max of fits data
@@ -95,7 +109,7 @@ var DynamicImage = function(gl, pixels, format, dataType, width, height)
  *	@param pixels Fits data
  *	@param texture glTexture
  */
-DynamicImage.prototype.computeMinMax = function(pixels, image)
+DynamicImage.prototype.computeMinMax = function(pixels)
 {
 	var max = pixels[0];
 	var min = pixels[0];
@@ -114,6 +128,8 @@ DynamicImage.prototype.computeMinMax = function(pixels, image)
 	this.tmin = min;
 }
 
+/**************************************************************************************************************/
+
 /**
  *	Update colormap of current image
  *
@@ -123,33 +139,41 @@ DynamicImage.prototype.computeMinMax = function(pixels, image)
  */
 DynamicImage.prototype.updateColormap = function(transferFn, colormap, inverse)
 {
+	var gl = this.renderContext.gl;
 	if ( transferFn != "raw" )
 	{
-		this.fragmentCode = colormapFragShader;
-		this.updateUniforms = colorMapCallback;
+		this.fragmentCode = defaultFragmentCode;
+		this.updateUniforms = defaultCallback;
 		// Dispose current texture
 		if ( this.colormapTex )
-	    	this.gl.deleteTexture( this.colormapTex );
+	    	gl.deleteTexture( this.colormapTex );
 
-		this.colormapTex = ColorMap.generateColormap(this.gl, transferFn, colormap, inverse);
+		this.colormapTex = ColorMap.generateColormap(gl, transferFn, colormap, inverse);
 	}
 	else
 	{
 		this.fragmentCode = null;
 		this.updateUniforms = null;
 	}
+	this.transferFn = transferFn;
+	this.inverse = inverse;
 }
+
+/**************************************************************************************************************/
 
 /**
  *	Dispose textures
  */
 DynamicImage.prototype.dispose = function()
 {
+	var gl = this.renderContext.gl;
 	if ( this.colormapTex )
-		this.gl.deleteTexture( this.colormapTex );
+		gl.deleteTexture( this.colormapTex );
 	if ( this.texture )
-		this.gl.deleteTexture( this.texture );
+		gl.deleteTexture( this.texture );
 }
+
+/**************************************************************************************************************/
 
 return DynamicImage;
 
