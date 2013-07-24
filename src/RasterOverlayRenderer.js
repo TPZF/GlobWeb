@@ -487,7 +487,7 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 				}
 				
 				// If no texture on tile, try to find a valid texture with parent
-				while ( !renderable.requestFinished && textureTile )
+				while ( !renderable.texture && textureTile )
 				{
 					prevTextureTile = textureTile;
 					textureTile = textureTile.parent;
