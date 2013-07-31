@@ -171,6 +171,9 @@ DynamicImage.prototype.dispose = function()
 		gl.deleteTexture( this.colormapTex );
 	if ( this.texture )
 		gl.deleteTexture( this.texture );
+
+	this.colormapTex = null;
+	this.texture = null;
 }
 
 /**************************************************************************************************************/
