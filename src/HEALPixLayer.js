@@ -36,6 +36,7 @@ var HEALPixLayer = function(options)
 	this.numberOfLevels = options.numberOfLevels || 10;
 	this.type = "ImageryRaster";
 	this.baseUrl = options['baseUrl'];
+	this.dataType = options.dataType || "jpg";
 	
 	// allsky
 	this.levelZeroImage = new Image();
@@ -81,7 +82,7 @@ HEALPixLayer.prototype._attach = function( g )
 	RasterLayer.prototype._attach.call( this, g );
 
 	// Load level zero image now
-	this.levelZeroImage.src = this.baseUrl + "/Norder3/Allsky.jpg";
+	this.levelZeroImage.src = this.baseUrl + "/Norder3/Allsky."+this.dataType;
 }
 
 /**************************************************************************************************************/
@@ -102,7 +103,7 @@ HEALPixLayer.prototype.getUrl = function(tile)
 	
 	url += "/Npix";
 	url += tile.pixelIndex;
-	url += ".jpg";
+	url += "."+this.dataType;
 	
 	return url;
 }
