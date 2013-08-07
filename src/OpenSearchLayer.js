@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./FeatureStyle','./VectorRendererManager','./Utils','./BaseLayer','./RendererTileData'],
-	function(FeatureStyle,VectorRendererManager,Utils,BaseLayer,RendererTileData) {
+ define(['./FeatureStyle','./VectorRendererManager','./Utils','./BaseLayer','./RendererTileData', './CoordinateSystem'],
+	function(FeatureStyle,VectorRendererManager,Utils,BaseLayer,RendererTileData, CoordinateSystem) {
 
 /**************************************************************************************************************/
 
@@ -505,7 +505,16 @@ OSData.prototype.dispose = function( renderContext, tilePool )
  */
 OpenSearchLayer.prototype.buildUrl = function( tile )
 {
-	return url = this.serviceUrl + "/search?order=" + tile.order + "&healpix=" + tile.pixelIndex;
+	var url = this.serviceUrl + "/search?order=" + tile.order + "&healpix=" + tile.pixelIndex;
+	if ( this.globe.tileManager.imageryProvider.tiling.coordSystem == "EQ" )
+	{
+		url += "&coordSystem=EQUATORIAL";
+	}
+	else
+	{
+		url += "&coordSystem=GALACTIC";
+	}
+	return url;
 }
 
 /**************************************************************************************************************/
@@ -578,6 +587,14 @@ OpenSearchLayer.prototype.updateFeatures = function( features )
 		switch ( currentFeature.geometry.type )
 		{
 			case "Point":
+
+				// Convert to default coordinate system if needed
+				if ( CoordinateSystem.type && CoordinateSystem.type != this.globe.tileManager.imageryProvider.tiling.coordSystem )
+				{
+					currentFeature.geometry.coordinates = CoordinateSystem.convertToDefault(currentFeature.geometry.coordinates, this.globe.tileManager.imageryProvider.tiling.coordSystem);
+				}
+
+				// Convert to geographic to simplify picking
 				if ( currentFeature.geometry.coordinates[0] > 180 )
 					currentFeature.geometry.coordinates[0] -= 360;
 				break;
@@ -585,6 +602,13 @@ OpenSearchLayer.prototype.updateFeatures = function( features )
 				var ring = currentFeature.geometry.coordinates[0];
 				for ( var j = 0; j < ring.length; j++ )
 				{
+					// Convert to default coordinate system if needed
+					if ( CoordinateSystem.type && CoordinateSystem.type != this.globe.tileManager.imageryProvider.tiling.coordSystem )
+					{
+						ring[j] = CoordinateSystem.convertToDefault(ring[j], this.globe.tileManager.imageryProvider.tiling.coordSystem);
+					}
+
+					// Convert to geographic to simplify picking
 					if ( ring[j][0] > 180 )
 						ring[j][0] -= 360;
 				}
