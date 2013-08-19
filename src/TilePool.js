@@ -48,13 +48,23 @@ var TilePool = function(rc)
 	{
 		var glTexture = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, glTexture);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+		if ( image.dataType == "byte" )
+		{
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+			gl.generateMipmap(gl.TEXTURE_2D);
+		}
+		else
+		{
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, image.width, image.height, 0, gl.LUMINANCE, gl.FLOAT, image.typedArray);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		}
+
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-		gl.generateMipmap(gl.TEXTURE_2D);
-		
+		// Store type of texture to dispose into right array later
+		glTexture.dataType = image.dataType;
 		self.numCreatedTextures++;
 		
 		return glTexture;
@@ -67,12 +77,20 @@ var TilePool = function(rc)
 	 */
 	var reuseGLTexture = function(image)
 	{
-		var glTexture = glTextures.pop();
+		var glTexture = glTextures[image.dataType].pop();
 		gl.bindTexture(gl.TEXTURE_2D, glTexture);
-		//gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, image);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-		gl.generateMipmap(gl.TEXTURE_2D);
-		
+
+		if ( image.dataType == "byte" )
+		{
+			//gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, image);
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+			gl.generateMipmap(gl.TEXTURE_2D);
+		}
+		else
+		{
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, image.width, image.height, 0, gl.LUMINANCE, gl.FLOAT, image.typedArray);
+		}
+
 		self.numReusedTextures++;
 		
 		return glTexture;
@@ -87,7 +105,10 @@ var TilePool = function(rc)
 	 */
 	this.createGLTexture = function(image)
 	{
-		if ( glTextures.length > 0 )
+		if ( !glTextures[image.dataType] )
+			glTextures[image.dataType] =  [];
+
+		if ( glTextures[image.dataType].length > 0 )
 		{
 			return reuseGLTexture(image);
 		}
@@ -126,7 +147,7 @@ var TilePool = function(rc)
 	 */
 	this.disposeGLTexture = function(texture)
 	{
-		glTextures.push(texture);
+		glTextures[texture.dataType].push(texture);
 	}
 
 	/**************************************************************************************************************/

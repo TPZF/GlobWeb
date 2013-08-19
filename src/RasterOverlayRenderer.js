@@ -17,16 +17,16 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define( ['./Program','./Tile','./RendererTileData'], function(Program,Tile,RendererTileData) {
+define( ['./Program','./Tile','./RendererTileData', './ImageRequest'], function(Program,Tile,RendererTileData, ImageRequest) {
 
-//*************************************************************************
+/**************************************************************************************************************/
 
 /** 
 	@constructor
  */
 var RasterOverlayRenderer = function(tileManager)
 {
-	var vertexShader = "\
+	this.vertexShader = "\
 	attribute vec3 vertex;\n\
 	attribute vec2 tcoord;\n\
 	uniform mat4 modelViewMatrix;\n\
@@ -40,7 +40,7 @@ var RasterOverlayRenderer = function(tileManager)
 	}\n\
 	";
 
-	var fragmentShader = "\
+	this.fragmentShader = "\
 	precision lowp float;\n\
 	varying vec2 texCoord;\n\
 	uniform sampler2D overlayTexture;\n\
@@ -54,9 +54,12 @@ var RasterOverlayRenderer = function(tileManager)
 	
 	this.requestHighestResolutionFirst = true;
 	this.tileManager = tileManager;
-	
-    this.program = new Program(tileManager.renderContext);
-	this.program.createFromSource( vertexShader, fragmentShader );
+	this.programs = [];
+	this.program = this.createProgram( {
+		vertexCode: this.vertexShader,
+		fragmentCode: this.fragmentShader,
+		updateUniforms: null
+	});
 	
 	this.overlays = [];
 	this.imageRequests = [];
@@ -65,39 +68,37 @@ var RasterOverlayRenderer = function(tileManager)
 	
 	var self = this;
 	for ( var i = 0; i < 4; i++ ) {
-		var image = new Image();
-		image.renderable = null;
-		image.frameNumber = -1;
-		image.crossOrigin = '';
-		image.onload = function() 
-		{
-			if ( this.renderable )
-			{
-				this.renderable.texture = tileManager.tilePool.createGLTexture(this);
-				this.renderable.onRequestFinished(true);
-				this.renderable = null;
-				self.tileManager.renderContext.requestFrame();
+		var imageRequest = new ImageRequest({
+			successCallback: function(){
+				if ( this.renderable )
+				{
+					if ( this.renderable.bucket.handleImage )
+						this.renderable.bucket.handleImage(this);
+
+					this.renderable.texture = tileManager.tilePool.createGLTexture(this.image);
+					this.renderable.onRequestFinished(true);
+					this.renderable = null;
+					self.tileManager.renderContext.requestFrame();
+				}
+			},
+			failCallback: function(){
+				if ( this.renderable )
+				{
+					this.renderable.onRequestFinished(true);
+					this.renderable = null;
+				}
+			},
+			abortCallback: function(){
+				console.log("Raster overlay request abort.");
+				if ( this.renderable )
+				{
+					this.renderable.onRequestFinished(false);
+					this.renderable = null;
+				}
 			}
-		};
-		image.onerror = function()
-		{
-			if ( this.renderable )
-			{
-				this.renderable.onRequestFinished(true);
-				this.renderable = null;
-			}
-		};
-		image.onabort = function()
-		{
-			console.log("Raster overlay request abort.");
-			if ( this.renderable )
-			{
-				this.renderable.onRequestFinished(false);
-				this.renderable = null;
-			}
-		};
-		
-		this.imageRequests.push( image );
+		});
+
+		this.imageRequests.push( imageRequest );
 	}
 
 	
@@ -388,7 +389,7 @@ RasterOverlayRenderer.prototype.requestOverlayTextureForTile = function( tile, r
 			renderable.onRequestStarted(imageRequest);
 			imageRequest.renderable = renderable;
 			imageRequest.frameNumber = this.frameNumber;
-			imageRequest.src = renderable.bucket.getUrl(tile);
+			imageRequest.send(renderable.bucket.getUrl(tile), renderable.bucket.dataType);
 		}
 	}
 	else
@@ -397,7 +398,50 @@ RasterOverlayRenderer.prototype.requestOverlayTextureForTile = function( tile, r
 	}
 }
 
-//*************************************************************************
+/**************************************************************************************************************/
+
+/**
+ 	Create program from customShader object
+ */
+RasterOverlayRenderer.prototype.createProgram = function(customShader)
+{
+	var program = new Program(this.tileManager.renderContext);
+	program.createFromSource(this.vertexShader, customShader.fragmentCode);
+	
+    // Add program
+    program.id = this.programs.length;
+    this.programs.push({ 
+    	fragmentCode: customShader.fragmentCode,
+    	program: program
+	});
+	return program;
+}
+
+/**************************************************************************************************************/
+
+/**
+ 	Get program if known by renderer, create otherwise
+ */
+RasterOverlayRenderer.prototype.getProgram = function(customShader) {
+
+	var program;
+
+    for(var id=0; id<this.programs.length; id++)
+    {
+        if( this.programs[id].fragmentCode == customShader.fragmentCode )
+        {
+        	program = this.programs[id].program;
+        }
+    }
+
+    if ( !program )
+    {
+    	program = this.createProgram(customShader);
+    }
+    return program;
+}
+
+/**************************************************************************************************************/
 
 /**
  *	Render the raster overlays for the given tiles
@@ -441,12 +485,6 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 			
 		if ( tileData )
 		{
-			mat4.multiply( rc.viewMatrix, tile.matrix, modelViewMatrix );
-			gl.uniformMatrix4fv(this.program.uniforms["modelViewMatrix"], false, modelViewMatrix);
-						
-			// Bind the vertex buffer
-			gl.bindBuffer(gl.ARRAY_BUFFER, tile.vertexBuffer);
-			gl.vertexAttribPointer(attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
 			
 			// Bind the index buffer
 			var indexBuffer = isTileLoaded ? this.tileManager.tileIndexBuffer.getSolid() : this.tileManager.tileIndexBuffer.getSubSolid(tile.parentIndex);
@@ -465,6 +503,52 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 				if ( !renderable.bucket._visible )
 					continue;
 				
+				if ( renderable.bucket.customShader )
+				{
+					var program = this.getProgram(renderable.bucket.customShader);
+					// Apply custom shader if changed
+					if ( program != this.program )
+					{
+						this.program = program;
+					    this.program.apply();
+						
+						attributes = this.program.attributes;
+							
+						gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
+						gl.uniform1i(this.program.uniforms["overlayTexture"], 0);
+					}	
+				}
+				else
+				{
+					var program = this.getProgram({
+						vertexCode: this.vertexShader,
+						fragmentCode: this.fragmentShader,
+						updateUniforms: null
+					});
+					// Revert to default shader if changed
+					if ( program != this.program )
+					{
+						this.program = program;
+						this.program.apply();
+						
+						attributes = this.program.attributes;
+							
+						gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
+						gl.uniform1i(this.program.uniforms["overlayTexture"], 0);
+					}
+				}
+
+				// Bind the vertex buffer
+				gl.bindBuffer(gl.ARRAY_BUFFER, tile.vertexBuffer);
+				gl.vertexAttribPointer(attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
+
+				mat4.multiply( rc.viewMatrix, tile.matrix, modelViewMatrix );
+				gl.uniformMatrix4fv(this.program.uniforms["modelViewMatrix"], false, modelViewMatrix);
+						
+
+				if ( renderable.bucket.customShader && renderable.bucket.customShader.updateUniforms )
+					renderable.bucket.customShader.updateUniforms(gl, this.program);
+
 				var uvScale = 1.0;
 				var uTrans = 0.0;
 				var vTrans = 0.0;
@@ -538,14 +622,14 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 		{
 			iq.renderable.onRequestFinished(false);
 			iq.renderable = null;
-			iq.src = '';
+			iq.abort();
 		}
 	}
 	
 	this.frameNumber++;
 }
 
-//*************************************************************************
+/**************************************************************************************************************/
 
 return RasterOverlayRenderer;
 

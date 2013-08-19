@@ -28,7 +28,6 @@ var TileManager = function( globe )
 	this.globe = globe;
 	this.renderContext = this.globe.renderContext;
 	this.tilePool = new TilePool(this.renderContext);
-	this.defaultTilePool = this.tilePool;
 	this.imageryProvider = null;
 	this.elevationProvider = null;
 	this.tilesToRender = [];
@@ -153,21 +152,8 @@ TileManager.prototype.setImageryProvider = function(ip)
 	
 	if (ip)
 	{
-		// Update tile pool if customized
-		if ( this.imageryProvider.customTilePool )
-		{
-			this.tilePool.disposeAll();
-			this.tilePool = this.imageryProvider.customTilePool;
-		}
-		else
-		{
-			// Revert to default tile pool if needed
-			if ( this.tilePool != this.defaultTilePool )
-			{
-				this.tilePool.disposeAll();
-				this.tilePool = this.defaultTilePool;
-			}
-		}
+		// Clean tile pool
+		this.tilePool.disposeAll();
 
 		// Rebuild level zero tiles
 		this.tileConfig.imageSize = ip.tilePixelSize;
@@ -326,6 +312,11 @@ TileManager.prototype.visitTiles = function( callback )
 				if( this.levelZeroTexture && tileIsLoaded )
 				{
 						this.tilePool.disposeGLTexture( tile.texture );
+						// Dispose raster overlay extension when tile is culled
+						if ( tile.extension.rasterOverlay )
+						{
+							tile.extension.rasterOverlay.dispose(this.renderContext, this.tilePool);
+						}
 						tile.texture = null;
 						tile.state = Tile.State.NONE;
 				}
@@ -399,7 +390,7 @@ TileManager.prototype.processTile = function(tile,level)
 		if ( tile.frameNumber == this.frameNumber )
 		{
 			// Generate the tile using data from tileRequest
-			tile.generate( this.tilePool, tileRequest.image, tileRequest.elevations );
+			tile.generate( this.tilePool, tileRequest.imageRequest.image, tileRequest.elevations );
 
 			// Now post renderers can generate their data on the new tile
 			for (var i=0; i < this.postRenderers.length; i++ )

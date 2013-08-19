@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./Tile'], function(Tile) {
+ define(['./Tile', './ImageRequest'], function(Tile, ImageRequest) {
  
 /**************************************************************************************************************/
 
@@ -33,7 +33,6 @@ var TileRequest = function(tileManager)
 
 	// Public variables
 	this.tile = null;
-	this.image = null;
 	this.elevations = null;
 
 	var self = this;
@@ -68,6 +67,10 @@ var TileRequest = function(tileManager)
 			_imageLoaded = true;
 			if ( _elevationLoaded )
 			{
+				// Call post-process function if defined
+				if ( tileManager.imageryProvider.handleImage )
+					tileManager.imageryProvider.handleImage(self.imageRequest);
+
 				tileManager.completedRequests.push(self);
 				tileManager.renderContext.requestFrame();
 			}
@@ -153,23 +156,19 @@ var TileRequest = function(tileManager)
 		}
 		
 		_imageLoaded = false;
-		// Launch the request
-		if ( tileManager.imageryProvider.customLoad )
-		{
-			tileManager.imageryProvider.customLoad(this, tileManager.imageryProvider.getUrl(tile), _handleLoadedImage, _handleErrorImage);
-		}
-		else
-		{
-			// Image by default
-			this.image = new Image();
-			this.image.crossOrigin = '';
-			this.image.onload = _handleLoadedImage;
-			this.image.onerror = _handleErrorImage;
-			this.image.onabort = _handleAbort;
-			this.image.src = tileManager.imageryProvider.getUrl(tile);
-		}
-	    
+		this.imageRequest.send( tileManager.imageryProvider.getUrl(tile) );
 	};
+
+	/**************************************************************************************************************/
+
+	/*
+	 *	Init image request
+	 */
+	this.imageRequest = new ImageRequest({
+		successCallback: _handleLoadedImage,
+		failCallback: _handleErrorImage,
+		abortCallback: _handleAbort
+	});
 	
 };
 
