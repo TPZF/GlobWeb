@@ -189,7 +189,10 @@ PointRenderer.prototype.addGeometry = function(geometry,layer,style)
 		var pos3d = CoordinateSystem.fromGeoTo3D( posGeo );
 		var vertical = vec3.create();
 		vec3.normalize(pos3d, vertical);
-		
+
+		// Hack : push away the point, only works for AstroWeb, sufficient for now
+		pos3d = [ 0.99 * pos3d[0], 0.99 * pos3d[1], 0.99 * pos3d[2] ];
+
 		var pointRenderData = { pos3d: pos3d,
 							vertical: vertical,
 							geometry: geometry,
