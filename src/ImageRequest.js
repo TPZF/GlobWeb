@@ -41,7 +41,15 @@ ImageRequest.prototype.send = function(url)
 	this.image = new Image();
 	this.image.crossOrigin = '';
 	this.image.dataType = "byte";
-	this.image.onload = this.successCallback.bind(this);
+
+	var self = this;
+	this.image.onload = function(){
+		var isComplete = self.image.naturalWidth != 0 && self.image.complete;
+		if ( isComplete )
+		{
+			self.successCallback.call(self);
+		}
+	} 
 	this.image.onerror = this.failCallback.bind(this);
 	this.image.onabort = this.abortCallback.bind(this);
 	this.image.src = url;
