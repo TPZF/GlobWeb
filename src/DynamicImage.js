@@ -111,12 +111,13 @@ var DynamicImage = function(renderContext, pixels, format, dataType, width, heig
  */
 DynamicImage.prototype.computeMinMax = function(pixels)
 {
-	var max = pixels[0];
-	var min = pixels[0];
+	var max = Number.MIN_VALUE;
+	var min = Number.MAX_VALUE;
 	for ( var i=1; i<pixels.length; i++ )
 	{
 		var val = pixels[i];
-
+		if ( isNaN(val) )
+			continue;
 		if ( max < val )
 			max = val;
 		if ( min > val )
