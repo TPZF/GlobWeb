@@ -200,6 +200,7 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 			}
 			else if ( xhr.status >= 400 )
 			{
+				tileData.complete = true;
 				console.error( xhr.responseText );
 			}
 			
