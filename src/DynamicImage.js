@@ -87,11 +87,24 @@ var DynamicImage = function(renderContext, pixels, format, dataType, width, heig
 		format, width, height, 0, 
 		format, dataType, pixels);
 
+
+	if ( dataType == gl.FLOAT )
+	{	
+		// Choose floating point texture filtering depending on extension support
+		var float_linear_ext = gl.getExtension("OES_texture_float_linear");
+		var float_filtering = float_linear_ext ? gl.LINEAR : gl.NEAREST;
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, float_filtering);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, float_filtering);
+	}
+	else
+	{
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	}
+
     // NPOT properties
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
 	this.texture = tex;
 	this.width = width;

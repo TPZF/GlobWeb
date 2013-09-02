@@ -32,6 +32,10 @@ var TilePool = function(rc)
 	var glTextures = [];
 	var glBuffers = [];
 	var self = this;
+
+	// Choose floating point texture filtering depending on extension support
+	var float_linear_ext = gl.getExtension("OES_texture_float_linear");
+	var float_filtering = float_linear_ext ? gl.LINEAR : gl.NEAREST;
 	
 	// Public properties
 	this.numCreatedTextures = 0;
@@ -52,15 +56,16 @@ var TilePool = function(rc)
 		{
 			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 			gl.generateMipmap(gl.TEXTURE_2D);
 		}
 		else
 		{
 			gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, image.width, image.height, 0, gl.LUMINANCE, gl.FLOAT, image.typedArray);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, float_filtering);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, float_filtering);
 		}
 
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 		// Store type of texture to dispose into right array later
