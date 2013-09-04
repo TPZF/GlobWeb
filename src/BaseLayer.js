@@ -84,7 +84,7 @@ BaseLayer.prototype.visible = function( arg )
 {
 	if ( typeof arg == "boolean" )
 	{
-		if (  this.attribution && this.globe.attributionHandler )
+		if (  this._visible != arg && this.attribution && this.globe.attributionHandler )
 		{
 			this.globe.attributionHandler.toggleAttribution(this);
 		}
