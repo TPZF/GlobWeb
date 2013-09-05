@@ -108,7 +108,9 @@ AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, callback)
 		});
 	
 	// TODO : maybe improve it ?
-	if (middleFov > this.globe.renderContext.fov)
+	// End point which is out of frustum invokes two steps animation, one step otherwise
+	var end3DValue = CoordinateSystem.fromGeoTo3D( geoPos );
+	if (middleFov > this.globe.renderContext.fov && this.globe.renderContext.worldFrustum.containsSphere( end3DValue, 0.005 ) < 0 )
 	{
 		// Two steps animation, 'rising' & 'falling'
 		
