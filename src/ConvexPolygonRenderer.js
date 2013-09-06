@@ -28,9 +28,14 @@ define(['./Program','./CoordinateSystem','./RendererTileData','./FeatureStyle', 
 var ConvexPolygonRenderer = function(tileManager)
 {
 	// Store object for rendering
+	this.tileManager = tileManager;
 	this.renderContext = tileManager.renderContext;
 	this.tileConfig = tileManager.tileConfig;
 	
+	// To avoid duplication of large geometries and avoid rendering limitation of mainRenderable
+	// set the threshold defining if geometry must be added to tile or mainRenderable
+	this.maxTilePerGeometry = 10;
+
 	this.programs = [];
 
 	// Bucket management for rendering : a bucket is a texture with its points
@@ -343,13 +348,31 @@ ConvexPolygonRenderer.prototype.removeGeometryFromTile = function(geometry,tile)
  */
 ConvexPolygonRenderer.prototype.addGeometry = function(geometry, layer, style)
 {
-	var bucket = this.getOrCreateBucket(layer,style);
-	if (!bucket.mainRenderable)
+	var range;
+	if ( this.tileManager.imageryProvider.tiling.getTileRange )
 	{
-		bucket.mainRenderable = new Renderable(bucket);
+		range = this.tileManager.imageryProvider.tiling.getTileRange(geometry, 0);
 	}
-	
-	bucket.mainRenderable.add(geometry);
+		
+	var bucket = this.getOrCreateBucket(layer,style);
+	if ( range && range.length < this.maxTilePerGeometry )
+	{
+		// Add geometry to each tile in range
+		for ( var i=0;i<range.length; i++ )
+		{
+			var index = range[i];
+			this.addGeometryToTile(bucket, geometry, this.tileManager.level0Tiles[index]);
+		}
+	}
+	else
+	{
+		// Attach to mainRenderable
+		if (!bucket.mainRenderable)
+		{
+			bucket.mainRenderable = new Renderable(bucket);
+		}
+		bucket.mainRenderable.add(geometry);
+	}
 }
 
 /**************************************************************************************************************/
@@ -359,16 +382,33 @@ ConvexPolygonRenderer.prototype.addGeometry = function(geometry, layer, style)
  */
 ConvexPolygonRenderer.prototype.removeGeometry = function(geometry)
 {
-	for ( var n = 0; n < this.buckets.length; n++ )
+	var range;
+	if ( this.tileManager.imageryProvider.tiling.getTileRange )
 	{
-		var bucket = this.buckets[n];
-		if ( bucket.mainRenderable )
+		range = this.tileManager.imageryProvider.tiling.getTileRange(geometry, 0);
+	}
+
+	if ( range && range.length < this.maxTilePerGeometry )
+	{
+		for ( var i=0; i<range.length; i++ )
 		{
-			bucket.mainRenderable.remove(geometry);
-			if ( bucket.mainRenderable.vertices.length == 0 )
+			var tileIndex = range[i];
+			this.removeGeometryFromTile(geometry, this.tileManager.level0Tiles[tileIndex]);
+		}
+	}
+	else
+	{
+		for ( var n = 0; n < this.buckets.length; n++ )
+		{
+			var bucket = this.buckets[n];
+			if ( bucket.mainRenderable )
 			{
-				bucket.mainRenderable.dispose(this.renderContext);
-				bucket.mainRenderable = null;
+				bucket.mainRenderable.remove(geometry);
+				if ( bucket.mainRenderable.vertices.length == 0 )
+				{
+					bucket.mainRenderable.dispose(this.renderContext);
+					bucket.mainRenderable = null;
+				}
 			}
 		}
 	}
@@ -678,7 +718,7 @@ ConvexPolygonRenderer.prototype.render = function(tiles)
 VectorRendererManager.registerRenderer({
 	id: "ConvexPolygon",
 	creator: function(globe) { return new ConvexPolygonRenderer(globe.tileManager); },
-	canApply: function(type,style) {return type == "Polygon" || type == "MultiPolygon"; }
+	canApply: function(type,style) {return type == "Polygon" || type == "MultiPolygon" || type == "LineString" || type == "MultiLineString"; }
 });
 
 /**************************************************************************************************************/

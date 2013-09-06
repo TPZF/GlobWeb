@@ -23,7 +23,14 @@ define(['./Tile', './HEALPixBase', './GeoBound', './CoordinateSystem', './Numeri
 /**************************************************************************************************************/
  
 /** @constructor
-	HEALPixTiling constructor
+ *	HEALPixTiling constructor
+ *	
+ *	@param order Starting tiling order
+ *	@param options Options
+ *		<ul>
+ *			<li>coordSystem: Coordinate system of the given tiling</li>
+ *		</ul>
+ *	
  */
 var HEALPixTiling = function(order, options)
 {
@@ -79,6 +86,53 @@ HEALPixTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 /**************************************************************************************************************/
 
 /**
+ *	Get range set of tile indices that overlap with geometry
+ */
+HEALPixTiling.prototype.getTileRange = function(geometry, level)
+{
+	var rings = [];
+	if ( geometry['type'] == 'MultiPolygon' )
+	{
+		for ( var i=0; i<geometry['coordinates'].length; i++ )
+		{
+			rings.push( geometry['coordinates'][i][0] );
+		}
+	}
+	else
+	{
+		rings.push( geometry['coordinates'][0] );
+	}
+
+	var range = [];
+	for ( var r=0; r<rings.length; r++ )
+	{
+		var coords = rings[r];
+		var numPoints = coords.length;
+		for ( var i = 0; i < numPoints; i++ ) 
+		{
+
+			var lon = coords[i][0];
+			var lat = coords[i][1];
+			if ( this.coordSystem != CoordinateSystem.type )
+			{
+				var geo = CoordinateSystem.convertFromDefault( [lon, lat], this.coordSystem );
+				lon = geo[0];
+				lat = geo[1];
+			}
+
+			var tileIndex = HEALPixBase.lonLat2pix( this.order + level, lon, lat );
+			if ( range.indexOf(tileIndex) == -1 )
+			{
+				range.push(tileIndex);
+			}
+		}
+	}
+	return range;
+}
+
+/**************************************************************************************************************/
+
+/**
  	Return tile of given longitude/latitude from tiles array if exists, null otherwise
  */
 HEALPixTiling.prototype.findInsideTile = function(lon, lat, tiles)
@@ -105,7 +159,7 @@ HEALPixTiling.prototype.findInsideTile = function(lon, lat, tiles)
 /** @constructor
 	Tile constructor
 	
-		Quadrilateral which composes one pixel of HEALPix sphere
+		Quadrilateral which composes one tile of HEALPix sphere
 		
 		nside : 2^order
 		order : log2(nside);
