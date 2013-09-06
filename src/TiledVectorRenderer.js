@@ -63,7 +63,9 @@ var TiledVectorRenderer = function(tileManager)
 	// Customization for different renderer : lineString or polygon
 	this.styleEquals = null;
 	this.renderableConstuctor = null;
-	this.id = "empty";
+	this.id = "empty"
+	
+	this.needsOffset = true;
 }
 
 /**************************************************************************************************************/
@@ -299,6 +301,8 @@ TiledVectorRenderer.prototype.render = function( visibleTiles )
     this.program.apply();
 	
 	gl.depthFunc(gl.LEQUAL);
+	// Do not write into z-buffer : the tiled vector are clamped to terrain, so the z of terrain should not change
+	gl.depthMask(false);
  	gl.uniformMatrix4fv( this.program.uniforms["projectionMatrix"], false, renderContext.projectionMatrix);
     
 	var currentStyle = null;
@@ -365,6 +369,7 @@ TiledVectorRenderer.prototype.render = function( visibleTiles )
 		}
     }
 
+	gl.depthMask(true);
 	gl.depthFunc(gl.LESS);
 }
 

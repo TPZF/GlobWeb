@@ -42,8 +42,9 @@ var RasterLayer = function( options )
 	this.tilePixelSize = -1;
 	this.tiling = null;
 	this.numberOfLevels = -1;
-	this.geoBound = options['geoBound'] || null;
-	this.coordinates = options['coordinates'] || null;
+	this.geoBound = options.geoBound || null;
+	this.coordinates = options.coordinates || null;
+	this.zIndex = options.zIndex || 0;
 	
 	// Internal
 	this._overlay = true; 

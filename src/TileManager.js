@@ -119,6 +119,9 @@ var TileManager = function( globe )
 TileManager.prototype.addPostRenderer = function(renderer)
 {	
 	this.postRenderers.push( renderer );
+	this.postRenderers.sort( function(a,b) {
+		return (a.zIndex || 0) - (b.zIndex || 0);
+	});
 }
 
 /**************************************************************************************************************/

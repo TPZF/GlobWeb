@@ -101,8 +101,8 @@ var RasterOverlayRenderer = function(tileManager)
 		this.imageRequests.push( imageRequest );
 	}
 
-	
 	this.needsOffset = true;
+	this.zIndex = 10;
 }
 
 /**************************************************************************************************************/
@@ -441,6 +441,10 @@ RasterOverlayRenderer.prototype.getProgram = function(customShader) {
     return program;
 }
 
+var _sortRenderableByZIndex = function(a,b) {
+	return a.bucket.zIndex - b.bucket.zIndex;
+};
+
 /**************************************************************************************************************/
 
 /**
@@ -452,24 +456,9 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 	if ( this.overlays.length == 0 )
 		return;
 		
-	var rc = this.tileManager.renderContext;
- 	var gl = rc.gl;
-
-	// Setup program
-    this.program.apply();
-	
-	var attributes = this.program.attributes;
+	var activeRenderDatas = [];
 		
-	gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
-	gl.uniform1i(this.program.uniforms["overlayTexture"], 0);
-	gl.enable(gl.BLEND);
-	gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
-	gl.depthFunc( gl.LEQUAL );
-	
-	var modelViewMatrix = mat4.create();
-	
-	var currentIB = null;
-
+	// process visible tiles to find raster overlay to render
 	for ( var i = 0; i < tiles.length; i++ )
 	{
 		var tile = tiles[i];
@@ -484,16 +473,9 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 			tileData = tile.parent.extension.rasterOverlay;
 			
 		if ( tileData )
-		{
-			
-			// Bind the index buffer
-			var indexBuffer = isTileLoaded ? this.tileManager.tileIndexBuffer.getSolid() : this.tileManager.tileIndexBuffer.getSubSolid(tile.parentIndex);
-			// Bind the index buffer only if different (index buffer is shared between tiles)
-			if ( currentIB != indexBuffer )
-			{	
-				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-				currentIB = indexBuffer;
-			}
+		{			
+			// Sort renderables by zIndex
+			tileData.renderables.sort( _sortRenderableByZIndex );
 			
 			for ( var j = 0; j < tileData.renderables.length; j++ )
 			{
@@ -503,52 +485,6 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 				if ( !renderable.bucket._visible )
 					continue;
 				
-				if ( renderable.bucket.customShader )
-				{
-					var program = this.getProgram(renderable.bucket.customShader);
-					// Apply custom shader if changed
-					if ( program != this.program )
-					{
-						this.program = program;
-					    this.program.apply();
-						
-						attributes = this.program.attributes;
-							
-						gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
-						gl.uniform1i(this.program.uniforms["overlayTexture"], 0);
-					}	
-				}
-				else
-				{
-					var program = this.getProgram({
-						vertexCode: this.vertexShader,
-						fragmentCode: this.fragmentShader,
-						updateUniforms: null
-					});
-					// Revert to default shader if changed
-					if ( program != this.program )
-					{
-						this.program = program;
-						this.program.apply();
-						
-						attributes = this.program.attributes;
-							
-						gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
-						gl.uniform1i(this.program.uniforms["overlayTexture"], 0);
-					}
-				}
-
-				// Bind the vertex buffer
-				gl.bindBuffer(gl.ARRAY_BUFFER, tile.vertexBuffer);
-				gl.vertexAttribPointer(attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
-
-				mat4.multiply( rc.viewMatrix, tile.matrix, modelViewMatrix );
-				gl.uniformMatrix4fv(this.program.uniforms["modelViewMatrix"], false, modelViewMatrix);
-						
-
-				if ( renderable.bucket.customShader && renderable.bucket.customShader.updateUniforms )
-					renderable.bucket.customShader.updateUniforms(gl, this.program);
-
 				var uvScale = 1.0;
 				var uTrans = 0.0;
 				var vTrans = 0.0;
@@ -598,21 +534,28 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 				
 				if ( textureTile && renderable.texture )
 				{
-					gl.uniform1f(this.program.uniforms["opacity"], renderable.bucket._opacity );
-					gl.uniform4f(this.program.uniforms["textureTransform"], uvScale, uvScale, uTrans, vTrans );
-					
-					gl.activeTexture(gl.TEXTURE0);
-					gl.bindTexture(gl.TEXTURE_2D, renderable.texture );
-					
-					// Finally draw the tiles
-					gl.drawElements(gl.TRIANGLES, currentIB.numIndices, gl.UNSIGNED_SHORT, 0);
+					activeRenderDatas.push({
+						tile: tile,
+						texture: renderable.texture,
+						uvScale: uvScale,
+						uTrans: uTrans,
+						vTrans: vTrans,
+						opacity: renderable.bucket._opacity,
+						indexBuffer: isTileLoaded ? this.tileManager.tileIndexBuffer.getSolid() : this.tileManager.tileIndexBuffer.getSubSolid(tile.parentIndex),
+						customShader: renderable.bucket.customShader
+
+					});
 				}
 			}
 		}
 	}
+	
+	// render all active data found while processing visible tiles
+	if ( activeRenderDatas.length > 0 )
+	{
+		this.renderActiveData( activeRenderDatas );
+	}
 
-	gl.disable(gl.BLEND);
-	gl.depthFunc( gl.LESS );
 	
 	// Abort image requests not requested for this renderering
 	for ( var i = 0; i < this.imageRequests.length; i++ )
@@ -627,6 +570,112 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 	}
 	
 	this.frameNumber++;
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Render the raster overlays for the given tiles
+ */
+RasterOverlayRenderer.prototype.renderActiveData = function(datas)
+{
+	var rc = this.tileManager.renderContext;
+ 	var gl = rc.gl;
+
+	// Update gl states
+	gl.enable(gl.BLEND);
+	gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
+	gl.depthFunc( gl.LEQUAL );
+
+	// Setup program
+    this.program.apply();
+	
+	var attributes = this.program.attributes;
+		
+	gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
+	gl.uniform1i(this.program.uniforms["overlayTexture"], 0);
+	
+	// Bind tcoord buffer (same for all tiles)
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.tileManager.tcoordBuffer);
+	gl.vertexAttribPointer(attributes['tcoord'], 2, gl.FLOAT, false, 0, 0);
+	
+	var modelViewMatrix = mat4.create();
+	
+	var currentTile = null;
+	var currentIB = null;
+	
+	for ( var i =0; i < datas.length; i++ ) {
+	
+		var data = datas[i];
+		
+		if ( data.customShader )
+		{
+			var program = this.getProgram(data.customShader);
+			// Apply custom shader if changed
+			if ( program != this.program )
+			{
+				this.program = program;
+				this.program.apply();
+				
+				attributes = this.program.attributes;
+					
+				gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
+				gl.uniform1i(this.program.uniforms["overlayTexture"], 0);
+				if ( data.customShader.updateUniforms )
+					data.customShader.updateUniforms(gl, this.program);
+			}	
+		}
+		else
+		{
+			var program = this.getProgram({
+				vertexCode: this.vertexShader,
+				fragmentCode: this.fragmentShader,
+				updateUniforms: null
+			});
+			// Revert to default shader if changed
+			if ( program != this.program )
+			{
+				this.program = program;
+				this.program.apply();
+				
+				attributes = this.program.attributes;
+					
+				gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
+				gl.uniform1i(this.program.uniforms["overlayTexture"], 0);
+			}
+		}
+		
+		if ( data.tile != currentTile )
+		{
+			// Bind the vertex buffer
+			gl.bindBuffer(gl.ARRAY_BUFFER, data.tile.vertexBuffer);
+			gl.vertexAttribPointer(attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
+			
+			// Bind the index buffer only if different (index buffer is shared between tiles)
+			if ( currentIB != data.indexBuffer )
+			{	
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, data.indexBuffer);
+				currentIB = data.indexBuffer;
+			}
+
+			// Bind the tile tile matrix
+			mat4.multiply( rc.viewMatrix, data.tile.matrix, modelViewMatrix );
+			gl.uniformMatrix4fv(this.program.uniforms["modelViewMatrix"], false, modelViewMatrix);
+		}
+					
+		gl.uniform1f(this.program.uniforms["opacity"], data.opacity );
+		gl.uniform4f(this.program.uniforms["textureTransform"], data.uvScale, data.uvScale, data.uTrans, data.vTrans );
+		
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, data.texture );
+		
+		// Finally draw the tiles
+		gl.drawElements(gl.TRIANGLES, currentIB.numIndices, gl.UNSIGNED_SHORT, 0);
+	}
+
+	// reset gl states
+	gl.disable(gl.BLEND);
+	gl.depthFunc( gl.LESS );
 }
 
 /**************************************************************************************************************/
