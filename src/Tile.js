@@ -247,17 +247,18 @@ Tile.prototype.isCulled = function(renderContext)
  */
 Tile.prototype.dispose = function(renderContext,tilePool)
 {		
+	// Dispose extension even if tile isn't loaded because it can be culled
+	for ( var x in this.extension )
+	{
+		if ( this.extension[x].dispose )
+			this.extension[x].dispose(renderContext,tilePool);
+	}
+
 	if ( this.state == Tile.State.LOADED  )
 	{
 		tilePool.disposeGLBuffer(this.vertexBuffer);
 		tilePool.disposeGLTexture(this.texture);
 		
-		for ( var x in this.extension )
-		{
-			if ( this.extension[x].dispose )
-				this.extension[x].dispose(renderContext,tilePool);
-		}
-
 		this.vertexBuffer = null;
 		this.texture = null;
 		this.parent = null;

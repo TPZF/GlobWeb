@@ -164,7 +164,7 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 	}
 	
 	var xhr = this.freeRequests.pop();
-	
+	var prevCoordSystem = CoordinateSystem.type;
 	var self = this;
 	xhr.onreadystatechange = function(e)
 	{
@@ -172,6 +172,14 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 		{
 			if ( xhr.status == 200 )
 			{
+				// Don't handle features if coordinate system has been changed
+				// because tiles were regenerated
+				if ( CoordinateSystem.type != prevCoordSystem )
+				{
+					self.freeRequests.push(xhr);
+					return;
+				}
+
 				var response = JSON.parse(xhr.response);
 
 				tileData.complete = (response.totalResults == response.features.length);
@@ -276,7 +284,8 @@ OpenSearchLayer.prototype.addFeature = function( feature, tile )
 	if ( !this.featuresSet.hasOwnProperty(feature.properties.identifier) )
 	{
 		this.features.push( feature );
-		featureData = { index: this.features.length-1, 
+		featureData = {
+			index: this.features.length-1, 
 			tiles: [tile]
 		};
 		this.featuresSet[feature.properties.identifier] = featureData;
@@ -285,26 +294,11 @@ OpenSearchLayer.prototype.addFeature = function( feature, tile )
 	{
 		featureData = this.featuresSet[feature.properties.identifier];
 		
+		// Store the tile
+		featureData.tiles.push(tile);
+
 		// Always use the base feature to manage geometry indices
 		feature = this.features[ featureData.index ];
-		
-		// DEBUG : check tile is only present one time
-		var isTileExists = false;
-		for ( var i = 0; i < featureData.tiles.length; i++ )
-		{
-			if ( tile.order == featureData.tiles[i].order
-			&& tile.pixelIndex == featureData.tiles[i].pixelIndex  )
-			{
-				isTileExists = true;
-				console.log('OpenSearchLayer internal error : tile already there! ' + tile.order + ' ' + tile.pixelIndex  );
-			}
-		}
-		
-		if (!isTileExists)
-		{
-			// Store the tile
-			featureData.tiles.push(tile);
-		}
 	}
 	
 	// Add feature id
