@@ -621,9 +621,9 @@ RasterOverlayRenderer.prototype.renderActiveData = function(datas)
 					
 				gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
 				gl.uniform1i(this.program.uniforms["overlayTexture"], 0);
-				if ( data.customShader.updateUniforms )
-					data.customShader.updateUniforms(gl, this.program);
 			}	
+			if ( data.customShader.updateUniforms )
+				data.customShader.updateUniforms(gl, this.program);
 		}
 		else
 		{
