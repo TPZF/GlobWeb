@@ -510,7 +510,7 @@ ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style)
 			image.crossOrigin = '';
 			image.onload = function () 
 			{
-				bucket.texture = self.renderContext.createNonPowerOfTwoTextureFromImage(image);
+				bucket.texture = self.renderContext.createNonPowerOfTwoTextureFromImage(image, layer.invertY);
 			}
 			
 			image.onerror = function(event)

@@ -31,6 +31,7 @@
 			<li>serviceUrl : Url of OpenSearch description XML file(necessary option)</li>
 			<li>minOrder : Starting order for OpenSearch requests</li>
 			<li>displayProperties : Properties which will be shown in priority</li>
+			<li>invertY : a boolean, if set all the image data of current layer is flipped along the vertical axis</li>
 		</ul>
 */
 var OpenSearchLayer = function(options){
@@ -40,6 +41,7 @@ var OpenSearchLayer = function(options){
 	this.minOrder = options.minOrder || 5;
 	this.maxRequests = options.maxRequests || 2;
 	this.requestProperties = "";
+	this.invertY = options.invertY || false;
 
 	// Set style
 	if ( options && options['style'] )

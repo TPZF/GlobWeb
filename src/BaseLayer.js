@@ -32,7 +32,7 @@
 			<li>attribution : its attribution</li>
 			<li>icon : an icon to represent the layer</li>
 			<li>visible : a boolean flag to set the layer visible, default is true </li>
-			<li>opacity : an oapcity value, default is 1.0</li>
+			<li>opacity : an opacity value, default is 1.0</li>
 		</ul>
  */
 var BaseLayer = function(options)
