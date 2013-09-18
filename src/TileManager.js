@@ -286,7 +286,7 @@ TileManager.prototype.visitTiles = function( callback )
 				}
 				else if ( tile.state == Tile.State.ERROR )
 				{
-					this.globe.publish("baseLayersError");
+					this.globe.publish("baseLayersError", this.imageryProvider);
 					this.imageryProvider._ready = false;
 				}
 			}
