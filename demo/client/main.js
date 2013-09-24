@@ -221,7 +221,11 @@ initializePath = function()
 			pathLayer.addFeature( feature );
 			globe.addLayer(pathLayer);
 			
-			pathAnimation = new PathAnimation(coords,1000,undefined);
+			pathAnimation = new PathAnimation({ 
+				coords: coords,
+				speed: 1000,
+				globe: globe
+			});
 			globe.addAnimation(pathAnimation);
 			
 			}

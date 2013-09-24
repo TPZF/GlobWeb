@@ -24,17 +24,24 @@
 /** @export
 	@constructor
   PathAnimation is an animation defined with a path.
+ *	@param options Configuration of the animation
+ *			<ul>
+ *				<li>coords : the path coordinates</li>
+ *				<li>speed : the speed value </li>
+ *				<li>setter : the function used to set the value</li>
+ *				<li>globe : the globe to clamp path animations on the terrain</li>
+ *			</ul>
  */
-var PathAnimation = function(coords,speed,valueSetter)
+var PathAnimation = function(options)
 {
     // Call ancestor constructor
     Animation.prototype.constructor.call(this);
 
-    this.speed = speed * CoordinateSystem.heightScale / 1000;
+    this.speed = options.speed * CoordinateSystem.heightScale / 1000;
 	this.nodes = [];
-	for ( var i = 0; i < coords.length; i++ )
+	for ( var i = 0; i < options.coords.length; i++ )
 	{
-		var node = { position: CoordinateSystem.fromGeoTo3D(coords[i]),
+		var node = { position: CoordinateSystem.fromGeoTo3D(options.coords[i]),
 					velocity: null,
 					distance: 0.0 };
 		this.nodes.push( node );
@@ -47,7 +54,7 @@ var PathAnimation = function(coords,speed,valueSetter)
 		}
 	}
 	
-	for ( var i = 1; i <  coords.length - 1; i++ )
+	for ( var i = 1; i <  options.coords.length - 1; i++ )
 	{
 		var vec1 = vec3.subtract( this.nodes[i+1].position, this.nodes[i].position, vec3.create() );
 		var vec2 = vec3.subtract( this.nodes[i-1].position, this.nodes[i].position, vec3.create() );
@@ -64,7 +71,7 @@ var PathAnimation = function(coords,speed,valueSetter)
 	vec3.scale( this.nodes[0].velocity, 0.5 );
 	
 	// End velocity
-	var i = coords.length - 1;
+	var i = options.coords.length - 1;
 	var temp = vec3.subtract( this.nodes[i].position, this.nodes[i-1].position, vec3.create() );
 	vec3.scale( temp, ( 3 / this.nodes[i-1].distance ) );
 	this.nodes[i].velocity = vec3.subtract( temp, this.nodes[i-1].velocity, vec3.create() );
@@ -78,9 +85,9 @@ var PathAnimation = function(coords,speed,valueSetter)
 	this.altitudeOffset = 1000;
 	
 	var that = this;
-	if ( valueSetter )
+	if ( options.setter )
 	{
-		this.valueSetter = valueSetter;
+		this.valueSetter = options.setter;
 	}
 	else
 	{
@@ -88,15 +95,23 @@ var PathAnimation = function(coords,speed,valueSetter)
 		{				
 			var up = vec3.normalize( value, vec3.create() );
 			
-			var geoEye = CoordinateSystem.from3DToGeo( value );
-			geoEye[2] = that.globe.getElevation( geoEye[0], geoEye[1] ) + that.altitudeOffset;
-			var eye =  CoordinateSystem.fromGeoTo3D( geoEye );
-			
-			//var eye = vec3.add( vec3.scale(up, (that.altitudeOffset+elevation) * CoordinateSystem.heightScale, vec3.create()), value );
+			var eye;
+			if ( options.globe )
+			{
+				var geoEye = CoordinateSystem.from3DToGeo( value );
+				geoEye[2] = options.globe.getElevation( geoEye[0], geoEye[1] ) + that.altitudeOffset;
+				eye =  CoordinateSystem.fromGeoTo3D( geoEye );
+			}
+			else
+			{
+				eye = value;
+				eye[2] += that.altitudeOffset;;
+			}
+				
 			var dirn = vec3.normalize( direction, vec3.create() );
 			var center = vec3.add( eye, dirn, vec3.create() );
 			vec3.add( center, vec3.scale(up, that.centerOffset, vec3.create()) );
-			mat4.lookAt( eye, center, up, that.globe.renderContext.viewMatrix );
+			mat4.lookAt( eye, center, up, that.renderContext.viewMatrix );
 		};
 	}
 }
