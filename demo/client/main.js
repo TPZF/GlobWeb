@@ -122,9 +122,6 @@ initializeImagery = function(value)
 	//imageries["Landsat"] = new WMSLayer( { baseUrl: config.serverUrl + "/wmspo",  layers: "PO150m,POFrance15m,POI15m" } );
 	imageries["OSM"] = new WMSLayer( { baseUrl: config.serverUrl + "/geocache/wms", layers: "imposm-fr", format: "image/png" } );
 
-	//imageries["GI"] = new WMSLayer({name : "GILayer", baseUrl : config.serverUrl +"/wmsgi", layers : "BurkinaFaso_IGN_0001,BurkinaFaso_IGN_0002,BurkinaFaso_IGN_0003"} );
-
-
 	activeImagery = imageries[value];
 	globe.setBaseImagery( activeImagery );
 }
@@ -303,9 +300,6 @@ $(function()
 	initializePoi(pois);
 	// Initialize follow path
 	initializePath();
-
-	//globe.addLayer( new WMSLayer({name : "GILayer", baseUrl : "http://demonstrator.telespazio.com/wmsgi", layers : "BurkinaFaso_IGN_0001"}) );
-
 
 	// Init Stats
 	var stats = new Stats(globe.renderContext,{element: "fps",verbose: false});
