@@ -54,6 +54,7 @@ onImageryClicked = function(e)
 	var value = e.currentTarget.value;
 	activeImagery = imageries[value];
 	globe.setBaseImagery( activeImagery );
+	$("#attribution").attr("src",$(this).data("attribution"));
 }
 
 // Called when elevation is clicked
@@ -120,6 +121,9 @@ initializeImagery = function(value)
 	imageries["PO"] = new WMSLayer( { baseUrl: config.serverUrl + "/wmspo",  layers: "PO150m,POFrance15m,POI15m" } );
 	//imageries["Landsat"] = new WMSLayer( { baseUrl: config.serverUrl + "/wmspo",  layers: "PO150m,POFrance15m,POI15m" } );
 	imageries["OSM"] = new WMSLayer( { baseUrl: config.serverUrl + "/geocache/wms", layers: "imposm-fr", format: "image/png" } );
+
+	//imageries["GI"] = new WMSLayer({name : "GILayer", baseUrl : config.serverUrl +"/wmsgi", layers : "BurkinaFaso_IGN_0001,BurkinaFaso_IGN_0002,BurkinaFaso_IGN_0003"} );
+
 
 	activeImagery = imageries[value];
 	globe.setBaseImagery( activeImagery );
@@ -280,7 +284,8 @@ $(function()
 	try
 	{
 		globe = new Globe({ canvas: 'GlobWebCanvas', 
-				shadersPath: config.shadersPath 
+				shadersPath: config.shadersPath ,
+				continuousRendering : true
 		});
 	}
 	catch (err)
@@ -299,8 +304,11 @@ $(function()
 	// Initialize follow path
 	initializePath();
 
+	//globe.addLayer( new WMSLayer({name : "GILayer", baseUrl : "http://demonstrator.telespazio.com/wmsgi", layers : "BurkinaFaso_IGN_0001"}) );
+
+
 	// Init Stats
-	var stats = new Stats(globe,{element: "fps",verbose: false});
+	var stats = new Stats(globe.renderContext,{element: "fps",verbose: false});
 
 });
 

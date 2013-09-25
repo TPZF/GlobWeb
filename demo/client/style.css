@@ -11,11 +11,13 @@ body
 
 #header
 {
- 	#background: white;
 	margin-bottom: 15px;
-	padding: 0px;
-	box-shadow: 0.3em 0.3em 0.9em black;
-	/*-moz-box-shadow: 0.3em 0.3em 0.9em black;*/
+	padding: 5px;
+	/*box-shadow: 0.3em 0.3em 0.9em black;*/
+	border: 1px solid black;
+   background-color: rgb(255,255,255);
+	opacity: 0.80;
+	border-radius: 5px;
 }
 
 /******************************************************
@@ -30,7 +32,7 @@ body
 	top: 10px;
 	padding: 0px;
 	margin: 5px;
-	width: 250px;
+	width: 260px;
 	background: rgba(76,109,131,0);
 }
 
@@ -109,6 +111,8 @@ body
 	padding: 5px;
 	left: 20px;
 	bottom: 10px;
+	font-size : 0.9em!important;
+	color : #69727a;
 }
 
 .logos
@@ -116,7 +120,7 @@ body
 	position: absolute;
 	z-index: 1;
 	border: 1px solid black;
-    background-color: rgb(255,255,255);
+   background-color: rgb(255,255,255);
 	opacity: 0.80;
 	border-radius: 5px;
 	padding: 5px;
@@ -124,10 +128,27 @@ body
 	bottom: 10px;
 }
 
+.logos>img{
+	vertical-align: middle;
+}
 .canvas
 {
 #	position: relative;
 	width: 100%;
 	height: 100%;
 #	float: left;
+}
+
+
+/**
+ * FIX JQUERY THEME
+**/
+.ui-widget{
+	font-size : 1em;
+}
+.ui-icon{
+	display : inline-block;
+}
+.ui-accordion .ui-accordion-content{
+	padding : 5px;
 }

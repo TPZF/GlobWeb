@@ -1,10 +1,11 @@
-
 var config = {
-	serverUrl : "http://127.0.0.1/VEGA",
+	serverUrl : "http://localhost/demonstrator",
 	shadersPath: "../../shaders/"
 };
+
 /*
 var config = {
-	serverUrl : "http://demonstrator.vegaspace.com",
-	shadersPath: "shaders/"
-};*/
+	serverUrl : "http://demonstrator.telespazio.com",
+	shadersPath: "../../shaders/"
+};
+*/
