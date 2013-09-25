@@ -23,6 +23,9 @@ var activeImagery = null;
 var elevations = {};
 var activeElevation = null;
 
+var atmosphereLayer = null;
+
+
 // Called when go to is clicked
 onGoToClicked = function(e)
 {
@@ -253,6 +256,11 @@ $(function()
 			inputs[i].onclick = onImageryClicked;
 		}
 	}
+
+	$("#atmoChk").change(function(e){
+		atmosphereLayer.visible($(this).attr("checked")==="checked");
+	});
+
 	var elevationDiv = document.getElementById('elevationMenu');
 	var inputs = elevationDiv.getElementsByTagName('input');
 	for (var i=0; i < inputs.length; i++)
@@ -293,7 +301,8 @@ $(function()
 		
 	nav = new Navigation(globe);
 	
-	globe.addLayer( new AtmosphereLayer() );
+	atmosphereLayer =  new AtmosphereLayer();
+	globe.addLayer(atmosphereLayer);
 	
 	initializeImagery('PO');
 	initializeElevation('GTOPO');
