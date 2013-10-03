@@ -129,6 +129,8 @@ var ConvexPolygonRenderer = function(tileManager)
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
 	this.tcoordBuffer.itemSize = 2;
 	this.tcoordBuffer.numItems = 5;
+
+	this.tiledGeometries = [];
 }
 
 /**************************************************************************************************************/
@@ -363,6 +365,10 @@ ConvexPolygonRenderer.prototype.addGeometry = function(geometry, layer, style)
 			var index = range[i];
 			this.addGeometryToTile(bucket, geometry, this.tileManager.level0Tiles[index]);
 		}
+
+		// Store "tiled" geometry
+		geometry.bucket = bucket;
+		this.tiledGeometries.push(geometry);
 	}
 	else
 	{
@@ -547,6 +553,31 @@ ConvexPolygonRenderer.prototype.getOrCreateBucket = function(layer,style)
 	this.buckets.push( bucket );
 	
 	return bucket;
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Generate the tile data
+ */
+ConvexPolygonRenderer.prototype.generate = function(tile)
+{
+	// Generate stored "tiled" geometries on level0Tiles
+	if ( this.tileManager.imageryProvider.tiling.getTileRange && tile.order == this.tileManager.imageryProvider.tiling.order )
+	{
+		for ( var i=0; i<this.tiledGeometries.length; i++ )
+		{
+			var geometry = this.tiledGeometries[i];
+			var range = this.tileManager.imageryProvider.tiling.getTileRange(geometry, 0);
+
+			// Add geometry to each tile in range
+			for ( var j=0; j<range.length; j++ )
+			{
+				var index = range[j];
+				this.addGeometryToTile(geometry.bucket, geometry, this.tileManager.level0Tiles[index]);
+			}
+		}
+	}
 }
 
 /**************************************************************************************************************/
