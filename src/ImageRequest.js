@@ -51,7 +51,6 @@ ImageRequest.prototype.send = function(url)
 		}
 	} 
 	this.image.onerror = this.failCallback.bind(this);
-	this.image.onabort = this.abortCallback.bind(this);
 	this.image.src = url;
 }
 
@@ -62,6 +61,10 @@ ImageRequest.prototype.send = function(url)
  */
 ImageRequest.prototype.abort = function()
 {
+	if ( this.abortCallback )
+	{
+		this.abortCallback(this);
+	}
 	this.image.src = '';
 }
 

@@ -563,8 +563,6 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 		var iq = this.imageRequests[i];
 		if ( iq.renderable && iq.frameNumber < this.frameNumber )
 		{
-			iq.renderable.onRequestFinished(false);
-			iq.renderable = null;
 			iq.abort();
 		}
 	}
