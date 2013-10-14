@@ -133,7 +133,7 @@ CoordinateSystem.fromDegreesToDMS = function(degree)
 {
 	function stringSign(val)
 	{
-		return (val>=0 ? "": "-");
+		return (val>=0 ? "+": "-");
 	}
 	
 	var absLat = Math.abs(degree);
@@ -166,18 +166,15 @@ CoordinateSystem.fromDegreesToHMS = function(degree)
 }
 
 /**
- *	Convert to default coordinate system
+ *	Conversion between coordinate systems("EQ" or "GAL")
  *
  *	@param {Float[]} geo Geographic coordinates
- *	@param type Type of coordinate system to convert :
- *		<ul>
- *			<li>"EQ" : Equatorial</li>
- *			<li>"GAL" : Galactic</li>
- *		</ul>
+ *	@param from Type of source coordinate system
+ *	@param to Type of destination coordinate system
  */
-CoordinateSystem.convertToDefault = function(geo, type) {
-	var convertType;
-	switch ( type+"2"+CoordinateSystem.type ) {
+CoordinateSystem.convert = function(geo, from, to)
+{
+	switch ( from+"2"+to ) {
 		case "GAL2EQ" :
 			convertType = AstroCoordTransform.Type.GAL2EQ;
 			break;
@@ -188,34 +185,7 @@ CoordinateSystem.convertToDefault = function(geo, type) {
 			console.error("Not implemented");
 			return null;
 	}
-
-	return AstroCoordTransform.transformInDeg( geo, convertType );
-}
-
-/**
- *	Convert from default coordinate system
- *
- *	@param {Float[]} geo Geographic coordinates
- *	@param type Type of coordinate system to convert :
- *		<ul>
- *			<li>"EQ" : Equatorial</li>
- *			<li>"GAL" : Galactic</li>
- *		</ul>
- */
-CoordinateSystem.convertFromDefault = function(geo, type) {
-	var convertType;
-	switch ( CoordinateSystem.type+"2"+type ) {
-		case "GAL2EQ" :
-			convertType = AstroCoordTransform.Type.GAL2EQ;
-			break;
-		case "EQ2GAL" :
-			convertType = AstroCoordTransform.Type.EQ2GAL;
-			break;
-		default:
-			console.error("Not implemented");
-			return null;
-	}
-
+	
 	return AstroCoordTransform.transformInDeg( geo, convertType );
 }
 

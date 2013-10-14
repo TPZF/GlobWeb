@@ -166,7 +166,6 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 	}
 	
 	var xhr = this.freeRequests.pop();
-	var prevCoordSystem = CoordinateSystem.type;
 	var self = this;
 	xhr.onreadystatechange = function(e)
 	{
@@ -174,13 +173,6 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 		{
 			if ( xhr.status == 200 )
 			{
-				// Don't handle features if coordinate system has been changed
-				// because tiles were regenerated
-				if ( CoordinateSystem.type != prevCoordSystem )
-				{
-					self.freeRequests.push(xhr);
-					return;
-				}
 
 				var response = JSON.parse(xhr.response);
 
@@ -211,6 +203,7 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 			else if ( xhr.status >= 400 )
 			{
 				tileData.complete = true;
+				//self.updateChildrenState(tile);
 				console.error( xhr.responseText );
 			}
 			
@@ -586,9 +579,9 @@ OpenSearchLayer.prototype.updateFeatures = function( features )
 			case "Point":
 
 				// Convert to default coordinate system if needed
-				if ( CoordinateSystem.type && CoordinateSystem.type != this.globe.tileManager.imageryProvider.tiling.coordSystem )
+				if ( "EQ" != this.globe.tileManager.imageryProvider.tiling.coordSystem )
 				{
-					currentFeature.geometry.coordinates = CoordinateSystem.convertToDefault(currentFeature.geometry.coordinates, this.globe.tileManager.imageryProvider.tiling.coordSystem);
+					currentFeature.geometry.coordinates = CoordinateSystem.convert(currentFeature.geometry.coordinates, this.globe.tileManager.imageryProvider.tiling.coordSystem, "EQ");
 				}
 
 				// Convert to geographic to simplify picking
@@ -600,9 +593,9 @@ OpenSearchLayer.prototype.updateFeatures = function( features )
 				for ( var j = 0; j < ring.length; j++ )
 				{
 					// Convert to default coordinate system if needed
-					if ( CoordinateSystem.type && CoordinateSystem.type != this.globe.tileManager.imageryProvider.tiling.coordSystem )
+					if ( "EQ" != this.globe.tileManager.imageryProvider.tiling.coordSystem )
 					{
-						ring[j] = CoordinateSystem.convertToDefault(ring[j], this.globe.tileManager.imageryProvider.tiling.coordSystem);
+						ring[j] = CoordinateSystem.convert(ring[j], this.globe.tileManager.imageryProvider.tiling.coordSystem, "EQ");
 					}
 
 					// Convert to geographic to simplify picking

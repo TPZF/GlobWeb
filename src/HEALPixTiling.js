@@ -112,9 +112,9 @@ HEALPixTiling.prototype.getTileRange = function(geometry, level)
 
 			var lon = coords[i][0];
 			var lat = coords[i][1];
-			if ( this.coordSystem != CoordinateSystem.type )
+			if ( this.coordSystem != "EQ" )
 			{
-				var geo = CoordinateSystem.convertFromDefault( [lon, lat], this.coordSystem );
+				var geo = CoordinateSystem.convert( [lon, lat], 'EQ', this.coordSystem );
 				lon = geo[0];
 				lat = geo[1];
 			}
@@ -136,9 +136,9 @@ HEALPixTiling.prototype.getTileRange = function(geometry, level)
  */
 HEALPixTiling.prototype.findInsideTile = function(lon, lat, tiles)
 {
-	if ( this.coordSystem != CoordinateSystem.type )
+	if ( this.coordSystem != "EQ" )
 	{
-		var geo = CoordinateSystem.convertFromDefault( [lon, lat], this.coordSystem );
+		var geo = CoordinateSystem.convert( [lon, lat], 'EQ', this.coordSystem );
 		lon = geo[0];
 		lat = geo[1];
 	}
@@ -279,7 +279,6 @@ HEALPixTile.prototype.generateVertices = function()
 	var step = 1./(size - 1);
 	
 	// xyf calculation
-	//var xyf = new healpixBase.Xyf(this.pixelIndex, this.order);
 	var pix=this.pixelIndex&(this.nside*this.nside-1);
 	var ix = HEALPixBase.compress_bits(pix);
 	var iy = HEALPixBase.compress_bits(pix>>>1);
@@ -289,11 +288,11 @@ HEALPixTile.prototype.generateVertices = function()
 		for(var v = 0; v < size; v++){
 
 
-			if ( this.config.coordSystem != CoordinateSystem.type )
+			if ( this.config.coordSystem != 'EQ' )
 			{
 				var vertice = HEALPixBase.fxyf((ix+u*step)/this.nside, (iy+v*step)/this.nside, this.face);
 				var geo = CoordinateSystem.from3DToGeo( vertice );
-				var eq = CoordinateSystem.convertToDefault(geo, this.config.coordSystem);
+				var eq = CoordinateSystem.convert(geo, this.config.coordSystem, 'EQ');
 				worldSpaceVertices[u*size + v] = CoordinateSystem.fromGeoTo3D( eq );
 			}
 			else

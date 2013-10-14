@@ -245,12 +245,12 @@ CoordinateGridLayer.prototype.render = function( tiles )
 
 	// Compute current geoBound
 	var geoBound;
-	if ( this.coordSystem != CoordinateSystem.type )
+	if ( this.coordSystem != 'EQ' )
 	{
 		// Transform geoBound computed in default coordinate system to coordinate system of current grid if different
 		var self = this;
 		geoBound = this.globe.getViewportGeoBound(function(coordinate) {
-			return CoordinateSystem.convertFromDefault(coordinate, self.coordSystem);
+			return CoordinateSystem.convert(coordinate, 'EQ', self.coordSystem);
 		});
 	}
 	else
@@ -435,9 +435,9 @@ CoordinateGridLayer.prototype.generateGridBuffers = function()
 				var y = sinPhi * sinTheta;
 				var z = cosTheta;
 
-				if ( this.coordSystem != CoordinateSystem.type ) {
+				if ( this.coordSystem != "EQ" ) {
 					var geo = CoordinateSystem.from3DToGeo( [x, y, z] );
-					geo = CoordinateSystem.convertToDefault(geo, this.coordSystem);
+					geo = CoordinateSystem.convert(geo, this.coordSystem, "EQ");
 					var eq = CoordinateSystem.fromGeoTo3D( geo );
 					vertexPositionData.push(eq[0], eq[1], eq[2]);				
 				} else {
@@ -528,8 +528,8 @@ CoordinateGridLayer.prototype.computeGeoCenter = function() {
 	CoordinateSystem.from3DToGeo( center3d, geoCenter );
 
 	// Convert geoCenter into grid's coordinate system
-	if ( this.coordSystem != CoordinateSystem.type ) {
-		geoCenter = CoordinateSystem.convertFromDefault( geoCenter, this.coordSystem );
+	if ( this.coordSystem != "EQ" ) {
+		geoCenter = CoordinateSystem.convert( geoCenter, "EQ", this.coordSystem );
 	}
 	return geoCenter;
 }
@@ -543,8 +543,8 @@ CoordinateGridLayer.prototype.computeGeoCenter = function() {
  *	@param {Float[]} posGeo Updated geographic position of label
  */
 CoordinateGridLayer.prototype.updateLabel = function(label, posGeo) {
-	if ( this.coordSystem != CoordinateSystem.type ) {
-		posGeo = CoordinateSystem.convertToDefault( posGeo, this.coordSystem );
+	if ( this.coordSystem != "EQ" ) {
+		posGeo = CoordinateSystem.convert( posGeo, this.coordSystem, "EQ" );
 	}
 
 	var pos3d = CoordinateSystem.fromGeoTo3D( posGeo );
