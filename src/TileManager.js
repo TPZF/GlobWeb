@@ -34,7 +34,6 @@ var TileManager = function( globe )
 	this.tilesToRequest = [];
 	this.postRenderers = [];
 	this.level0Tiles = [];
-	this.levelZeroTexture = null;
 	
 	// Tile requests : limit to 4 at a given time
 	this.maxRequests = 4;
@@ -60,7 +59,6 @@ var TileManager = function( globe )
 	// Shared index and texture coordinate buffer : all tiles uses the same
 	this.tcoordBuffer = null;
 	this.tileIndexBuffer = new TileIndexBuffer(this.renderContext,this.tileConfig);
-	this.identityTextureTransform = [ 1.0, 1.0, 0.0, 0.0 ];
 
 	// For debug
 	this.showWireframe = false;
@@ -75,7 +73,6 @@ var TileManager = function( globe )
 	attribute vec2 tcoord;\n\
 	uniform mat4 modelViewMatrix;\n\
 	uniform mat4 projectionMatrix;\n\
-	uniform vec4 texTransform;\n\
 	varying vec2 texCoord;\n";
 	if ( this.renderContext.lighting )
 		this.vertexShader += "attribute vec3 normal;\nvarying vec3 color;\n";
@@ -86,7 +83,7 @@ var TileManager = function( globe )
 	if ( this.renderContext.lighting )
 		this.vertexShader += "vec4 vn = modelViewMatrix * vec4(normal,0);\ncolor = max( vec3(-vn[2],-vn[2],-vn[2]), 0.0 );\n";
 	this.vertexShader += "\
-		texCoord = vec2(tcoord.s * texTransform.x + texTransform.z, tcoord.t * texTransform.y + texTransform.w);\n\
+		texCoord = tcoord;\n\
 	}\n\
 	";
 
@@ -219,8 +216,6 @@ TileManager.prototype.reset = function()
 	gl.deleteBuffer( this.tcoordBuffer );
 	this.tcoordBuffer = null;
 	
-	this.levelZeroTexture = null;
-	
 	this.level0TilesLoaded = false;
 }
 
@@ -264,7 +259,7 @@ TileManager.prototype.visitTiles = function( callback )
 	this.numTraversedTiles = 0;
 	
 	// First load level 0 tiles if needed
-	if ( !this.level0TilesLoaded && !this.levelZeroTexture )
+	if ( !this.level0TilesLoaded )
 	{
 		this.level0TilesLoaded = true;
 		for ( var i = 0; i < this.level0Tiles.length; i++ )
@@ -298,7 +293,7 @@ TileManager.prototype.visitTiles = function( callback )
 	}
 	
 	// Traverse tiles
-	if ( this.level0TilesLoaded || this.levelZeroTexture )
+	if ( this.level0TilesLoaded )
 	{
 		// Normal traversal, iterate through level zero tiles and process them recursively
 		for ( var i = 0; i < this.level0Tiles.length; i++ )
@@ -310,19 +305,6 @@ TileManager.prototype.visitTiles = function( callback )
 			}
 			else 
 			{
-				var tileIsLoaded = (tile.state == Tile.State.LOADED);
-				// Remove texture from level 0 tile, only if there is a global level zero texture
-				if( this.levelZeroTexture && tileIsLoaded )
-				{
-						this.tilePool.disposeGLTexture( tile.texture );
-						// Dispose raster overlay extension when tile is culled
-						if ( tile.extension.rasterOverlay )
-						{
-							tile.extension.rasterOverlay.dispose(this.renderContext, this.tilePool);
-						}
-						tile.texture = null;
-						tile.state = Tile.State.NONE;
-				}
 				// Delete its children
 				tile.deleteChildren(this.renderContext,this.tilePool);
 			}
@@ -498,8 +480,6 @@ TileManager.prototype.processTile = function(tile,level)
 	
 	var currentIB = null;
 	
-	var currentTextureTransform = null;
-	
 	for ( var i = 0; i < this.tilesToRender.length; i++ )
 	{
 		var tile = this.tilesToRender[i];
@@ -508,26 +488,8 @@ TileManager.prototype.processTile = function(tile,level)
 		var isLevelZero = ( tile.parentIndex == -1 );
 		
 		// Bind tile texture
-		var textureTransform;
-		if ( !isLoaded && isLevelZero )
-		{
-			// The texture is not yet loaded but there is a full texture to render the tile
-			gl.bindTexture(gl.TEXTURE_2D, this.levelZeroTexture);
-			textureTransform = tile.texTransform;
-		}
-		else
-		{
-			gl.bindTexture(gl.TEXTURE_2D, tile.texture);
-			textureTransform = this.identityTextureTransform;
-		}
-		
-		// Update texture transform
-		if ( currentTextureTransform != textureTransform )
-		{
-			gl.uniform4f(this.program.uniforms["texTransform"], textureTransform[0], textureTransform[1], textureTransform[2], textureTransform[3]);
-			currentTextureTransform = textureTransform;
-		}
-	
+		gl.bindTexture(gl.TEXTURE_2D, tile.texture);
+
 		// Update uniforms for modelview matrix
 		mat4.multiply( rc.viewMatrix, tile.matrix, rc.modelViewMatrix );
 		gl.uniformMatrix4fv(this.program.uniforms["modelViewMatrix"], false, rc.modelViewMatrix);
@@ -615,17 +577,11 @@ TileManager.prototype.render = function()
 		return;
 	}
 	
-	// Create the texture for level zero
-	if ( this.levelZeroTexture == null && this.imageryProvider.levelZeroImage )
+	// Specific case when the image provider has a level zero image : generate the texture for each level zero tile
+	if ( !this.level0TilesLoaded && this.imageryProvider.levelZeroImage )
 	{
-		if ( this.imageryProvider.getLevelZeroTexture )
-		{
-			this.levelZeroTexture = this.imageryProvider.getLevelZeroTexture();
-		}
-		else
-		{
-			this.levelZeroTexture = this.renderContext.createNonPowerOfTwoTextureFromImage(this.imageryProvider.levelZeroImage);
-		}
+		this.imageryProvider.generateLevel0Textures( this.level0Tiles, this.tilePool );
+		this.level0TilesLoaded = true;
 		this.globe.publish("baseLayersReady");
 	}
 
@@ -638,7 +594,7 @@ TileManager.prototype.render = function()
 		if (stats) stats.end("traverseTime");
 	}
 
-	if ( this.level0TilesLoaded || this.levelZeroTexture )
+	if ( this.level0TilesLoaded )
 	{
 		if (stats) stats.start("renderTime");
 		this.renderTiles();

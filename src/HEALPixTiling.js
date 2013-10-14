@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Tile', './HEALPixBase', './GeoBound', './CoordinateSystem', './Numeric', './AstroCoordTransform'], 
+define(['./Tile', './HEALPixBase', './GeoBound', './EquatorialCoordinateSystem', './Numeric', './AstroCoordTransform'], 
 	function(Tile, HEALPixBase, GeoBound, CoordinateSystem, Numeric, AstroCoordTransform) {
 
 /**************************************************************************************************************/
@@ -63,7 +63,6 @@ HEALPixTiling.prototype.generateLevelZeroTiles = function( config, tilePool )
 		tile.config = config;
 		level0Tiles.push( tile );
 		tile.generate(tilePool);
-		tile.state = Tile.State.NONE;
 	}
 
 	return level0Tiles;
@@ -177,9 +176,9 @@ var HEALPixTile = function( order, pix, face )
 	this.face = face;
 
 	// Compute texture transform
-	var width = 1728/64;
+/*	var width = 1728/64;
 	var height = 1856/64;
-	this.texTransform = [64/1728, 64/1856, ((this.pixelIndex % width))/width, ((Math.floor(this.pixelIndex/width))/height)];
+	this.texTransform = [64/1728, 64/1856, ((this.pixelIndex % width))/width, ((Math.floor(this.pixelIndex/width))/height)];*/
 
 	this.geoBound = null;
 }

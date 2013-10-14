@@ -29,7 +29,7 @@ var TilePool = function(rc)
 {
 	// Private properties
 	var gl = rc.gl;
-	var glTextures = [];
+	var glTexturePools = {};
 	var glBuffers = [];
 	var self = this;
 
@@ -48,7 +48,7 @@ var TilePool = function(rc)
 	/**
 		Create a new GL texture
 	 */
-	var createNewGLTexture = function(image)
+	var createNewGLTexture = function(image,texturePool)
 	{
 		var glTexture = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, glTexture);
@@ -68,8 +68,7 @@ var TilePool = function(rc)
 
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-		// Store type of texture to dispose into right array later
-		glTexture.dataType = image.dataType;
+		glTexture.pool = texturePool;
 		self.numCreatedTextures++;
 		
 		return glTexture;
@@ -80,9 +79,9 @@ var TilePool = function(rc)
 	/**
 		Reuse a GL texture
 	 */
-	var reuseGLTexture = function(image)
+	var reuseGLTexture = function(image,texturePool)
 	{
-		var glTexture = glTextures[image.dataType].pop();
+		var glTexture = texturePool.pop();
 		gl.bindTexture(gl.TEXTURE_2D, glTexture);
 
 		if ( image.dataType == "byte" )
@@ -99,7 +98,20 @@ var TilePool = function(rc)
 		self.numReusedTextures++;
 		
 		return glTexture;
-	}
+	};
+	
+	/**
+	 * Get or create a texture pool for the given image
+	 */
+	var getOrCreateTexturePool = function(image) 
+	{
+		var key = image.dataType + image.width;
+		if (!glTexturePools[key])
+		{
+			glTexturePools[key] = [];
+		}
+		return glTexturePools[key];
+	};
 		
 	// Public methods
 	
@@ -110,16 +122,15 @@ var TilePool = function(rc)
 	 */
 	this.createGLTexture = function(image)
 	{
-		if ( !glTextures[image.dataType] )
-			glTextures[image.dataType] =  [];
+		var texturePool = getOrCreateTexturePool(image);
 
-		if ( glTextures[image.dataType].length > 0 )
+		if ( texturePool.length > 0 )
 		{
-			return reuseGLTexture(image);
+			return reuseGLTexture(image,texturePool);
 		}
 		else
 		{
-			return createNewGLTexture(image);
+			return createNewGLTexture(image,texturePool);
 		}
 	};
 
@@ -152,7 +163,7 @@ var TilePool = function(rc)
 	 */
 	this.disposeGLTexture = function(texture)
 	{
-		glTextures[texture.dataType].push(texture);
+		texture.pool.push(texture);
 	}
 
 	/**************************************************************************************************************/
@@ -172,12 +183,21 @@ var TilePool = function(rc)
 	 */
 	this.disposeAll = function()
 	{
-		for ( var i = 0;  i < glTextures.length; i++ ) {
-			gl.deleteTexture( glTextures[i] );
+		for ( var key in glTexturePools )
+		{
+			if ( glTexturePools.hasOwnProperty(key) )
+			{
+				var glTextures = glTexturePools[key];
+				for ( var i = 0;  i < glTextures.length; i++ ) 
+				{
+					gl.deleteTexture( glTextures[i] );
+				}
+			}
 		}
-		glTextures.length = 0;
+		glTexturePools = {};
 		
-		for ( var i = 0;  i < glBuffers.length; i++ ) {
+		for ( var i = 0;  i < glBuffers.length; i++ )
+		{
 			gl.deleteBuffer( glBuffers[i] );
 		}
 		glBuffers.length = 0;

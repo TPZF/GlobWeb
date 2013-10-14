@@ -14,7 +14,7 @@ require(['../src/AstroWeb'], function (AstroWeb)
 	
 	var astroNavigator = new AstroWeb.AstroNavigation(globe, { inertia: true });
 	
-	new AstroWeb.Stats(globe,{element: "fps",verbose: true});
+	new AstroWeb.Stats(globe.renderContext,{element: "fps",verbose: true});
 	
 	var cdsLayer = new AstroWeb.HEALPixLayer( { baseUrl: "/Alasky/DssColor/"} );
 	globe.setBaseImagery( cdsLayer );

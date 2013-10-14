@@ -32,7 +32,7 @@ var HEALPixLayer = function(options)
 	RasterLayer.prototype.constructor.call( this, options );
 	
 	this.tilePixelSize = options.tilePixelSize || 512;
-	this.tiling = new HEALPixTiling( options.baseLevel || 3, options );
+	this.tiling = new HEALPixTiling( options.baseLevel || 2, options );
 	this.numberOfLevels = options.numberOfLevels || 10;
 	this.type = "ImageryRaster";
 	this.baseUrl = options['baseUrl'];
@@ -106,6 +106,57 @@ HEALPixLayer.prototype.getUrl = function(tile)
 	url += "."+this.dataType;
 	
 	return url;
+}
+
+
+/**************************************************************************************************************/
+
+/**
+ *	Generate the level0 texture for the tiles
+ */
+HEALPixLayer.prototype.generateLevel0Textures = function(tiles,tilePool)
+{
+	// Create a canvas to build the texture
+	var canvas = document.createElement("canvas");
+	canvas.width = 128;
+	canvas.height = 128;
+	
+	var context = canvas.getContext("2d");
+	
+	for ( var i = 0; i < tiles.length; i++ )
+	{
+		var tile = tiles[i];
+		
+		// Top left
+		var pi = tile.pixelIndex * 4;
+		var sx = ( pi % 27) * 64;
+		var sy = ( Math.floor(pi /27) ) * 64;
+		context.drawImage(this.levelZeroImage,sx,sy,64,64,0,0,64,64);
+		
+		// Top right
+		pi = tile.pixelIndex * 4 + 2;
+		var sx = ( pi % 27) * 64;
+		var sy = ( Math.floor(pi /27) ) * 64;
+		context.drawImage(this.levelZeroImage,sx,sy,64,64,64,0,64,64);
+		
+		// Bottom left
+		pi = tile.pixelIndex * 4 + 1;
+		var sx = ( pi % 27) * 64;
+		var sy = ( Math.floor(pi /27) ) * 64;
+		context.drawImage(this.levelZeroImage,sx,sy,64,64,0,64,64,64);
+		
+		// Bottom right
+		pi = tile.pixelIndex * 4 + 3;
+		var sx = ( pi % 27) * 64;
+		var sy = ( Math.floor(pi /27) ) * 64;
+		context.drawImage(this.levelZeroImage,sx,sy,64,64,64,64,64,64);
+
+		var imgData = context.getImageData(0, 0, 128, 128);
+		imgData.dataType = 'byte';
+		
+		tile.texture = tilePool.createGLTexture( imgData );
+		tile.imageSize = 128;
+	}
 }
 
 /**************************************************************************************************************/

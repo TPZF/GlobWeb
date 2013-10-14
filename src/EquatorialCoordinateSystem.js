@@ -219,4 +219,6 @@ CoordinateSystem.convertFromDefault = function(geo, type) {
 	return AstroCoordTransform.transformInDeg( geo, convertType );
 }
 
+return CoordinateSystem;
+
 });
