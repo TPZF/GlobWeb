@@ -52,7 +52,7 @@ var AstroNavigation = function(globe, options)
 		this._clampFov();
 	}
 	
-	this.up = [0., 0., 1.]
+	this.up = options.up || [0., 0., 1.];
 	
 	// Update the view matrix now
 	this.computeViewMatrix();
