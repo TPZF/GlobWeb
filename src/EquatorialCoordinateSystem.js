@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define( ['./CoordinateSystem', './Numeric', './AstroCoordTransform'], function(CoordinateSystem, Numeric, AstroCoordTransform) {
+define( ['./CoordinateSystem', './Numeric', './AstroCoordTransform', './glMatrix'], function(CoordinateSystem, Numeric, AstroCoordTransform) {
 
 /**************************************************************************************************************/
 
