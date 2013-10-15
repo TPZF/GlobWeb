@@ -146,6 +146,8 @@ CoordinateSystem.fromDegreesToDMS = function(degree)
 	
 }
 
+/**************************************************************************************************************/
+
 /**
  *	Function converting degrees to HMS("hours minuts seconds")
  *
@@ -164,6 +166,8 @@ CoordinateSystem.fromDegreesToHMS = function(degree)
 	
 	return hours+"h "+min+"m "+ Numeric.roundNumber(sec, 2) +"s";
 }
+
+/**************************************************************************************************************/
 
 /**
  *	Conversion between coordinate systems("EQ" or "GAL")
@@ -189,6 +193,49 @@ CoordinateSystem.convert = function(geo, from, to)
 	return AstroCoordTransform.transformInDeg( geo, convertType );
 }
 
-return CoordinateSystem;
+/**************************************************************************************************************/
+
+/**
+ *	Transfrom 3D vector from galactic coordinate system to equatorial
+ */
+CoordinateSystem.transformVec = function( vec )
+{
+	var res = [];
+	mat4.multiplyVec3( transformMatrix, vec, res );
+	return res;
+}
+
+/**************************************************************************************************************/
+
+// Compute transformation matrix from GAL to EQ in 3D coordinates
+var transformMatrix = [];
+
+var galNorth = CoordinateSystem.convert([0,90], 'GAL', 'EQ');
+var gal3DNorth = CoordinateSystem.fromGeoTo3D(galNorth);
+
+var galCenter = CoordinateSystem.convert([0, 0], 'GAL', 'EQ');
+var gal3DCenter = CoordinateSystem.fromGeoTo3D(galCenter);
+
+var galEast = CoordinateSystem.convert([90, 0], 'GAL', 'EQ');
+var gal3DEast = CoordinateSystem.fromGeoTo3D(galEast);
+
+transformMatrix[0] = gal3DCenter[0];
+transformMatrix[1] = gal3DCenter[1];
+transformMatrix[2] = gal3DCenter[2];
+transformMatrix[3] = 0.;
+transformMatrix[4] = gal3DEast[0];
+transformMatrix[5] = gal3DEast[1];
+transformMatrix[6] = gal3DEast[2];
+transformMatrix[7] = 0.;
+transformMatrix[8] = gal3DNorth[0];
+transformMatrix[9] = gal3DNorth[1];
+transformMatrix[10] = gal3DNorth[2];
+transformMatrix[11] = 0.;
+transformMatrix[12] = 0.;
+transformMatrix[13] = 0.;
+transformMatrix[14] = 0.;
+transformMatrix[15] = 1.;
+mat4.create(transformMatrix);
+mat4.inverse(transformMatrix);
 
 });

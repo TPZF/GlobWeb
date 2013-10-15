@@ -1,0 +1,86 @@
+<html>
+
+<head>
+<title>Equatorial/Galactic coordinate system changing tests</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-git.css" type="text/css" media="screen" />
+<script type="text/javascript" src="http://code.jquery.com/qunit/qunit-git.js"></script>
+<script  src="../examples/require.min.js"></script>
+
+</head>
+
+
+<body>
+
+<script type="text/javascript">
+
+require(['../src/CoordinateSystem', '../src/AstroCoordTransform', '../src/glMatrix', '../src/EquatorialCoordinateSystem'], function (CoordinateSystem, AstroCoordTransform) {
+
+	/**
+	 *	Returns true if vectors are almost equal, depending on epsilon, false otherwise
+	 */
+	var nearEqual = function( vec1, vec2 )
+	{
+		var epsilon = 0.0000000001;
+		if ( Math.abs( vec3.length( vec1 ) - vec3.length( vec2 ) ) < epsilon )
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+
+	}
+
+	test("transformVec", function(){
+
+			/*** North test ***/
+			// Galactic north
+			var north = CoordinateSystem.convert([0, 90], 'EQ', 'GAL');
+			var gal3DNorth = CoordinateSystem.fromGeoTo3D(north);
+
+			// Transform zAxis from equatorial 3D to galactic
+			var res = CoordinateSystem.transformVec( [0.,0.,1.] );
+
+			deepEqual( true, nearEqual( gal3DNorth, res ) );
+
+			/*** Two random points ***/
+			// Equatorial 3D
+			var pt1 = [23.4621, 30.6599417];
+			var eq3D = CoordinateSystem.fromGeoTo3D( pt1 );
+
+			// Galactic 3D
+			var gal = CoordinateSystem.convert(pt1, 'GAL', 'EQ');
+			var gal3D = CoordinateSystem.fromGeoTo3D( gal ); // 3D from GAL of m33
+
+			res = CoordinateSystem.transformVec( gal3D );
+			deepEqual( true, nearEqual( eq3D, res ) );
+
+			// Equatorial 3D
+			var pt2 = [-10.1010, -50.6599417];
+			eq3D = CoordinateSystem.fromGeoTo3D( pt2 );
+
+			// Galactic 3D
+			gal = CoordinateSystem.convert(pt2, 'GAL', 'EQ');
+			gal3D = CoordinateSystem.fromGeoTo3D( gal ); // 3D from GAL of m33
+
+			res = CoordinateSystem.transformVec( gal3D );
+			deepEqual( true, nearEqual(eq3D, res) );
+		});
+
+	});
+
+</script>
+
+<h1 id="qunit-header">QUnit GlobWeb</h1>
+<h2 id="qunit-banner"></h2>
+<div id="qunit-testrunner-toolbar"></div>
+<h2 id="qunit-userAgent"></h2>
+<ol id="qunit-tests"></ol>
+
+</body>
+
+</html>
