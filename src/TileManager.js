@@ -119,6 +119,8 @@ TileManager.prototype.addPostRenderer = function(renderer)
 	this.postRenderers.sort( function(a,b) {
 		return (a.zIndex || 0) - (b.zIndex || 0);
 	});
+	
+	this.visitTiles( function(tile) { renderer.generate(tile); } );
 }
 
 /**************************************************************************************************************/
