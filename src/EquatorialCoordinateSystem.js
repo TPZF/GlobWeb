@@ -238,4 +238,6 @@ transformMatrix[15] = 1.;
 mat4.create(transformMatrix);
 mat4.inverse(transformMatrix);
 
+return CoordinateSystem;
+
 });
