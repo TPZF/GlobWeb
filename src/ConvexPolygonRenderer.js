@@ -34,7 +34,7 @@ var ConvexPolygonRenderer = function(tileManager)
 	
 	// To avoid duplication of large geometries and avoid rendering limitation of mainRenderable
 	// set the threshold defining if geometry must be added to tile or mainRenderable
-	this.maxTilePerGeometry = 10;
+	this.maxTilePerGeometry = 2;
 
 	this.programs = [];
 
