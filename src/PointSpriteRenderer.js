@@ -247,7 +247,8 @@ PointSpriteRenderer.prototype.getOrCreateBucket = function(layer,style)
 	var bucket = {
 		style: new FeatureStyle(style),
 		layer: layer,
-		texture: null
+		texture: null,
+		currentRenderables: []
 	};
 		
 	// Initialize bucket : create the texture	
@@ -301,32 +302,30 @@ PointSpriteRenderer.prototype.render = function(tiles)
 	gl.uniformMatrix4fv(this.program.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
 	gl.uniform1i(this.program.uniforms["texture"], 0);
 	
-	for ( var n = 0; n < tiles.length; n++ )
+	// Render each bucket
+	for ( var n = 0; n < this.buckets.length; n++ )
 	{
-		var tile = tiles[n];
-		var tileData = tile.extension.pointSprite;
-		while (tile.parent && !tileData)
-		{
-			tile = tile.parent;
-			tileData = tile.extension.pointSprite;
-		}
+		var bucket = this.buckets[n];
 		
-		if (!tileData || tileData.frameNumber == this.frameNumber)
+		if (!bucket.layer._visible)
 			continue;
+			
+		if (bucket.currentRenderables.length == 0)
+			continue;		
+	
+		gl.uniform1f(this.program.uniforms["alpha"], bucket.layer._opacity);
+		var color = bucket.style.fillColor;
+		gl.uniform3f(this.program.uniforms["color"], color[0], color[1], color[2] );
+		gl.uniform1f(this.program.uniforms["pointSize"], bucket.textureWidth);
 		
-		tileData.frameNumber = this.frameNumber;
-		
-		for (var i=0; i < tileData.renderables.length; i++ ) 
+		// Bind point texture
+		gl.activeTexture(gl.TEXTURE0);
+		gl.bindTexture(gl.TEXTURE_2D, bucket.texture);
+
+		for (var i=0; i < bucket.currentRenderables.length; i++ ) 
 		{
-			var renderable = tileData.renderables[i];
-			if (!renderable.bucket.layer._visible)
-				continue;
-			gl.uniform1f(this.program.uniforms["alpha"], renderable.bucket.layer._opacity);
-			var color = renderable.bucket.style.fillColor;
-			gl.uniform3f(this.program.uniforms["color"], color[0], color[1], color[2] );
-			gl.uniform1f(this.program.uniforms["pointSize"], renderable.bucket.textureWidth);
+			var renderable = bucket.currentRenderables[i];
 				
-			// Warning : use quoted strings to access properties of the attributes, to work correclty in advanced mode with closure compiler
 			if ( !renderable.vertexBuffer )
 			{
 				renderable.vertexBuffer = gl.createBuffer();
@@ -341,15 +340,11 @@ PointSpriteRenderer.prototype.render = function(tiles)
 				renderable.vertexBufferDirty = false;
 			}
 
-			
-			// Bind point texture
-			gl.activeTexture(gl.TEXTURE0);
-			gl.bindTexture(gl.TEXTURE_2D, renderable.bucket.texture);
-					
+								
 			gl.drawArrays(gl.POINTS, 0, renderable.vertices.length/3);
 		}
 			
-		
+		bucket.currentRenderables.length = 0;
 	}
 
     gl.disable(gl.BLEND);

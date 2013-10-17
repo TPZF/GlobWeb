@@ -597,7 +597,7 @@ ConvexPolygonRenderer.prototype.render = function(tiles)
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
 	// Retrieve renderables stored on the visible tiles
-	for ( var n = 0; n < tiles.length; n++ )
+/*	for ( var n = 0; n < tiles.length; n++ )
 	{
 		var tile = tiles[n];
 		var tileData = tile.extension.polygon;
@@ -616,7 +616,7 @@ ConvexPolygonRenderer.prototype.render = function(tiles)
 		{
 			tileData.renderables[i].bucket.currentRenderables.push( tileData.renderables[i] );
 		}
-	}
+	}*/
 	
 	// Setup the basic program
 	this.basicProgram.apply();
@@ -629,11 +629,7 @@ ConvexPolygonRenderer.prototype.render = function(tiles)
 		var bucket = this.buckets[n];
 		
 		if (!bucket.layer.visible())
-		{
-			// Remove current renderables from bucket
-			bucket.currentRenderables.length = 0;
 			continue;
-		}
 			
 		if ( bucket.mainRenderable ) 
 			bucket.currentRenderables.push( bucket.mainRenderable );

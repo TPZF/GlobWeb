@@ -62,6 +62,7 @@ var OpenSearchLayer = function(options){
 
 	// Maximum two requests for now
 	this.freeRequests = [];
+	this.tilesToLoad = [];
 	
 	// Build the request objects
 	for ( var i =0; i < this.maxRequests; i++ )
@@ -435,31 +436,14 @@ OpenSearchLayer.TileState = {
  */
 OpenSearchLayer.prototype.generate = function(tile) 
 {
-	// Create data for the layer
-	// Check that it has not been created before (it can happen with level 0 tile)
-	var osData = tile.extension[this.extId];
-	if ( !osData )
+	if ( tile.order == this.minOrder )
 	{
-		if ( tile.parent )
-		{	
-			var parentOSData = tile.parent.extension[this.extId];
-			osData = new OSData(this,tile);
-			osData.state = parentOSData.complete ? OpenSearchLayer.TileState.INHERIT_PARENT : OpenSearchLayer.TileState.NOT_LOADED;
-			osData.complete = parentOSData.complete;
-		}
-		else
-		{
-			osData = new OSData(this,tile);
-		}
-		
-		// Store in on the tile
-		tile.extension[this.extId] = osData;
+		tile.extension[this.extId] = new OSData(this,tile);
 	}
 	
 };
 
 /**************************************************************************************************************/
-
 
 /**
  *	OpenSearch renderable
@@ -472,6 +456,34 @@ var OSData = function(layer,tile)
 	this.featureIds = []; // exclusive parameter to remove from layer
 	this.state = OpenSearchLayer.TileState.NOT_LOADED;
 	this.complete = false;
+	this.childrenCreated = false;
+}
+
+/**************************************************************************************************************/
+
+/**
+ * Traverse 
+ */
+OSData.prototype.traverse = function( tile )
+{
+	// Check if the tile need to be loaded
+	if ( this.state != OpenSearchLayer.TileState.LOADED )
+	{
+		this.layer.tilesToLoad.push( this );
+	}
+	
+	// Create children if needed
+	if ( tile.children && !this.childrenCreated )
+	{
+		if ( this.state == OpenSearchLayer.TileState.LOADED && !this.complete )
+		{
+			for ( var i = 0; i < 4; i++ )
+			{
+				tile.children[i].extension[this.layer.extId] = new OSData(this.layer,tile.children[i]);
+			}
+			this.childrenCreated = true;
+		}
+	}
 }
 
 /**************************************************************************************************************/
@@ -512,7 +524,7 @@ OpenSearchLayer.prototype.buildUrl = function( tile )
 // Internal function to sort tiles
 function _sortTilesByDistance(t1,t2)
 {
-	return t1.distance - t2.distance;
+	return t1.tile.distance - t2.tile.distance;
 };
 
 /**
@@ -526,41 +538,20 @@ OpenSearchLayer.prototype.render = function( tiles )
 		return;
 	
 	// Sort tiles
-	tiles.sort( _sortTilesByDistance );
+	this.tilesToLoad.sort( _sortTilesByDistance );
 
 	// Load data for the tiles if needed
-	for ( var i = 0; i < tiles.length && this.freeRequests.length > 0; i++ )
+	for ( var i = 0; i < this.tilesToLoad.length && this.freeRequests.length > 0; i++ )
 	{
-		var tile = tiles[i];
-		if ( tile.order >= this.minOrder )
+		var tile = this.tilesToLoad[i].tile;
+		var url = this.buildUrl(tile);
+		if ( url )
 		{
-			var osData = tile.extension[this.extId];
-			if ( !osData || osData.state == OpenSearchLayer.TileState.NOT_LOADED ) 
-			{
-				// Check if the parent is loaded or not, in that case load the parent first
-				while ( tile.parent 
-					&& tile.parent.order >= this.minOrder 
-					&& tile.parent.extension[this.extId]
-					&& tile.parent.extension[this.extId].state == OpenSearchLayer.TileState.NOT_LOADED )
-				{
-					tile = tile.parent;
-				}
-				
-				if ( tile.extension[this.extId] && tile.extension[this.extId].state == OpenSearchLayer.TileState.NOT_LOADED )
-				{
-					// Skip loading parent
-					if ( tile.parent && tile.parent.extension[this.extId].state == OpenSearchLayer.TileState.LOADING )
-						continue;
-
-					var url = this.buildUrl(tile);
-					if ( url )
-					{
-						this.launchRequest(tile, url);
-					}
-				}
-			}
+			this.launchRequest(tile, url);
 		}
 	}
+	
+	this.tilesToLoad.length = 0;
 }
 
 /**************************************************************************************************************/

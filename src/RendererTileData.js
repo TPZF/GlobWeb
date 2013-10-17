@@ -34,6 +34,23 @@ var RendererTileData = function()
 /**************************************************************************************************************/
 
 /**
+ * Traverse the renderer data
+ */
+RendererTileData.prototype.traverse = function(tile)
+{
+	for ( var i = 0; i < this.renderables.length; i++ ) 
+	{
+		var bucket = this.renderables[i].bucket;
+		if ( bucket.layer._visible )
+		{
+			bucket.currentRenderables.push( this.renderables[i] );
+		}
+	}
+}
+
+/**************************************************************************************************************/
+
+/**
 	Get a renderable from the tile, given the bucket
  */
 RendererTileData.prototype.getRenderable = function(bucket)

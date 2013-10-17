@@ -341,6 +341,13 @@ TileManager.prototype.processTile = function(tile,level)
 		this.tilesToRequest.push(tile);
 	}
 	
+	// Traverse extension
+	for ( var x in tile.extension ) 
+	{
+		var e = tile.extension[x];
+		if ( e.traverse ) e.traverse(tile);
+	}
+	
 	// Check if the tiles needs to be refined
 	if ( (tile.state == Tile.State.LOADED) && (level+1 < this.imageryProvider.numberOfLevels) && (tile.needsToBeRefined(this.renderContext) ) )
 	{
