@@ -120,7 +120,13 @@ TileManager.prototype.addPostRenderer = function(renderer)
 		return (a.zIndex || 0) - (b.zIndex || 0);
 	});
 	
-	this.visitTiles( function(tile) { renderer.generate(tile); } );
+	if ( renderer.generate )
+	{
+		this.visitTiles( function(tile) {
+		
+			renderer.generate(tile);
+		} );
+	}
 }
 
 /**************************************************************************************************************/
@@ -583,6 +589,19 @@ TileManager.prototype.render = function()
 	if ( !this.level0TilesLoaded && this.imageryProvider.levelZeroImage )
 	{
 		this.imageryProvider.generateLevel0Textures( this.level0Tiles, this.tilePool );
+		
+		for (var i=0; i < this.postRenderers.length; i++ )
+		{
+			var renderer = this.postRenderers[i];
+			if ( renderer.generate )
+			{
+				for ( var j=0; j<this.level0Tiles.length; j++ )
+				{
+					renderer.generate(this.level0Tiles[j]);
+				}
+			}
+		}
+
 		this.level0TilesLoaded = true;
 		this.globe.publish("baseLayersReady");
 	}
