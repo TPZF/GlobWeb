@@ -25,9 +25,9 @@
 /** @constructor
  *	TiledVectorRenderable constructor
  */
-var TiledVectorRenderable = function( bucket, gl )
+var TiledVectorRenderable = function( bucket )
 {
-	this.gl = gl;
+	this.gl = bucket.renderer.tileManager.renderContext.gl;
 	this.bucket = bucket;
  	this.vertexBuffer = null;
  	this.indexBuffer = null;
@@ -39,8 +39,33 @@ var TiledVectorRenderable = function( bucket, gl )
 	this.childrenIndexBuffers = null;
 	this.childrenIndices = null;
 	this.glMode = -1;
+	this.hasChildren = false;
+	this.initFromParent = false;
 }
 
+/**************************************************************************************************************/
+
+/**
+ * Create from parent
+ */
+TiledVectorRenderable.prototype.createFromParent = function(i,j)
+{				
+	// TODO
+}
+
+/**************************************************************************************************************/
+
+/**
+ * Generate a child renderable
+ */
+TiledVectorRenderable.prototype.generateChild = function(rendererManager,tile)
+{				
+	for ( var j = 0; j < this.geometryInfos.length; j++ )
+	{
+		rendererManager._addGeometryToTile( this.bucket, this.geometryInfos[j].geometry, tile );
+	}
+	this.hasChildren = true;
+}
 
 /**************************************************************************************************************/
 
@@ -61,7 +86,7 @@ TiledVectorRenderable.prototype.buildChildrenIndices = function( )
 /**
  *	Remove a geometry from the renderable
  */
-TiledVectorRenderable.prototype.removeGeometry = function( geometry )
+TiledVectorRenderable.prototype.remove = function( geometry )
 {
 	var fiIndex = -1;
 
@@ -173,8 +198,9 @@ TiledVectorRenderable.prototype._fixDateLine = function( tile, coords )
 /**
  *	Add a feature to the renderable
  */
-TiledVectorRenderable.prototype.addGeometry = function( geometry, tile )
-{		
+TiledVectorRenderable.prototype.add = function( geometry, tile )
+{
+	this.tile = tile;
 	var geometryInfo = { geometry: geometry,
 						startVertices: this.vertices.length,
 						startIndices: this.indices.length,

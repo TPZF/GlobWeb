@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./Utils','./VectorRendererManager','./TiledVectorRenderable','./TiledVectorRenderer','./Numeric'],
-	function(Utils,VectorRendererManager,TiledVectorRenderable,TiledVectorRenderer,Numeric) {
+ define(['./Utils','./FeatureStyle','./RendererManager','./TiledVectorRenderable','./TiledVectorRenderer','./Numeric'],
+	function(Utils,FeatureStyle,RendererManager,TiledVectorRenderable,TiledVectorRenderer,Numeric) {
 
 /**************************************************************************************************************/
 
@@ -27,10 +27,10 @@
  *  @extends TiledVectorRenderable
  *	LineStringRenderable manages lineString data to be rendered on a tile.
  */
-var LineStringRenderable = function( bucket, gl )
+var LineStringRenderable = function( bucket )
 {
-	TiledVectorRenderable.prototype.constructor.call(this,bucket,gl);
-	this.glMode = gl.LINES;
+	TiledVectorRenderable.prototype.constructor.call(this,bucket);
+	this.glMode = this.gl.LINES;
 }
 
 /**************************************************************************************************************/
@@ -206,8 +206,79 @@ LineStringRenderable.prototype.buildVerticesAndIndices = function( tile, coords 
 
 /**************************************************************************************************************/
 
+/** @constructor
+ *  @extends TiledVectorRenderer
+ */
+var LineStringRenderer = function( globe )
+{
+	TiledVectorRenderer.prototype.constructor.call(this,globe);
+}
+
+// Inheritance
+Utils.inherits(TiledVectorRenderer,LineStringRenderer);
+
+/**************************************************************************************************************/
+
+/**
+	Check if renderer is applicable
+ */
+LineStringRenderer.prototype.canApply = function(type,style)
+{
+	return type == "LineString" || type == "MultiLineString"
+							|| (!style.fill && (type == "Polygon" || type == "MultiPolygon")); 
+}
+/**************************************************************************************************************/
+
+/**
+	Bucket constructor for LineStringRenderer
+ */
+var Bucket = function(layer,style)
+{
+	this.layer = layer;
+	this.style = new FeatureStyle(style);
+	this.geometries = [];
+}
+
+/**************************************************************************************************************/
+
+/**
+	Create a renderable for this bucket
+ */
+Bucket.prototype.createRenderable = function()
+{
+	return new LineStringRenderable(this);
+}
+
+/**************************************************************************************************************/
+
+/**
+	Check if a bucket is compatible
+ */
+Bucket.prototype.isCompatible = function(style)
+{
+	return this.style.isEqualForLine(style);
+}
+
+/**************************************************************************************************************/
+
+/**
+	Get or create a bucket to store a feature with the given style
+ */
+LineStringRenderer.prototype.createBucket = function( layer, style )
+{
+	// Create a bucket
+	var bucket = new Bucket(layer,style);
+	bucket.renderer = this;
+	return bucket;
+}
+
+/**************************************************************************************************************/
+
 // Register the renderer
-VectorRendererManager.registerRenderer({
+RendererManager.factory.push( function(globe) { return new LineStringRenderer(globe.tileManager); } );
+
+// Register the renderer
+/*VectorRendererManager.registerRenderer({
 					creator: function(globe) { 
 						var lineStringRenderer = new TiledVectorRenderer(globe.tileManager);
 						lineStringRenderer.id = "lineString";
@@ -225,7 +296,7 @@ VectorRendererManager.registerRenderer({
 						return type == "LineString" || type == "MultiLineString"
 							|| (!style.fill && (type == "Polygon" || type == "MultiPolygon")); 
 					} 
-				});
+				});*/
 				
 return LineStringRenderable;
 

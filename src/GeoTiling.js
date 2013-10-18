@@ -74,6 +74,22 @@ GeoTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 
 /**************************************************************************************************************/
 
+/**
+ *	Get range set of tile indices that overlap with geometry
+ */
+GeoTiling.prototype.getTileRange = function(geometry, level)
+{
+	// TODO : do the computation !!
+	var range = [];
+	for ( var r = 0; r < this.level0NumTilesX * this.level0NumTilesY; r++ )
+	{
+		range.push(r);
+	}
+	return range;
+}
+
+/**************************************************************************************************************/
+
 /** @constructor
 	Tile constructor
  */

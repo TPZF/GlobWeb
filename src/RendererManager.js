@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./RendererTileData','./ConvexPolygonRenderer', './PointSpriteRenderer'],
-	function(RendererTileData,ConvexPolygonRenderer,PointSpriteRenderer) {
+define(['./RendererTileData','./Tile'],
+	function(RendererTileData, Tile) {
 
 /**************************************************************************************************************/
 
@@ -32,14 +32,20 @@ var RendererManager = function(globe)
 	this.buckets = [];
 	this.bucketId = 0;
 	
-	this.renderers = [ new ConvexPolygonRenderer(globe), new PointSpriteRenderer(globe) ];
+	this.renderers = [];
+	for ( var i = 0; i < RendererManager.factory.length; i++ )
+	{
+		this.renderers.push( RendererManager.factory[i](globe) );
+	}
 	
 	this.renderables = [];
 	
-	this.maxTilePerGeometry = 2;
+	this.maxTilePerGeometry = 100;
 	
 	this.levelZeroTiledGeometries = [];
 }
+
+RendererManager.factory = [];
 
 /**************************************************************************************************************/
 
@@ -93,11 +99,24 @@ RendererManager.prototype.generate = function(tile)
 		for ( var i=0; i < this.levelZeroTiledGeometries.length; i++ )
 		{
 			var geometry = this.levelZeroTiledGeometries[i];
-			var range = geometry._tileRange;
-			
-			if ( range.indexOf( tile.pixelIndex ) >= 0 )
+			if ( geometry._tiles.indexOf( tile ) >= 0 )
 			{
 				this._addGeometryToTile(geometry._bucket, geometry, tile);
+			}
+		}
+	}
+	else
+	{
+		var tileData = tile.parent.extension.renderer;
+		if ( tileData )
+		{
+			for ( var i = 0; i < tileData.renderables.length; i++ )
+			{
+				var renderable = tileData.renderables[i];
+				if ( renderable.generateChild )
+				{
+					renderable.generateChild( this, tile );
+				}
 			}
 		}
 	}
@@ -112,19 +131,23 @@ RendererManager.prototype.addGeometry = function(layer, geometry, style)
 {
 	var bucket = this.getOrCreateBucket(layer, geometry, style);
 	
-	var range = this.tileManager.imageryProvider.tiling.getTileRange(geometry, 0);
-		
-	if ( range && range.length < this.maxTilePerGeometry )
+	var tiles = this.tileManager.getOverlappedLevelZeroTiles(geometry);
+	if ( tiles && tiles.length < this.maxTilePerGeometry )
 	{
 		// Add geometry to each tile in range
-		for ( var i=0; i < range.length; i++ )
+		for ( var i=0; i < tiles.length; i++ )
 		{
-			var index = range[i];
-			this._addGeometryToTile(bucket, geometry, this.tileManager.level0Tiles[index]);
+			var tile = tiles[i];
+			if ( tile.state == Tile.State.LOADED )
+			{
+				this._addGeometryToTile(bucket, geometry, tile);
+				
+				// TODO : check to also generate children if loaded
+			}
 		}
 		
 		geometry._bucket = bucket;
-		geometry._tileRange = range;
+		geometry._tiles = tiles;
 		this.levelZeroTiledGeometries.push(geometry);
 	}
 	else
@@ -229,7 +252,7 @@ RendererManager.prototype._addGeometryToTile = function(bucket, geometry, tile)
 		renderable = bucket.createRenderable();
 		tileData.renderables.push(renderable);
 	}
-	renderable.add(geometry);
+	renderable.add(geometry, tile);
 }
 
 /**************************************************************************************************************/

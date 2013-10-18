@@ -29,10 +29,6 @@ var TiledVectorRenderer = function(tileManager)
 {
 	this.tileManager = tileManager;
 	
-	// Create a bucket with default style
-	// Bucket aggregate geometries that shares a common style
-	this.buckets = [  { style: new FeatureStyle(), geometries: [] } ];
-	
 	var vertexShader = "\
 	attribute vec3 vertex; \n\
 	uniform float zOffset; \n\
@@ -59,33 +55,8 @@ var TiledVectorRenderer = function(tileManager)
 
     this.program = new Program(this.tileManager.renderContext);
     this.program.createFromSource(vertexShader, fragmentShader);
-	
-	// Customization for different renderer : lineString or polygon
-	this.styleEquals = null;
-	this.renderableConstuctor = null;
-	this.id = "empty"
-	
+		
 	this.needsOffset = true;
-}
-
-/**************************************************************************************************************/
-
-/**
-	Get or create a bucket to store a feature with the given style
- */
-TiledVectorRenderer.prototype.getOrCreateBucket = function( layer, style )
-{
-	for ( var i = 0; i < this.buckets.length; i++ )
-	{
-		if ( this.buckets[i].layer == layer && this.styleEquals(style, this.buckets[i].style ) )
-		{
-			return this.buckets[i];
-		}
-	}
-	
-	var bucket = { layer: layer, style: style, geometries: [] };
-	this.buckets.push( bucket );
-	return bucket;
 }
 
 /**************************************************************************************************************/
@@ -93,7 +64,7 @@ TiledVectorRenderer.prototype.getOrCreateBucket = function( layer, style )
 /**
 	Remove a geometry from the tile
  */
-TiledVectorRenderer.prototype.removeGeometryFromTile = function( bucket, geometry, tile )
+/*TiledVectorRenderer.prototype.removeGeometryFromTile = function( bucket, geometry, tile )
 {
 	var renderable;
 	if ( tile.extension[this.id] )
@@ -111,14 +82,14 @@ TiledVectorRenderer.prototype.removeGeometryFromTile = function( bucket, geometr
 			}
 		}
 	}
-}
+}*/
 
 /**************************************************************************************************************/
 
 /**
 	Remove a geometry from the renderer
  */
-TiledVectorRenderer.prototype.removeGeometry = function( geometry, layer )
+/*TiledVectorRenderer.prototype.removeGeometry = function( geometry, layer )
 {
 	var foundBucket = null;
 	
@@ -146,7 +117,7 @@ TiledVectorRenderer.prototype.removeGeometry = function( geometry, layer )
 			this.removeGeometryFromTile( foundBucket, geometry, this.tileManager.level0Tiles[i] );
 		}
 	}
-}
+}*/
 
 /**************************************************************************************************************/
 
@@ -154,14 +125,14 @@ TiledVectorRenderer.prototype.removeGeometry = function( geometry, layer )
 	Clean-up a tile
 	TODO : the method is only used by TileManager.removePostRenderer, maybe remove it, TileManager can use directly the extension id.
  */
-TiledVectorRenderer.prototype.cleanupTile = function( tile )
+/*TiledVectorRenderer.prototype.cleanupTile = function( tile )
 {
 	if ( tile.extension[this.id] )
 	{
 		tile.extension[this.id].dispose();
 		delete tile.extension[this.id];
 	}
-}
+}*/
 
 /**************************************************************************************************************/
 
@@ -169,7 +140,7 @@ TiledVectorRenderer.prototype.cleanupTile = function( tile )
 	Add a geometry to the renderer.
 	Public method to add geometry to the renderer
  */
-TiledVectorRenderer.prototype.addGeometry = function( geometry, layer, style )
+/*TiledVectorRenderer.prototype.addGeometry = function( geometry, layer, style )
 {
 	var bucket = this.getOrCreateBucket( layer, style );
 	bucket.geometries.push( geometry );
@@ -180,7 +151,7 @@ TiledVectorRenderer.prototype.addGeometry = function( geometry, layer, style )
 		if ( tile.state == Tile.State.LOADED )
 			this.addGeometryToTile( bucket, geometry, tile );
 	}
-}
+}*/
 
 /**************************************************************************************************************/
 
@@ -188,7 +159,7 @@ TiledVectorRenderer.prototype.addGeometry = function( geometry, layer, style )
 	Add a geometry to the given tile.
 	The method is recursive, it will also add the geometry to children if exists
  */
-TiledVectorRenderer.prototype.addGeometryToTile = function( bucket, geometry, tile )
+/*TiledVectorRenderer.prototype.addGeometryToTile = function( bucket, geometry, tile )
 {
 	var isNewRenderable = false;
 	
@@ -223,14 +194,14 @@ TiledVectorRenderer.prototype.addGeometryToTile = function( bucket, geometry, ti
 	{
 		this.addRenderableToTile(tile,renderable);
 	}
-}
+}*/
 
 /**************************************************************************************************************/
 
 /**
 	Add a renderable to the tile
  */
-TiledVectorRenderer.prototype.addRenderableToTile = function( tile, renderable )
+/*TiledVectorRenderer.prototype.addRenderableToTile = function( tile, renderable )
 {
 	if ( renderable.vertices.length > 0 )
 	{
@@ -239,14 +210,14 @@ TiledVectorRenderer.prototype.addRenderableToTile = function( tile, renderable )
 		
 		tile.extension[this.id].renderables.push( renderable );
 	}
-}
+}*/
 
 /**************************************************************************************************************/
 
 /**
 	Generate renderable data on the tile
  */
-TiledVectorRenderer.prototype.generate = function( tile )
+/*TiledVectorRenderer.prototype.generate = function( tile )
 {
 	if ( tile.parent )
 	{	
@@ -283,14 +254,14 @@ TiledVectorRenderer.prototype.generate = function( tile )
 			this.addRenderableToTile(tile,renderable);
 		}
 	}
-}
+}*/
 
 /**************************************************************************************************************/
 
 /**
 	Render all redenrable on the given tiles
  */
-TiledVectorRenderer.prototype.render = function( visibleTiles )
+TiledVectorRenderer.prototype.render = function(renderables,start,end)
 {
 	var renderContext = this.tileManager.renderContext;
 	var gl = renderContext.gl;
@@ -307,7 +278,25 @@ TiledVectorRenderer.prototype.render = function( visibleTiles )
     
 	var currentStyle = null;
 	
-    for (var i = 0; i < visibleTiles.length; ++i)
+	for ( var n = start; n < end; n++ )
+	{
+		var renderable = renderables[n];
+		var tile = renderable.tile;
+		
+		mat4.multiply( renderContext.viewMatrix, tile.matrix, modelViewMatrix );
+		gl.uniformMatrix4fv( this.program.uniforms["modelViewMatrix"], false, modelViewMatrix );
+		gl.uniform1f( this.program.uniforms["zOffset"], tile.radius * 0.0007 );
+		
+		var currentStyle = renderable.bucket.style;
+		gl.lineWidth( currentStyle.strokeWidth );
+		gl.uniform4f( this.program.uniforms["color"], currentStyle.strokeColor[0], currentStyle.strokeColor[1], currentStyle.strokeColor[2], 
+			currentStyle.strokeColor[3] * renderable.bucket.layer._opacity );
+			
+		renderable.render( this.program.attributes );
+	}
+
+	
+ /*   for (var i = 0; i < visibleTiles.length; ++i)
     {
 		var tile = visibleTiles[i];
 		
@@ -367,7 +356,7 @@ TiledVectorRenderer.prototype.render = function( visibleTiles )
 			}
 		
 		}
-    }
+    }*/
 
 	gl.depthMask(true);
 	gl.depthFunc(gl.LESS);

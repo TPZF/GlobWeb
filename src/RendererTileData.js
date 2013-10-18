@@ -35,15 +35,35 @@ var RendererTileData = function(manager)
 /**************************************************************************************************************/
 
 /**
+ * Initialize from the parent
+ */
+RendererTileData.prototype.initFromParent = function(parent,i,j)
+{
+	for ( var i = 0; i < parent.renderables.length; i++ ) 
+	{
+		if ( parent.renderables[i].createFromParent )
+		{		
+			this.renderables.push( parent.renderables[i].createFromParent(i,j) );
+		}
+	}
+}
+
+/**************************************************************************************************************/
+
+/**
  * Traverse the renderer data
  */
-RendererTileData.prototype.traverse = function(tile)
+RendererTileData.prototype.traverse = function(tile,isLeaf)
 {
 	for ( var i = 0; i < this.renderables.length; i++ ) 
 	{
 		var bucket = this.renderables[i].bucket;
 		if ( bucket.layer._visible )
 		{
+			if ( this.renderables[i].hasChildren 
+				&& !isLeaf )
+				continue;
+				
 			this.manager.renderables.push( this.renderables[i] );
 		}
 	}

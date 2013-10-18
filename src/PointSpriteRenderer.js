@@ -17,15 +17,15 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Program','./CoordinateSystem','./RendererTileData','./FeatureStyle', './VectorRendererManager'],
-	function(Program,CoordinateSystem,RendererTileData,FeatureStyle,VectorRendererManager) {
+define(['./Program','./CoordinateSystem','./RendererTileData','./FeatureStyle', './RendererManager'],
+	function(Program,CoordinateSystem,RendererTileData,FeatureStyle,RendererManager) {
 
 /**************************************************************************************************************/
 
 /** @constructor
 	PointSpriteRenderer constructor
  */
-var PointSpriteRenderer = function(tileManager,style)
+var PointSpriteRenderer = function(tileManager)
 {
 	// Store object for rendering
 	this.renderContext = tileManager.renderContext;
@@ -331,11 +331,7 @@ PointSpriteRenderer.prototype.render = function(renderables,start,end)
 /**************************************************************************************************************/
 
 // Register the renderer
-/*VectorRendererManager.registerRenderer({
-	id: "PointSprite",
-	creator: function(globe) { return new PointSpriteRenderer(globe.tileManager); },
-	canApply: function(type,style) {return false; }
-});*/
+RendererManager.factory.push( function(globe) { return new PointSpriteRenderer(globe.tileManager); } );
 
 return PointSpriteRenderer;
 

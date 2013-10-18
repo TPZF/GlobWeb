@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Program','./CoordinateSystem','./RendererTileData','./FeatureStyle', './VectorRendererManager'],
-	function(Program,CoordinateSystem,RendererTileData,FeatureStyle,VectorRendererManager) {
+define(['./Program','./CoordinateSystem','./RendererTileData','./FeatureStyle', './RendererManager'],
+	function(Program,CoordinateSystem,RendererTileData,FeatureStyle,RendererManager) {
 
 /**************************************************************************************************************/
 
@@ -293,7 +293,7 @@ Renderable.prototype.dispose = function(renderContext)
 /**
 	Check if renderer is applicable
  */
-ConvexPolygonRenderer.prototype.canApply = function(type,tile)
+ConvexPolygonRenderer.prototype.canApply = function(type,style)
 {
 	return type == "Polygon" || type == "MultiPolygon" || type == "LineString" || type == "MultiLineString"; 
 }
@@ -574,14 +574,10 @@ ConvexPolygonRenderer.prototype.render = function(renderables,start,end)
 
 
 /**************************************************************************************************************/
-/*
+
 // Register the renderer
-VectorRendererManager.registerRenderer({
-	id: "ConvexPolygon",
-	creator: function(globe) { return new ConvexPolygonRenderer(globe.tileManager); },
-	canApply: function(type,style) {return type == "Polygon" || type == "MultiPolygon" || type == "LineString" || type == "MultiLineString"; }
-});
-*/
+RendererManager.factory.push( function(globe) { return new ConvexPolygonRenderer(globe.tileManager); } );
+
 /**************************************************************************************************************/
 
 return ConvexPolygonRenderer;
