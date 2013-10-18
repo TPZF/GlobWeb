@@ -204,6 +204,7 @@ var FeatureStyle = function(style)
 	this.fill = false;
 	this.pointMaxSize = 40;
 	this.opacity = 1.;
+	this.zIndex = 0;
 	
 	if ( style )
 	{

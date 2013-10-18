@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./CoordinateSystem', './RenderContext', './TileManager', './Tile', './VectorRendererManager', './Numeric', './GeoBound', './Event', './Utils' ], 
-	function(CoordinateSystem, RenderContext, TileManager, Tile, VectorRendererManager, Numeric, GeoBound, Event, Utils) {
+ define(['./CoordinateSystem', './RenderContext', './TileManager', './Tile', './RendererManager', './Numeric', './GeoBound', './Event', './Utils' ], 
+	function(CoordinateSystem, RenderContext, TileManager, Tile, RendererManager, Numeric, GeoBound, Event, Utils) {
 
 /**************************************************************************************************************/
 
@@ -43,10 +43,12 @@ var Globe = function(options)
 
 	this.renderContext = new RenderContext(options);
 	this.tileManager = new TileManager( this );
-	this.vectorRendererManager = new VectorRendererManager( this );
+	this.rendererManager = new RendererManager( this );
 	this.attributionHandler = null;
 	this.preRenderers = [];
 	this.nbCreatedLayers = 0;
+	
+	this.tileManager.addPostRenderer( this.rendererManager );
 	
 	this.renderContext.renderer = this;
 	this.renderContext.requestFrame();

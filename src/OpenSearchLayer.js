@@ -237,7 +237,7 @@ OpenSearchLayer.prototype.setRequestProperties = function(properties)
 		{
 			var tile = featureData.tiles[i];
 			var feature = this.features[featureData.index];
-			this.removeFeatureFromRenderer( feature, tile );
+			this.globe.rendererManager.removeGeometryFromTile(this,feature.geometry,tile);
 		}
 	}
 
@@ -304,52 +304,10 @@ OpenSearchLayer.prototype.addFeature = function( feature, tile )
 	feature.geometry.gid = feature.properties.identifier;
 
 	// Add to renderer
-	this.addFeatureToRenderer(feature, tile);
+	//this.addFeatureToRenderer(feature, tile);
+	this.globe.rendererManager.addGeometryToTile(this,feature.geometry,this.style,tile);
 }
 
-/**************************************************************************************************************/
-
-/**
- *	Add feature to renderer
- */
-OpenSearchLayer.prototype.addFeatureToRenderer = function( feature, tile )
-{
-	if ( feature.geometry['type'] == "Point" )
-	{
-		if (!this.pointRenderer) 
-		{
-			this.pointRenderer = this.globe.vectorRendererManager.getRenderer("PointSprite"); 
-			this.pointBucket = this.pointRenderer.getOrCreateBucket( this, this.style );
-		}
-		this.pointRenderer.addGeometryToTile( this.pointBucket, feature.geometry, tile );
-	} 
-	else if ( feature.geometry['type'] == "Polygon" )
-	{
-		if (!this.polygonRenderer) 
-		{
-			this.polygonRenderer = this.globe.vectorRendererManager.getRenderer("ConvexPolygon"); 
-			this.polygonBucket = this.polygonRenderer.getOrCreateBucket( this, this.style );
-		}
-		this.polygonRenderer.addGeometryToTile( this.polygonBucket, feature.geometry, tile );
-	}
-}
-
-/**************************************************************************************************************/
-
-/**
- *	Remove feature from renderer
- */
-OpenSearchLayer.prototype.removeFeatureFromRenderer = function( feature, tile )
-{
-	if ( feature.geometry['type'] == "Point" )
-	{
-		this.pointRenderer.removeGeometryFromTile( feature.geometry, tile );
-	} 
-	else if ( feature.geometry['type'] == "Polygon" )
-	{
-		this.polygonRenderer.removeGeometryFromTile( feature.geometry, tile );
-	}
-}
 
 /**************************************************************************************************************/
 
@@ -402,20 +360,11 @@ OpenSearchLayer.prototype.modifyFeatureStyle = function( feature, style )
 	feature.properties.style = style;
 	var featureData = this.featuresSet[feature.properties.identifier];
 	if ( featureData )
-	{
-		var renderer;
-		if ( feature.geometry.type == "Point" ) {
-			renderer = this.pointRenderer;
-		}
-		else if ( feature.geometry.type == "Polygon" ) {
-			renderer = this.polygonRenderer;
-		}
-		
-		var newBucket = renderer.getOrCreateBucket(this,style);
+	{	
 		for ( var i = 0; i < featureData.tiles.length; i++ )
 		{
-			renderer.removeGeometryFromTile(feature.geometry,featureData.tiles[i]);
-			renderer.addGeometryToTile(newBucket,feature.geometry,featureData.tiles[i]);
+			this.globe.rendererManager.removeGeometryFromTile(feature.geometry,tile);
+			this.globe.rendererManager.addGeometryToTile(this,feature.geometry,style,tile);
 		}
 		
 	}

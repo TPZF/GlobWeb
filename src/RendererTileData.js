@@ -25,8 +25,9 @@ define( function() {
 	RendererTileData constructor
 	Contains a list of renderables for the tiles
  */
-var RendererTileData = function()
+var RendererTileData = function(manager)
 {
+	this.manager = manager;
 	this.renderables = [];
 	this.frameNumber = -1;
 }
@@ -43,7 +44,7 @@ RendererTileData.prototype.traverse = function(tile)
 		var bucket = this.renderables[i].bucket;
 		if ( bucket.layer._visible )
 		{
-			bucket.currentRenderables.push( this.renderables[i] );
+			this.manager.renderables.push( this.renderables[i] );
 		}
 	}
 }
