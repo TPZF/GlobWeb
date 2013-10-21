@@ -24,6 +24,15 @@ define( function() {
 /** @constructor
 	RendererTileData constructor
 	Contains a list of renderables for the tiles
+	
+	A renderable contains the following attributes/methods :
+		Attributes :
+			bucket : the renderable bucket
+			initChild (opt) : create a child at "init" time (children are created but not yet loaded)
+			generateChild (opt) : generate a child at "generate" time (children are loaded)
+			dispose : discard any gl data
+			add : add a geometry to the renderable
+			remove: remove a geometry from the renderable
  */
 var RendererTileData = function(manager)
 {
@@ -35,15 +44,19 @@ var RendererTileData = function(manager)
 /**************************************************************************************************************/
 
 /**
- * Initialize from the parent
+ * Initialize a child tile
  */
-RendererTileData.prototype.initFromParent = function(parent,i,j)
+RendererTileData.prototype.initChild = function(childTile,i,j)
 {
-	for ( var i = 0; i < parent.renderables.length; i++ ) 
+	var childData;
+	for ( var n = 0; n < this.renderables.length; n++ ) 
 	{
-		if ( parent.renderables[i].createFromParent )
-		{		
-			this.renderables.push( parent.renderables[i].createFromParent(i,j) );
+		if ( this.renderables[n].initChild )
+		{
+			if (!childData)
+				childData = childTile.extension.renderer = new RendererTileData(this.manager);
+				
+			childData.renderables.push( this.renderables[n].initChild(i,j) );
 		}
 	}
 }

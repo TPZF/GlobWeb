@@ -142,10 +142,13 @@ Tile.prototype.initFromParent = function(parent,i,j)
 	this.radius = this.bbox.getRadius();
 	
 	// Init extension
-	for ( var x in this.extension ) 
+	for ( var x in parent.extension ) 
 	{
-		var e = this.extension[x];
-		if ( e.initFromParent ) e.initFromParent(e,i,j);
+		var e = parent.extension[x];
+		if ( e.initChild )
+		{
+			e.initChild(this,i,j);
+		}
 	}
 
 }

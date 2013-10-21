@@ -110,6 +110,10 @@ RendererManager.prototype.generate = function(tile)
 		var tileData = tile.parent.extension.renderer;
 		if ( tileData )
 		{
+			// delete renderer created at init time
+			delete tile.extension.renderer;
+			
+			// Now generate renderables
 			for ( var i = 0; i < tileData.renderables.length; i++ )
 			{
 				var renderable = tileData.renderables[i];
@@ -117,6 +121,28 @@ RendererManager.prototype.generate = function(tile)
 				{
 					renderable.generateChild( this, tile );
 				}
+			}
+		}
+	}
+}
+
+
+/**************************************************************************************************************/
+
+/**
+ 	Recursively add a geometry to a tile
+*/
+RendererManager.prototype._recursiveAddGeometryToTile = function(bucket, geometry, tile)
+{
+	var added = this._addGeometryToTile(bucket, geometry, tile);
+	
+	if ( added && tile.children)
+	{
+		for ( var i = 0; i < 4; i++ )
+		{
+			if ( tile.children[i].state == Tile.State.LOADED )
+			{
+				this._recursiveAddGeometryToTile( bucket, geometry, tile.children[i] );
 			}
 		}
 	}
@@ -140,9 +166,7 @@ RendererManager.prototype.addGeometry = function(layer, geometry, style)
 			var tile = tiles[i];
 			if ( tile.state == Tile.State.LOADED )
 			{
-				this._addGeometryToTile(bucket, geometry, tile);
-				
-				// TODO : check to also generate children if loaded
+				this._recursiveAddGeometryToTile(bucket, geometry, tile);
 			}
 		}
 		
@@ -230,7 +254,7 @@ RendererManager.prototype.getOrCreateBucket = function(layer, geometry, style )
 RendererManager.prototype.addGeometryToTile = function(layer, geometry, style, tile)
 {
 	var bucket = this.getOrCreateBucket(layer, geometry, style);
-	this._addGeometryToTile( bucket, geometry, tile );
+	return this._addGeometryToTile( bucket, geometry, tile );
 }
 	
 /**************************************************************************************************************/
@@ -252,7 +276,7 @@ RendererManager.prototype._addGeometryToTile = function(bucket, geometry, tile)
 		renderable = bucket.createRenderable();
 		tileData.renderables.push(renderable);
 	}
-	renderable.add(geometry, tile);
+	return renderable.add(geometry, tile);
 }
 
 /**************************************************************************************************************/
