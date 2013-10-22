@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define( ['./CoordinateSystem','./RendererManager','./FeatureStyle','./Program'], 
-	function(CoordinateSystem,RendererManager,FeatureStyle,Program) {
+ define( ['./Utils','./VectorRenderer','./CoordinateSystem','./VectorRendererManager','./FeatureStyle','./Program'], 
+	function(Utils,VectorRenderer,CoordinateSystem,VectorRendererManager,FeatureStyle,Program) {
 
 /**************************************************************************************************************/
 
@@ -70,17 +70,18 @@ var Text = (function()
 	return { generateImageData: generateImageData };
 })();
 
-
 /**************************************************************************************************************/
 
 /** @constructor
 	POI Renderer constructor
  */
-var PointRenderer = function(tileManager)
+var PointRenderer = function(globe)
 {
+	VectorRenderer.prototype.constructor.call( this, globe );
+
 	// Store object for rendering
-	this.renderContext = tileManager.renderContext;
-	this.tileConfig = tileManager.tileConfig;
+	this.renderContext = globe.tileManager.renderContext;
+	this.tileConfig = globe.tileManager.tileConfig;
 	
 	// For stats
 	this.numberOfRenderPoints = 0;
@@ -137,6 +138,8 @@ var PointRenderer = function(tileManager)
 
 	this.defaultTexture = null;
 }
+
+Utils.inherits(VectorRenderer,PointRenderer);
 
 /**************************************************************************************************************/
 
@@ -410,7 +413,7 @@ PointRenderer.prototype.canApply = function(type,style)
 /**************************************************************************************************************/
 
 // Register the renderer
-RendererManager.factory.push( function(globe) { return new PointRenderer(globe.tileManager); } );
+VectorRendererManager.factory.push( function(globe) { return new PointRenderer(globe); } );
 									
 return PointRenderer;
 

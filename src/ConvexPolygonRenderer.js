@@ -17,20 +17,21 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Program','./CoordinateSystem','./RendererTileData','./FeatureStyle', './RendererManager'],
-	function(Program,CoordinateSystem,RendererTileData,FeatureStyle,RendererManager) {
+define(['./Utils','./VectorRenderer','./Program','./CoordinateSystem','./FeatureStyle', './VectorRendererManager'],
+	function(Utils,VectorRenderer,Program,CoordinateSystem,FeatureStyle,VectorRendererManager) {
 
 /**************************************************************************************************************/
 
 /** @constructor
 	ConvexPolygonRenderer constructor
  */
-var ConvexPolygonRenderer = function(tileManager)
+var ConvexPolygonRenderer = function(globe)
 {
+	VectorRenderer.prototype.constructor.call( this, globe );
+	
 	// Store object for rendering
-	this.tileManager = tileManager;
-	this.renderContext = tileManager.renderContext;
-	this.tileConfig = tileManager.tileConfig;
+	this.renderContext = globe.tileManager.renderContext;
+	this.tileConfig = globe.tileManager.tileConfig;
 	
 	this.programs = [];
 
@@ -123,6 +124,8 @@ var ConvexPolygonRenderer = function(tileManager)
 
 	this.tiledGeometries = [];
 }
+
+Utils.inherits(VectorRenderer,ConvexPolygonRenderer);
 
 /**************************************************************************************************************/
 
@@ -576,7 +579,7 @@ ConvexPolygonRenderer.prototype.render = function(renderables,start,end)
 /**************************************************************************************************************/
 
 // Register the renderer
-RendererManager.factory.push( function(globe) { return new ConvexPolygonRenderer(globe.tileManager); } );
+VectorRendererManager.factory.push( function(globe) { return new ConvexPolygonRenderer(globe); } );
 
 /**************************************************************************************************************/
 

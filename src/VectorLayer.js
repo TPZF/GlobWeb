@@ -139,13 +139,13 @@ VectorLayer.prototype._addFeatureToRenderers = function( feature )
 		var geoms = geometry["geometries"];
 		for ( var i = 0; i < geoms.length; i++ )
 		{
-			this.globe.rendererManager.addGeometry( this, geoms[i], style );
+			this.globe.vectorRendererManager.addGeometry( this, geoms[i], style );
 		}
 	}
 	else
 	{
 		// Add geometry to renderers
-		this.globe.rendererManager.addGeometry( this, geometry, style );
+		this.globe.vectorRendererManager.addGeometry( this, geometry, style );
 	}
 }
 
@@ -164,12 +164,12 @@ VectorLayer.prototype._removeFeatureFromRenderers = function( feature )
 		var geoms = geometry["geometries"];
 		for ( var i = 0; i < geoms.length; i++ )
 		{
-			this.globe.rendererManager.removeGeometry( geoms[i], this );
+			this.globe.vectorRendererManager.removeGeometry( geoms[i], this );
 		}
 	}
 	else
 	{
-		this.globe.rendererManager.removeGeometry( geometry, this );
+		this.globe.vectorRendererManager.removeGeometry( geometry, this );
 	}
 }
 
@@ -265,6 +265,8 @@ VectorLayer.prototype.modifyStyle = function(style)
 		this._addFeatureToRenderers( this.features[i] );
 	}
 }
+
+/**************************************************************************************************************/
 
 return VectorLayer;
 

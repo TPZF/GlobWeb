@@ -237,7 +237,7 @@ OpenSearchLayer.prototype.setRequestProperties = function(properties)
 		{
 			var tile = featureData.tiles[i];
 			var feature = this.features[featureData.index];
-			this.globe.rendererManager.removeGeometryFromTile(this,feature.geometry,tile);
+			this.globe.vectorRendererManager.removeGeometryFromTile(this,feature.geometry,tile);
 		}
 	}
 
@@ -305,7 +305,7 @@ OpenSearchLayer.prototype.addFeature = function( feature, tile )
 
 	// Add to renderer
 	//this.addFeatureToRenderer(feature, tile);
-	this.globe.rendererManager.addGeometryToTile(this,feature.geometry,this.style,tile);
+	this.globe.vectorRendererManager.addGeometryToTile(this,feature.geometry,this.style,tile);
 }
 
 

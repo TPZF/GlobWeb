@@ -260,12 +260,24 @@ PolygonRenderer.prototype.render = function()
 
 /**************************************************************************************************************/
 
+/**
+	Check if renderer is applicable
+ */
+/*PolygonRenderer.prototype.canApply = function(type,tile)
+{
+	return (type == "Polygon") && style.fill;
+}*/
+
+/**************************************************************************************************************/
+
 // Register the renderer
-VectorRendererManager.registerRenderer({
+//VectorRendererManager.push( function(globe) { return new PolygonRenderer(globe); } );
+
+/*VectorRendererManager.registerRenderer({
 	creator: function(globe) { 
 			return new PolygonRenderer(globe.tileManager);
 		},
 	canApply: function(type,style) {return (type == "Polygon") && style.fill; }
-});
+});*/
 
 });

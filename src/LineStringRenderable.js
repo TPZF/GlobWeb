@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./Utils','./FeatureStyle','./RendererManager','./TiledVectorRenderable','./TiledVectorRenderer','./Numeric'],
-	function(Utils,FeatureStyle,RendererManager,TiledVectorRenderable,TiledVectorRenderer,Numeric) {
+ define(['./Utils','./FeatureStyle','./VectorRendererManager','./TiledVectorRenderable','./TiledVectorRenderer','./Numeric'],
+	function(Utils,FeatureStyle,VectorRendererManager,TiledVectorRenderable,TiledVectorRenderer,Numeric) {
 
 /**************************************************************************************************************/
 
@@ -275,7 +275,7 @@ LineStringRenderer.prototype.createBucket = function( layer, style )
 /**************************************************************************************************************/
 
 // Register the renderer
-RendererManager.factory.push( function(globe) { return new LineStringRenderer(globe.tileManager); } );
+VectorRendererManager.factory.push( function(globe) { return new LineStringRenderer(globe); } );
 
 // Register the renderer
 /*VectorRendererManager.registerRenderer({

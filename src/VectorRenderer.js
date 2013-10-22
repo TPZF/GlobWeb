@@ -23,46 +23,15 @@ define(['./RendererTileData','./Tile'],
 /**************************************************************************************************************/
 
 /** @constructor
-	RenderererManager constructor
+	VectorRenderer constructor
  */
-var RendererManager = function(globe)
+var VectorRenderer = function(globe)
 {
 	this.tileManager = globe.tileManager;
-	
+	this.globe = globe;
 	this.buckets = [];
-	this.bucketId = 0;
-	
-	this.renderers = [];
-	for ( var i = 0; i < RendererManager.factory.length; i++ )
-	{
-		this.renderers.push( RendererManager.factory[i](globe) );
-	}
-	
-	this.renderables = [];
-	
 	this.maxTilePerGeometry = 100;
-	
 	this.levelZeroTiledGeometries = [];
-}
-
-RendererManager.factory = [];
-
-/**************************************************************************************************************/
-
-/**
-	Get a renderer
- */
-RendererManager.prototype.getRenderer = function(geometry,style)
-{
-	for ( var i = 0; i < this.renderers.length; i++ )
-	{
-		if ( this.renderers[i].canApply(geometry.type,style) )
-		{
-			return this.renderers[i];
-		}
-	}
-	
-	return null;
 }
 
 /**************************************************************************************************************/
@@ -70,14 +39,13 @@ RendererManager.prototype.getRenderer = function(geometry,style)
 /**
 	Find a compatible bucket
  */
-RendererManager.prototype.findBucket = function(renderer,layer,style)
+VectorRenderer.prototype.findBucket = function(layer,style)
 {
 	// Find an existing bucket for the given style
 	for ( var i = 0; i < this.buckets.length; i++ )
 	{
 		var bucket = this.buckets[i];
 		if ( bucket.layer == layer 
-			&& bucket.renderer == renderer 
 			&& bucket.isCompatible(style) )
 		{
 			return bucket;
@@ -87,56 +55,34 @@ RendererManager.prototype.findBucket = function(renderer,layer,style)
 	return null;
 }
 
+
 /**************************************************************************************************************/
 
 /**
- *	Generate the tile data
+ 	Generate the level zero for a tle
  */
-RendererManager.prototype.generate = function(tile)
+VectorRenderer.prototype.generateLevelZero = function(tile)
 {
-	if ( !tile.parent )
+	for ( var i=0; i < this.levelZeroTiledGeometries.length; i++ )
 	{
-		for ( var i=0; i < this.levelZeroTiledGeometries.length; i++ )
+		var geometry = this.levelZeroTiledGeometries[i];
+		if ( geometry._tiles.indexOf( tile ) >= 0 )
 		{
-			var geometry = this.levelZeroTiledGeometries[i];
-			if ( geometry._tiles.indexOf( tile ) >= 0 )
-			{
-				this._addGeometryToTile(geometry._bucket, geometry, tile);
-			}
-		}
-	}
-	else
-	{
-		var tileData = tile.parent.extension.renderer;
-		if ( tileData )
-		{
-			// delete renderer created at init time
-			delete tile.extension.renderer;
-			
-			// Now generate renderables
-			for ( var i = 0; i < tileData.renderables.length; i++ )
-			{
-				var renderable = tileData.renderables[i];
-				if ( renderable.generateChild )
-				{
-					renderable.generateChild( this, tile );
-				}
-			}
+			this._addGeometryToTile(geometry._bucket, geometry, tile);
 		}
 	}
 }
-
 
 /**************************************************************************************************************/
 
 /**
  	Recursively add a geometry to a tile
 */
-RendererManager.prototype._recursiveAddGeometryToTile = function(bucket, geometry, tile)
+VectorRenderer.prototype._recursiveAddGeometryToTile = function(bucket, geometry, tile)
 {
-	var added = this._addGeometryToTile(bucket, geometry, tile);
+	var renderable = this._addGeometryToTile(bucket, geometry, tile);
 	
-	if ( added && tile.children)
+	if ( renderable && renderable.generateChild && tile.children)
 	{
 		for ( var i = 0; i < 4; i++ )
 		{
@@ -151,9 +97,9 @@ RendererManager.prototype._recursiveAddGeometryToTile = function(bucket, geometr
 /**************************************************************************************************************/
 
 /**
- 	Add a geometry to the renderer
+ 	Add a geometry to a vector renderer
  */
-RendererManager.prototype.addGeometry = function(layer, geometry, style)
+VectorRenderer.prototype.addGeometry = function(layer, geometry, style)
 {
 	var bucket = this.getOrCreateBucket(layer, geometry, style);
 	
@@ -188,9 +134,9 @@ RendererManager.prototype.addGeometry = function(layer, geometry, style)
 /**************************************************************************************************************/
 
 /**
- 	Remove a geometry from the renderer
+ 	Remove a geometry from a vector renderer
  */
-RendererManager.prototype.removeGeometry = function(geometry)
+VectorRenderer.prototype.removeGeometry = function(geometry)
 {
 	var range = geometry._tileRange;
 
@@ -228,19 +174,14 @@ RendererManager.prototype.removeGeometry = function(geometry)
 /**
  	Get or create a bucket for the given configuration
  */
-RendererManager.prototype.getOrCreateBucket = function(layer, geometry, style )
-{
-	// First get a renderer
-	var renderer = this.getRenderer(geometry,style);
-	if (!renderer)
-		return null;
-		
+VectorRenderer.prototype.getOrCreateBucket = function(layer, geometry, style )
+{		
 	// Then find an existing bucket
-	var bucket = this.findBucket(renderer,layer,style);
+	var bucket = this.findBucket(layer,style);
 	if (!bucket)
 	{
-		bucket = renderer.createBucket(layer,style);
-		bucket.id = this.bucketId++;
+		bucket = this.createBucket(layer,style);
+		bucket.id = this.globe.vectorRendererManager.bucketId++;
 		this.buckets.push( bucket );
 	}
 	return bucket;
@@ -251,7 +192,7 @@ RendererManager.prototype.getOrCreateBucket = function(layer, geometry, style )
 /**
 	Add a geometry to a tile
  */
-RendererManager.prototype.addGeometryToTile = function(layer, geometry, style, tile)
+VectorRenderer.prototype.addGeometryToTile = function(layer, geometry, style, tile)
 {
 	var bucket = this.getOrCreateBucket(layer, geometry, style);
 	return this._addGeometryToTile( bucket, geometry, tile );
@@ -262,12 +203,12 @@ RendererManager.prototype.addGeometryToTile = function(layer, geometry, style, t
 /**
 	Internal method to add a geometry to a tile
  */
-RendererManager.prototype._addGeometryToTile = function(bucket, geometry, tile)
+VectorRenderer.prototype._addGeometryToTile = function(bucket, geometry, tile)
 {	
 	var tileData = tile.extension.renderer;
 	if (!tileData)
 	{
-		tileData = tile.extension.renderer = new RendererTileData(this);
+		tileData = tile.extension.renderer = new RendererTileData(this.globe.vectorRendererManager);
 	}
 	
 	var renderable = tileData.getRenderable(bucket);
@@ -276,7 +217,12 @@ RendererManager.prototype._addGeometryToTile = function(bucket, geometry, tile)
 		renderable = bucket.createRenderable();
 		tileData.renderables.push(renderable);
 	}
-	return renderable.add(geometry, tile);
+	if ( renderable.add(geometry, tile) )
+	{
+		return renderable;
+	}
+	
+	return null;
 }
 
 /**************************************************************************************************************/
@@ -284,7 +230,7 @@ RendererManager.prototype._addGeometryToTile = function(bucket, geometry, tile)
 /**
 	Remove a geometry from a tile
  */
-RendererManager.prototype.removeGeometryFromTile = function(geometry,tile)
+VectorRenderer.prototype.removeGeometryFromTile = function(geometry,tile)
 {
 	var tileData = tile.extension.renderer;
 	if (tileData)
@@ -298,62 +244,6 @@ RendererManager.prototype.removeGeometryFromTile = function(geometry,tile)
 
 /**************************************************************************************************************/
 
-/**
-	Function to sort with zIndex, then bucket
- */
-var renderableSort = function(r1,r2)
-{
-	var zdiff = r1.bucket.style.zIndex - r2.bucket.style.zIndex;
-	if ( zdiff == 0 )
-		return r1.bucket.id - r2.bucket.id;
-	else
-		return zdiff;
-};
-
-/**************************************************************************************************************/
-
-/**
-	Render all
- */
-RendererManager.prototype.render = function()
-{
-	// Add main renderables
-	for ( var i = 0; i < this.buckets.length; i++ )
-	{
-		if ( this.buckets[i].mainRenderable )
-		{
-			this.renderables.push( this.buckets[i].mainRenderable );
-		}
-	}
-	
-	// Renderable sort
-	this.renderables.sort( renderableSort );
-	
-	//var renderCall = 0;
-	
-	var i = 0;
-	while ( i < this.renderables.length )
-	{
-		var j = i + 1;
-		
-		var currentRenderer = this.renderables[i].bucket.renderer;
-		while ( j < this.renderables.length && this.renderables[j].bucket.renderer == currentRenderer )
-		{
-			j++;
-		}
-		currentRenderer.render( this.renderables, i, j );
-		//renderCall++;
-		
-		i = j;
-	}
-	
-	//console.log( "# of render calls "  + renderCall );
-	
-	this.renderables.length = 0;
-}
-
-/**************************************************************************************************************/
-
-return RendererManager;
+return VectorRenderer;
 
 });

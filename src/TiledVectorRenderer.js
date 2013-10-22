@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define( ['./Program','./FeatureStyle','./Tile','./RendererTileData'], function(Program,FeatureStyle,Tile,RendererTileData) {
+ define( ['./Utils','./VectorRenderer','./Program','./FeatureStyle','./Tile'], function(Utils,VectorRenderer,Program,FeatureStyle,Tile) {
 
 /**************************************************************************************************************/
 
@@ -25,9 +25,9 @@
 /** @constructor
 	TiledVectorRenderer constructor
  */
-var TiledVectorRenderer = function(tileManager)
+var TiledVectorRenderer = function(globe)
 {
-	this.tileManager = tileManager;
+	VectorRenderer.prototype.constructor.call( this, globe );
 	
 	var vertexShader = "\
 	attribute vec3 vertex; \n\
@@ -58,6 +58,8 @@ var TiledVectorRenderer = function(tileManager)
 		
 	this.needsOffset = true;
 }
+
+Utils.inherits(VectorRenderer,TiledVectorRenderer);
 
 /**************************************************************************************************************/
 

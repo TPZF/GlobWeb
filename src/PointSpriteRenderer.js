@@ -17,19 +17,17 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Program','./CoordinateSystem','./RendererTileData','./FeatureStyle', './RendererManager'],
-	function(Program,CoordinateSystem,RendererTileData,FeatureStyle,RendererManager) {
+define(['./Utils','./VectorRenderer','./Program','./CoordinateSystem','./FeatureStyle', './VectorRendererManager'],
+	function(Utils,VectorRenderer,Program,CoordinateSystem,FeatureStyle,VectorRendererManager) {
 
 /**************************************************************************************************************/
 
 /** @constructor
 	PointSpriteRenderer constructor
  */
-var PointSpriteRenderer = function(tileManager)
+var PointSpriteRenderer = function(globe)
 {
-	// Store object for rendering
-	this.renderContext = tileManager.renderContext;
-	this.tileConfig = tileManager.tileConfig;
+	VectorRenderer.prototype.constructor.call( this, globe );
 	
 	// For stats
 	this.numberOfRenderPoints = 0;
@@ -60,11 +58,13 @@ var PointSpriteRenderer = function(tileManager)
 	} \n\
 	";
 
-    this.program = new Program(this.renderContext);
+    this.program = new Program(globe.renderContext);
     this.program.createFromSource(vertexShader, fragmentShader);
 	
 	this.defaultTexture = null;
 }
+
+Utils.inherits(VectorRenderer,PointSpriteRenderer);
 
 /**************************************************************************************************************/
 
@@ -144,7 +144,7 @@ PointSpriteRenderer.prototype._buildDefaultTexture = function(bucket)
 {  	
 	if ( !this.defaultTexture )
 	{
-		var gl = this.renderContext.gl;
+		var gl = this.globe.renderContext.gl;
 		this.defaultTexture = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, this.defaultTexture);
 		var whitePixel = new Uint8Array([255, 255, 255, 255]);
@@ -163,7 +163,7 @@ PointSpriteRenderer.prototype._buildDefaultTexture = function(bucket)
  */
 PointSpriteRenderer.prototype._buildTextureFromImage = function(bucket,image)
 {  	
-	bucket.texture = this.renderContext.createNonPowerOfTwoTextureFromImage(image);
+	bucket.texture = this.globe.renderContext.createNonPowerOfTwoTextureFromImage(image);
 	bucket.textureWidth = image.width;
 	bucket.textureHeight = image.height;
 }
@@ -228,7 +228,7 @@ Bucket.prototype.isCompatible = function(style)
  */
 PointSpriteRenderer.prototype.createBucket = function(layer,style)
 {
-	var gl = this.renderContext.gl;
+	var gl = this.globe.renderContext.gl;
 	var vb = gl.createBuffer();
 
 	// Create a bucket
@@ -245,7 +245,7 @@ PointSpriteRenderer.prototype.createBucket = function(layer,style)
 	{
 		var image = new Image();
 		var self = this;
-		image.onload = function() {self._buildTextureFromImage(bucket,image); self.renderContext.requestFrame(); }
+		image.onload = function() {self._buildTextureFromImage(bucket,image); self.globe.renderContext.requestFrame(); }
 		image.onerror = function() { self._buildDefaultTexture(bucket); }
 		image.src = style.iconUrl;
 	}
@@ -268,8 +268,8 @@ PointSpriteRenderer.prototype.createBucket = function(layer,style)
  */
 PointSpriteRenderer.prototype.render = function(renderables,start,end)
 {	
-	var renderContext = this.renderContext;
-	var gl = this.renderContext.gl;
+	var renderContext = this.globe.renderContext;
+	var gl = renderContext.gl;
 	
 	// Setup states
 	gl.enable(gl.BLEND);
@@ -331,7 +331,7 @@ PointSpriteRenderer.prototype.render = function(renderables,start,end)
 /**************************************************************************************************************/
 
 // Register the renderer
-RendererManager.factory.push( function(globe) { return new PointSpriteRenderer(globe.tileManager); } );
+VectorRendererManager.factory.push( function(globe) { return new PointSpriteRenderer(globe); } );
 
 return PointSpriteRenderer;
 

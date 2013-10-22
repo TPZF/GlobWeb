@@ -16,70 +16,49 @@
  * You should have received a copy of the GNU General Public License
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
- 
- define( function() {
- 
+
+define( function() {
+
 /**************************************************************************************************************/
 
-/** 
-	@class Manage the various vector renderer.
-	@constructor
-	@param globe	the globe
+/** @constructor
+	VectorRenderererManager constructor
  */
 var VectorRendererManager = function(globe)
 {
-	this.globe = globe;
-	this.factories = [];
-	
-	// Clone 'global' factories to this instance
-	var globalFactories = VectorRendererManager.globalFactories;
-	for ( var i = 0; i < globalFactories.length; i++ )
+	// Create the registered renderers
+	this.renderers = [];
+	for ( var i = 0; i < VectorRendererManager.factory.length; i++ )
 	{
-		this.factories.push( { id: globalFactories[i].id, creator: globalFactories[i].creator, canApply: globalFactories[i].canApply, instance: null } );
+		this.renderers.push( VectorRendererManager.factory[i](globe) );
 	}
+	
+	// The array of renderables
+	this.renderables = [];
+	
+	// To uniquely identify buckets created by the renderers
+	this.bucketId = 0;
 }
 
 /**************************************************************************************************************/
 
-/** 
-	A global array that contains a factory for each vector renderer
-	A factory is just two function :
-	@see VectorRendererManager.registerRenderer
+/**
+	The factory for renderers
  */
-VectorRendererManager.globalFactories = [];
-
+VectorRendererManager.factory = [];
 
 /**************************************************************************************************************/
 
-/** 
-	Register a renderer in the manager
-	@param factory the factory to create a renderer
-	@param factory.creator a function to create a renderer
-	@param factory.canApply a function to check if the renderer can be applied
+/**
+	Get a renderer
  */
-VectorRendererManager.registerRenderer = function(factory)
+VectorRendererManager.prototype.getRenderer = function(geometry,style)
 {
-	VectorRendererManager.globalFactories.push( factory );
-}
-
-/**************************************************************************************************************/
-
-/** 
-	Get a renderer compatible for the given type and style
- */
-VectorRendererManager.prototype.getRenderer = function(id)
-{
-	for ( var i = 0; i < this.factories.length; i++ )
+	for ( var i = 0; i < this.renderers.length; i++ )
 	{
-		var factory = this.factories[i];
-		if ( factory.id == id )
+		if ( this.renderers[i].canApply(geometry.type,style) )
 		{
-			if ( !factory.instance )
-			{
-				factory.instance = factory.creator(this.globe);
-				this.globe.tileManager.addPostRenderer(factory.instance);
-			}
-			return factory.instance;
+			return this.renderers[i];
 		}
 	}
 	
@@ -88,42 +67,147 @@ VectorRendererManager.prototype.getRenderer = function(id)
 
 /**************************************************************************************************************/
 
-/** 
-	Add a geometry to renderers
+/**
+ *	Generate the tile data
  */
-VectorRendererManager.prototype.addGeometry = function(geometry,layer,style)
+VectorRendererManager.prototype.generate = function(tile)
 {
-	var type = geometry['type'];
-	for ( var i = 0; i < this.factories.length; i++ )
+	if ( !tile.parent )
 	{
-		var factory = this.factories[i];
-		if ( factory.canApply(type,style) )
+		for ( var i=0; i < this.renderers.length; i++ )
 		{
-			if ( !factory.instance )
+			this.renderers[i].generateLevelZero(tile);
+		}
+	}
+	else
+	{
+		var tileData = tile.parent.extension.renderer;
+		if ( tileData )
+		{
+			// delete renderer created at init time
+			delete tile.extension.renderer;
+			
+			// Now generate renderables
+			for ( var i = 0; i < tileData.renderables.length; i++ )
 			{
-				factory.instance = factory.creator(this.globe);
-				this.globe.tileManager.addPostRenderer(factory.instance);
+				var renderable = tileData.renderables[i];
+				if ( renderable.generateChild )
+				{
+					renderable.generateChild( tile );
+				}
 			}
-			factory.instance.addGeometry(geometry,layer,style);
 		}
 	}
 }
 
 /**************************************************************************************************************/
 
-/** 
-	Remove a geometry from renderers
+/**
+ 	Add a geometry to the renderer
  */
-VectorRendererManager.prototype.removeGeometry = function(geometry,layer)
+VectorRendererManager.prototype.addGeometry = function(layer, geometry, style)
 {
-	for ( var i = 0; i < this.factories.length; i++ )
+	var renderer = this.getRenderer(geometry,style);
+	renderer.addGeometry(layer, geometry, style);
+}
+
+/**************************************************************************************************************/
+
+/**
+ 	Remove a geometry from the renderer
+ */
+VectorRendererManager.prototype.removeGeometry = function(geometry)
+{
+	for ( var i = 0; i < this.renderers.length; i++ )
 	{
-		var factory = this.factories[i];
-		if ( factory.instance )
+		this.renderers[i].removeGeometry(geometry);
+	}
+}
+
+/**************************************************************************************************************/
+
+/**
+	Add a geometry to a tile
+ */
+VectorRendererManager.prototype.addGeometryToTile = function(layer, geometry, style, tile)
+{
+	var renderer = this.getRenderer(geometry,style);
+	renderer.addGeometryToTile(layer, geometry, style, tile);
+}
+	
+
+/**************************************************************************************************************/
+
+/**
+	Remove a geometry from a tile
+ */
+VectorRendererManager.prototype.removeGeometryFromTile = function(geometry,tile)
+{
+	for ( var i = 0; i < this.renderers.length; i++ )
+	{
+		this.renderers[i].removeGeometryFromTile(geometry,tile);
+	}
+}
+
+
+/**************************************************************************************************************/
+
+/**
+	Function to sort with zIndex, then bucket
+ */
+var renderableSort = function(r1,r2)
+{
+	var zdiff = r1.bucket.style.zIndex - r2.bucket.style.zIndex;
+	if ( zdiff == 0 )
+		return r1.bucket.id - r2.bucket.id;
+	else
+		return zdiff;
+};
+
+/**************************************************************************************************************/
+
+/**
+	Render all
+ */
+VectorRendererManager.prototype.render = function()
+{
+	// Add main renderables
+	for ( var j = 0; j < this.renderers.length; j++ )
+	{
+		var buckets = this.renderers[j].buckets;
+		for ( var i = 0; i < buckets.length; i++ )
 		{
-			factory.instance.removeGeometry(geometry,layer);
+			if ( buckets[i].mainRenderable )
+			{
+				this.renderables.push( buckets[i].mainRenderable );
+			}
 		}
 	}
+	
+	// Renderable sort
+	this.renderables.sort( renderableSort );
+	
+	//var renderCall = 0;
+	
+	var i = 0;
+	while ( i < this.renderables.length )
+	{
+		var j = i + 1;
+		
+		var currentRenderer = this.renderables[i].bucket.renderer;
+		while ( j < this.renderables.length && this.renderables[j].bucket.renderer == currentRenderer )
+		{
+			j++;
+		}
+		currentRenderer.render( this.renderables, i, j );
+		//renderCall++;
+		
+		i = j;
+	}
+	
+	//console.log( "# of render calls "  + renderCall );
+	
+	this.renderables.length = 0;
 }
 
 /**************************************************************************************************************/

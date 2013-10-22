@@ -83,11 +83,11 @@ TiledVectorRenderable.prototype.initChild = function(i,j)
 /**
  * Generate a child renderable
  */
-TiledVectorRenderable.prototype.generateChild = function(rendererManager,tile)
+TiledVectorRenderable.prototype.generateChild = function(tile)
 {				
 	for ( var j = 0; j < this.geometryInfos.length; j++ )
 	{
-		rendererManager._addGeometryToTile( this.bucket, this.geometryInfos[j].geometry, tile );
+		this.bucket.renderer._addGeometryToTile( this.bucket, this.geometryInfos[j].geometry, tile );
 	}
 	this.hasChildren = true;
 }
