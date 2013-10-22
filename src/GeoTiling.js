@@ -66,8 +66,8 @@ GeoTiling.prototype.generateLevelZeroTiles = function(config)
  */
 GeoTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 {	
-	var i = Math.floor( (lon + 180) * this.level0NumTilesX / 360 );
- 	var j = Math.floor( (90 - lat) * this.level0NumTilesY / 180 );
+	var i = Math.floor( (lon + 180) * this.level0NumTilesX / 360 ) % this.level0NumTilesX;
+ 	var j = Math.floor( (90 - lat) * this.level0NumTilesY / 180 ) % this.level0NumTilesY;
 	return j * this.level0NumTilesX + i;
 
 }
@@ -79,12 +79,43 @@ GeoTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
  */
 GeoTiling.prototype.getTileRange = function(geometry, level)
 {
-	// TODO : do the computation !!
-	var range = [];
-	for ( var r = 0; r < this.level0NumTilesX * this.level0NumTilesY; r++ )
+	var coords;
+	switch ( geometry.type )
 	{
-		range.push(r);
+	case "Point":
+		coords = [];
+		coords.push( geometry.coordinates );
+		break;
+	case "LineString":
+		coords = geometry.coordinates;
+		break;
+	case "Polygon":
+		coords = geometry.coordinates[0];
+		break;
+	case "MultiPolygon":
+		coords = [];
+		for ( var n = 0; n < geometry.coordinates.length; n++ )
+		{
+			coords = coords.concat( geometry.coordinates[n][0] );
+		}
+		break;
 	}
+	
+	if ( !coords )
+		console.log("COOORDDS!!");
+		
+	var rangeMap = {};
+	var range = [];
+	for ( var i = 0; i < coords.length; i++ )
+	{
+		var index = this.lonlat2LevelZeroIndex( coords[i][0], coords[i][1] );
+		if ( !rangeMap[index] )
+		{
+			rangeMap[ index ] = true;
+			range.push( index );
+		}
+	}
+	
 	return range;
 }
 
