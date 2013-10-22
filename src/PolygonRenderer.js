@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
  
-define( ['./CoordinateSystem','./VectorRendererManager','./FeatureStyle','./Program','./Triangulator'], 
-	function(CoordinateSystem,VectorRendererManager,FeatureStyle,Program,Triangulator) {
+define( ['./Utils','./VectorRenderer','./CoordinateSystem','./VectorRendererManager','./FeatureStyle','./Program','./Triangulator'], 
+	function(Utils,VectorRenderer,CoordinateSystem,VectorRendererManager,FeatureStyle,Program,Triangulator) {
 
 /**************************************************************************************************************/
 
@@ -26,13 +26,12 @@ define( ['./CoordinateSystem','./VectorRendererManager','./FeatureStyle','./Prog
  *	Basic renderer for polygon
  */
 
-var PolygonRenderer = function(tileManager)
+var PolygonRenderer = function(globe)
 {
-	this.renderContext = tileManager.renderContext;
-	
-	this.renderables = [];
+	VectorRenderer.prototype.constructor.call( this, globe );
+	this.maxTilePerGeometry = 0;
 		
-	this.vertexShader = "\
+	var vertexShader = "\
 	attribute vec3 vertex;\n\
 	uniform mat4 mvp;\n\
 	void main(void) \n\
@@ -50,31 +49,39 @@ var PolygonRenderer = function(tileManager)
 	}\n\
 	";
 	
-	this.program = new Program(this.renderContext);
-	this.program.createFromSource(this.vertexShader, fragmentShader);
+	this.program = new Program(globe.renderContext);
+	this.program.createFromSource(vertexShader, fragmentShader);
+}
+
+Utils.inherits(VectorRenderer,PolygonRenderer);
+
+/**************************************************************************************************************/
+
+/**
+ * Renderable constructor for Polygon
+ */
+var Renderable = function(bucket) 
+{
+	this.bucket = bucket;
+	this.geometry = null;
+	this.matrix = mat4.create();
+	this.vertexBuffer = null;
+	this.indexBuffer = null;
 }
 
 /**************************************************************************************************************/
 
 /**
- *	Add polygon to renderer
+ * Add a geometry to the renderbale
  */
-PolygonRenderer.prototype.addGeometry = function(geometry, layer, style){
-	
-	var gl = this.renderContext.gl;
-	
-	// Create renderable
-	var renderable = {
-		geometry : geometry,
-		style : style,
-		layer: layer,
-		matrix: mat4.create(),
-		vertexBuffer : gl.createBuffer(),
-		indexBuffer : gl.createBuffer(),
-	};
+Renderable.prototype.add = function(geometry)
+{
+	var gl = this.bucket.renderer.tileManager.renderContext.gl;
+	var style = this.bucket.style;
 		
 	// Create vertex buffer
-	gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
+	this.vertexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
 	
 	var coords = geometry['coordinates'][0];
 	var vertices = new Float32Array( style.extrude ? coords.length * 6 : coords.length * 3 );
@@ -118,7 +125,6 @@ PolygonRenderer.prototype.addGeometry = function(geometry, layer, style){
 		return false;
 	}
 	
-	
 	if ( style.extrude )
 	{
 		var upOffset = 0;
@@ -134,7 +140,7 @@ PolygonRenderer.prototype.addGeometry = function(geometry, layer, style){
 		}
 	}
 	
-	renderable.numTriIndices = indices.length;
+	this.numTriIndices = indices.length;
 	
 	var offset = 0;
 	for ( var i = 0; i < coords.length-1; i++ )
@@ -155,46 +161,72 @@ PolygonRenderer.prototype.addGeometry = function(geometry, layer, style){
 		}
 	}
 	
-	renderable.numLineIndices = indices.length - renderable.numTriIndices;
+	this.numLineIndices = indices.length - this.numTriIndices;
 
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.indexBuffer);
+	this.indexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 	
-	mat4.identity(renderable.matrix);
-	mat4.translate(renderable.matrix,origin);
-
-	this.renderables.push(renderable);
-
+	mat4.identity(this.matrix);
+	mat4.translate(this.matrix,origin);	
 }
 
 /**************************************************************************************************************/
 
 /**
- * 	Remove polygon from renderer
+ * Remove a geometry from the renderable
  */
-PolygonRenderer.prototype.removeGeometry = function(geometry,style){
-	
-	for ( var i = 0; i<this.renderables.length; i++ )
+Renderable.prototype.remove = function(geometry)
+{
+	if ( this.geometry == geometry)
 	{
-		var currentRenderable = this.renderables[i];
-		if ( currentRenderable.geometry == geometry){
-
-			// Dispose resources
-			var gl = this.renderContext.gl;
-	
-			if ( currentRenderable.indexBuffer )
-				gl.deleteBuffer(currentRenderable.indexBuffer);
-			if ( currentRenderable.vertexBuffer )
-				gl.deleteBuffer(currentRenderable.vertexBuffer);
-
-			currentRenderable.indexBuffer = null;
-			currentRenderable.vertexBuffer = null;
-
-			// Remove from array
-			this.renderables.splice(i, 1);
-			break;
-		}
+		this.geometry = null;
 	}
+}
+
+/**************************************************************************************************************/
+
+/**
+ * Dispose the renderable
+ */
+Renderable.prototype.dispose = function(renderContext)
+{
+	var gl = renderContext.gl;
+	if (this.vertexBuffer) gl.deleteBuffer( this.vertexBuffer );
+	if (this.indexBuffer) gl.deleteBuffer( this.indexBuffer );
+}
+
+
+/**************************************************************************************************************/
+
+/**
+	Bucket constructor for PolygonRenderer
+ */
+var Bucket = function(layer,style)
+{
+	this.layer = layer;
+	this.style = new FeatureStyle(style);
+	this.renderer = null;
+}
+
+/**************************************************************************************************************/
+
+/**
+	Create a renderable for this bucket
+ */
+Bucket.prototype.createRenderable = function()
+{
+	return new Renderable(this);
+}
+
+/**************************************************************************************************************/
+
+/**
+	Check if a bucket is compatible
+ */
+Bucket.prototype.isCompatible = function(style)
+{
+	return false;
 }
 
 /**************************************************************************************************************/
@@ -202,9 +234,9 @@ PolygonRenderer.prototype.removeGeometry = function(geometry,style){
 /**
  * 	Render all the polygons
  */
-PolygonRenderer.prototype.render = function()
+PolygonRenderer.prototype.render = function(renderables, start, end)
 {
-	var renderContext = this.renderContext;
+	var renderContext = this.globe.renderContext;
 	var gl = renderContext.gl;
 	
 	gl.enable(gl.BLEND);
@@ -222,22 +254,16 @@ PolygonRenderer.prototype.render = function()
 	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, viewProjMatrix);
 	
 	var modelViewProjMatrix = mat4.create();
-
-	
-	for ( var n = 0; n < this.renderables.length; n++ )
+	for ( var n = start; n < end; n++ )
 	{
-		var renderable = this.renderables[n];
-		
-		if ( !renderable.layer._visible
-			|| renderable.layer._opacity <= 0.0 )
-			continue;
-			
+		var renderable = renderables[n];
+				
 		mat4.multiply(viewProjMatrix,renderable.matrix,modelViewProjMatrix);
 		gl.uniformMatrix4fv(this.program.uniforms["mvp"], false, modelViewProjMatrix);
 			
-		var style = renderable.style;
+		var style = renderable.bucket.style;
 		gl.uniform4f(this.program.uniforms["u_color"], style.fillColor[0], style.fillColor[1], style.fillColor[2], 
-				style.fillColor[3] * renderable.layer._opacity);  // use fillColor
+				style.fillColor[3] * renderable.bucket.layer._opacity);  // use fillColor
 				
 		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
 		gl.vertexAttribPointer(this.program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
@@ -247,7 +273,7 @@ PolygonRenderer.prototype.render = function()
 		gl.drawElements( gl.TRIANGLES, renderable.numTriIndices, gl.UNSIGNED_SHORT, 0);
 		if ( renderable.numLineIndices > 0 )
 		{
-			gl.uniform4f(this.program.uniforms["u_color"], style.strokeColor[0], style.strokeColor[1], style.strokeColor[2], style.strokeColor[3] * renderable.layer._opacity);  
+			gl.uniform4f(this.program.uniforms["u_color"], style.strokeColor[0], style.strokeColor[1], style.strokeColor[2], style.strokeColor[3] * renderable.bucket.layer._opacity);  
 			gl.drawElements( gl.LINES, renderable.numLineIndices, gl.UNSIGNED_SHORT, renderable.numTriIndices * 2);
 		}
 	}
@@ -263,21 +289,24 @@ PolygonRenderer.prototype.render = function()
 /**
 	Check if renderer is applicable
  */
-/*PolygonRenderer.prototype.canApply = function(type,tile)
+PolygonRenderer.prototype.canApply = function(type,style)
 {
 	return (type == "Polygon") && style.fill;
-}*/
+}
+
+/**************************************************************************************************************/
+
+/**
+	Create a bucket
+ */
+PolygonRenderer.prototype.createBucket = function(layer,style)
+{
+	return new Bucket(layer,style);
+}
 
 /**************************************************************************************************************/
 
 // Register the renderer
-//VectorRendererManager.push( function(globe) { return new PolygonRenderer(globe); } );
-
-/*VectorRendererManager.registerRenderer({
-	creator: function(globe) { 
-			return new PolygonRenderer(globe.tileManager);
-		},
-	canApply: function(type,style) {return (type == "Polygon") && style.fill; }
-});*/
+VectorRendererManager.factory.push( function(globe) { return new PolygonRenderer(globe); } );
 
 });

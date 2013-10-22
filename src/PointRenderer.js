@@ -240,7 +240,7 @@ Renderable.prototype.dispose = function(renderContext)
 /**
 	Bucket constructor for PointRenderer
  */
- var Bucket = function(layer,style)
+var Bucket = function(layer,style)
 {
 	this.layer = layer;
 	this.style = new FeatureStyle(style);
@@ -265,7 +265,9 @@ Bucket.prototype.createRenderable = function()
  */
 Bucket.prototype.isCompatible = function(style)
 {
-	return this.style.isEqualForPoint(style)
+	return this.style.iconUrl == style.iconUrl
+		&& this.style.icon == style.icon
+		&& this.style.label == style.label;
 }
 
 /**************************************************************************************************************/
@@ -277,7 +279,6 @@ PointRenderer.prototype.createBucket = function(layer,style)
 {
 	// Create a bucket
 	var bucket = new Bucket(layer,style);
-	bucket.renderer = this;
 	
 	// Initialize bucket : create the texture	
 	if ( style['label'] )

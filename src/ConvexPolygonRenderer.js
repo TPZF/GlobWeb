@@ -28,6 +28,7 @@ define(['./Utils','./VectorRenderer','./Program','./CoordinateSystem','./Feature
 var ConvexPolygonRenderer = function(globe)
 {
 	VectorRenderer.prototype.constructor.call( this, globe );
+	this.maxTilePerGeometry = 2;
 	
 	// Store object for rendering
 	this.renderContext = globe.tileManager.renderContext;
@@ -121,8 +122,6 @@ var ConvexPolygonRenderer = function(globe)
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
 	this.tcoordBuffer.itemSize = 2;
 	this.tcoordBuffer.numItems = 5;
-
-	this.tiledGeometries = [];
 }
 
 Utils.inherits(VectorRenderer,ConvexPolygonRenderer);

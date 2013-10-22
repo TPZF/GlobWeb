@@ -59,7 +59,7 @@ VectorRenderer.prototype.findBucket = function(layer,style)
 /**************************************************************************************************************/
 
 /**
- 	Generate the level zero for a tle
+ 	Generate the level zero for a tile
  */
 VectorRenderer.prototype.generateLevelZero = function(tile)
 {
@@ -103,7 +103,7 @@ VectorRenderer.prototype.addGeometry = function(layer, geometry, style)
 {
 	var bucket = this.getOrCreateBucket(layer, geometry, style);
 	
-	var tiles = this.tileManager.getOverlappedLevelZeroTiles(geometry);
+	var tiles = this.maxTilePerGeometry > 0 ? this.tileManager.getOverlappedLevelZeroTiles(geometry) : null;
 	if ( tiles && tiles.length < this.maxTilePerGeometry )
 	{
 		// Add geometry to each tile in range
@@ -181,6 +181,7 @@ VectorRenderer.prototype.getOrCreateBucket = function(layer, geometry, style )
 	if (!bucket)
 	{
 		bucket = this.createBucket(layer,style);
+		bucket.renderer = this;
 		bucket.id = this.globe.vectorRendererManager.bucketId++;
 		this.buckets.push( bucket );
 	}

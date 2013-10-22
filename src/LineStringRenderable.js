@@ -236,7 +236,7 @@ var Bucket = function(layer,style)
 {
 	this.layer = layer;
 	this.style = new FeatureStyle(style);
-	this.geometries = [];
+	this.renderer = null;
 }
 
 /**************************************************************************************************************/
@@ -256,7 +256,11 @@ Bucket.prototype.createRenderable = function()
  */
 Bucket.prototype.isCompatible = function(style)
 {
-	return this.style.isEqualForLine(style);
+	return this.style.strokeColor[0] == style.strokeColor[0]
+		&& this.style.strokeColor[1] == style.strokeColor[1]
+		&& this.style.strokeColor[2] == style.strokeColor[2]
+		&& this.style.strokeColor[3] == style.strokeColor[3]
+		&& this.style.strokeWidth == style.strokeWidth;
 }
 
 /**************************************************************************************************************/
@@ -267,36 +271,13 @@ Bucket.prototype.isCompatible = function(style)
 LineStringRenderer.prototype.createBucket = function( layer, style )
 {
 	// Create a bucket
-	var bucket = new Bucket(layer,style);
-	bucket.renderer = this;
-	return bucket;
+	return new Bucket(layer,style);
 }
 
 /**************************************************************************************************************/
 
 // Register the renderer
 VectorRendererManager.factory.push( function(globe) { return new LineStringRenderer(globe); } );
-
-// Register the renderer
-/*VectorRendererManager.registerRenderer({
-					creator: function(globe) { 
-						var lineStringRenderer = new TiledVectorRenderer(globe.tileManager);
-						lineStringRenderer.id = "lineString";
-						lineStringRenderer.styleEquals = function(s1,s2) {
-							if (!s1.isEqualForLine)
-								console.log(s1);
-							return s1.isEqualForLine(s2);
-						};
-						lineStringRenderer.renderableConstuctor = LineStringRenderable;
-						return lineStringRenderer;
-					},
-					canApply: function(type,style) {
-						// LineStringRenderer supports line string (multi or not) and polygon (or multi) when not filled
-
-						return type == "LineString" || type == "MultiLineString"
-							|| (!style.fill && (type == "Polygon" || type == "MultiPolygon")); 
-					} 
-				});*/
 				
 return LineStringRenderable;
 

@@ -38,7 +38,6 @@ var RendererTileData = function(manager)
 {
 	this.manager = manager;
 	this.renderables = [];
-	this.frameNumber = -1;
 }
 
 /**************************************************************************************************************/
@@ -71,7 +70,7 @@ RendererTileData.prototype.traverse = function(tile,isLeaf)
 	for ( var i = 0; i < this.renderables.length; i++ ) 
 	{
 		var bucket = this.renderables[i].bucket;
-		if ( bucket.layer._visible )
+		if ( bucket.layer._visible && bucket.layer._opacity > 0 )
 		{
 			if ( this.renderables[i].hasChildren 
 				&& !isLeaf )

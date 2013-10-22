@@ -33,7 +33,7 @@ var VectorRendererManager = function(globe)
 		this.renderers.push( VectorRendererManager.factory[i](globe) );
 	}
 	
-	// The array of renderables
+	// The array of renderables used during rendering
 	this.renderables = [];
 	
 	// To uniquely identify buckets created by the renderers
