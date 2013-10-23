@@ -267,6 +267,7 @@ Renderable.prototype.remove = function(geometry)
 		this.bufferDirty = true;
 		this.triBufferDirty = true;
 	}
+	return this.vertices.length;
 }
 
 /**************************************************************************************************************/
@@ -314,8 +315,7 @@ ConvexPolygonRenderer.prototype.createProgram = function(fillShader)
     program.id = this.programs.length;
     this.programs.push({ 
     	fillShader: fillShader,
-    	program: program,
-    	renderables: []
+    	program: program
 	});
 	return program;
 }
@@ -402,7 +402,6 @@ ConvexPolygonRenderer.prototype.createBucket = function(layer,style)
 
 	// Create a bucket
 	var bucket = new Bucket(layer,style);
-	bucket.renderer = this;
 
 	// Create texture
 	var self = this;
@@ -464,6 +463,7 @@ ConvexPolygonRenderer.prototype.render = function(renderables,start,end)
 	
 	// Setup states
 	gl.disable(gl.DEPTH_TEST);
+	gl.depthMask(false);
 	gl.enable(gl.BLEND);
 	gl.blendEquation(gl.FUNC_ADD);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -504,40 +504,24 @@ ConvexPolygonRenderer.prototype.render = function(renderables,start,end)
 		}
 
 		gl.drawElements( gl.LINES, renderable.lineIndices.length, gl.UNSIGNED_SHORT, 0);
-		
-		// Construct renderables for second pass with filled polygons
+
 		if ( bucket.polygonProgram )
-			this.programs[ bucket.polygonProgram.id ].renderables.push(renderable);
-		
-		// Remove current renderables from bucket
-		//bucket.currentRenderables.length = 0;
-	}
-	
-	// Second pass for filled polygons
-	for ( var i=0; i<this.programs.length; i++ )
-	{
-		if ( this.programs[i].renderables.length == 0 )
-			continue;
-
-		var currentPolygonProgram = this.programs[i].program;
-		currentPolygonProgram.apply();
-		gl.uniformMatrix4fv(currentPolygonProgram.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
-
-
-		gl.uniform1i(currentPolygonProgram.uniforms["texture"], 0);
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.tcoordBuffer);
-		gl.vertexAttribPointer(currentPolygonProgram.attributes['tcoord'], 2, gl.FLOAT, false, 0, 0);
-
-		for ( var j=0; j<this.programs[i].renderables.length; j++ )
 		{
-			renderable = this.programs[i].renderables[j];
-
-			if ( this.programs[i].fillShader.updateUniforms )
-				this.programs[i].fillShader.updateUniforms(gl, renderable.bucket, currentPolygonProgram);
-
+			var program = bucket.polygonProgram;
+			
+			program.apply();
+			gl.uniformMatrix4fv(program.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
+			
+			gl.uniform1i(program.uniforms["texture"], 0);
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.tcoordBuffer);
+			gl.vertexAttribPointer(program.attributes['tcoord'], 2, gl.FLOAT, false, 0, 0);
+			
 			gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
-			gl.vertexAttribPointer(currentPolygonProgram.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
-
+			gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
+			
+			if ( bucket.style.fillShader && bucket.style.fillShader.updateUniforms )
+				bucket.style.fillShader.updateUniforms(gl, renderable.bucket, program);
+				
 			if ( !renderable.triangleIndexBuffer )
 			{
 				renderable.triangleIndexBuffer = gl.createBuffer();
@@ -553,24 +537,23 @@ ConvexPolygonRenderer.prototype.render = function(renderables,start,end)
 			if ( renderable.bucket.texture ) 
 			{
 				gl.bindTexture(gl.TEXTURE_2D, renderable.bucket.texture); // use texture of renderable
-				gl.uniform4f(currentPolygonProgram.uniforms["color"], 1.0, 1.0, 1.0, color[3] * renderable.bucket.layer.opacity());  // use whiteColor
+				gl.uniform4f(program.uniforms["color"], 1.0, 1.0, 1.0, color[3] * bucket.layer.opacity());  // use whiteColor
 			}
 			else
 			{
 				gl.bindTexture(gl.TEXTURE_2D, this.whiteTexture);  // use white texture
 				color = renderable.bucket.style.fillColor;
-				gl.uniform4f(currentPolygonProgram.uniforms["color"], color[0], color[1], color[2], color[3] * renderable.bucket.layer.opacity() );
+				gl.uniform4f(program.uniforms["color"], color[0], color[1], color[2], color[3] * bucket.layer.opacity() );
 			}
 			
 			gl.drawElements( gl.TRIANGLES, renderable.triangleIndices.length, gl.UNSIGNED_SHORT, 0);
-
+			
+			this.basicProgram.apply();
 		}
-		
-		// Remove all renderables for current program
-		this.programs[i].renderables.length = 0;
-	}	
+	}
 
     gl.enable(gl.DEPTH_TEST);
+	gl.depthMask(true);
     gl.disable(gl.BLEND);
 }
 

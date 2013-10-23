@@ -177,7 +177,7 @@ VectorRendererManager.prototype.render = function()
 		var buckets = this.renderers[j].buckets;
 		for ( var i = 0; i < buckets.length; i++ )
 		{
-			if ( buckets[i].mainRenderable )
+			if ( buckets[i].layer._visible && buckets[i].mainRenderable )
 			{
 				this.renderables.push( buckets[i].mainRenderable );
 			}

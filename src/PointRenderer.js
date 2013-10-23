@@ -219,9 +219,10 @@ Renderable.prototype.remove = function(geometry)
 		if ( this.points[j].geometry == geometry )
 		{
 			this.points.splice( j, 1 );
-			return;
+			return this.points.length;
 		}
 	}
+	return this.points.length;
 }
 
 /**************************************************************************************************************/

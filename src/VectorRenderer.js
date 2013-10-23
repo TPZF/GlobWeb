@@ -138,15 +138,14 @@ VectorRenderer.prototype.addGeometry = function(layer, geometry, style)
  */
 VectorRenderer.prototype.removeGeometry = function(geometry)
 {
-	var range = geometry._tileRange;
+	var tiles = geometry._tiles;
 
-	if ( range )
+	if ( tiles )
 	{
 		// Remove from tile
-		for ( var i = 0; i < range.length; i++ )
+		for ( var i = 0; i < tiles.length; i++ )
 		{
-			var tileIndex = range[i];
-			this.removeGeometryFromTile(geometry, this.tileManager.level0Tiles[tileIndex]);
+			this.removeGeometryFromTile(geometry, tiles[i]);
 		}
 		// Remove from geometry arrays
 		this.levelZeroTiledGeometries.splice( this.levelZeroTiledGeometries.indexOf(geometry), 1 );
@@ -158,8 +157,8 @@ VectorRenderer.prototype.removeGeometry = function(geometry)
 			var bucket = this.buckets[n];
 			if ( bucket.mainRenderable )
 			{
-				bucket.mainRenderable.remove(geometry);
-				if ( bucket.mainRenderable.vertices.length == 0 )
+				var numGeometries = bucket.mainRenderable.remove(geometry);
+				if ( numGeometries == 0 )
 				{
 					bucket.mainRenderable.dispose(this.renderContext);
 					bucket.mainRenderable = null;
@@ -236,9 +235,18 @@ VectorRenderer.prototype.removeGeometryFromTile = function(geometry,tile)
 	var tileData = tile.extension.renderer;
 	if (tileData)
 	{
-		for ( var i=0; i < tileData.renderables.length; i++ )
+		var i = 0;
+		while ( i < tileData.renderables.length )
 		{
-			tileData.renderables[i].remove(geometry);
+			var numGeometries = tileData.renderables[i].remove(geometry);
+			if ( numGeometries == 0 )
+			{
+				tileData.renderables.splice(i,1);
+			}
+			else
+			{
+				i++;
+			}
 		}
 	}
 }

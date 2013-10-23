@@ -70,12 +70,6 @@ var OpenSearchLayer = function(options){
 		var xhr = new XMLHttpRequest();
 		this.freeRequests.push( xhr );
 	}
-	
-	// For rendering
-	this.pointBucket = null;
-	this.polygonBucket = null;
-	this.polygonRenderer = null;
-	this.pointRenderer = null;
 }
 
 /**************************************************************************************************************/
@@ -92,9 +86,7 @@ Utils.inherits( BaseLayer, OpenSearchLayer );
 OpenSearchLayer.prototype._attach = function( g )
 {
 	BaseLayer.prototype._attach.call( this, g );
-
 	this.extId += this.id;
-	
 	g.tileManager.addPostRenderer(this);
 }
 
@@ -105,13 +97,7 @@ OpenSearchLayer.prototype._attach = function( g )
  */
 OpenSearchLayer.prototype._detach = function()
 {
-	this.globe.tileManager.removePostRenderer(this);
-	this.pointRenderer = null;
-	this.pointBucket = null;
-
-	this.polygonRenderer = null;
-	this.polygonBucket = null;
-	
+	this.globe.tileManager.removePostRenderer(this);	
 	BaseLayer.prototype._detach.call(this);
 }
 
@@ -363,8 +349,9 @@ OpenSearchLayer.prototype.modifyFeatureStyle = function( feature, style )
 	{	
 		for ( var i = 0; i < featureData.tiles.length; i++ )
 		{
-			this.globe.rendererManager.removeGeometryFromTile(feature.geometry,tile);
-			this.globe.rendererManager.addGeometryToTile(this,feature.geometry,style,tile);
+			var tile = featureData.tiles[i];
+			this.globe.vectorRendererManager.removeGeometryFromTile(feature.geometry,tile);
+			this.globe.vectorRendererManager.addGeometryToTile(this,feature.geometry,style,tile);
 		}
 		
 	}
@@ -415,7 +402,10 @@ var OSData = function(layer,tile)
  */
 OSData.prototype.traverse = function( tile )
 {
-	// Check if the tile need to be loaded
+	if (!this.layer._visible)
+		return;
+
+		// Check if the tile need to be loaded
 	if ( this.state != OpenSearchLayer.TileState.LOADED )
 	{
 		this.layer.tilesToLoad.push( this );
@@ -465,6 +455,7 @@ OpenSearchLayer.prototype.buildUrl = function( tile )
 	{
 		url += "&coordSystem=GALACTIC";
 	}
+	url += "&media=json";
 	return url;
 }
 

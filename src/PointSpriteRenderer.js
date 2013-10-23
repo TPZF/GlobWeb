@@ -120,6 +120,7 @@ Renderable.prototype.remove = function(geometry)
 			}
 		}
 	}
+	return this.vertices.length;
 }
 
 /**************************************************************************************************************/
@@ -173,9 +174,9 @@ PointSpriteRenderer.prototype._buildTextureFromImage = function(bucket,image)
 /**
 	Check if renderer is applicable
  */
-PointSpriteRenderer.prototype.canApply = function(type,tile)
+PointSpriteRenderer.prototype.canApply = function(type,style)
 {
-	return type == "Point"; 
+	return type == "Point"&& !style.label; 
 }
 
 /**************************************************************************************************************/
@@ -210,7 +211,6 @@ Bucket.prototype.isCompatible = function(style)
 {
 	if ( this.style.iconUrl == style.iconUrl
 		&& this.style.icon == style.icon
-		&& this.style.label == style.label
 		&& this.style.fillColor[0] == style.fillColor[0]
 		&& this.style.fillColor[1] == style.fillColor[1]
 		&& this.style.fillColor[2] == style.fillColor[2] )
@@ -236,12 +236,7 @@ PointSpriteRenderer.prototype.createBucket = function(layer,style)
 	bucket.renderer = this;
 		
 	// Initialize bucket : create the texture	
-	if ( style['label'] )
-	{
-		var imageData = Text.generateImageData(style['label'], style['textColor']);
-		this._buildTextureFromImage(bucket,imageData);
-	}
-	else if ( style['iconUrl'] )
+	if ( style['iconUrl'] )
 	{
 		var image = new Image();
 		var self = this;
