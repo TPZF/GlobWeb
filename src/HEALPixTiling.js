@@ -62,7 +62,6 @@ HEALPixTiling.prototype.generateLevelZeroTiles = function( config, tilePool )
 		var tile = new HEALPixTile(this.order, i, face);
 		tile.config = config;
 		level0Tiles.push( tile );
-		tile.generate(tilePool);
 	}
 
 	return level0Tiles;

@@ -649,15 +649,17 @@ TileManager.prototype.render = function()
 	{
 		this.imageryProvider.generateLevel0Textures( this.level0Tiles, this.tilePool );
 		
-		for (var i=0; i < this.postRenderers.length; i++ )
+		for (var n = 0; n < this.level0Tiles.length; n++ )
 		{
-			var renderer = this.postRenderers[i];
-			if ( renderer.generate )
+			var tile = this.level0Tiles[n];
+			// Generate the tile
+			tile.generate( this.tilePool );
+
+			// Now post renderers can generate their data on the new tile
+			for (var i = 0; i < this.postRenderers.length; i++ )
 			{
-				for ( var j=0; j<this.level0Tiles.length; j++ )
-				{
-					renderer.generate(this.level0Tiles[j]);
-				}
+				if ( this.postRenderers[i].generate )
+					this.postRenderers[i].generate(tile);
 			}
 		}
 
