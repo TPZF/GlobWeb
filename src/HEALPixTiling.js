@@ -75,58 +75,14 @@ HEALPixTiling.prototype.generateLevelZeroTiles = function( config, tilePool )
  */
 HEALPixTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 {	
-	// var i = Math.floor( (lon + 180) * this.level0NumTilesX / 360 );
- 	// var j = Math.floor( (lat + 90) * this.level0NumTilesY / 180 );
-	// return j * this.level0NumTilesX + i;
-	return 0;
-
-}
-
-/**************************************************************************************************************/
-
-/**
- *	Get range set of tile indices that overlap with geometry
- */
-HEALPixTiling.prototype.getTileRange = function(geometry, level)
-{
-	var rings = [];
-	if ( geometry['type'] == 'MultiPolygon' )
+	if ( this.coordSystem != "EQ" )
 	{
-		for ( var i=0; i<geometry['coordinates'].length; i++ )
-		{
-			rings.push( geometry['coordinates'][i][0] );
-		}
-	}
-	else
-	{
-		rings.push( geometry['coordinates'][0] );
+		var geo = CoordinateSystem.convert( [lon, lat], 'EQ', this.coordSystem );
+		lon = geo[0];
+		lat = geo[1];
 	}
 
-	var range = [];
-	for ( var r=0; r<rings.length; r++ )
-	{
-		var coords = rings[r];
-		var numPoints = coords.length;
-		for ( var i = 0; i < numPoints; i++ ) 
-		{
-
-			var lon = coords[i][0];
-			var lat = coords[i][1];
-			if ( this.coordSystem != "EQ" )
-			{
-				var geo = CoordinateSystem.convert( [lon, lat], 'EQ', this.coordSystem );
-				lon = geo[0];
-				lat = geo[1];
-			}
-
-			var tileIndex = HEALPixBase.lonLat2pix( this.order + level, lon, lat );
-			if ( range.indexOf(tileIndex) == -1 )
-			{
-				range.push(tileIndex);
-			}
-		}
-	}
-	return range;
+	return HEALPixBase.lonLat2pix( this.order, lon, lat );
 }
 
 /**************************************************************************************************************/

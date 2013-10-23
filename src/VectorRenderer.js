@@ -66,7 +66,17 @@ VectorRenderer.prototype.generateLevelZero = function(tile)
 	for ( var i=0; i < this.levelZeroTiledGeometries.length; i++ )
 	{
 		var geometry = this.levelZeroTiledGeometries[i];
-		if ( geometry._tiles.indexOf( tile ) >= 0 )
+		
+		// Check that the geometry is on this tile
+		var isFound = false;
+		for ( var n = 0; n < geometry._tileIndices.length && !isFound; n++ )
+		{
+			var t = this.tileManager.level0Tiles[ geometry._tileIndices[n] ];
+			isFound = ( t == tile );
+		}
+		
+		// Found the tile, so add it
+		if ( isFound )
 		{
 			this._addGeometryToTile(geometry._bucket, geometry, tile);
 		}
@@ -103,13 +113,13 @@ VectorRenderer.prototype.addGeometry = function(layer, geometry, style)
 {
 	var bucket = this.getOrCreateBucket(layer, geometry, style);
 	
-	var tiles = this.maxTilePerGeometry > 0 ? this.tileManager.getOverlappedLevelZeroTiles(geometry) : null;
-	if ( tiles && tiles.length < this.maxTilePerGeometry )
+	var tileIndices = this.maxTilePerGeometry > 0 ? this.tileManager.getOverlappedLevelZeroTiles(geometry) : null;
+	if ( tileIndices && tileIndices.length < this.maxTilePerGeometry )
 	{
 		// Add geometry to each tile in range
-		for ( var i=0; i < tiles.length; i++ )
+		for ( var i=0; i < tileIndices.length; i++ )
 		{
-			var tile = tiles[i];
+			var tile = this.tileManager.level0Tiles[ tileIndices[i] ];
 			if ( tile.state == Tile.State.LOADED )
 			{
 				this._recursiveAddGeometryToTile(bucket, geometry, tile);
@@ -117,7 +127,7 @@ VectorRenderer.prototype.addGeometry = function(layer, geometry, style)
 		}
 		
 		geometry._bucket = bucket;
-		geometry._tiles = tiles;
+		geometry._tileIndices = tileIndices;
 		this.levelZeroTiledGeometries.push(geometry);
 	}
 	else
@@ -138,14 +148,15 @@ VectorRenderer.prototype.addGeometry = function(layer, geometry, style)
  */
 VectorRenderer.prototype.removeGeometry = function(geometry)
 {
-	var tiles = geometry._tiles;
+	var tileIndices = geometry._tileIndices;
 
-	if ( tiles )
+	if ( tileIndices )
 	{
 		// Remove from tile
-		for ( var i = 0; i < tiles.length; i++ )
+		for ( var i = 0; i < tileIndices.length; i++ )
 		{
-			this.removeGeometryFromTile(geometry, tiles[i]);
+			var tile = this.tileManager.level0Tiles[ tileIndices[i] ];
+			this.removeGeometryFromTile(geometry, tile);
 		}
 		// Remove from geometry arrays
 		this.levelZeroTiledGeometries.splice( this.levelZeroTiledGeometries.indexOf(geometry), 1 );

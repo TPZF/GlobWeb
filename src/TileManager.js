@@ -199,18 +199,44 @@ TileManager.prototype.setImageryProvider = function(ip)
  */
 TileManager.prototype.getOverlappedLevelZeroTiles = function( geometry )
 {	
-	var range = this.imageryProvider.tiling.getTileRange(geometry, 0);
-	if ( range && range.length > 0 )
+	var coords;
+	switch ( geometry.type )
 	{
-		var tiles = [];
-		for ( var i = 0; i < range.length; i++ )
+	case "Point":
+		coords = [];
+		coords.push( geometry.coordinates );
+		break;
+	case "LineString":
+		coords = geometry.coordinates;
+		break;
+	case "Polygon":
+		coords = geometry.coordinates[0];
+		break;
+	case "MultiPolygon":
+		coords = [];
+		for ( var n = 0; n < geometry.coordinates.length; n++ )
 		{
-			tiles.push( this.level0Tiles[ range[i] ] );
+			coords = coords.concat( geometry.coordinates[n][0] );
 		}
-		return tiles;
+		break;
 	}
 	
-	return null;
+	if ( !coords )
+		console.log("COOORDDS!!");
+		
+	var indexMap = {};
+	var tileIndices = [];
+	for ( var i = 0; i < coords.length; i++ )
+	{
+		var index = this.imageryProvider.tiling.lonlat2LevelZeroIndex( coords[i][0], coords[i][1] );
+		if ( !indexMap[index] )
+		{
+			indexMap[ index ] = true;
+			tileIndices.push( index );
+		}
+	}
+	
+	return tileIndices;
 }
 
 /**************************************************************************************************************/
