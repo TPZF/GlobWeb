@@ -238,15 +238,15 @@ AstroNavigation.prototype.moveTo = function(geoPos, duration, callback)
 /**************************************************************************************************************/
 
 /**
- *	Set up vector to north
+ *	Move up vector
  */
- AstroNavigation.prototype.setUpToNorth = function(duration)
+ AstroNavigation.prototype.moveUpTo = function(vec, duration)
  {
 	// Create a single animation to animate up
 	var startValue = [];
 	var endValue = [];
 	CoordinateSystem.from3DToGeo(this.up, startValue);
-	CoordinateSystem.from3DToGeo([0,0,1], endValue);
+	CoordinateSystem.from3DToGeo(vec, endValue);
 	var duration = duration || 1000;
 
 	var navigation = this;
