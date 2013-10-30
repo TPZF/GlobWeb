@@ -206,6 +206,7 @@ VectorRenderer.prototype.getOrCreateBucket = function(layer, geometry, style )
 VectorRenderer.prototype.addGeometryToTile = function(layer, geometry, style, tile)
 {
 	var bucket = this.getOrCreateBucket(layer, geometry, style);
+	geometry._bucket = bucket;
 	return this._addGeometryToTile( bucket, geometry, tile );
 }
 	
