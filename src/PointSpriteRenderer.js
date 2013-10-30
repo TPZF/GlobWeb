@@ -267,6 +267,7 @@ PointSpriteRenderer.prototype.render = function(renderables,start,end)
 	var gl = renderContext.gl;
 	
 	// Setup states
+	gl.disable(gl.DEPTH_TEST);
 	gl.enable(gl.BLEND);
 	gl.blendEquation(gl.FUNC_ADD);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -319,6 +320,7 @@ PointSpriteRenderer.prototype.render = function(renderables,start,end)
 		gl.drawArrays(gl.POINTS, 0, renderable.vertices.length/3);
 	}
 
+    gl.enable(gl.DEPTH_TEST);
     gl.disable(gl.BLEND);
 }
 
