@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Utils','./VectorRenderer','./Program','./CoordinateSystem','./FeatureStyle', './VectorRendererManager'],
-	function(Utils,VectorRenderer,Program,CoordinateSystem,FeatureStyle,VectorRendererManager) {
+define(['./Utils','./VectorRenderer','./Program','./CoordinateSystem','./FeatureStyle', './VectorRendererManager', './Triangulator', './glMatrix'],
+	function(Utils,VectorRenderer,Program,CoordinateSystem,FeatureStyle,VectorRendererManager, Triangulator) {
 
 /**************************************************************************************************************/
 
@@ -144,6 +144,7 @@ var Renderable = function(bucket)
 	this.triangleIndexBuffer = null;
 	this.bufferDirty = false;
 	this.triBufferDirty = false;
+	this.tcoords = [];
 }
 
 /**************************************************************************************************************/
@@ -182,6 +183,38 @@ Renderable.prototype.add = function(geometry)
 			triIndexCount: 0
 		};
 
+		// Compute texture coordinates if defined
+		if ( geometry._imageCoordinates )
+		{
+			data.tcoordsStart = this.tcoords.length;
+			data.tcoordsCount = 2 * numPoints;
+
+			// Initialize variables used for texture coordinates computation
+			var p0 = CoordinateSystem.fromGeoTo3D( geometry._imageCoordinates[0][0] ); // origin
+			var p1 = CoordinateSystem.fromGeoTo3D( geometry._imageCoordinates[0][1] );
+			var p3 = CoordinateSystem.fromGeoTo3D( geometry._imageCoordinates[0][3] ); 
+			var v01 = [];
+			vec3.subtract( p1, p0, v01 ); // U-axis
+			var v03 = [];
+			vec3.subtract( p3, p0, v03 ); // V-axis
+			var squaredU = vec3.length(v01) * vec3.length(v01);
+			var squaredV = vec3.length(v03) * vec3.length(v03);
+
+			for ( var i=0; i<numPoints; i++ )
+			{
+				var pt = CoordinateSystem.fromGeoTo3D( coords[i] );
+				var v0P = [];
+				vec3.subtract( pt, p0, v0P );
+
+				var uDotProduct = vec3.dot( v0P, v01 );
+				var vDotProduct = vec3.dot( v0P, v03 );
+				var u = uDotProduct / squaredU;
+				var v = vDotProduct / squaredV;
+				this.tcoords.push( u );
+				this.tcoords.push( v );		
+			}
+
+		}
 		
 		// Compute vertices and indices and store them in the buffers
 		var startIndex = this.vertices.length / 3;
@@ -198,10 +231,7 @@ Renderable.prototype.add = function(geometry)
 			data.triIndexStart = this.triangleIndices.length;
 			data.triIndexCount = 3 * (numPoints-2);
 			
-			for ( var i = 0; i < numPoints-2; i++ ) 
-			{
-				this.triangleIndices.push( startIndex, startIndex + i+1, startIndex + i+2 );
-			}
+			this.triangleIndices = Triangulator.process( coords );
 		}
 
 		if ( this.geometry2vb[ geometry.gid ] )
@@ -248,6 +278,10 @@ Renderable.prototype.remove = function(geometry)
 
 		this.lineIndices.splice( data.lineIndexStart, data.lineIndexCount );
 		this.triangleIndices.splice( data.triIndexStart, data.triIndexCount );
+		if ( data.tcoordsStart )
+		{
+			this.tcoords.splice( data.tcoordsStart, data.tcoordsCount );
+		}
 		
 		// Update render data for all other geometries
 		for ( var g in this.geometry2vb ) 
@@ -260,6 +294,10 @@ Renderable.prototype.remove = function(geometry)
 					d.vertexStart -= data.vertexCount;
 					d.lineIndexStart -= data.lineIndexCount;
 					d.triIndexStart -= data.triIndexCount;
+					if ( d.tcoordsStart )
+					{
+						d.tcoordsStart -= data.tcoordsCount;
+					}
 				}
 			}
 		}
@@ -288,6 +326,10 @@ Renderable.prototype.dispose = function(renderContext)
 	if ( this.triangleIndexBuffer ) 
 	{
 		renderContext.gl.deleteBuffer( this.triangleIndexBuffer );
+	}
+	if ( this.tcoordBuffer )
+	{
+		renderContext.gl.deleteBuffer( this.tcoordBuffer );
 	}
 }
 
@@ -513,7 +555,26 @@ ConvexPolygonRenderer.prototype.render = function(renderables,start,end)
 			gl.uniformMatrix4fv(program.uniforms["viewProjectionMatrix"], false, renderContext.modelViewMatrix);
 			
 			gl.uniform1i(program.uniforms["texture"], 0);
-			gl.bindBuffer(gl.ARRAY_BUFFER, this.tcoordBuffer);
+			if ( renderable.tcoords.length > 0 )
+			{
+				// Use tcoord buffer defined by _imageCoordinates
+				if ( !renderable.tcoordBuffer )
+				{
+					renderable.tcoordBuffer = gl.createBuffer();
+					gl.bindBuffer(gl.ARRAY_BUFFER, renderable.tcoordBuffer);
+								
+					gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(renderable.tcoords), gl.STATIC_DRAW);
+					renderable.tcoordBuffer.itemSize = 2;
+					renderable.tcoordBuffer.numItems = renderable.tcoords.length / 2;
+				}
+
+				gl.bindBuffer(gl.ARRAY_BUFFER, renderable.tcoordBuffer);
+			}
+			else
+			{
+				// Use default tcoord buffer
+				gl.bindBuffer(gl.ARRAY_BUFFER, this.tcoordBuffer);
+			}
 			gl.vertexAttribPointer(program.attributes['tcoord'], 2, gl.FLOAT, false, 0, 0);
 			
 			gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
