@@ -204,6 +204,7 @@ var FeatureStyle = function(style)
 	this.fill = false;
 	this.pointMaxSize = 40;
 	this.opacity = 1.;
+	this.zIndex = 0;
 	
 	if ( style )
 	{
@@ -287,42 +288,6 @@ FeatureStyle.fromColorToString = function(color)
    }
 
 	return hashColor;
-}
-
-/**************************************************************************************************************/
-
-/** 
- * Check if a style is equals to render poly
- */
-FeatureStyle.prototype.isEqualForPoly = function(style)
-{
-	return this.fill == style.fill;
-}
-
-/**************************************************************************************************************/
-
-/** 
- * Check if a style is equals to render poly
- */
-FeatureStyle.prototype.isEqualForLine = function(style)
-{
-	return this.strokeColor[0] == style.strokeColor[0]
-		&& this.strokeColor[1] == style.strokeColor[1]
-		&& this.strokeColor[2] == style.strokeColor[2]
-		&& this.strokeColor[3] == style.strokeColor[3]
-		&& this.strokeWidth == style.strokeWidth;
-}
-
-/**************************************************************************************************************/
-
-/** 
- * Check if a style is equals to render point
- */
-FeatureStyle.prototype.isEqualForPoint = function(style)
-{
-	return this.iconUrl == style.iconUrl
-		&& this.icon == style.icon
-		&& this.label == style.label;
 }
 
 /**************************************************************************************************************/

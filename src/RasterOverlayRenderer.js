@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define( ['./Program','./Tile','./RendererTileData', './ImageRequest'], function(Program,Tile,RendererTileData, ImageRequest) {
+define( ['./Program','./Tile','./ImageRequest'], function(Program, Tile, ImageRequest) {
 
 /**************************************************************************************************************/
 
@@ -72,8 +72,8 @@ var RasterOverlayRenderer = function(tileManager)
 			successCallback: function(){
 				if ( this.renderable )
 				{
-					if ( this.renderable.bucket.handleImage )
-						this.renderable.bucket.handleImage(this);
+					if ( this.renderable.layer.handleImage )
+						this.renderable.layer.handleImage(this);
 
 					this.renderable.texture = tileManager.tilePool.createGLTexture(this.image);
 					this.renderable.onRequestFinished(true);
@@ -114,7 +114,7 @@ var RasterOverlayRenderer = function(tileManager)
  */
 var RasterOverlayRenderable = function( layer )
 {
-	this.bucket = layer;
+	this.layer = layer;
 	this.texture = null;
 	this.request = null;
 	this.requestFinished = false;
@@ -129,8 +129,7 @@ RasterOverlayRenderable.prototype.onRequestStarted = function(request)
 {
 	this.request = request;
 	this.requestFinished = false;
-	// Bucket is in fact the layer!
-	var layer = this.bucket;
+	var layer = this.layer;
 	if ( layer._numRequests == 0 )
 	{
 		layer.globe.publish('startLoad',layer);
@@ -147,8 +146,7 @@ RasterOverlayRenderable.prototype.onRequestFinished = function(completed)
 {
 	this.request = null;
 	this.requestFinished = completed;
-	// Bucket is in fact the layer!
-	var layer = this.bucket;
+	var layer = this.layer;
 	layer._numRequests--;
 	if ( layer.globe && layer._numRequests == 0 )
 	{
@@ -225,6 +223,23 @@ RasterOverlayRenderer.prototype.removeOverlay = function( overlay )
 			}
 	);
 }
+
+var RendererTileData = function()
+{
+	this.renderables = [];
+};
+
+RendererTileData.prototype.getRenderable = function(layer)
+{
+	for ( var i=0; i < this.renderables.length; i++ )
+	{
+		if ( layer == this.renderables[i].layer )
+		{
+			return this.renderables[i];
+		}
+	}
+	return null;
+};
 
 /**************************************************************************************************************/
 
@@ -348,7 +363,7 @@ RasterOverlayRenderer.prototype.generate = function( tile )
 		var rl = data ?  data.renderables.length : 0;
 		for ( var i = 0; i < rl; i++ )
 		{
-			var overlay = data.renderables[i].bucket;		
+			var overlay = data.renderables[i].layer;		
 			if ( this.overlayIntersects( tile.geoBound, overlay ) )
 				this.addOverlayToTile(tile,overlay);
 		}
@@ -389,7 +404,7 @@ RasterOverlayRenderer.prototype.requestOverlayTextureForTile = function( tile, r
 			renderable.onRequestStarted(imageRequest);
 			imageRequest.renderable = renderable;
 			imageRequest.frameNumber = this.frameNumber;
-			imageRequest.send(renderable.bucket.getUrl(tile));
+			imageRequest.send(renderable.layer.getUrl(tile));
 		}
 	}
 	else
@@ -442,7 +457,7 @@ RasterOverlayRenderer.prototype.getProgram = function(customShader) {
 }
 
 var _sortRenderableByZIndex = function(a,b) {
-	return a.bucket.zIndex - b.bucket.zIndex;
+	return a.layer.zIndex - b.layer.zIndex;
 };
 
 /**************************************************************************************************************/
@@ -482,7 +497,7 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 				var renderable = tileData.renderables[j];
 				
 				// Skip not visible layer
-				if ( !renderable.bucket._visible )
+				if ( !renderable.layer._visible )
 					continue;
 				
 				var uvScale = 1.0;
@@ -519,7 +534,7 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 						uTrans += (prevTextureTile.parentIndex & 1) ? 0.5 : 0;
 						vTrans += (prevTextureTile.parentIndex & 2) ? 0.5 : 0;
 						var data = textureTile.extension.rasterOverlay;
-						renderable = data.getRenderable( renderable.bucket );
+						renderable = data.getRenderable( renderable.layer );
 					}
 				}
 				
@@ -540,9 +555,9 @@ RasterOverlayRenderer.prototype.render = function( tiles )
 						uvScale: uvScale,
 						uTrans: uTrans,
 						vTrans: vTrans,
-						opacity: renderable.bucket._opacity,
+						opacity: renderable.layer._opacity,
 						indexBuffer: isTileLoaded ? this.tileManager.tileIndexBuffer.getSolid() : this.tileManager.tileIndexBuffer.getSubSolid(tile.parentIndex),
-						customShader: renderable.bucket.customShader
+						customShader: renderable.layer.customShader
 
 					});
 				}

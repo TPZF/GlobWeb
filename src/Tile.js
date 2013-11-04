@@ -140,6 +140,17 @@ Tile.prototype.initFromParent = function(parent,i,j)
 	
 	// Compute the bounding box
 	this.radius = this.bbox.getRadius();
+	
+	// Init extension
+	for ( var x in parent.extension ) 
+	{
+		var e = parent.extension[x];
+		if ( e.initChild )
+		{
+			e.initChild(this,i,j);
+		}
+	}
+
 }
 
 /**************************************************************************************************************/

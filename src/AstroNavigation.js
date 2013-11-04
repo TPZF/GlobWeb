@@ -38,7 +38,7 @@ var AstroNavigation = function(globe, options)
 	this.globe = globe;
 	
 	// Default values for fov (in degrees)
-	this.minFov = (options && options.minFov) || 0.25;
+	this.minFov = (options && options.minFov) || 0.001;
 	this.maxFov = (options && options.maxFov) || 100;
 
 	// Initialize the navigation

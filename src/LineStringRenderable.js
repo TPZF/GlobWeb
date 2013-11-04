@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./Utils','./VectorRendererManager','./TiledVectorRenderable','./TiledVectorRenderer','./Numeric'],
-	function(Utils,VectorRendererManager,TiledVectorRenderable,TiledVectorRenderer,Numeric) {
+ define(['./Utils','./FeatureStyle','./VectorRendererManager','./TiledVectorRenderable','./TiledVectorRenderer','./Numeric'],
+	function(Utils,FeatureStyle,VectorRendererManager,TiledVectorRenderable,TiledVectorRenderer,Numeric) {
 
 /**************************************************************************************************************/
 
@@ -27,10 +27,10 @@
  *  @extends TiledVectorRenderable
  *	LineStringRenderable manages lineString data to be rendered on a tile.
  */
-var LineStringRenderable = function( bucket, gl )
+var LineStringRenderable = function( bucket )
 {
-	TiledVectorRenderable.prototype.constructor.call(this,bucket,gl);
-	this.glMode = gl.LINES;
+	TiledVectorRenderable.prototype.constructor.call(this,bucket);
+	this.glMode = this.gl.LINES;
 }
 
 /**************************************************************************************************************/
@@ -206,26 +206,78 @@ LineStringRenderable.prototype.buildVerticesAndIndices = function( tile, coords 
 
 /**************************************************************************************************************/
 
-// Register the renderer
-VectorRendererManager.registerRenderer({
-					creator: function(globe) { 
-						var lineStringRenderer = new TiledVectorRenderer(globe.tileManager);
-						lineStringRenderer.id = "lineString";
-						lineStringRenderer.styleEquals = function(s1,s2) {
-							if (!s1.isEqualForLine)
-								console.log(s1);
-							return s1.isEqualForLine(s2);
-						};
-						lineStringRenderer.renderableConstuctor = LineStringRenderable;
-						return lineStringRenderer;
-					},
-					canApply: function(type,style) {
-						// LineStringRenderer supports line string (multi or not) and polygon (or multi) when not filled
+/** @constructor
+ *  @extends TiledVectorRenderer
+ */
+var LineStringRenderer = function( globe )
+{
+	TiledVectorRenderer.prototype.constructor.call(this,globe);
+}
 
-						return type == "LineString" || type == "MultiLineString"
+// Inheritance
+Utils.inherits(TiledVectorRenderer,LineStringRenderer);
+
+/**************************************************************************************************************/
+
+/**
+	Check if renderer is applicable
+ */
+LineStringRenderer.prototype.canApply = function(type,style)
+{
+	return type == "LineString" || type == "MultiLineString"
 							|| (!style.fill && (type == "Polygon" || type == "MultiPolygon")); 
-					} 
-				});
+}
+/**************************************************************************************************************/
+
+/**
+	Bucket constructor for LineStringRenderer
+ */
+var Bucket = function(layer,style)
+{
+	this.layer = layer;
+	this.style = new FeatureStyle(style);
+	this.renderer = null;
+}
+
+/**************************************************************************************************************/
+
+/**
+	Create a renderable for this bucket
+ */
+Bucket.prototype.createRenderable = function()
+{
+	return new LineStringRenderable(this);
+}
+
+/**************************************************************************************************************/
+
+/**
+	Check if a bucket is compatible
+ */
+Bucket.prototype.isCompatible = function(style)
+{
+	return this.style.strokeColor[0] == style.strokeColor[0]
+		&& this.style.strokeColor[1] == style.strokeColor[1]
+		&& this.style.strokeColor[2] == style.strokeColor[2]
+		&& this.style.strokeColor[3] == style.strokeColor[3]
+		&& this.style.strokeWidth == style.strokeWidth;
+}
+
+/**************************************************************************************************************/
+
+/**
+	Get or create a bucket to store a feature with the given style
+ */
+LineStringRenderer.prototype.createBucket = function( layer, style )
+{
+	// Create a bucket
+	return new Bucket(layer,style);
+}
+
+/**************************************************************************************************************/
+
+// Register the renderer
+VectorRendererManager.factory.push( function(globe) { return new LineStringRenderer(globe); } );
 				
 return LineStringRenderable;
 

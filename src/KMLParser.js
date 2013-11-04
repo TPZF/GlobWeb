@@ -131,7 +131,7 @@ var KMLParser = (function()
 				{
 					var coord = coordNode[0].textContent.split(",");
 					return { type: "Point",
-							coordinates: [ coord[0], coord[1] ] };
+							coordinates: [ parseFloat(coord[0]), parseFloat(coord[1]) ] };
 				}
 			}
 			break;

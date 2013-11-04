@@ -139,13 +139,13 @@ VectorLayer.prototype._addFeatureToRenderers = function( feature )
 		var geoms = geometry["geometries"];
 		for ( var i = 0; i < geoms.length; i++ )
 		{
-			this.globe.vectorRendererManager.addGeometry( geoms[i], this, style );
+			this.globe.vectorRendererManager.addGeometry( this, geoms[i], style );
 		}
 	}
 	else
 	{
 		// Add geometry to renderers
-		this.globe.vectorRendererManager.addGeometry( geometry, this, style );
+		this.globe.vectorRendererManager.addGeometry( this, geometry, style );
 	}
 }
 
@@ -265,6 +265,8 @@ VectorLayer.prototype.modifyStyle = function(style)
 		this._addFeatureToRenderers( this.features[i] );
 	}
 }
+
+/**************************************************************************************************************/
 
 return VectorLayer;
 

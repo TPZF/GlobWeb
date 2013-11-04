@@ -66,8 +66,8 @@ GeoTiling.prototype.generateLevelZeroTiles = function(config)
  */
 GeoTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 {	
-	var i = Math.floor( (lon + 180) * this.level0NumTilesX / 360 );
- 	var j = Math.floor( (90 - lat) * this.level0NumTilesY / 180 );
+	var i = Math.floor( (lon + 180) * this.level0NumTilesX / 360 ) % this.level0NumTilesX;
+ 	var j = Math.floor( (90 - lat) * this.level0NumTilesY / 180 ) % this.level0NumTilesY;
 	return j * this.level0NumTilesX + i;
 
 }

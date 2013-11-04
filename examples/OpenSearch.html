@@ -21,6 +21,9 @@ require(['../src/AstroWeb'], function (AstroWeb)
 	
 	var osLayer = new AstroWeb.OpenSearchLayer( { serviceUrl: "/sitoolsDemo/sia", minOrder: 3} );
 	globe.addLayer( osLayer );
+	
+	var os2Layer = new AstroWeb.OpenSearchLayer( { serviceUrl: "/sitoolsDemo/ovo", minOrder: 7} );
+	globe.addLayer( os2Layer );
 
 	window.onkeypress = function(event)
 	{

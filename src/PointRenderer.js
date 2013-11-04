@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define( ['./CoordinateSystem','./VectorRendererManager','./FeatureStyle','./Program'], 
-	function(CoordinateSystem,VectorRendererManager,FeatureStyle,Program) {
+ define( ['./Utils','./VectorRenderer','./CoordinateSystem','./VectorRendererManager','./FeatureStyle','./Program'], 
+	function(Utils,VectorRenderer,CoordinateSystem,VectorRendererManager,FeatureStyle,Program) {
 
 /**************************************************************************************************************/
 
@@ -70,20 +70,18 @@ var Text = (function()
 	return { generateImageData: generateImageData };
 })();
 
-
 /**************************************************************************************************************/
 
 /** @constructor
 	POI Renderer constructor
  */
-var PointRenderer = function(tileManager)
+var PointRenderer = function(globe)
 {
+	VectorRenderer.prototype.constructor.call( this, globe );
+
 	// Store object for rendering
-	this.renderContext = tileManager.renderContext;
-	this.tileConfig = tileManager.tileConfig;
-	
-	// Bucket management for rendering : a bucket is a texture with its points
-	this.buckets = [];
+	this.renderContext = globe.tileManager.renderContext;
+	this.tileConfig = globe.tileManager.tileConfig;
 	
 	// For stats
 	this.numberOfRenderPoints = 0;
@@ -141,6 +139,8 @@ var PointRenderer = function(tileManager)
 	this.defaultTexture = null;
 }
 
+Utils.inherits(VectorRenderer,PointRenderer);
+
 /**************************************************************************************************************/
 
 /*
@@ -176,87 +176,111 @@ PointRenderer.prototype._buildTextureFromImage = function(bucket,image)
 
 /**************************************************************************************************************/
 
-/*
-	Add a point to the renderer
+/**
+ * Renderable constructor for Point
  */
-PointRenderer.prototype.addGeometry = function(geometry,layer,style)
+var Renderable = function(bucket) 
 {
-	if ( style )
-	{
-		var bucket = this.getOrCreateBucket( layer,style );
-		
-		var posGeo = geometry['coordinates'];
-		var pos3d = CoordinateSystem.fromGeoTo3D( posGeo );
-		var vertical = vec3.create();
-		vec3.normalize(pos3d, vertical);
-
-		// Hack : push away the point, only works for AstroWeb, sufficient for now
-		pos3d = [ 0.99 * pos3d[0], 0.99 * pos3d[1], 0.99 * pos3d[2] ];
-
-		var pointRenderData = { pos3d: pos3d,
-							vertical: vertical,
-							geometry: geometry,
-							color: style.fillColor };
-
-		bucket.points.push( pointRenderData );
-	}
+	this.bucket = bucket;
+	this.points = [];
 }
 
 /**************************************************************************************************************/
 
-/*
-	Remove a point from renderer
+/**
+ * Add a geometry to the renderbale
  */
-PointRenderer.prototype.removeGeometry = function(geometry,layer)
+Renderable.prototype.add = function(geometry)
 {
-	for ( var i = 0; i < this.buckets.length; i++ )
-	{
-		var bucket = this.buckets[i];
-		if ( bucket.layer == layer )
-		{
-			for ( var j = 0; j < bucket.points.length; j++ )
-			{
-				if ( bucket.points[j].geometry == geometry )
-				{
-					bucket.points.splice( j, 1 );
-					
-					if ( bucket.points.length == 0 )
-					{
-						this.buckets.splice( i, 1 );
-					}
-					return;
-				}
-			}
-		}
-	}
+	var posGeo = geometry['coordinates'];
+	var pos3d = CoordinateSystem.fromGeoTo3D( posGeo );
+	var vertical = vec3.create();
+	vec3.normalize(pos3d, vertical);
+
+	// Hack : push away the point, only works for AstroWeb, sufficient for now
+	pos3d = [ 0.99 * pos3d[0], 0.99 * pos3d[1], 0.99 * pos3d[2] ];
+
+	this.points.push({
+		pos3d: pos3d,
+		vertical: vertical,
+		geometry: geometry
+	});
 }
 
 /**************************************************************************************************************/
 
-/*
-	Get or create bucket to render a point
+/**
+ * Remove a geometry from the renderable
  */
-PointRenderer.prototype.getOrCreateBucket = function(layer,style)
+Renderable.prototype.remove = function(geometry)
 {
-	// Find an existing bucket for the given style, except if label is set, always create a new one
-	for ( var i = 0; i < this.buckets.length; i++ )
+	for ( var j = 0; j < this.points.length; j++ )
 	{
-		var bucket = this.buckets[i];
-		if ( bucket.layer == layer && bucket.style.isEqualForPoint(style) )
+		if ( this.points[j].geometry == geometry )
 		{
-			return bucket;
+			this.points.splice( j, 1 );
+			return this.points.length;
 		}
 	}
+	return this.points.length;
+}
+
+/**************************************************************************************************************/
+
+/**
+ * Dispose the renderable
+ */
+Renderable.prototype.dispose = function(renderContext)
+{
+	// Nothing to do
+}
 
 
+/**************************************************************************************************************/
+
+/**
+	Bucket constructor for PointRenderer
+ */
+var Bucket = function(layer,style)
+{
+	this.layer = layer;
+	this.style = new FeatureStyle(style);
+	this.renderer = null;
+	this.texture = null;
+}
+
+/**************************************************************************************************************/
+
+/**
+	Create a renderable for this bucket
+ */
+Bucket.prototype.createRenderable = function()
+{
+	return new Renderable(this);
+}
+
+/**************************************************************************************************************/
+
+/**
+	Check if a bucket is compatible
+ */
+Bucket.prototype.isCompatible = function(style)
+{
+	return this.style.iconUrl == style.iconUrl
+		&& this.style.icon == style.icon
+		&& this.style.label == style.label;
+}
+
+/**************************************************************************************************************/
+
+/**
+	Create bucket to render a point
+ */
+PointRenderer.prototype.createBucket = function(layer,style)
+{
 	// Create a bucket
-	var bucket = {
-		texture: null,
-		points: [],
-		style: style,
-		layer: layer
-	};
-		
+	var bucket = new Bucket(layer,style);
+	
 	// Initialize bucket : create the texture	
 	if ( style['label'] )
 	{
@@ -279,9 +303,7 @@ PointRenderer.prototype.getOrCreateBucket = function(layer,style)
 	{
 		this._buildDefaultTexture(bucket);
 	}
-	
-	this.buckets.push( bucket );
-	
+		
 	return bucket;
 }
 
@@ -290,13 +312,8 @@ PointRenderer.prototype.getOrCreateBucket = function(layer,style)
 /*
 	Render all the POIs
  */
-PointRenderer.prototype.render = function()
+PointRenderer.prototype.render = function(renderables,start,end)
 {
-	if (this.buckets.length == 0)
-	{
-		return;
-	}
-	
 	this.numberOfRenderPoints = 0;
 	
 	var renderContext = this.renderContext;
@@ -329,29 +346,33 @@ PointRenderer.prototype.render = function()
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
 	gl.vertexAttribPointer(this.program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
 
-	for ( var n = 0; n < this.buckets.length; n++ )
+	var currentBucket = null;
+	for ( var n = start; n < end; n++ )
 	{
-		var bucket = this.buckets[n];
+		var renderable = renderables[n];
+		var bucket = renderable.bucket;
 		
-		if ( bucket.texture == null || bucket.points.length == 0
-			|| !bucket.layer._visible || bucket.layer._opactiy <= 0.0 )
+		if ( renderable.points.length == 0 )
 			continue;
-		
-		// Bind point texture
-		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, bucket.texture);
-
-		// 2.0 * because normalized device coordinates goes from -1 to 1
-		var scale = [2.0 * bucket.textureWidth / renderContext.canvas.width,
-					 2.0 * bucket.textureHeight / renderContext.canvas.height];
-		gl.uniform2fv(this.program.uniforms["poiScale"], scale);
-		gl.uniform2fv(this.program.uniforms["tst"], [ 0.5 / (bucket.textureWidth), 0.5 / (bucket.textureHeight)  ]);
-
-		for (var i = 0; i < bucket.points.length; ++i)
+			
+		if ( bucket != currentBucket )
 		{
+			// Bind point texture
+			gl.activeTexture(gl.TEXTURE0);
+			gl.bindTexture(gl.TEXTURE_2D, bucket.texture);
+
+			// 2.0 * because normalized device coordinates goes from -1 to 1
+			var scale = [2.0 * bucket.textureWidth / renderContext.canvas.width,
+						 2.0 * bucket.textureHeight / renderContext.canvas.height];
+			gl.uniform2fv(this.program.uniforms["poiScale"], scale);
+			gl.uniform2fv(this.program.uniforms["tst"], [ 0.5 / (bucket.textureWidth), 0.5 / (bucket.textureHeight)  ]);
+		}
+		
+		for ( var i = 0; i < renderable.points.length; i++ )
+		{	
 			// Poi culling
-			var worldPoi = bucket.points[i].pos3d;
-			var poiVec = bucket.points[i].vertical;
+			var worldPoi = renderable.points[i].pos3d;
+			var poiVec = renderable.points[i].vertical;
 			var scale = bucket.textureHeight * ( pixelSizeVector[0] * worldPoi[0] + pixelSizeVector[1] * worldPoi[1] + pixelSizeVector[2] * worldPoi[2] + pixelSizeVector[3] );
 			scale *= this.tileConfig.cullSign;
 			var scaleInKm = (scale / CoordinateSystem.heightScale) * 0.001;
@@ -367,7 +388,8 @@ PointRenderer.prototype.render = function()
 				
 				gl.uniform3f(this.program.uniforms["poiPosition"], x, y, z);
 				gl.uniform1f(this.program.uniforms["alpha"], bucket.layer._opacity);
-				gl.uniform3f(this.program.uniforms["color"], bucket.points[i].color[0], bucket.points[i].color[1], bucket.points[i].color[2] );
+				var color = bucket.style.fillColor;
+				gl.uniform3f(this.program.uniforms["color"], color[0], color[1], color[2] );
 				
 				gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 				
@@ -382,11 +404,18 @@ PointRenderer.prototype.render = function()
 
 /**************************************************************************************************************/
 
+/**
+ * Check if renderer is applicable
+ */
+PointRenderer.prototype.canApply = function(type,style)
+{
+	return type == "Point";
+}
+
+/**************************************************************************************************************/
+
 // Register the renderer
-VectorRendererManager.registerRenderer({
-										creator: function(globe) { return new PointRenderer(globe.tileManager); },
-										canApply: function(type,style) {return type == "Point"; }
-									});
+VectorRendererManager.factory.push( function(globe) { return new PointRenderer(globe); } );
 									
 return PointRenderer;
 

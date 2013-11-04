@@ -25,9 +25,9 @@
 /** @constructor
  *	TiledVectorRenderable constructor
  */
-var TiledVectorRenderable = function( bucket, gl )
+var TiledVectorRenderable = function( bucket )
 {
-	this.gl = gl;
+	this.gl = bucket.renderer.tileManager.renderContext.gl;
 	this.bucket = bucket;
  	this.vertexBuffer = null;
  	this.indexBuffer = null;
@@ -39,8 +39,58 @@ var TiledVectorRenderable = function( bucket, gl )
 	this.childrenIndexBuffers = null;
 	this.childrenIndices = null;
 	this.glMode = -1;
+	this.tile = null;
+	this.hasChildren = false;
 }
 
+
+/**************************************************************************************************************/
+
+/**
+ *	Child renderable constructor.
+ * 	To be used when the tile is not loaded but still displayed
+ */
+ var ChildTiledVectorRenderable = function( parent, index )
+{
+	this.bucket = parent.bucket;
+	this.tile = parent.tile;
+	this.parent = parent;
+	this.index = index;
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Dispose graphics data 
+ */
+ChildTiledVectorRenderable.prototype.dispose = function()
+{
+	// Nothing to do
+}
+
+/**************************************************************************************************************/
+
+/**
+ * Initialize a child renderable
+ */
+TiledVectorRenderable.prototype.initChild = function(i,j)
+{				
+	return new ChildTiledVectorRenderable(this, j*2+i);
+}
+
+/**************************************************************************************************************/
+
+/**
+ * Generate a child renderable
+ */
+TiledVectorRenderable.prototype.generateChild = function(tile)
+{				
+	for ( var j = 0; j < this.geometryInfos.length; j++ )
+	{
+		this.bucket.renderer._addGeometryToTile( this.bucket, this.geometryInfos[j].geometry, tile );
+	}
+	this.hasChildren = true;
+}
 
 /**************************************************************************************************************/
 
@@ -61,7 +111,7 @@ TiledVectorRenderable.prototype.buildChildrenIndices = function( )
 /**
  *	Remove a geometry from the renderable
  */
-TiledVectorRenderable.prototype.removeGeometry = function( geometry )
+TiledVectorRenderable.prototype.remove = function( geometry )
 {
 	var fiIndex = -1;
 
@@ -173,8 +223,9 @@ TiledVectorRenderable.prototype._fixDateLine = function( tile, coords )
 /**
  *	Add a feature to the renderable
  */
-TiledVectorRenderable.prototype.addGeometry = function( geometry, tile )
-{		
+TiledVectorRenderable.prototype.add = function( geometry, tile )
+{
+	this.tile = tile;
 	var geometryInfo = { geometry: geometry,
 						startVertices: this.vertices.length,
 						startIndices: this.indices.length,
@@ -274,39 +325,39 @@ TiledVectorRenderable.prototype.dispose = function()
  *	Render the line string for a child tile
  *  Used for loading tiles
  */
-TiledVectorRenderable.prototype.renderChild = function(attributes, childIndex)
+ChildTiledVectorRenderable.prototype.render = function(attributes)
 {
-	if ( this.childrenIndices == null )
-		this.buildChildrenIndices();
+	var p = this.parent;
+	if ( p.childrenIndices == null )
+		p.buildChildrenIndices();
 	
-	var childIndices = this.childrenIndices[childIndex];
+	var childIndices = p.childrenIndices[this.index];
 	if ( childIndices.length == 0 )
 		return;
 		
-	var gl = this.gl;
+	var gl = p.gl;
 			
 	// Bind and update VertexBuffer
-	if ( this.vertexBuffer == null )
-		this.vertexBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-	if ( this.dirtyVB )
+	if ( p.vertexBuffer == null )
+		p.vertexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, p.vertexBuffer);
+	if ( p.dirtyVB )
 	{
-		gl.bufferData(gl.ARRAY_BUFFER,	new Float32Array(this.vertices), gl.STATIC_DRAW);
-		this.dirtyVB = false;
+		gl.bufferData(gl.ARRAY_BUFFER,	new Float32Array(p.vertices), gl.STATIC_DRAW);
+		p.dirtyVB = false;
 	}
 
 	// Warning : use quoted strings to access properties of the attributes, to work correclty in advanced mode with closure compiler
 	gl.vertexAttribPointer(attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
 
 	// Bind IndexBuffer
-	var ib = this.childrenIndexBuffers[childIndex];
+	var ib = p.childrenIndexBuffers[this.index];
 	if ( !ib ) 
 	{
-		var gl = this.gl;
 		ib = gl.createBuffer();
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
 		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(childIndices), gl.STATIC_DRAW);
-		this.childrenIndexBuffers[childIndex] = ib;
+		p.childrenIndexBuffers[this.index] = ib;
 	}
 	else
 	{
@@ -314,7 +365,7 @@ TiledVectorRenderable.prototype.renderChild = function(attributes, childIndex)
 	}
 
 		
-	gl.drawElements( this.glMode, childIndices.length, gl.UNSIGNED_SHORT, 0);
+	gl.drawElements( p.glMode, childIndices.length, gl.UNSIGNED_SHORT, 0);
 }
 
 /**************************************************************************************************************/

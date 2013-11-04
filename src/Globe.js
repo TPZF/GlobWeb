@@ -48,6 +48,8 @@ var Globe = function(options)
 	this.preRenderers = [];
 	this.nbCreatedLayers = 0;
 	
+	this.tileManager.addPostRenderer( this.vectorRendererManager );
+	
 	this.renderContext.renderer = this;
 	this.renderContext.requestFrame();
 }

@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define( ['./Program','./FeatureStyle','./Tile','./RendererTileData'], function(Program,FeatureStyle,Tile,RendererTileData) {
+ define( ['./Utils','./VectorRenderer','./Program','./FeatureStyle','./Tile'], function(Utils,VectorRenderer,Program,FeatureStyle,Tile) {
 
 /**************************************************************************************************************/
 
@@ -25,13 +25,9 @@
 /** @constructor
 	TiledVectorRenderer constructor
  */
-var TiledVectorRenderer = function(tileManager)
+var TiledVectorRenderer = function(globe)
 {
-	this.tileManager = tileManager;
-	
-	// Create a bucket with default style
-	// Bucket aggregate geometries that shares a common style
-	this.buckets = [  { style: new FeatureStyle(), geometries: [] } ];
+	VectorRenderer.prototype.constructor.call( this, globe );
 	
 	var vertexShader = "\
 	attribute vec3 vertex; \n\
@@ -59,238 +55,18 @@ var TiledVectorRenderer = function(tileManager)
 
     this.program = new Program(this.tileManager.renderContext);
     this.program.createFromSource(vertexShader, fragmentShader);
-	
-	// Customization for different renderer : lineString or polygon
-	this.styleEquals = null;
-	this.renderableConstuctor = null;
-	this.id = "empty"
-	
+		
 	this.needsOffset = true;
 }
 
-/**************************************************************************************************************/
-
-/**
-	Get or create a bucket to store a feature with the given style
- */
-TiledVectorRenderer.prototype.getOrCreateBucket = function( layer, style )
-{
-	for ( var i = 0; i < this.buckets.length; i++ )
-	{
-		if ( this.buckets[i].layer == layer && this.styleEquals(style, this.buckets[i].style ) )
-		{
-			return this.buckets[i];
-		}
-	}
-	
-	var bucket = { layer: layer, style: style, geometries: [] };
-	this.buckets.push( bucket );
-	return bucket;
-}
-
-/**************************************************************************************************************/
-
-/**
-	Remove a geometry from the tile
- */
-TiledVectorRenderer.prototype.removeGeometryFromTile = function( bucket, geometry, tile )
-{
-	var renderable;
-	if ( tile.extension[this.id] )
-	{
-		renderable = tile.extension[this.id].getRenderable( bucket );
-	}
-	if ( renderable && renderable.removeGeometry( geometry ) && tile.children )
-	{
-		// Remove the geometry from loaded children
-		for ( var i = 0; i < 4; i++ )
-		{
-			if ( tile.children[i].state == Tile.State.LOADED )
-			{
-				this.removeGeometryFromTile( bucket, geometry, tile.children[i] );
-			}
-		}
-	}
-}
-
-/**************************************************************************************************************/
-
-/**
-	Remove a geometry from the renderer
- */
-TiledVectorRenderer.prototype.removeGeometry = function( geometry, layer )
-{
-	var foundBucket = null;
-	
-	// Remove geometry from buckets
-	for ( var i = 0; i < this.buckets.length && !foundBucket; i++ )
-	{
-		var bucket = this.buckets[i];
-		if ( bucket.layer == layer ) 
-		{
-			var index = bucket.geometries.indexOf( geometry );
-			if ( index != -1 )
-			{
-				bucket = this.buckets[i];
-				bucket.geometries.splice( index, 1 );
-				foundBucket = bucket;
-			}
-		}
-	}
-	
-	// Remove geometry 
-	if ( foundBucket )
-	{
-		for ( var i = 0; i < this.tileManager.level0Tiles.length; i++ )
-		{
-			this.removeGeometryFromTile( foundBucket, geometry, this.tileManager.level0Tiles[i] );
-		}
-	}
-}
-
-/**************************************************************************************************************/
-
-/**
-	Clean-up a tile
-	TODO : the method is only used by TileManager.removePostRenderer, maybe remove it, TileManager can use directly the extension id.
- */
-TiledVectorRenderer.prototype.cleanupTile = function( tile )
-{
-	if ( tile.extension[this.id] )
-	{
-		tile.extension[this.id].dispose();
-		delete tile.extension[this.id];
-	}
-}
-
-/**************************************************************************************************************/
-
-/**
-	Add a geometry to the renderer.
-	Public method to add geometry to the renderer
- */
-TiledVectorRenderer.prototype.addGeometry = function( geometry, layer, style )
-{
-	var bucket = this.getOrCreateBucket( layer, style );
-	bucket.geometries.push( geometry );
-	
-	for ( var i = 0; i < this.tileManager.level0Tiles.length; i++ )
-	{
-		var tile = this.tileManager.level0Tiles[i];
-		if ( tile.state == Tile.State.LOADED )
-			this.addGeometryToTile( bucket, geometry, tile );
-	}
-}
-
-/**************************************************************************************************************/
-
-/**
-	Add a geometry to the given tile.
-	The method is recursive, it will also add the geometry to children if exists
- */
-TiledVectorRenderer.prototype.addGeometryToTile = function( bucket, geometry, tile )
-{
-	var isNewRenderable = false;
-	
-	// Try to find an existing renderable on the tile
-	var renderable;
-	if ( tile.extension[this.id] )
-	{
-		renderable = tile.extension[this.id].getRenderable( bucket );
-	}
-	
-	// If no renderable on the tile, create a new renderable (or reuse an existing one)
-	if ( !renderable )
-	{
-		renderable = new this.renderableConstuctor(bucket,this.tileManager.renderContext.gl);
-		isNewRenderable = true;
-	}
-	
-	if ( renderable.addGeometry( geometry, tile ) && tile.children )
-	{
-		// Recursively add the geometry to loaded children
-		for ( var i = 0; i < 4; i++ )
-		{
-			if ( tile.children[i].state == Tile.State.LOADED )
-			{
-				this.addGeometryToTile( bucket, geometry, tile.children[i] );
-			}
-		}
-	}
-	
-	// 	If the renderable is new, add it to the tile
-	if (isNewRenderable)
-	{
-		this.addRenderableToTile(tile,renderable);
-	}
-}
-
-/**************************************************************************************************************/
-
-/**
-	Add a renderable to the tile
- */
-TiledVectorRenderer.prototype.addRenderableToTile = function( tile, renderable )
-{
-	if ( renderable.vertices.length > 0 )
-	{
-		if ( !tile.extension[this.id] )
-			tile.extension[this.id] = new RendererTileData();
-		
-		tile.extension[this.id].renderables.push( renderable );
-	}
-}
-
-/**************************************************************************************************************/
-
-/**
-	Generate renderable data on the tile
- */
-TiledVectorRenderer.prototype.generate = function( tile )
-{
-	if ( tile.parent )
-	{	
-		// Only add geometry from parent tile (if any)
-		var ls = tile.parent.extension[this.id];
-		var ll = ls ?  ls.renderables.length : 0;
-		for ( var i = 0; i < ll; i++ )
-		{
-			var parentRenderable = ls.renderables[i];
-			var renderable = new this.renderableConstuctor(parentRenderable.bucket,this.tileManager.renderContext.gl);
-			
-			var parentGeometryInfos = parentRenderable.geometryInfos;
-			for ( var j = 0; j < parentGeometryInfos.length; j++ )
-			{
-				renderable.addGeometry( parentGeometryInfos[j].geometry, tile );
-			}
-			
-			this.addRenderableToTile(tile,renderable);
-		}
-	}
-	else
-	{
-		// No parent tile : traverse all geometries to generate data on tile
-		for ( var i = 0; i < this.buckets.length; i++ )
-		{
-			var bucket = this.buckets[i];
-			var renderable = new this.renderableConstuctor(bucket,this.tileManager.renderContext.gl);
-			
-			for ( var j = 0; j < bucket.geometries.length; j++ )
-			{
-				renderable.addGeometry( bucket.geometries[j], tile );
-			}
-			
-			this.addRenderableToTile(tile,renderable);
-		}
-	}
-}
+Utils.inherits(VectorRenderer,TiledVectorRenderer);
 
 /**************************************************************************************************************/
 
 /**
 	Render all redenrable on the given tiles
  */
-TiledVectorRenderer.prototype.render = function( visibleTiles )
+TiledVectorRenderer.prototype.render = function(renderables,start,end)
 {
 	var renderContext = this.tileManager.renderContext;
 	var gl = renderContext.gl;
@@ -307,67 +83,22 @@ TiledVectorRenderer.prototype.render = function( visibleTiles )
     
 	var currentStyle = null;
 	
-    for (var i = 0; i < visibleTiles.length; ++i)
-    {
-		var tile = visibleTiles[i];
+	for ( var n = start; n < end; n++ )
+	{
+		var renderable = renderables[n];
+		var tile = renderable.tile;
 		
-		// If the tile is loaded and contains renderable, render them
-		if ( tile.extension[this.id] )
-		{
-			mat4.multiply( renderContext.viewMatrix, tile.matrix, modelViewMatrix );
-			gl.uniformMatrix4fv( this.program.uniforms["modelViewMatrix"], false, modelViewMatrix );
-			gl.uniform1f( this.program.uniforms["zOffset"], tile.radius * 0.0007 );
-			
-			var renderables = tile.extension[this.id].renderables;
-			for (var j=0; j < renderables.length; j++)
-			{
-				var renderable = renderables[j];
-				
-				if ( renderable.bucket.layer._visible )
-				{
-					if ( renderable.bucket.style != currentStyle )
-					{
-						currentStyle = renderable.bucket.style;
-						gl.lineWidth( currentStyle.strokeWidth );
-						gl.uniform4f( this.program.uniforms["color"], currentStyle.strokeColor[0], currentStyle.strokeColor[1], currentStyle.strokeColor[2], 
-							currentStyle.strokeColor[3] * renderable.bucket.layer._opacity );
-							
-						// TODO : manage opacity
-					}
-					
-					renderables[j].render( this.program.attributes );
-				}
-			}
-		}
-		// If the tile is not loaded, but its parent contains some renderable, render them 'clipped' to the child tile to avoid 'glitch' when zooming
-		else if ( tile.state != Tile.State.LOADED && tile.parent.extension[this.id] )
-		{
-			mat4.multiply( renderContext.viewMatrix, tile.parent.matrix, modelViewMatrix );
-			gl.uniformMatrix4fv( this.program.uniforms["modelViewMatrix"], false, modelViewMatrix );
-			gl.uniform1f( this.program.uniforms["zOffset"], tile.parent.radius * 0.0007 );
-			
-			var renderables = tile.parent.extension[this.id].renderables;
-			for (var j=0; j < renderables.length; j++)
-			{
-				var renderable = renderables[j];
-				if ( renderable.bucket.layer._visible )
-				{
-					if ( renderable.bucket.style != currentStyle )
-					{
-						currentStyle = renderable.bucket.style;
-						gl.lineWidth( currentStyle.strokeWidth );
-						gl.uniform4f( this.program.uniforms["color"], currentStyle.strokeColor[0], currentStyle.strokeColor[1], currentStyle.strokeColor[2], 
-							currentStyle.strokeColor[3] * renderable.bucket.layer._opacity );
-							
-						// TODO : manage opacity
-					}
-					
-					renderables[j].renderChild( this.program.attributes, tile.parentIndex );
-				}
-			}
+		mat4.multiply( renderContext.viewMatrix, tile.matrix, modelViewMatrix );
+		gl.uniformMatrix4fv( this.program.uniforms["modelViewMatrix"], false, modelViewMatrix );
+		gl.uniform1f( this.program.uniforms["zOffset"], tile.radius * 0.0007 );
 		
-		}
-    }
+		var currentStyle = renderable.bucket.style;
+		gl.lineWidth( currentStyle.strokeWidth );
+		gl.uniform4f( this.program.uniforms["color"], currentStyle.strokeColor[0], currentStyle.strokeColor[1], currentStyle.strokeColor[2], 
+			currentStyle.strokeColor[3] * renderable.bucket.layer._opacity );
+			
+		renderable.render( this.program.attributes );
+	}
 
 	gl.depthMask(true);
 	gl.depthFunc(gl.LESS);

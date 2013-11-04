@@ -195,6 +195,53 @@ TileManager.prototype.setImageryProvider = function(ip)
 /**************************************************************************************************************/
 
 /** 
+	Get the level zero tiles that overlaps the given geometry
+ */
+TileManager.prototype.getOverlappedLevelZeroTiles = function( geometry )
+{	
+	var coords;
+	switch ( geometry.type )
+	{
+	case "Point":
+		coords = [];
+		coords.push( geometry.coordinates );
+		break;
+	case "LineString":
+		coords = geometry.coordinates;
+		break;
+	case "Polygon":
+		coords = geometry.coordinates[0];
+		break;
+	case "MultiPolygon":
+		coords = [];
+		for ( var n = 0; n < geometry.coordinates.length; n++ )
+		{
+			coords = coords.concat( geometry.coordinates[n][0] );
+		}
+		break;
+	}
+	
+	if ( !coords )
+		console.log("COOORDDS!!");
+		
+	var indexMap = {};
+	var tileIndices = [];
+	for ( var i = 0; i < coords.length; i++ )
+	{
+		var index = this.imageryProvider.tiling.lonlat2LevelZeroIndex( coords[i][0], coords[i][1] );
+		if ( !indexMap[index] )
+		{
+			indexMap[ index ] = true;
+			tileIndices.push( index );
+		}
+	}
+	
+	return tileIndices;
+}
+
+/**************************************************************************************************************/
+
+/** 
 	Set the elevation provider to be used
  */
 TileManager.prototype.setElevationProvider = function(tp)
@@ -331,6 +378,8 @@ TileManager.prototype.processTile = function(tile,level)
 	
 	// Update frame number
 	tile.frameNumber = this.frameNumber;
+	
+	var isLeaf = false;
 
 	// Request the tile if needed
 	if ( tile.state == Tile.State.NONE )
@@ -340,7 +389,7 @@ TileManager.prototype.processTile = function(tile,level)
 		// Add it to the request
 		this.tilesToRequest.push(tile);
 	}
-	
+		
 	// Check if the tiles needs to be refined
 	if ( (tile.state == Tile.State.LOADED) && (level+1 < this.imageryProvider.numberOfLevels) && (tile.needsToBeRefined(this.renderContext) ) )
 	{
@@ -364,9 +413,19 @@ TileManager.prototype.processTile = function(tile,level)
 	}
 	else
 	{
+		isLeaf = true;
+		
 		// Push the tiles to render
 		this.tilesToRender.push( tile );
 	}
+	
+	// Traverse extension
+	for ( var x in tile.extension ) 
+	{
+		var e = tile.extension[x];
+		if ( e.traverse ) e.traverse(tile,isLeaf);
+	}
+	
 }
 
 /**************************************************************************************************************/
@@ -590,15 +649,17 @@ TileManager.prototype.render = function()
 	{
 		this.imageryProvider.generateLevel0Textures( this.level0Tiles, this.tilePool );
 		
-		for (var i=0; i < this.postRenderers.length; i++ )
+		for (var n = 0; n < this.level0Tiles.length; n++ )
 		{
-			var renderer = this.postRenderers[i];
-			if ( renderer.generate )
+			var tile = this.level0Tiles[n];
+			// Generate the tile
+			tile.generate( this.tilePool );
+
+			// Now post renderers can generate their data on the new tile
+			for (var i = 0; i < this.postRenderers.length; i++ )
 			{
-				for ( var j=0; j<this.level0Tiles.length; j++ )
-				{
-					renderer.generate(this.level0Tiles[j]);
-				}
+				if ( this.postRenderers[i].generate )
+					this.postRenderers[i].generate(tile);
 			}
 		}
 
