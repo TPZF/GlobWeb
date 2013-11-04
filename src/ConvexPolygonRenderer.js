@@ -278,7 +278,7 @@ Renderable.prototype.remove = function(geometry)
 
 		this.lineIndices.splice( data.lineIndexStart, data.lineIndexCount );
 		this.triangleIndices.splice( data.triIndexStart, data.triIndexCount );
-		if ( data.tcoordsStart )
+		if ( data.tcoordsStart >= 0 )
 		{
 			this.tcoords.splice( data.tcoordsStart, data.tcoordsCount );
 		}
@@ -294,7 +294,7 @@ Renderable.prototype.remove = function(geometry)
 					d.vertexStart -= data.vertexCount;
 					d.lineIndexStart -= data.lineIndexCount;
 					d.triIndexStart -= data.triIndexCount;
-					if ( d.tcoordsStart )
+					if ( d.tcoordsStart >= 0 )
 					{
 						d.tcoordsStart -= data.tcoordsCount;
 					}
