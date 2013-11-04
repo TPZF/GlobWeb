@@ -231,7 +231,19 @@ Renderable.prototype.add = function(geometry)
 			data.triIndexStart = this.triangleIndices.length;
 			data.triIndexCount = 3 * (numPoints-2);
 			
-			this.triangleIndices = Triangulator.process( coords );
+			var triangleIndices = Triangulator.process( coords );
+			if ( triangleIndices != null  )
+			{
+				this.triangleIndices = triangleIndices;
+			}
+			else
+			{
+				// HACK for not trivial polygons
+				for ( var i = 0; i < numPoints-2; i++ ) 
+				{
+					this.triangleIndices.push( startIndex, startIndex + i+1, startIndex + i+2 );
+				}
+			}
 		}
 
 		if ( this.geometry2vb[ geometry.gid ] )
