@@ -69,8 +69,6 @@ var GroundOverlayRenderer = function(tileManager)
 	this.program.createFromSource( vertexShader, fragmentShader );
 	
 	this.groundOverlays = [];
-	
-	this.needsOffset = true;
 }
 
 //*************************************************************************
@@ -92,6 +90,8 @@ GroundOverlayRenderer.prototype.render = function( tiles )
 	gl.enable(gl.BLEND);
 	gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
 	gl.depthFunc( gl.LEQUAL );
+	gl.enable(gl.POLYGON_OFFSET_FILL);
+	gl.polygonOffset(0,4);
 	
 	var modelViewMatrix = mat4.create();
 	
@@ -159,6 +159,7 @@ GroundOverlayRenderer.prototype.render = function( tiles )
 	}
 
 	gl.disable(gl.BLEND);
+	gl.disable(gl.POLYGON_OFFSET_FILL);
 }
 
 //*************************************************************************

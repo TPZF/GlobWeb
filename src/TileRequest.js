@@ -30,10 +30,12 @@ var TileRequest = function(tileManager)
 	var _imageLoaded = false;
 	var _elevationLoaded = true;
 	var _xhr = new XMLHttpRequest();
+	var _imageRequest;
 
 	// Public variables
 	this.tile = null;
 	this.elevations = null;
+	this.image = null;
 
 	var self = this;
 	
@@ -65,11 +67,12 @@ var TileRequest = function(tileManager)
 		if (!_imageLoaded)
 		{
 			_imageLoaded = true;
+			self.image = _imageRequest.image;
 			if ( _elevationLoaded )
 			{
 				// Call post-process function if defined
 				if ( tileManager.imageryProvider.handleImage )
-					tileManager.imageryProvider.handleImage(self.imageRequest);
+					tileManager.imageryProvider.handleImage(_imageRequest);
 
 				tileManager.completedRequests.push(self);
 				tileManager.renderContext.requestFrame();
@@ -84,7 +87,6 @@ var TileRequest = function(tileManager)
 	 */
 	var _handleErrorImage = function() 
 	{
-		console.log( "Error while loading " + this.src );
 		self.tile.state = Tile.State.ERROR;
 		tileManager.availableRequests.push(self);
 	}
@@ -141,7 +143,11 @@ var TileRequest = function(tileManager)
 	 */
 	this.launch = function(tile)
 	{
+		tile.state = Tile.State.LOADING;
 		this.tile = tile;
+		
+		this.image = null;
+		this.elevations = null;
 		
 		// Request the elevation if needed
 		if ( tileManager.elevationProvider )
@@ -155,20 +161,26 @@ var TileRequest = function(tileManager)
 			_elevationLoaded = true;
 		}
 		
-		_imageLoaded = false;
-		this.imageRequest.send( tileManager.imageryProvider.getUrl(tile) );
+		if ( tileManager.imageryProvider )
+		{
+			if (!_imageRequest)
+			{
+				_imageRequest = new ImageRequest({
+					successCallback: _handleLoadedImage,
+					failCallback: _handleErrorImage,
+					abortCallback: _handleAbort
+				});
+			}
+			_imageLoaded = false;
+			_imageRequest.send( tileManager.imageryProvider.getUrl(tile) );
+		}
+		
+		// Check if there is nothing to load
+		if ( !tileManager.imageryProvider && !tileManager.elevationProvider )
+		{
+			tileManager.completedRequests.push(this);
+		}
 	};
-
-	/**************************************************************************************************************/
-
-	/*
-	 *	Init image request
-	 */
-	this.imageRequest = new ImageRequest({
-		successCallback: _handleLoadedImage,
-		failCallback: _handleErrorImage,
-		abortCallback: _handleAbort
-	});
 	
 };
 

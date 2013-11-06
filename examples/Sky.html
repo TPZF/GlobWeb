@@ -1,0 +1,74 @@
+<html>
+
+<head>
+<title>AstroWeb example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+<script  src="require.min.js"></script>
+<script type="text/javascript">
+	
+require(["../src/Sky",
+		"../src/VectorLayer", "../src/HEALPixLayer", "../src/OpenSearchLayer", // Layers
+		"../src/AstroNavigation", "../src/FeatureStyle", "../src/Stats", // Others
+		"../src/PointSpriteRenderer", "../src/ConvexPolygonRenderer"], 
+		function (Sky, VectorLayer, HEALPixLayer, OpenSearchLayer, AstroNavigation, FeatureStyle, Stats) 
+{		
+	var sky = new Sky( { canvas: "AstroWebCanvas", 
+		showWireframe: false, 
+		continuousRendering: true } );
+	
+	var astroNavigator = new AstroNavigation(sky, { inertia: true });
+	
+	new Stats(sky.renderContext,{element: "fps",verbose: true});
+	
+	var cdsLayer = new HEALPixLayer( { baseUrl: "/sitools/Alasky/DssColor"} );
+	sky.setBaseImagery( cdsLayer );
+	
+	var osLayer = new OpenSearchLayer( { serviceUrl: "/sitools/sia", minOrder: 3} );
+	sky.addLayer( osLayer );
+	
+	
+	var vectorLayer = new VectorLayer();
+	sky.addLayer( vectorLayer );
+	
+	sky.addLayer( new HEALPixLayer({
+				baseUrl: "http://demonstrator.telespazio.com/doradus",
+				dataType: "png"
+			}) 
+	);
+	
+	
+	$.ajax({
+		  url: "doradus.json",
+		  success: function(data)
+		  {
+			vectorLayer.addFeatureCollection( data );
+		  }
+	});
+	
+	$(window).keypress( function(event) {
+		if ( event.which == 115 ) {
+			var cdsLayer = new HEALPixLayer({
+				baseUrl: "/sitools/Alasky/IRISColor",
+				coordSystem : "GAL"
+			});
+			sky.setBaseImagery( cdsLayer );
+		}
+	});
+	
+	
+});
+
+</script>
+
+</head>
+
+
+<body>
+    <canvas id="AstroWebCanvas" style="border: none;" width="1280" height="500"></canvas> 
+  	<br/>
+	<div id="fps" style="font-weight:bold"></div>
+</body>
+
+</html>
+

@@ -442,14 +442,8 @@ OpenSearchLayer.prototype.buildUrl = function( tile )
 	var url = this.serviceUrl + "/search?order=" + tile.order + "&healpix=" + tile.pixelIndex;
 	if ( this.coordSystemRequired )
 	{
-		if ( this.globe.tileManager.imageryProvider.tiling.coordSystem == "EQ" )
-		{
-			url += "&coordSystem=EQUATORIAL";
-		}
-		else
-		{
-			url += "&coordSystem=GALACTIC";
-		}
+		// OpenSearchLayer always works in equatorial
+		url += "&coordSystem=EQUATORIAL";
 	}
 	url += "&media=json";
 	return url;
@@ -506,10 +500,10 @@ OpenSearchLayer.prototype.updateFeatures = function( features )
 			case "Point":
 
 				// Convert to default coordinate system if needed
-				if ( "EQ" != this.globe.tileManager.imageryProvider.tiling.coordSystem )
+				/*if ( "EQ" != this.globe.tileManager.imageryProvider.tiling.coordSystem )
 				{
 					currentFeature.geometry.coordinates = CoordinateSystem.convert(currentFeature.geometry.coordinates, this.globe.tileManager.imageryProvider.tiling.coordSystem, "EQ");
-				}
+				}*/
 
 				// Convert to geographic to simplify picking
 				if ( currentFeature.geometry.coordinates[0] > 180 )
@@ -520,10 +514,10 @@ OpenSearchLayer.prototype.updateFeatures = function( features )
 				for ( var j = 0; j < ring.length; j++ )
 				{
 					// Convert to default coordinate system if needed
-					if ( "EQ" != this.globe.tileManager.imageryProvider.tiling.coordSystem )
+					/*if ( "EQ" != this.globe.tileManager.imageryProvider.tiling.coordSystem )
 					{
 						ring[j] = CoordinateSystem.convert(ring[j], this.globe.tileManager.imageryProvider.tiling.coordSystem, "EQ");
-					}
+					}*/
 
 					// Convert to geographic to simplify picking
 					if ( ring[j][0] > 180 )

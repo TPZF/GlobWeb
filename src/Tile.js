@@ -58,7 +58,7 @@ var Tile = function()
 	
 	// Tile configuration given by tile manager : contains if the tile uses skirt, the tesselation, etc...
 	this.config = null;
-	this.imageSize = -1;
+	this.imageSize = 256;
 }
 
 /**************************************************************************************************************/
@@ -269,7 +269,7 @@ Tile.prototype.dispose = function(renderContext,tilePool)
 	if ( this.state == Tile.State.LOADED  )
 	{
 		tilePool.disposeGLBuffer(this.vertexBuffer);
-		tilePool.disposeGLTexture(this.texture);
+		if (this.texture) tilePool.disposeGLTexture(this.texture);
 		
 		this.vertexBuffer = null;
 		this.texture = null;

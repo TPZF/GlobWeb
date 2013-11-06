@@ -37,6 +37,7 @@ var HEALPixLayer = function(options)
 	this.type = "ImageryRaster";
 	this.baseUrl = options['baseUrl'];
 	this.dataType = options.dataType || "jpg";
+	this.coordSystem = options.coordSystem || "EQ";
 	
 	// allsky
 	this.levelZeroImage = new Image();

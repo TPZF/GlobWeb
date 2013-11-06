@@ -106,8 +106,6 @@ var RasterOverlayRenderer = function(globe)
 
 		this.imageRequests.push( imageRequest );
 	}
-
-	this.needsOffset = true;
 }
 
 /**************************************************************************************************************/
@@ -673,6 +671,7 @@ RasterOverlayRenderer.prototype.render = function( renderables, start, end )
 	
 	// reset gl states
 	gl.disable(gl.BLEND);
+	//gl.disable(gl.POLYGON_OFFSET_FILL);
 	gl.depthFunc( gl.LESS );
 }
 
