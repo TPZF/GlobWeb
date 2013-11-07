@@ -75,8 +75,8 @@ RasterLayer.prototype._attach = function( g )
 		// Create the renderer if needed
 		if ( !g.rasterOverlayRenderer )
 		{
-			var renderer = new RasterOverlayRenderer(g.tileManager);
-			g.tileManager.addPostRenderer(renderer);
+			var renderer = new RasterOverlayRenderer(g);
+			g.vectorRendererManager.renderers.push( renderer );
 			g.rasterOverlayRenderer = renderer;
 		}
 		g.rasterOverlayRenderer.addOverlay(this);

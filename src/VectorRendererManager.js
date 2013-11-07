@@ -118,10 +118,8 @@ VectorRendererManager.prototype.addGeometry = function(layer, geometry, style)
  */
 VectorRendererManager.prototype.removeGeometry = function(geometry)
 {
-	for ( var i = 0; i < this.renderers.length; i++ )
-	{
-		this.renderers[i].removeGeometry(geometry);
-	}
+	var bucket = geometry._bucket;
+	bucket.renderer.removeGeometry(geometry);
 }
 
 /**************************************************************************************************************/
@@ -143,10 +141,8 @@ VectorRendererManager.prototype.addGeometryToTile = function(layer, geometry, st
  */
 VectorRendererManager.prototype.removeGeometryFromTile = function(geometry,tile)
 {
-	for ( var i = 0; i < this.renderers.length; i++ )
-	{
-		this.renderers[i].removeGeometryFromTile(geometry,tile);
-	}
+	var bucket = geometry._bucket;
+	bucket.renderer.removeGeometryFromTile(geometry,tile);
 }
 
 

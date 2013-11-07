@@ -112,6 +112,7 @@ VectorRenderer.prototype._recursiveAddGeometryToTile = function(bucket, geometry
 VectorRenderer.prototype.addGeometry = function(layer, geometry, style)
 {
 	var bucket = this.getOrCreateBucket(layer, geometry, style);
+	geometry._bucket = bucket;
 	
 	var tileIndices = this.maxTilePerGeometry > 0 ? this.tileManager.getOverlappedLevelZeroTiles(geometry) : null;
 	if ( tileIndices && tileIndices.length < this.maxTilePerGeometry )
@@ -126,7 +127,6 @@ VectorRenderer.prototype.addGeometry = function(layer, geometry, style)
 			}
 		}
 		
-		geometry._bucket = bucket;
 		geometry._tileIndices = tileIndices;
 		this.levelZeroTiledGeometries.push(geometry);
 	}
@@ -163,17 +163,14 @@ VectorRenderer.prototype.removeGeometry = function(geometry)
 	}
 	else
 	{
-		for ( var n = 0; n < this.buckets.length; n++ )
+		var bucket = geometry._bucket;
+		if ( bucket.mainRenderable )
 		{
-			var bucket = this.buckets[n];
-			if ( bucket.mainRenderable )
+			var numGeometries = bucket.mainRenderable.remove(geometry);
+			if ( numGeometries == 0 )
 			{
-				var numGeometries = bucket.mainRenderable.remove(geometry);
-				if ( numGeometries == 0 )
-				{
-					bucket.mainRenderable.dispose(this.renderContext);
-					bucket.mainRenderable = null;
-				}
+				bucket.mainRenderable.dispose(this.renderContext);
+				bucket.mainRenderable = null;
 			}
 		}
 	}

@@ -20,7 +20,7 @@ require(['../src/GlobWeb'], function (GlobWeb)
 	var navigation = new GlobWeb.Navigation(globe);
 	
 	// Add stats
-	var stats = new GlobWeb.Stats( globe, {element: 'fps', verbose: false} );
+	var stats = new GlobWeb.Stats( globe.renderContext, {element: 'fps', verbose: true} );
 
 	var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble" });
 	globe.setBaseImagery( blueMarbleLayer );

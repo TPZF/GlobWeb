@@ -55,7 +55,7 @@ RendererTileData.prototype.initChild = function(childTile,i,j)
 			if (!childData)
 				childData = childTile.extension.renderer = new RendererTileData(this.manager);
 				
-			childData.renderables.push( this.renderables[n].initChild(i,j) );
+			childData.renderables.push( this.renderables[n].initChild(i,j,childTile) );
 		}
 	}
 }
@@ -69,14 +69,22 @@ RendererTileData.prototype.traverse = function(tile,isLeaf)
 {
 	for ( var i = 0; i < this.renderables.length; i++ ) 
 	{
-		var bucket = this.renderables[i].bucket;
+		var renderable = this.renderables[i];
+		var bucket = renderable.bucket;
 		if ( bucket.layer._visible && bucket.layer._opacity > 0 )
 		{
-			if ( this.renderables[i].hasChildren 
-				&& !isLeaf )
-				continue;
+			if ( renderable.traverse )
+			{
+				renderable.traverse( this.manager, tile, isLeaf  );
+			}
+			else
+			{
+				if ( renderable.hasChildren 
+					&& !isLeaf )
+					continue;
 				
-			this.manager.renderables.push( this.renderables[i] );
+				this.manager.renderables.push( renderable );
+			}
 		}
 	}
 }

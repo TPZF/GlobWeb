@@ -17,14 +17,15 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define( ['./Program','./Tile','./ImageRequest'], function(Program, Tile, ImageRequest) {
+define( ['./Program','./Tile','./ImageRequest','./RendererTileData'], function(Program, Tile, ImageRequest, RendererTileData) {
 
 /**************************************************************************************************************/
 
 /** 
 	@constructor
+	RasterOverlayRenderer constructor
  */
-var RasterOverlayRenderer = function(tileManager)
+var RasterOverlayRenderer = function(globe)
 {
 	this.vertexShader = "\
 	attribute vec3 vertex;\n\
@@ -52,8 +53,8 @@ var RasterOverlayRenderer = function(tileManager)
 	}\n\
 	";
 	
-	this.requestHighestResolutionFirst = true;
-	this.tileManager = tileManager;
+	this.rendererManager = globe.vectorRendererManager;
+	this.tileManager = globe.tileManager;
 	this.programs = [];
 	this.program = this.createProgram( {
 		vertexCode: this.vertexShader,
@@ -61,7 +62,7 @@ var RasterOverlayRenderer = function(tileManager)
 		updateUniforms: null
 	});
 	
-	this.overlays = [];
+	this.buckets = [];
 	this.imageRequests = [];
 	this.frameNumber = 0;
 	
@@ -72,10 +73,14 @@ var RasterOverlayRenderer = function(tileManager)
 			successCallback: function(){
 				if ( this.renderable )
 				{
-					if ( this.renderable.layer.handleImage )
-						this.renderable.layer.handleImage(this);
+					if ( this.renderable.bucket.layer.handleImage )
+						this.renderable.bucket.layer.handleImage(this);
 
-					this.renderable.texture = tileManager.tilePool.createGLTexture(this.image);
+					this.renderable.ownTexture = self.tileManager.tilePool.createGLTexture(this.image);
+					this.renderable.texture = this.renderable.ownTexture;
+					this.renderable.uvScale = 1.0;
+					this.renderable.uTrans = 0.0;
+					this.renderable.vTrans = 0.0;
 					this.renderable.onRequestFinished(true);
 					this.renderable = null;
 					self.tileManager.renderContext.requestFrame();
@@ -89,7 +94,7 @@ var RasterOverlayRenderer = function(tileManager)
 				}
 			},
 			abortCallback: function(){
-				console.log("Raster overlay request abort.");
+				//console.log("Raster overlay request abort.");
 				if ( this.renderable )
 				{
 					this.renderable.onRequestFinished(false);
@@ -102,7 +107,6 @@ var RasterOverlayRenderer = function(tileManager)
 	}
 
 	this.needsOffset = true;
-	this.zIndex = 10;
 }
 
 /**************************************************************************************************************/
@@ -112,12 +116,17 @@ var RasterOverlayRenderer = function(tileManager)
 	Create a renderable for the overlay.
 	There is one renderable per overlay and per tile.
  */
-var RasterOverlayRenderable = function( layer )
+var RasterOverlayRenderable = function( bucket )
 {
-	this.layer = layer;
+	this.bucket = bucket;
+	this.ownTexture = null;
 	this.texture = null;
 	this.request = null;
 	this.requestFinished = false;
+	this.tile = null;
+	this.uvScale = 1.0;
+	this.uTrans = 0.0;
+	this.vTrans = 0.0;
 }
 
 /**************************************************************************************************************/
@@ -129,7 +138,7 @@ RasterOverlayRenderable.prototype.onRequestStarted = function(request)
 {
 	this.request = request;
 	this.requestFinished = false;
-	var layer = this.layer;
+	var layer = this.bucket.layer;
 	if ( layer._numRequests == 0 )
 	{
 		layer.globe.publish('startLoad',layer);
@@ -146,11 +155,64 @@ RasterOverlayRenderable.prototype.onRequestFinished = function(completed)
 {
 	this.request = null;
 	this.requestFinished = completed;
-	var layer = this.layer;
+	var layer = this.bucket.layer;
 	layer._numRequests--;
 	if ( layer.globe && layer._numRequests == 0 )
 	{
 		layer.globe.publish('endLoad',layer);
+	}
+}
+
+/**************************************************************************************************************/
+
+/**
+ * Initialize a child renderable
+ */
+RasterOverlayRenderable.prototype.initChild = function(i,j,childTile)
+{				
+	var renderable = this.bucket.createRenderable();
+	renderable.tile = childTile;	
+	if ( this.texture )
+	{
+		renderable.texture = this.texture;
+		renderable.uvScale = this.uvScale;
+		renderable.uTrans = this.uTrans;
+		renderable.vTrans = this.vTrans;
+	}
+	
+	return renderable;
+}
+
+/**************************************************************************************************************/
+
+/** 
+	Generate child renderable
+ */
+RasterOverlayRenderable.prototype.generateChild = function( tile )
+{
+	var r = this.bucket.renderer;
+	if ( r.overlayIntersects( tile.geoBound, this.bucket.layer ) )
+	{
+		r.addOverlayToTile( tile, this.bucket, this );
+	}
+}
+
+/**************************************************************************************************************/
+
+/** 
+	Traverse renderable : add it to renderables list if there is a texture
+	Request the texture
+ */
+ RasterOverlayRenderable.prototype.traverse = function( manager, tile, isLeaf  )
+{
+	if ( isLeaf && this.texture )
+	{
+		manager.renderables.push( this );
+	}
+	
+	if (!this.requestFinished)
+	{
+		this.bucket.renderer.requestOverlayTextureForTile( this);
 	}
 }
 
@@ -161,11 +223,37 @@ RasterOverlayRenderable.prototype.onRequestFinished = function(completed)
  */
 RasterOverlayRenderable.prototype.dispose = function(renderContext,tilePool)
 {
-	if ( this.texture ) 
+	if ( this.ownTexture ) 
 	{
-		tilePool.disposeGLTexture(this.texture);
-		this.texture = null;
+		tilePool.disposeGLTexture(this.ownTexture);
+		this.ownTexture = null;
 	}
+}
+
+
+/**************************************************************************************************************/
+
+/**
+	Bucket constructor for RasterOverlay
+ */
+var Bucket = function(layer)
+{
+	this.layer = layer;
+	this.renderer = null;
+	// TODO : hack
+	this.style = {
+		zIndex: layer.zIndex
+	};
+}
+
+/**************************************************************************************************************/
+
+/**
+	Create a renderable for this bucket
+ */
+Bucket.prototype.createRenderable = function()
+{
+	return new RasterOverlayRenderable(this);
 }
 
 /**************************************************************************************************************/
@@ -179,13 +267,18 @@ RasterOverlayRenderer.prototype.addOverlay = function( overlay )
 	// Initialize num requests to 0
 	overlay._numRequests = 0;
 
-	this.overlays.push( overlay );
+	var bucket = new Bucket(overlay);
+	bucket.renderer = this;
+	this.buckets.push( bucket );
+	
+	overlay._bucket = bucket;
+	
 	for ( var i = 0; i < this.tileManager.level0Tiles.length; i++ )
 	{
 		var tile = this.tileManager.level0Tiles[i];
 		if ( tile.state == Tile.State.LOADED )
 		{
-			this.addOverlayToTile( tile, overlay );
+			this.addOverlayToTile( tile, bucket );
 		}
 	}
 }
@@ -198,15 +291,15 @@ RasterOverlayRenderer.prototype.addOverlay = function( overlay )
  */
 RasterOverlayRenderer.prototype.removeOverlay = function( overlay )
 {
-	var index = this.overlays.indexOf( overlay );
-	this.overlays.splice(index,1);
+	var index = this.buckets.indexOf( overlay._bucket );
+	this.buckets.splice(index,1);
 	
 	var rc = this.tileManager.renderContext;
 	var tp = this.tileManager.tilePool;
 	this.tileManager.visitTiles( function(tile) 
 			{
-				var rs = tile.extension.rasterOverlay;
-				var renderable = rs ?  rs.getRenderable( overlay ) : null;
+				var rs = tile.extension.renderer;
+				var renderable = rs ?  rs.getRenderable( bucket ) : null;
 				if ( renderable ) 
 				{
 					// Remove the renderable
@@ -218,28 +311,11 @@ RasterOverlayRenderer.prototype.removeOverlay = function( overlay )
 					
 					// Remove tile data if not needed anymore
 					if ( rs.renderables.length == 0 )
-						delete tile.extension.rasterOverlay;
+						delete tile.extension.renderer;
 				}
 			}
 	);
 }
-
-var RendererTileData = function()
-{
-	this.renderables = [];
-};
-
-RendererTileData.prototype.getRenderable = function(layer)
-{
-	for ( var i=0; i < this.renderables.length; i++ )
-	{
-		if ( layer == this.renderables[i].layer )
-		{
-			return this.renderables[i];
-		}
-	}
-	return null;
-};
 
 /**************************************************************************************************************/
 
@@ -247,22 +323,34 @@ RendererTileData.prototype.getRenderable = function(layer)
 	Add an overlay into a tile.
 	Create tile data if needed, and create the renderable for the overlay.
  */
-RasterOverlayRenderer.prototype.addOverlayToTile = function( tile, overlay )
+RasterOverlayRenderer.prototype.addOverlayToTile = function( tile, bucket, parentRenderable )
 {
-	if ( !tile.extension.rasterOverlay )
-		tile.extension.rasterOverlay = new RendererTileData();
+	if ( !tile.extension.renderer )
+		tile.extension.renderer = new RendererTileData(this.rendererManager);
 	
-	tile.extension.rasterOverlay.renderables.push( new RasterOverlayRenderable(overlay) );
+	var renderable = bucket.createRenderable();
+	renderable.tile = tile;
+	tile.extension.renderer.renderables.push( renderable );
+	
+	if ( parentRenderable && parentRenderable.texture )
+	{
+		renderable.texture = parentRenderable.texture;
+		renderable.uvScale = parentRenderable.uvScale * 0.5;
+		renderable.uTrans = parentRenderable.uTrans;
+		renderable.vTrans = parentRenderable.vTrans;
+		
+		renderable.uTrans += (tile.parentIndex & 1) ? renderable.uvScale : 0;
+		renderable.vTrans += (tile.parentIndex & 2) ? renderable.uvScale : 0;
+	}
 	
 	if ( tile.children )
 	{
 		// Add the overlay to loaded children
 		for ( var i = 0; i < 4; i++ )
 		{
-			if ( tile.children[i].state == Tile.State.LOADED
-					&& this.overlayIntersects( tile.children[i].geoBound, overlay ) )
+			if ( tile.children[i].state == Tile.State.LOADED )
 			{
-				this.addOverlayToTile( tile.children[i], overlay );
+				this.addOverlayToTile( tile.children[i], bucket, renderable );
 			}
 		}
 	}
@@ -354,29 +442,14 @@ RasterOverlayRenderer.prototype.overlayIntersects = function( bound, overlay )
 	Generate Raster overlay data on the tile.
 	The method is called by TileManager when a new tile has been generated.
  */
-RasterOverlayRenderer.prototype.generate = function( tile )
+RasterOverlayRenderer.prototype.generateLevelZero = function( tile )
 {
-	if ( tile.parent )
-	{	
-		// Only add feature from parent tile (if any)
-		var data = tile.parent.extension.rasterOverlay;
-		var rl = data ?  data.renderables.length : 0;
-		for ( var i = 0; i < rl; i++ )
-		{
-			var overlay = data.renderables[i].layer;		
-			if ( this.overlayIntersects( tile.geoBound, overlay ) )
-				this.addOverlayToTile(tile,overlay);
-		}
-	}
-	else
+	// Traverse all overlays
+	for ( var i = 0; i < this.buckets.length; i++ )
 	{
-		// Traverse all overlays
-		for ( var i = 0; i < this.overlays.length; i++ )
-		{
-			var overlay = this.overlays[i];
-			if ( this.overlayIntersects( tile.geoBound, overlay ) )
-				this.addOverlayToTile(tile,overlay);
-		}
+		var overlay = this.buckets[i].layer;
+		if ( this.overlayIntersects( tile.geoBound, overlay ) )
+			this.addOverlayToTile(tile,this.buckets[i]);
 	}
 }
 
@@ -385,7 +458,7 @@ RasterOverlayRenderer.prototype.generate = function( tile )
 /**
 	Request the overlay texture for a tile
  */
-RasterOverlayRenderer.prototype.requestOverlayTextureForTile = function( tile, renderable )
+RasterOverlayRenderer.prototype.requestOverlayTextureForTile = function( renderable )
 {	
 	if ( !renderable.request )
 	{
@@ -404,7 +477,7 @@ RasterOverlayRenderer.prototype.requestOverlayTextureForTile = function( tile, r
 			renderable.onRequestStarted(imageRequest);
 			imageRequest.renderable = renderable;
 			imageRequest.frameNumber = this.frameNumber;
-			imageRequest.send(renderable.layer.getUrl(tile));
+			imageRequest.send(renderable.bucket.layer.getUrl(renderable.tile));
 		}
 	}
 	else
@@ -456,141 +529,12 @@ RasterOverlayRenderer.prototype.getProgram = function(customShader) {
     return program;
 }
 
-var _sortRenderableByZIndex = function(a,b) {
-	return a.layer.zIndex - b.layer.zIndex;
-};
-
 /**************************************************************************************************************/
 
 /**
  *	Render the raster overlays for the given tiles
  */
-RasterOverlayRenderer.prototype.render = function( tiles )
-{
-	// First check if there is someting to do
-	if ( this.overlays.length == 0 )
-		return;
-		
-	var activeRenderDatas = [];
-		
-	// process visible tiles to find raster overlay to render
-	for ( var i = 0; i < tiles.length; i++ )
-	{
-		var tile = tiles[i];
-				
-		// First retreive tileData for overlay
-		var isTileLoaded = (tile.state == Tile.State.LOADED);
-		var tileData;
-		
-		if ( isTileLoaded )
-			tileData = tile.extension.rasterOverlay;
-		else if ( tile.parent) 
-			tileData = tile.parent.extension.rasterOverlay;
-			
-		if ( tileData )
-		{			
-			// Sort renderables by zIndex
-			tileData.renderables.sort( _sortRenderableByZIndex );
-			
-			for ( var j = 0; j < tileData.renderables.length; j++ )
-			{
-				var renderable = tileData.renderables[j];
-				
-				// Skip not visible layer
-				if ( !renderable.layer._visible )
-					continue;
-				
-				var uvScale = 1.0;
-				var uTrans = 0.0;
-				var vTrans = 0.0;
-				
-				// Retrieve the texture to use
-				var textureTile = isTileLoaded ? tile : tile.parent;
-				
-				if ( !textureTile )
-					continue;
-					
-				var prevTextureTile = textureTile;
-				
-				// Request high resolution first : always request the texture for the given tile
-				if ( this.requestHighestResolutionFirst )
-				{
-					if ( !renderable.requestFinished )
-					{	
-						this.requestOverlayTextureForTile( textureTile, renderable );
-					}
-				}
-				
-				// If no texture on tile, try to find a valid texture with parent
-				while ( !renderable.texture && textureTile )
-				{
-					prevTextureTile = textureTile;
-					textureTile = textureTile.parent;
-					if ( textureTile )
-					{
-						uTrans *= 0.5;
-						vTrans *= 0.5;
-						uvScale *= 0.5;
-						uTrans += (prevTextureTile.parentIndex & 1) ? 0.5 : 0;
-						vTrans += (prevTextureTile.parentIndex & 2) ? 0.5 : 0;
-						var data = textureTile.extension.rasterOverlay;
-						renderable = data.getRenderable( renderable.layer );
-					}
-				}
-				
-				// Request low resolution texture
-				if ( !this.requestHighestResolutionFirst )
-				{
-					if ( prevTextureTile != textureTile )
-					{
-						this.requestOverlayTextureForTile( prevTextureTile, renderable );
-					}
-				}
-				
-				if ( textureTile && renderable.texture )
-				{
-					activeRenderDatas.push({
-						tile: tile,
-						texture: renderable.texture,
-						uvScale: uvScale,
-						uTrans: uTrans,
-						vTrans: vTrans,
-						opacity: renderable.layer._opacity,
-						indexBuffer: isTileLoaded ? this.tileManager.tileIndexBuffer.getSolid() : this.tileManager.tileIndexBuffer.getSubSolid(tile.parentIndex),
-						customShader: renderable.layer.customShader
-
-					});
-				}
-			}
-		}
-	}
-	
-	// render all active data found while processing visible tiles
-	if ( activeRenderDatas.length > 0 )
-	{
-		this.renderActiveData( activeRenderDatas );
-	}
-
-	
-	// Abort image requests not requested for this renderering
-	for ( var i = 0; i < this.imageRequests.length; i++ )
-	{
-		var iq = this.imageRequests[i];
-		if ( iq.renderable && iq.frameNumber < this.frameNumber )
-		{
-			iq.abort();
-		}
-	}
-	
-	this.frameNumber++;
-}
-
-/**************************************************************************************************************/
-
-/**
- *	Render the raster overlays for the given tiles
- */
-RasterOverlayRenderer.prototype.renderActiveData = function(datas)
+RasterOverlayRenderer.prototype.render = function( renderables, start, end )
 {
 	var rc = this.tileManager.renderContext;
  	var gl = rc.gl;
@@ -599,93 +543,80 @@ RasterOverlayRenderer.prototype.renderActiveData = function(datas)
 	gl.enable(gl.BLEND);
 	gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
 	gl.depthFunc( gl.LEQUAL );
-
-	// Setup program
-    this.program.apply();
-	
-	var attributes = this.program.attributes;
-		
-	gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
-	gl.uniform1i(this.program.uniforms["overlayTexture"], 0);
-	
-	// Bind tcoord buffer (same for all tiles)
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.tileManager.tcoordBuffer);
-	gl.vertexAttribPointer(attributes['tcoord'], 2, gl.FLOAT, false, 0, 0);
 	
 	var modelViewMatrix = mat4.create();
 	
 	var currentTile = null;
 	var currentIB = null;
-	
-	for ( var i =0; i < datas.length; i++ ) {
-	
-		var data = datas[i];
+	var currentProgram = null;
+
+	for ( var n = start; n < end; n++ )
+	{
+		var renderable = renderables[n];
+		var bucket = renderable.bucket;
+		var layer = bucket.layer;
 		
-		if ( data.customShader )
+		var updateUniforms;
+		var program;
+		if ( layer.customShader )
 		{
-			var program = this.getProgram(data.customShader);
-			// Apply custom shader if changed
-			if ( program != this.program )
-			{
-				this.program = program;
-				this.program.apply();
-				
-				attributes = this.program.attributes;
-					
-				gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
-				gl.uniform1i(this.program.uniforms["overlayTexture"], 0);
-			}	
-			if ( data.customShader.updateUniforms )
-				data.customShader.updateUniforms(gl, this.program);
+			program = this.getProgram(layer.customShader);
+			updateUniforms = layer.customShader.updateUniforms;
 		}
 		else
 		{
-			var program = this.getProgram({
+			program = this.getProgram({
 				vertexCode: this.vertexShader,
 				fragmentCode: this.fragmentShader,
 				updateUniforms: null
 			});
-			// Revert to default shader if changed
-			if ( program != this.program )
-			{
-				this.program = program;
-				this.program.apply();
-				
-				attributes = this.program.attributes;
-					
-				gl.uniformMatrix4fv(this.program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
-				gl.uniform1i(this.program.uniforms["overlayTexture"], 0);
-			}
 		}
 		
-		if ( data.tile != currentTile )
+		// Apply program if changed
+		if ( program != currentProgram )
 		{
-			// Bind the vertex buffer
-			gl.bindBuffer(gl.ARRAY_BUFFER, data.tile.vertexBuffer);
-			gl.vertexAttribPointer(attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
+			currentProgram = program;
+			program.apply();
+							
+			gl.uniformMatrix4fv(program.uniforms["projectionMatrix"], false, rc.projectionMatrix);
+			gl.uniform1i(program.uniforms["overlayTexture"], 0);
 			
-			// Bind the index buffer only if different (index buffer is shared between tiles)
-			if ( currentIB != data.indexBuffer )
-			{	
-				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, data.indexBuffer);
-				currentIB = data.indexBuffer;
-			}
-
-			// Bind the tile tile matrix
-			mat4.multiply( rc.viewMatrix, data.tile.matrix, modelViewMatrix );
-			gl.uniformMatrix4fv(this.program.uniforms["modelViewMatrix"], false, modelViewMatrix);
+			// Bind tcoord buffer
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.tileManager.tcoordBuffer);
+			gl.vertexAttribPointer(program.attributes['tcoord'], 2, gl.FLOAT, false, 0, 0);
+		}	
+		
+		if (updateUniforms)
+			updateUniforms(gl, program);
+		
+		// Bind the vertex buffer
+		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.tile.vertexBuffer);
+		gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
+		
+		// Bind the index buffer only if different (index buffer is shared between tiles)
+		var isLoaded = ( renderable.tile.state == Tile.State.LOADED );
+		var isLevelZero = ( renderable.tile.parentIndex == -1 );
+		var indexBuffer = ( isLoaded || isLevelZero ) ? this.tileManager.tileIndexBuffer.getSolid() : this.tileManager.tileIndexBuffer.getSubSolid(renderable.tile.parentIndex);
+		if ( currentIB != indexBuffer )
+		{	
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer );
+			currentIB = indexBuffer;
 		}
+
+		// Bind the tile tile matrix
+		mat4.multiply( rc.viewMatrix, renderable.tile.matrix, modelViewMatrix );
+		gl.uniformMatrix4fv(program.uniforms["modelViewMatrix"], false, modelViewMatrix);
 					
-		gl.uniform1f(this.program.uniforms["opacity"], data.opacity );
-		gl.uniform4f(this.program.uniforms["textureTransform"], data.uvScale, data.uvScale, data.uTrans, data.vTrans );
+		gl.uniform1f(program.uniforms["opacity"], layer._opacity );
+		gl.uniform4f(program.uniforms["textureTransform"], renderable.uvScale, renderable.uvScale, renderable.uTrans, renderable.vTrans );
 		
 		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, data.texture );
+		gl.bindTexture(gl.TEXTURE_2D, renderable.texture );
 		
 		// Finally draw the tiles
 		gl.drawElements(gl.TRIANGLES, currentIB.numIndices, gl.UNSIGNED_SHORT, 0);
 	}
-
+	
 	// reset gl states
 	gl.disable(gl.BLEND);
 	gl.depthFunc( gl.LESS );
@@ -693,6 +624,16 @@ RasterOverlayRenderer.prototype.renderActiveData = function(datas)
 
 /**************************************************************************************************************/
 
+/**
+ * Check if renderer is applicable
+ */
+RasterOverlayRenderer.prototype.canApply = function(type,style)
+{
+	return false;
+}
+
+/**************************************************************************************************************/
+									
 return RasterOverlayRenderer;
 
 });
