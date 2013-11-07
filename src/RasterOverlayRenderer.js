@@ -81,6 +81,7 @@ var RasterOverlayRenderer = function(globe)
 					this.renderable.uvScale = 1.0;
 					this.renderable.uTrans = 0.0;
 					this.renderable.vTrans = 0.0;
+					this.renderable.updateChildrenTexture();
 					this.renderable.onRequestFinished(true);
 					this.renderable = null;
 					self.tileManager.renderContext.requestFrame();
@@ -170,6 +171,11 @@ RasterOverlayRenderable.prototype.onRequestFinished = function(completed)
  */
 RasterOverlayRenderable.prototype.initChild = function(i,j,childTile)
 {				
+	// Request finished and no texture  : no init needed for children
+/*	// TODO : does not work because sometimes level 0 cannot be loaded
+	if (this.requestFinished && !this.ownTexture)
+		return null;*/
+		
 	var renderable = this.bucket.createRenderable();
 	renderable.tile = childTile;	
 	if ( this.texture )
@@ -190,10 +196,66 @@ RasterOverlayRenderable.prototype.initChild = function(i,j,childTile)
  */
 RasterOverlayRenderable.prototype.generateChild = function( tile )
 {
+	// Request finished and no texture  : no generate needed for children
+/*	// TODO : does not work because sometimes level 0 cannot be loaded
+	if (this.requestFinished && !this.ownTexture)
+		return;*/
+
 	var r = this.bucket.renderer;
 	if ( r.overlayIntersects( tile.geoBound, this.bucket.layer ) )
 	{
 		r.addOverlayToTile( tile, this.bucket, this );
+	}
+}
+
+/**************************************************************************************************************/
+
+/** 
+	Update the children texture
+ */
+ RasterOverlayRenderable.prototype.updateChildrenTexture = function()
+{
+	if ( this.tile.children )
+	{
+		for ( var i = 0; i < 4; i++ )
+		{
+			var rd = this.tile.children[i].extension.renderer;
+			if ( rd )
+			{
+				var cr = rd.getRenderable(this.bucket);
+				if ( cr && !cr.ownTexture )
+				{
+					cr.updateTextureFromParent( this );
+					cr.updateChildrenTexture();
+				}
+			}
+		}
+	}
+}
+
+/**************************************************************************************************************/
+
+/** 
+	Update texture from its parent
+ */
+RasterOverlayRenderable.prototype.updateTextureFromParent = function( parent )
+{
+	if ( this.tile.state == Tile.State.LOADED )
+	{
+		this.texture = parent.texture;
+		this.uvScale = parent.uvScale * 0.5;
+		this.uTrans = parent.uTrans;
+		this.vTrans = parent.vTrans;
+		
+		this.uTrans += (this.tile.parentIndex & 1) ? this.uvScale : 0;
+		this.vTrans += (this.tile.parentIndex & 2) ? this.uvScale : 0;
+	}
+	else
+	{
+		this.texture = parent.texture;
+		this.uvScale = parent.uvScale;
+		this.uTrans = parent.uTrans;
+		this.vTrans = parent.vTrans;
 	}
 }
 
@@ -210,7 +272,7 @@ RasterOverlayRenderable.prototype.generateChild = function( tile )
 		manager.renderables.push( this );
 	}
 	
-	if (!this.requestFinished)
+	if (!this.requestFinished && this.tile.state == Tile.State.LOADED)
 	{
 		this.bucket.renderer.requestOverlayTextureForTile( this);
 	}
@@ -299,7 +361,7 @@ RasterOverlayRenderer.prototype.removeOverlay = function( overlay )
 	this.tileManager.visitTiles( function(tile) 
 			{
 				var rs = tile.extension.renderer;
-				var renderable = rs ?  rs.getRenderable( bucket ) : null;
+				var renderable = rs ?  rs.getRenderable( overlay._bucket ) : null;
 				if ( renderable ) 
 				{
 					// Remove the renderable
@@ -334,13 +396,7 @@ RasterOverlayRenderer.prototype.addOverlayToTile = function( tile, bucket, paren
 	
 	if ( parentRenderable && parentRenderable.texture )
 	{
-		renderable.texture = parentRenderable.texture;
-		renderable.uvScale = parentRenderable.uvScale * 0.5;
-		renderable.uTrans = parentRenderable.uTrans;
-		renderable.vTrans = parentRenderable.vTrans;
-		
-		renderable.uTrans += (tile.parentIndex & 1) ? renderable.uvScale : 0;
-		renderable.vTrans += (tile.parentIndex & 2) ? renderable.uvScale : 0;
+		renderable.updateTextureFromParent( parentRenderable );
 	}
 	
 	if ( tile.children )
@@ -594,9 +650,7 @@ RasterOverlayRenderer.prototype.render = function( renderables, start, end )
 		gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
 		
 		// Bind the index buffer only if different (index buffer is shared between tiles)
-		var isLoaded = ( renderable.tile.state == Tile.State.LOADED );
-		var isLevelZero = ( renderable.tile.parentIndex == -1 );
-		var indexBuffer = ( isLoaded || isLevelZero ) ? this.tileManager.tileIndexBuffer.getSolid() : this.tileManager.tileIndexBuffer.getSubSolid(renderable.tile.parentIndex);
+		var indexBuffer = ( renderable.tile.state == Tile.State.LOADED ) ? this.tileManager.tileIndexBuffer.getSolid() : this.tileManager.tileIndexBuffer.getSubSolid(renderable.tile.parentIndex);
 		if ( currentIB != indexBuffer )
 		{	
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer );

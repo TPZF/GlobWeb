@@ -81,8 +81,11 @@ HEALPixLayer.prototype._attach = function( g )
 {
 	RasterLayer.prototype._attach.call( this, g );
 
-	// Load level zero image now
-	this.levelZeroImage.src = this.baseUrl + "/Norder3/Allsky."+this.dataType;
+	// Load level zero image now, only for background
+	if ( !this._overlay )
+	{
+		this.levelZeroImage.src = this.baseUrl + "/Norder3/Allsky."+this.dataType;
+	}
 }
 
 /**************************************************************************************************************/

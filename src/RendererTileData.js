@@ -51,11 +51,14 @@ RendererTileData.prototype.initChild = function(childTile,i,j)
 	for ( var n = 0; n < this.renderables.length; n++ ) 
 	{
 		if ( this.renderables[n].initChild )
-		{
-			if (!childData)
-				childData = childTile.extension.renderer = new RendererTileData(this.manager);
-				
-			childData.renderables.push( this.renderables[n].initChild(i,j,childTile) );
+		{		
+			var r = this.renderables[n].initChild(i,j,childTile);
+			if (r)
+			{
+				if (!childData)
+					childData = childTile.extension.renderer = new RendererTileData(this.manager);
+				childData.renderables.push( r );
+			}
 		}
 	}
 }
