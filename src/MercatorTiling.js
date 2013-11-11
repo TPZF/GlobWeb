@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define (['./Utils', './Tile', './GeoBound', './CoordinateSystem'], function(Utils,Tile,GeoBound,CoordinateSystem) {
+ define (['./Tile', './GeoBound', './CoordinateSystem'], function(Tile,GeoBound,CoordinateSystem) {
 
 /**************************************************************************************************************/
 
@@ -63,18 +63,26 @@ MercatorTiling.prototype.generateLevelZeroTiles = function(config)
 	Locate a level zero tile
  */
 MercatorTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
-{	
-	// TODO
-	return 0;
+{
+	var x = (lon + 180) / 360; 
+	var sinLatitude = Math.sin(lat * Math.PI / 180);
+	var y = 0.5 - Math.log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * Math.PI);
+
+	var level0NumTiles = Math.pow(2,this.startLevel);
+	
+	var i = Math.floor( x * level0NumTiles ) % level0NumTiles;
+	var j = Math.floor( y * level0NumTiles ) % level0NumTiles;
+	
+	return j * level0NumTiles + i;
 }
 
 /**************************************************************************************************************/
 
-MercatorTiling.tile2long = function(x,z) {
+var tile2long = function(x,z) {
 	return ( x /Math.pow(2,z) * 360 - 180 );
 }
 
-MercatorTiling.tile2lat = function(y,z) {
+var tile2lat = function(y,z) {
 	var n = Math.PI - 2 * Math.PI * y / Math.pow(2,z);
 	return ( 180 / Math.PI * Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
 }		
@@ -93,7 +101,7 @@ var MercatorTile = function( level, x, y )
 	this.x = x;
 	this.y = y;
 	
-	this.geoBound = new GeoBound( MercatorTiling.tile2long(x,level), MercatorTiling.tile2lat(y+1,level), MercatorTiling.tile2long(x+1,level), MercatorTiling.tile2lat(y,level) );
+	this.geoBound = new GeoBound( tile2long(x,level), tile2lat(y+1,level), tile2long(x+1,level), tile2lat(y,level) );
 }
 
 /**************************************************************************************************************/
