@@ -60,7 +60,7 @@ Utils.inherits(VectorRenderer,PolygonRenderer);
 /**
  * Renderable constructor for Polygon
  */
-var Renderable = function(bucket) 
+var PolygonRenderable = function(bucket) 
 {
 	this.bucket = bucket;
 	this.geometry = null;
@@ -74,7 +74,7 @@ var Renderable = function(bucket)
 /**
  * Add a geometry to the renderbale
  */
-Renderable.prototype.add = function(geometry)
+PolygonRenderable.prototype.add = function(geometry)
 {
 	var gl = this.bucket.renderer.tileManager.renderContext.gl;
 	var style = this.bucket.style;
@@ -176,7 +176,7 @@ Renderable.prototype.add = function(geometry)
 /**
  * Remove a geometry from the renderable
  */
-Renderable.prototype.remove = function(geometry)
+PolygonRenderable.prototype.remove = function(geometry)
 {
 	if ( this.geometry == geometry)
 	{
@@ -189,7 +189,7 @@ Renderable.prototype.remove = function(geometry)
 /**
  * Dispose the renderable
  */
-Renderable.prototype.dispose = function(renderContext)
+PolygonRenderable.prototype.dispose = function(renderContext)
 {
 	var gl = renderContext.gl;
 	if (this.vertexBuffer) gl.deleteBuffer( this.vertexBuffer );
@@ -202,7 +202,7 @@ Renderable.prototype.dispose = function(renderContext)
 /**
 	Bucket constructor for PolygonRenderer
  */
-var Bucket = function(layer,style)
+var PolygonBucket = function(layer,style)
 {
 	this.layer = layer;
 	this.style = new FeatureStyle(style);
@@ -214,9 +214,9 @@ var Bucket = function(layer,style)
 /**
 	Create a renderable for this bucket
  */
-Bucket.prototype.createRenderable = function()
+PolygonBucket.prototype.createRenderable = function()
 {
-	return new Renderable(this);
+	return new PolygonRenderable(this);
 }
 
 /**************************************************************************************************************/
@@ -224,7 +224,7 @@ Bucket.prototype.createRenderable = function()
 /**
 	Check if a bucket is compatible
  */
-Bucket.prototype.isCompatible = function(style)
+PolygonBucket.prototype.isCompatible = function(style)
 {
 	return false;
 }
@@ -301,7 +301,7 @@ PolygonRenderer.prototype.canApply = function(type,style)
  */
 PolygonRenderer.prototype.createBucket = function(layer,style)
 {
-	return new Bucket(layer,style);
+	return new PolygonBucket(layer,style);
 }
 
 /**************************************************************************************************************/

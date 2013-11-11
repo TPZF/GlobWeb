@@ -35,7 +35,7 @@
 //	- Comments some not needed functions
 //	- Add mat4.project and mat4.rotateVec3
 
-(function (root) {
+define( function () {
 
     // Tweak to your liking
     var FLOAT_EPSILON = 0.000001;
@@ -2151,8 +2151,10 @@
      * Exports
      */
 
-	root.vec3 = vec3;
-	root.mat4 = mat4;
-	root.quat4 = quat4;
+	window.vec3 = vec3;
+	window.mat4 = mat4;
+	window.quat4 = quat4;
+	
+	return mat4;
 
-})(window);
+});

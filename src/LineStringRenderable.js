@@ -232,7 +232,7 @@ LineStringRenderer.prototype.canApply = function(type,style)
 /**
 	Bucket constructor for LineStringRenderer
  */
-var Bucket = function(layer,style)
+var LineStringBucket = function(layer,style)
 {
 	this.layer = layer;
 	this.style = new FeatureStyle(style);
@@ -244,7 +244,7 @@ var Bucket = function(layer,style)
 /**
 	Create a renderable for this bucket
  */
-Bucket.prototype.createRenderable = function()
+LineStringBucket.prototype.createRenderable = function()
 {
 	return new LineStringRenderable(this);
 }
@@ -254,7 +254,7 @@ Bucket.prototype.createRenderable = function()
 /**
 	Check if a bucket is compatible
  */
-Bucket.prototype.isCompatible = function(style)
+LineStringBucket.prototype.isCompatible = function(style)
 {
 	return this.style.strokeColor[0] == style.strokeColor[0]
 		&& this.style.strokeColor[1] == style.strokeColor[1]
@@ -271,7 +271,7 @@ Bucket.prototype.isCompatible = function(style)
 LineStringRenderer.prototype.createBucket = function( layer, style )
 {
 	// Create a bucket
-	return new Bucket(layer,style);
+	return new LineStringBucket(layer,style);
 }
 
 /**************************************************************************************************************/

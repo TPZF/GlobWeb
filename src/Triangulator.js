@@ -164,9 +164,11 @@ var Process = function( contour )
 
   return results;
 }
-		
-return {
+	
+var Triangulator = 	{
 	process: Process
 };
+
+return Triangulator;
 
 });
