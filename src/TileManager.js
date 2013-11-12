@@ -28,6 +28,7 @@ var TileManager = function( globe )
 	this.globe = globe;
 	this.renderContext = this.globe.renderContext;
 	this.tilePool = new TilePool(this.renderContext);
+	this.tiling = null;
 	this.imageryProvider = null;
 	this.elevationProvider = null;
 	this.tilesToRender = [];
@@ -163,10 +164,12 @@ TileManager.prototype.setImageryProvider = function(ip)
 	{
 		// Clean tile pool
 		this.tilePool.disposeAll();
+		
+		this.tiling = ip.tiling;
 
 		// Rebuild level zero tiles
 		this.tileConfig.imageSize = ip.tilePixelSize;
-		this.level0Tiles = ip.tiling.generateLevelZeroTiles(this.tileConfig,this.tilePool);
+		this.level0Tiles = this.tiling.generateLevelZeroTiles(this.tileConfig,this.tilePool);
 
 		// Update program
 		if ( ip.customShader )
@@ -229,7 +232,7 @@ TileManager.prototype.getOverlappedLevelZeroTiles = function( geometry )
 	var tileIndices = [];
 	for ( var i = 0; i < coords.length; i++ )
 	{
-		var index = this.imageryProvider.tiling.lonlat2LevelZeroIndex( coords[i][0], coords[i][1] );
+		var index = this.tiling.lonlat2LevelZeroIndex( coords[i][0], coords[i][1] );
 		if ( !indexMap[index] )
 		{
 			indexMap[ index ] = true;
@@ -734,7 +737,7 @@ TileManager.prototype.render = function()
  */
 TileManager.prototype.getVisibleTile = function(lon, lat)
 {
-	return this.imageryProvider.tiling.findInsideTile(lon, lat, this.visibleTiles);
+	return this.tiling.findInsideTile(lon, lat, this.visibleTiles);
 }
 
 /**************************************************************************************************************/

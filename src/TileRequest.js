@@ -71,7 +71,7 @@ var TileRequest = function(tileManager)
 			if ( _elevationLoaded )
 			{
 				// Call post-process function if defined
-				if ( tileManager.imageryProvider.handleImage )
+				if ( tileManager.imageryProvider && tileManager.imageryProvider.handleImage )
 					tileManager.imageryProvider.handleImage(_imageRequest);
 
 				tileManager.completedRequests.push(self);
