@@ -409,7 +409,7 @@ PointRenderer.prototype.render = function(renderables,start,end)
  */
 PointRenderer.prototype.canApply = function(type,style)
 {
-	return type == "Point";
+	return type == "Point" && style.label;
 }
 
 /**************************************************************************************************************/
