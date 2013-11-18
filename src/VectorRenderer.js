@@ -244,11 +244,26 @@ VectorRenderer.prototype.removeGeometryFromTile = function(geometry,tile)
 	var tileData = tile.extension.renderer;
 	if (tileData)
 	{
-		var renderable = tileData.getRenderable( geometry._bucket );
-		var numGeometries = renderable.remove(geometry);
-		if ( numGeometries == 0 )
+		var i = 0;
+		while ( i < tileData.renderables.length )
 		{
-			tileData.renderables.splice( tileData.renderables.indexOf(renderable),1);
+			var renderer = tileData.renderables[i].bucket.renderer;
+			if ( renderer == this )
+			{
+				var numGeometries = tileData.renderables[i].remove(geometry);
+				if ( numGeometries == 0 )
+				{
+					tileData.renderables.splice(i,1);
+				}
+				else
+				{
+					i++;
+				}
+			}
+			else
+			{
+				i++;
+			}
 		}
 	}
 }

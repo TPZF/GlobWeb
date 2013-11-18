@@ -42,7 +42,7 @@ var OpenSearchLayer = function(options){
 	this.maxRequests = options.maxRequests || 2;
 	this.requestProperties = "";
 	this.invertY = options.invertY || false;
-		this.coordSystemRequired = options.hasOwnProperty('coordSystemRequired') ? options.coordSystemRequired : true;
+	this.coordSystemRequired = options.hasOwnProperty('coordSystemRequired') ? options.coordSystemRequired : true;
 
 	// Set style
 	if ( options && options['style'] )
@@ -105,27 +105,6 @@ OpenSearchLayer.prototype._detach = function()
 /**************************************************************************************************************/
 
 /**
- *	Update children state as inherited from parent
- */
-OpenSearchLayer.prototype.updateChildrenState = function(tile)
-{
-	if ( tile.children )
-	{
-		for (var i = 0; i < 4; i++)
-		{
-			if ( tile.children[i].extension[this.extId] )
-			{
-				tile.children[i].extension[this.extId].state = OpenSearchLayer.TileState.INHERIT_PARENT;
-				tile.children[i].extension[this.extId].complete = true;
-			}
-			this.updateChildrenState(tile.children[i]);
-		}
-	}
-}
-
-/**************************************************************************************************************/
-
-/**
  * 	Launch request to the OpenSearch service
  */
 OpenSearchLayer.prototype.launchRequest = function(tile, url)
@@ -166,20 +145,11 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 
 				tileData.complete = (response.totalResults == response.features.length);
 					
-				// Update children state
-				if ( tileData.complete )
-				{
-					self.updateChildrenState(tile);
-				}
-
 				self.updateFeatures(response.features);
 				
-				if ( response.features.length > 0 )
+				for ( var i=0; i < response.features.length; i++ )
 				{
-					for ( var i=0; i < response.features.length; i++ )
-					{
-						self.addFeature( response.features[i], tile );
-					}
+					self.addFeature( response.features[i], tile );
 				}
 			}
 			else if ( xhr.status >= 400 )
@@ -346,11 +316,8 @@ OpenSearchLayer.prototype.modifyFeatureStyle = function( feature, style )
 	var featureData = this.featuresSet[feature.properties.identifier];
 	if ( featureData )
 	{
-		// HACK
-		var prevBucket = feature.geometry._bucket;
 		for ( var i = 0; i < featureData.tiles.length; i++ )
 		{
-			feature.geometry._bucket = prevBucket;
 			var tile = featureData.tiles[i];
 			this.globe.vectorRendererManager.removeGeometryFromTile(feature.geometry,tile);
 			this.globe.vectorRendererManager.addGeometryToTile(this,feature.geometry,style,tile);
@@ -414,23 +381,21 @@ OSData.prototype.traverse = function( tile )
 	}
 	
 	// Create children if needed
-	if ( tile.state == Tile.State.LOADED && tile.children && !this.childrenCreated )
+	if ( this.state == OpenSearchLayer.TileState.LOADED && !this.complete
+			&&  tile.state == Tile.State.LOADED && tile.children && !this.childrenCreated )
 	{
-		if ( this.state == OpenSearchLayer.TileState.LOADED && !this.complete )
+		for ( var i = 0; i < 4; i++ )
 		{
-			for ( var i = 0; i < 4; i++ )
-			{
-				tile.children[i].extension[this.layer.extId] = new OSData(this.layer,tile.children[i]);
-			}
-			this.childrenCreated = true;
-			
-			
-			/*var renderables = tile.extension.renderer.renderables;
-			for ( var i=0; i<renderables.length; i++ )
-			{
-				renderables[i].hasChildren = true;
-			}*/
+			tile.children[i].extension[this.layer.extId] = new OSData(this.layer,tile.children[i]);
 		}
+		this.childrenCreated = true;
+	
+		
+		/*var renderables = tile.extension.renderer.renderables;
+		for ( var i=0; i<renderables.length; i++ )
+		{
+			renderables[i].hasChildren = true;
+		}*/
 	}
 }
 
