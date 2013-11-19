@@ -38,11 +38,10 @@ var TouchNavigationHandler = function(options){
 	 */
 	 
 	var _navigation = null;
-	var _pressX;
-	var _pressY;
-	var _lastMouseX;
-	var _lastMouseY;
 	var _lastFingerDistance;
+
+	var _lastTouches = [];
+	var _prevAngle;
 
 	/**************************************************************************************************************/
 	
@@ -54,18 +53,23 @@ var TouchNavigationHandler = function(options){
 	 */
 	var _handleTouchStart = function(event)
 	{
-		console.log("# events : " + event.touches.length );
-		_pressX = event.touches[0].clientX;
-		_pressY = event.touches[0].clientY;
-		_lastMouseX = event.touches[0].clientX;
-		_lastMouseY = event.touches[0].clientY;
+		//console.log("# events : " + event.touches.length );
+		_prevAngle = 0.;
+		_lastTouches.length = 0;
+		for ( var i=0; i<event.touches.length; i++ )
+		{
+			_lastTouches.push({
+				x:event.touches[i].clientX,
+				y:event.touches[i].clientY
+			});
+		}
 		
 		if ( event.touches.length == 2 )
 		{
 			var dx = event.touches[0].clientX - event.touches[1].clientX;
 			var dy = event.touches[0].clientY - event.touches[1].clientY;
 			_lastFingerDistance = Math.sqrt( dx * dx + dy * dy );
-			console.log("Finger distance : " + this.lastFingerDistance );
+			console.log("Finger distance : " + _lastFingerDistance );
 		}
 				
 		if ( event.preventDefault )
@@ -83,20 +87,8 @@ var TouchNavigationHandler = function(options){
 	 */
 	var _handleTouchMove = function(event)
 	{
-		var dx = (event.touches[0].clientX - _lastMouseX);
-		var dy = (event.touches[0].clientY - _lastMouseY);
-		
-		_lastMouseX = event.touches[0].clientX;
-		_lastMouseY = event.touches[0].clientY;
-		
-		// Pan
-		if ( event.touches.length == 1 )
-		{
-			_navigation.pan( dx, dy );
-			_navigation.globe.renderContext.requestFrame();
-		}
 		// Zoom
-		else if ( event.touches.length == 2 )
+		if ( event.touches.length == 2 )
 		{
 			var dx = event.touches[0].clientX - event.touches[1].clientX;
 			var dy = event.touches[0].clientY - event.touches[1].clientY;
@@ -104,9 +96,9 @@ var TouchNavigationHandler = function(options){
 			var deltaDistance = (fingerDistance - _lastFingerDistance);
 			if (_lastFingerDistance != 0)
 			{
-				_navigation.zoom( deltaDistance * 0.025, fingerDistance / _lastFingerDistance);
+				_navigation.zoom( deltaDistance * 0.025, _lastFingerDistance/fingerDistance);
 			}
-			_navigation.globe.renderContext.requestFrame();
+			_navigation.renderContext.requestFrame();
 			_lastFingerDistance = fingerDistance;
 		}
 		
@@ -118,7 +110,6 @@ var TouchNavigationHandler = function(options){
 		
 		return false;
 	};
-
 
 	/**************************************************************************************************************/
 
@@ -150,11 +141,58 @@ var TouchNavigationHandler = function(options){
 		_navigation = nav;
 		
 		// Setup the touch event handlers
-		var canvas = _navigation.globe.renderContext.canvas;
+		var canvas = _navigation.renderContext.canvas;
 		
 		canvas.addEventListener("touchstart", _handleTouchStart,false);
 		document.addEventListener("touchend", _handleTouchEnd,false);
 		canvas.addEventListener("touchmove", _handleTouchMove,false);
+
+		$$('#'+canvas.id).swiping(function(event){
+			var currentX, currentY;
+
+            if ( event.currentTouch.length )
+        	{
+                currentX = event.currentTouch[0].x;
+                currentY = event.currentTouch[0].y;
+                var sameDirection = ( (event.currentTouch[0].y - _lastTouches[0].y) * (event.currentTouch[1].y - _lastTouches[1].y) > 0 );
+            }
+            else
+            {
+                currentX = event.currentTouch.x;
+                currentY = event.currentTouch.y;
+            }
+
+            var dx = currentX - _lastTouches[0].x;
+            _lastTouches[0].x = currentX;
+
+            var dy = currentY - _lastTouches[0].y;
+            _lastTouches[0].y = currentY;
+
+            if ( event.currentTouch.length )
+            {
+            	if ( sameDirection )
+            	{
+                    // Two fingers : tilt
+                    // TODO : make difference between rotate and tilt to avoid "shaking" while tilt
+                    _navigation.rotate(0., -dy);
+                }
+            }
+            else
+            {
+				// One finger : pan
+				_navigation.pan(dx, dy);
+            }
+		});
+
+		$$('#GlobWebCanvas').rotating(function(event){
+
+				var dx = event.angle - _prevAngle;
+				_prevAngle = event.angle;
+				nav.rotate(dx * 10, 0);
+
+        });
+
+
 	};
 
 	/** 
@@ -163,7 +201,7 @@ var TouchNavigationHandler = function(options){
 	this.uninstall = function()
 	{
 		// Setup the mouse event handlers
-		var canvas = _navigation.globe.renderContext.canvas;
+		var canvas = _navigation.renderContext.canvas;
 
 		canvas.addEventListener("touchstart", _handleTouchStart,false);
 		document.addEventListener("touchend", _handleTouchEnd,false);

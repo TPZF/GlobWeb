@@ -26,7 +26,7 @@ define( ['./Utils', './Event', './MouseNavigationHandler', './KeyboardNavigation
 	@constructor
 	Base class for navigation object
 
-	@param globe Globe
+	@param renderContext Render context
 	@param options Configuration options
 		<ul>
 			<li>handlers : Array of objects defining navigation events for different supports(mouse, keyboard..)</li>

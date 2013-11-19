@@ -92,7 +92,7 @@ var TileManager = function( parent )
 	";
 
 	this.fragmentShader = "\
-	precision highp float; \n\
+	precision lowp float; \n\
 	varying vec2 texCoord;\n";
 	if ( this.renderContext.lighting )
 		this.fragmentShader += "varying vec3 color;\n";
