@@ -158,11 +158,11 @@ TiledVectorRenderable.prototype.remove = function( geometry )
 		this.disposeChildrenIndexBuffers();
 		this.childrenIndices = null;
 		
-		return true;
+		return this.vertices.length;
 	}
 	else
 	{
-		return false;
+		return this.vertices.length;
 	}	
 }
 

@@ -1,0 +1,120 @@
+<html>
+
+<head>
+<title>GlobWeb example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+<script  src="require.min.js"></script>
+<script type="text/javascript">
+	
+
+	
+require(['../src/GlobWeb'], function (GlobWeb) 
+{	
+	var globe = new GlobWeb.Globe({ canvas: "GlobWebCanvas", 
+			atmosphere: false,
+			lighting: false,
+			showWireframe: false,
+			tileErrorTreshold: 4, 
+			continuousRendering: false,
+			statsElement: "fps" });
+			
+
+
+	var navigation = new GlobWeb.Navigation(globe);
+		
+	var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble,esat" });
+	globe.setBaseImagery( blueMarbleLayer );
+	var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
+	globe.setBaseElevation( elevationLayer );
+	
+/*		var osmLayer = new GlobWeb.OSMLayer( {baseUrl:"http://tile.openstreetmap.org"} );
+	globe.setBaseImagery( osmLayer );*/
+	
+	var vectorLayer = new GlobWeb.VectorLayer();
+	globe.addLayer( vectorLayer );
+	
+	
+var startPoint, endPoint;
+var started = false;
+var activated = false;
+
+var feature = {
+				id: '0',
+				type: 'Feature',
+				geometry: {
+					type: 'Polygon',
+					coordinates: []
+				}
+			};
+
+// Update the feature used to represent the rectangle
+function updateFeature(pt1,pt2) {
+	var minX = Math.min( pt1[0], pt2[0] );
+	var maxX = Math.max( pt1[0], pt2[0] );
+	var minY = Math.min( pt1[1], pt2[1] );
+	var maxY = Math.max( pt1[1], pt2[1] );
+	
+	feature.bbox = [ minX, minY, maxX, maxY ];
+	feature.geometry.coordinates = [[ [ minX, minY ],
+		[ maxX, minY ],
+		[ maxX, maxY ],
+		[ minX, maxY ],
+		[ minX, minY ]
+	]];
+	vectorLayer.removeFeature(feature);
+	vectorLayer.addFeature(feature);
+};
+
+// Called when left mouse button is pressed : start drawing the rectangle
+function onMouseDown(event) {
+	if ( activated && event.button == 0 ) {		
+		startPoint = globe.getLonLatFromPixel( event.pageX, event.pageY );
+		updateFeature( startPoint, startPoint );
+		started = true;
+	}
+};
+
+// Called when mouse is moved  : update the rectangle
+function onMouseMove(event) {
+	if ( started && event.button == 0 ) {							
+		var endPoint = globe.getLonLatFromPixel( event.pageX, event.pageY );
+		updateFeature(  startPoint, endPoint );
+	}
+};
+
+// Called when left mouse button is release  : end drawing the rectangle
+function onMouseUp(event) {
+	if ( started && event.button == 0 ) {
+		var endPoint = globe.getLonLatFromPixel( event.pageX, event.pageY );
+		updateFeature(  startPoint, endPoint );
+		started = false;
+	}
+};	
+
+$('#GlobWebCanvas').mousedown(onMouseDown);
+$('#GlobWebCanvas').mousemove(onMouseMove);
+$('#GlobWebCanvas').mouseup(onMouseUp);
+	
+$('#GlobWebCanvas').keypress( function() {
+	navigation.stop();
+	activated = !activated;
+	});
+ });
+
+
+</script>
+
+</head>
+
+
+<body>
+	<h1>Glob Web</h1>
+    <canvas id="GlobWebCanvas" style="border: none;" width="800" height="450"></canvas> 
+  	<br/>
+	<div id="fps" style="font-weight:bold">FPS : 0</div>
+</body>
+
+</html>
+

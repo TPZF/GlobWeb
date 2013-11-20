@@ -98,6 +98,7 @@ VectorRenderer.prototype._recursiveAddGeometryToTile = function(bucket, geometry
 		{
 			if ( tile.children[i].state == Tile.State.LOADED )
 			{
+				renderable.hasChildren = true;
 				this._recursiveAddGeometryToTile( bucket, geometry, tile.children[i] );
 			}
 		}
@@ -160,6 +161,8 @@ VectorRenderer.prototype.removeGeometry = function(geometry)
 		}
 		// Remove from geometry arrays
 		this.levelZeroTiledGeometries.splice( this.levelZeroTiledGeometries.indexOf(geometry), 1 );
+		
+		 geometry._tileIndices = null;
 	}
 	else
 	{
@@ -247,10 +250,12 @@ VectorRenderer.prototype.removeGeometryFromTile = function(geometry,tile)
 		var i = 0;
 		while ( i < tileData.renderables.length )
 		{
-			var renderer = tileData.renderables[i].bucket.renderer;
+			var renderable = tileData.renderables[i];
+			var renderer = renderable.bucket.renderer;
 			if ( renderer == this )
 			{
-				var numGeometries = tileData.renderables[i].remove(geometry);
+				// Remove renderable
+				var numGeometries = renderable.remove(geometry);
 				if ( numGeometries == 0 )
 				{
 					tileData.renderables.splice(i,1);
@@ -258,6 +263,18 @@ VectorRenderer.prototype.removeGeometryFromTile = function(geometry,tile)
 				else
 				{
 					i++;
+				}
+	
+				// Remove geoemtry from children if needed
+				if ( renderable.hasChildren && tile.children)
+				{
+					for ( var n = 0; n < 4; n++ )
+					{
+						if ( tile.children[n].state == Tile.State.LOADED )
+						{
+							this.removeGeometryFromTile( geometry, tile.children[n] );
+						}
+					}
 				}
 			}
 			else

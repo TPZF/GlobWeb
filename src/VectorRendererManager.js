@@ -119,7 +119,10 @@ VectorRendererManager.prototype.addGeometry = function(layer, geometry, style)
 VectorRendererManager.prototype.removeGeometry = function(geometry)
 {
 	var bucket = geometry._bucket;
-	bucket.renderer.removeGeometry(geometry);
+	if ( bucket )
+	{
+		bucket.renderer.removeGeometry(geometry);
+	}
 }
 
 /**************************************************************************************************************/
