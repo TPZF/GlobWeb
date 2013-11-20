@@ -248,7 +248,7 @@ var MouseNavigationHandler = function(options){
 		canvas.removeEventListener("mousedown", _handleMouseDown);
 		canvas.removeEventListener("mousemove", _handleMouseMove);
 		
-		if ( options.zoomOnDblClick )
+		if ( options && options.zoomOnDblClick )
 			canvas.removeEventListener("dblclick", _handleMouseDblClick);
 			
 		// For Firefox
