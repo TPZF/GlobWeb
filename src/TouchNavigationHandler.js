@@ -40,29 +40,48 @@ var TouchNavigationHandler = function(options){
 	var _navigation = null;
 	var _lastFingerDistance;
 
-	var _lastTouches = [];
-	var _prevAngle;
+	var _startTouches = [];
+	var _lastTouches;
+	var _lastAngle;
 
 	/**************************************************************************************************************/
 	
 	/**
  	 * Private methods
 	 */
+
+	/**
+	 * Calculate the angle between two coordinates
+	 */
+	var _getAngle = function(touch1, touch2) {
+		var y = touch2.clientY - touch1.clientY,
+			x = touch2.clientX - touch1.clientX;
+		return Math.atan2(y, x) * 180 / Math.PI;
+	};
+
+	/**************************************************************************************************************/
+
+	/**
+	 * Calculate the rotation degrees between two touchLists (fingers)
+	 */
+	var _getRotation = function(start, end) {
+		// Need two fingers
+		if(start.length >= 2 && end.length >= 2) {
+			return _getAngle(end[1], end[0]) - _getAngle(start[1], start[0]);
+		}
+		return 0;
+    };
+
+    /**************************************************************************************************************/
+
 	/** 
 	  Handle touch start event
 	 */
 	var _handleTouchStart = function(event)
 	{
 		//console.log("# events : " + event.touches.length );
-		_prevAngle = 0.;
-		_lastTouches.length = 0;
-		for ( var i=0; i<event.touches.length; i++ )
-		{
-			_lastTouches.push({
-				x:event.touches[i].clientX,
-				y:event.touches[i].clientY
-			});
-		}
+		_lastTouches = event.touches;
+		_startTouches = event.touches;
 		
 		if ( event.touches.length == 2 )
 		{
@@ -70,6 +89,8 @@ var TouchNavigationHandler = function(options){
 			var dy = event.touches[0].clientY - event.touches[1].clientY;
 			_lastFingerDistance = Math.sqrt( dx * dx + dy * dy );
 			console.log("Finger distance : " + _lastFingerDistance );
+			
+			_lastAngle = _getRotation( _startTouches, event.touches );
 		}
 				
 		if ( event.preventDefault )
@@ -82,17 +103,43 @@ var TouchNavigationHandler = function(options){
 		return false;
 	};
 
+	/**************************************************************************************************************/
+
 	/** 
 	  Handle touch move event
 	 */
 	var _handleTouchMove = function(event)
 	{
-		// Zoom
-		if ( event.touches.length == 2 )
+		if ( event.touches.length == 1 )
+		{	
+			// Pan
+			var dx = event.touches[0].clientX - _lastTouches[0].clientX;
+        	var dy = event.touches[0].clientY - _lastTouches[0].clientY;
+        	_navigation.pan(dx, dy);
+		}
+		else
 		{
+			// Depending on direction of two fingers, decide if tilt OR rotation
+			var sameDirection = ( (event.touches[0].clientY - _lastTouches[0].clientY) * (event.touches[1].clientY - _lastTouches[1].clientY) > 0 );
+			if ( sameDirection )
+			{
+				// Tilt
+				var dy = event.touches[0].clientY - _lastTouches[0].clientY;
+				_navigation.rotate(0., -dy);				
+			}
+			else
+			{
+				// Rotation
+				var rotation = _getRotation( _startTouches, event.touches );
+				var dx = rotation - _lastAngle;
+				_lastAngle = rotation;
+				_navigation.rotate(dx*10, 0);
+			}
+
+			// Zoom
 			var dx = event.touches[0].clientX - event.touches[1].clientX;
 			var dy = event.touches[0].clientY - event.touches[1].clientY;
-			var fingerDistance = Math.sqrt( dx * dx + dy * dy ); 
+			var fingerDistance = Math.sqrt( dx * dx + dy * dy );
 			var deltaDistance = (fingerDistance - _lastFingerDistance);
 			if (_lastFingerDistance != 0)
 			{
@@ -101,6 +148,9 @@ var TouchNavigationHandler = function(options){
 			_navigation.renderContext.requestFrame();
 			_lastFingerDistance = fingerDistance;
 		}
+
+		// Update _lastTouches
+		_lastTouches = event.touches;
 		
 		if ( event.preventDefault )
 		{
@@ -117,7 +167,10 @@ var TouchNavigationHandler = function(options){
 	  Handle touch end event
 	 */
 	var _handleTouchEnd = function(event)
-	{		
+	{	
+		_lastTouches = event.touches;
+//		_startTouches = event.touches;
+
 		if ( event.preventDefault )
 		{
 			event.preventDefault();
@@ -129,9 +182,9 @@ var TouchNavigationHandler = function(options){
 
 	/**************************************************************************************************************/
 	
-	 /**
-	  * Public methods
-	  */
+	/**
+	 * Public methods
+	 */
 			
 	/** 
 	 *	Setup the default event handlers for the _navigation
@@ -146,53 +199,6 @@ var TouchNavigationHandler = function(options){
 		canvas.addEventListener("touchstart", _handleTouchStart,false);
 		document.addEventListener("touchend", _handleTouchEnd,false);
 		canvas.addEventListener("touchmove", _handleTouchMove,false);
-
-		$$('#'+canvas.id).swiping(function(event){
-			var currentX, currentY;
-
-            if ( event.currentTouch.length )
-        	{
-                currentX = event.currentTouch[0].x;
-                currentY = event.currentTouch[0].y;
-                var sameDirection = ( (event.currentTouch[0].y - _lastTouches[0].y) * (event.currentTouch[1].y - _lastTouches[1].y) > 0 );
-            }
-            else
-            {
-                currentX = event.currentTouch.x;
-                currentY = event.currentTouch.y;
-            }
-
-            var dx = currentX - _lastTouches[0].x;
-            _lastTouches[0].x = currentX;
-
-            var dy = currentY - _lastTouches[0].y;
-            _lastTouches[0].y = currentY;
-
-            if ( event.currentTouch.length )
-            {
-            	if ( sameDirection )
-            	{
-                    // Two fingers : tilt
-                    // TODO : make difference between rotate and tilt to avoid "shaking" while tilt
-                    _navigation.rotate(0., -dy);
-                }
-            }
-            else
-            {
-				// One finger : pan
-				_navigation.pan(dx, dy);
-            }
-		});
-
-		$$('#GlobWebCanvas').rotating(function(event){
-
-				var dx = event.angle - _prevAngle;
-				_prevAngle = event.angle;
-				nav.rotate(dx * 10, 0);
-
-        });
-
-
 	};
 
 	/** 
