@@ -391,11 +391,13 @@ OSData.prototype.traverse = function( tile )
 		this.childrenCreated = true;
 	
 		
-		/*var renderables = tile.extension.renderer.renderables;
+		// HACK
+		var renderables = tile.extension.renderer ? tile.extension.renderer.renderables : [];
 		for ( var i=0; i<renderables.length; i++ )
 		{
-			renderables[i].hasChildren = true;
-		}*/
+			if ( renderables[i].bucket.layer == this )
+				renderables[i].hasChildren = true;
+		}
 	}
 }
 
