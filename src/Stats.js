@@ -31,10 +31,10 @@
 			<li>verbose : the verbosity of the stats, default is false</li>
 		</ul>
  */
-var Stats = function(globe,options)
+var Stats = function(renderContext,options)
 {
-	globe.renderContext.stats = this;
-	this.globe = globe;
+	renderContext.stats = this;
+	this.renderContext = renderContext;
 	
 	var elt = options ? options['element'] : undefined;
 	if ( elt )
@@ -49,9 +49,9 @@ var Stats = function(globe,options)
 		}
 	}
 	
-	this.showFPS = this.globe.renderContext.continuousRendering;
+	this.showFPS = this.renderContext.continuousRendering;
 	this.verbose = options && options['verbose'] ? options['verbose'] : false;
-	this.numFrames = 1;
+	this.numFrames = 0;
 	
 	var self = this;
 	window.setInterval( function() { self.print(); }, 1000 );
@@ -109,7 +109,8 @@ Stats.prototype.print = function()
 		}
 		
 		content += "Average render time : " + (this["sum_globalRenderTime"] / this.numFrames).toFixed(2) + " ms";
-		content += "<br>" + this.globe.getRenderStats();
+		if ( this.renderContext.renderer.getRenderStats )
+			content += "<br>" + this.renderContext.renderer.getRenderStats();
 		
 		if ( this.verbose )
 		{
