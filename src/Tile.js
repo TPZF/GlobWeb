@@ -288,11 +288,12 @@ Tile.prototype.deleteChildren = function(renderContext,tilePool)
 {
 	if ( this.children )
 	{
-		// Dispose children resources, and then delete its children
 		for (var i = 0; i < 4; i++)
 		{
-			this.children[i].dispose(renderContext,tilePool);
+			// Recursively delete its children
 			this.children[i].deleteChildren(renderContext,tilePool);
+			// Dispose its ressources (WebGL)
+			this.children[i].dispose(renderContext,tilePool);
 		}
 		
 		// Cleanup the tile

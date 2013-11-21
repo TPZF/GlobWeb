@@ -155,7 +155,6 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 			else if ( xhr.status >= 400 )
 			{
 				tileData.complete = true;
-				//self.updateChildrenState(tile);
 				console.error( xhr.responseText );
 			}
 			
@@ -343,7 +342,7 @@ OpenSearchLayer.prototype.generate = function(tile)
 {
 	if ( tile.order == this.minOrder )
 	{
-		tile.extension[this.extId] = new OSData(this,tile);
+		tile.extension[this.extId] = new OSData(this,tile,null);
 	}
 	
 };
@@ -354,9 +353,10 @@ OpenSearchLayer.prototype.generate = function(tile)
  *	OpenSearch renderable
  */
 
-var OSData = function(layer,tile)
+var OSData = function(layer,tile,p)
 {
 	this.layer = layer;
+	this.parent = p;
 	this.tile = tile;
 	this.featureIds = []; // exclusive parameter to remove from layer
 	this.state = OpenSearchLayer.TileState.NOT_LOADED;
@@ -373,6 +373,9 @@ OSData.prototype.traverse = function( tile )
 {
 	if (!this.layer._visible)
 		return;
+		
+	if (tile.state != Tile.State.LOADED)
+		return;
 
 	// Check if the tile need to be loaded
 	if ( this.state == OpenSearchLayer.TileState.NOT_LOADED )
@@ -386,16 +389,17 @@ OSData.prototype.traverse = function( tile )
 	{
 		for ( var i = 0; i < 4; i++ )
 		{
-			tile.children[i].extension[this.layer.extId] = new OSData(this.layer,tile.children[i]);
+			if (!tile.children[i].extension[this.layer.extId])
+				tile.children[i].extension[this.layer.extId] = new OSData(this.layer,tile.children[i],this);
 		}
 		this.childrenCreated = true;
 	
 		
-		// HACK
+		// HACK : set renderable to have children
 		var renderables = tile.extension.renderer ? tile.extension.renderer.renderables : [];
 		for ( var i=0; i<renderables.length; i++ )
 		{
-			if ( renderables[i].bucket.layer == this )
+			if ( renderables[i].bucket.layer == this.layer )
 				renderables[i].hasChildren = true;
 		}
 	}
@@ -407,12 +411,25 @@ OSData.prototype.traverse = function( tile )
  * 	Dispose renderable data from tile
  */
 OSData.prototype.dispose = function( renderContext, tilePool )
-{	
+{
+	if (this.parent && this.parent.childrenCreated)
+	{
+		this.parent.childrenCreated = false;
+		// HACK : set renderable to not have children!
+		var renderables = this.parent.tile.extension.renderer ? this.parent.tile.extension.renderer.renderables : [];
+		for ( var i=0; i<renderables.length; i++ )
+		{
+			if ( renderables[i].bucket.layer == this.layer )
+				renderables[i].hasChildren = false;
+		}
+	}
+	
 	for( var i = 0; i < this.featureIds.length; i++ )
 	{
 		this.layer.removeFeature( this.featureIds[i], this.tile );
 	}
 	this.tile = null;
+	this.parent = null;
 }
 
 /**************************************************************************************************************/
