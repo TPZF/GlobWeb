@@ -224,13 +224,19 @@ VectorRenderer.prototype._addGeometryToTile = function(bucket, geometry, tile)
 	}
 	
 	var renderable = tileData.getRenderable(bucket);
+	var needsToAdd = false;
 	if (!renderable) 
 	{
 		renderable = bucket.createRenderable();
-		tileData.renderables.push(renderable);
+		needsToAdd = true;
 	}
+	
 	if ( renderable.add(geometry, tile) )
 	{
+		if (needsToAdd)
+		{
+			tileData.renderables.push(renderable);
+		}
 		return renderable;
 	}
 	
