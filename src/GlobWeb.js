@@ -21,7 +21,7 @@ define( ["./Globe", "./GeoBound",
 		"./WMSLayer", "./WMTSLayer", "./WCSElevationLayer", "./OSMLayer", "./BingLayer", "./VectorLayer", "./AtmosphereLayer", // Layers
 		"./Navigation", "./FeatureStyle", "./Stats", "./KMLParser", // Others
 		"./PointRenderer", "./LineStringRenderable", "./PolygonRenderer" ], // Renderers
-	function(Globe, GeoBound, WMSLayer, WMTSLayer, WCSElevationLayer, OSMLayer, BingLayer, VectorLayer, AtmosphereLayer, Navigation, FeatureStyle, Stats, KMLParser) {
+	function(Globe, GeoBound, WMSLayer, WMTSLayer, WCSElevationLayer, OSMLayer, BingLayer, VectorLayer, AtmosphereLayer, Navigation, FeatureStyle, Stats, KMLParser, PointRenderer) {
 
 // Declare GlobWeb 
 var GlobWeb = {};
@@ -39,6 +39,12 @@ GlobWeb.AtmosphereLayer = AtmosphereLayer;
 GlobWeb.Navigation = Navigation;
 GlobWeb.Stats = Stats;
 GlobWeb.KMLParser = KMLParser;
+
+// Modify canApply for PointRenderer
+PointRenderer.prototype.canApply = function(type,style)
+{
+	return type == "Point";
+}
 
 window.GlobWeb = GlobWeb;
 
