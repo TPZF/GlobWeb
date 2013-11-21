@@ -22,12 +22,15 @@ define(['./Tile','./TilePool', './TileRequest', './TileIndexBuffer', './Program'
 
 /** @constructor
 	TileManager constructor
+	
+	Take in parameters its parent : can be a globe or a sky
  */
-var TileManager = function( globe )
+var TileManager = function( parent )
 {
-	this.globe = globe;
-	this.renderContext = this.globe.renderContext;
-	this.tilePool = new TilePool(this.renderContext);
+	this.parent = parent;
+	this.renderContext = this.parent.renderContext;
+	// Create a new tile pool or use the one from the parent
+	this.tilePool = parent.tilePool || new TilePool(this.renderContext);
 	this.tiling = null;
 	this.imageryProvider = null;
 	this.elevationProvider = null;
@@ -63,7 +66,6 @@ var TileManager = function( globe )
 	this.tileIndexBuffer = new TileIndexBuffer(this.renderContext,this.tileConfig);
 
 	// For debug
-	this.showWireframe = false;
 	this.freeze = false;
 
 	// Stats
@@ -118,9 +120,6 @@ var TileManager = function( globe )
 TileManager.prototype.addPostRenderer = function(renderer)
 {	
 	this.postRenderers.push( renderer );
-	this.postRenderers.sort( function(a,b) {
-		return (a.zIndex || 0) - (b.zIndex || 0);
-	});
 	
 	if ( renderer.generate )
 	{
@@ -344,16 +343,16 @@ TileManager.prototype.visitTiles = function( callback )
 					tile.state = Tile.State.REQUESTED;
 					this.tilesToRequest.push(tile);
 				}
-				else if ( tile.state == Tile.State.ERROR )
+				else if ( tile.state == Tile.State.ERROR && this.imageryProvider )
 				{
-					this.globe.publish("baseLayersError", this.imageryProvider);
+					this.parent.publish("baseLayersError", this.imageryProvider);
 					this.imageryProvider._ready = false;
 				}
 			}
 		}
-		if ( this.level0TilesLoaded )
+		if ( this.level0TilesLoaded && this.imageryProvider  )
 		{
-			this.globe.publish("baseLayersReady");
+			this.parent.publish("baseLayersReady");
 		}
 	}
 	
@@ -488,8 +487,8 @@ TileManager.prototype.processTile = function(tile,level)
 	}
 	
 	// All requests have been processed, send endBackgroundLoad event
-	if ( this.availableRequests.length == this.maxRequests )
-		this.globe.publish("endBackgroundLoad");
+	if ( this.availableRequests.length == this.maxRequests && this.imageryProvider )
+		this.parent.publish("endBackgroundLoad");
 
 }
 
@@ -655,8 +654,8 @@ var _sortTilesByDistance = function(t1,t2)
 		if ( this.availableRequests.length > 0 ) // Check to limit the number of requests done per frame
 		{
 			// First launch request, send an event
-			if ( this.availableRequests.length == this.maxRequests )
-				this.globe.publish("startBackgroundLoad");
+			if ( this.availableRequests.length == this.maxRequests && this.imageryProvider )
+				this.parent.publish("startBackgroundLoad");
 			
 			var tileRequest = this.availableRequests.pop();
 			tileRequest.launch( tile );
@@ -700,7 +699,7 @@ TileManager.prototype.render = function()
 		}
 
 		this.level0TilesLoaded = true;
-		this.globe.publish("baseLayersReady");
+		this.parent.publish("baseLayersReady");
 	}
 
 	var stats = this.renderContext.stats;

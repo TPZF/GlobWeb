@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./CoordinateSystem', './RenderContext', './TileManager', './Tile', './VectorRendererManager', './Numeric', './GeoBound', './Event', './Utils' ], 
-	function(CoordinateSystem, RenderContext, TileManager, Tile, VectorRendererManager, Numeric, GeoBound, Event, Utils) {
+ define(['./CoordinateSystem', './RenderContext', './TileManager', './TilePool', './Tile', './VectorRendererManager', './Numeric', './GeoBound', './Event', './Utils' ], 
+	function(CoordinateSystem, RenderContext, TileManager, TilePool, Tile, VectorRendererManager, Numeric, GeoBound, Event, Utils) {
 
 /**************************************************************************************************************/
 
@@ -28,7 +28,7 @@
 	Create a virtual sky in a HTML canvas element, passed in options parameter.
 	The virtual sky data is set using setBaseImage/addLayer methods.
 	
-	@param options Configuration properties for the Globe :
+	@param options Configuration properties for the Sky :
 		<ul>
 			<li>canvas : the canvas for WebGL, can be string (id) or a canvas element</li>
 			<li>backgroundColor : the background color of the canvas (an array of 4 floats)</li>
@@ -42,6 +42,7 @@ var Sky = function(options)
 	Event.prototype.constructor.call( this );
 
 	this.renderContext = new RenderContext(options);
+	this.tilePool =  new TilePool(this.renderContext);
 	this.tileManagers = {
 		'EQ': new TileManager( this ),
 		'GAL': new TileManager( this )
