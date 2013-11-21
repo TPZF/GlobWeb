@@ -24,7 +24,7 @@ require(['../src/Globe','../src/WMSLayer','../src/WCSElevationLayer','../src/Nav
 		var navigation = new Navigation(globe, { inertia: true });
 		
 		// Add stats
-		var stats = new Stats( globe, {element: 'fps', verbose: false} );
+		var stats = new Stats( globe.renderContext, {element: 'fps', verbose: false} );
 	
 		var blueMarbleLayer = new WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble" });
 		globe.setBaseImagery( blueMarbleLayer );
@@ -32,7 +32,7 @@ require(['../src/Globe','../src/WMSLayer','../src/WCSElevationLayer','../src/Nav
 		var elevationLayer = new WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
 		globe.setBaseElevation( elevationLayer );
 		
-		globe.addLayer( new TileWireframeLayer() );
+		globe.addLayer( new TileWireframeLayer({ outline: true }) );
 });
 
 </script>
@@ -42,7 +42,7 @@ require(['../src/Globe','../src/WMSLayer','../src/WCSElevationLayer','../src/Nav
 
 <body style="margin: 0; padding: 0;">
     <canvas id="GlobWebCanvas" style="border: none; margin: 0; padding: 0;" width="800" height="600"></canvas> 
- 	<div id="fps"></div>
+ 	<div id="fps" style="position: absolute; bottom: 0; background: white; opacity: 0.5; "></div>
 </body>
 
 </html>
