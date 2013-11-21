@@ -43,17 +43,25 @@ var AstroNavigation = function(globe, options)
 
 	// Initialize the navigation
 	this.center3d = [1.0, 0.0, 0.0];
-	if ( options.initTarget ) {
-		CoordinateSystem.fromGeoTo3D(options.initTarget, this.center3d );
-	}
+	this.up = [0., 0., 1.];
 
-	if ( options.initFov ) {
-		this.globe.renderContext.fov = options.initFov;
-		this._clampFov();
+	if ( options )
+	{
+		if ( options.initTarget ) {
+			CoordinateSystem.fromGeoTo3D(options.initTarget, this.center3d );
+		}
+
+		if ( options.initFov ) {
+			this.globe.renderContext.fov = options.initFov;
+			this._clampFov();
+		}
+
+		if ( options.up )
+		{
+			this.up = options.up;
+		}
 	}
-	
-	this.up = options.up || [0., 0., 1.];
-	
+		
 	// Update the view matrix now
 	this.computeViewMatrix();
 }
@@ -77,7 +85,7 @@ AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, callback)
 	
 	// default values
 	var destFov = fov || 15.0;
-	duration = duration || 5000;
+	duration = duration || 2000;
 	
 	// Create a single animation to animate center3d and fov
 	var geoStart = [];
