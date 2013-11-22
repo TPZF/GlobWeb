@@ -3,11 +3,13 @@
 <head>
 <title>GlobWeb example</title>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
-<link rel="stylesheet" href="GlobWeb.css">
 
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
+<script  src="require.min.js"></script>
 
 <script type="text/javascript">
+require(['../src/Globe','../src/WMSLayer','../src/Navigation','../src/Stats','../src/Program','../src/TileWireframeLayer','../src/WCSElevationLayer'], 
+	function (Globe,WMSLayer,Navigation,Stats,Program,TileWireframeLayer,WCSElevationLayer) 
+{	
 
 	var FrustumRenderer = function(rc)
 	{
@@ -31,7 +33,7 @@
 		}\n\
 		";
 		
-		this.program = new GlobWeb.Program(rc);
+		this.program = new Program(rc);
 		this.program.createFromSource( vertexShader, fragmentShader );
 	};
 	
@@ -93,37 +95,35 @@
 	};
 
 	
-    function webGLStart() 
-	{	
-		var cvs = document.getElementById("GlobWebCanvas");
+ 		var cvs = document.getElementById("GlobWebCanvas");
 		cvs.width = window.innerWidth;
 		cvs.height = window.innerHeight;
 		
 		// Create the globe
-		var globe = new GlobWeb.Globe( { canvas: cvs, 
+		var globe = new Globe( { canvas: cvs, 
 				lighting: false,
 				tileErrorTreshold: 3, 
 				continuousRendering: true } );
 
 		// Add mouse navigation
-		var navigation = new GlobWeb.Navigation(globe);
+		var navigation = new Navigation(globe);
 		
 		// Add stats
-		var stats = new GlobWeb.Stats( globe, {element: 'fps', verbose: false} );
+		var stats = new Stats( globe.renderContext, {element: 'fps', verbose: false} );
 	
-		var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble" });
+		var blueMarbleLayer = new WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble" });
 		globe.setBaseImagery( blueMarbleLayer );
 		
 		/*var elevationLayer = new GlobWeb.BasicElevationLayer({ baseUrl:"http://demonstrator.vegaspace.com/json_elevations/get.php"});
 		globe.setBaseElevation( elevationLayer );*/
 		
-		var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.vegaspace.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
+		var elevationLayer = new WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});
 		globe.setBaseElevation( elevationLayer );
 		
 		/*var osmLayer = new GlobWeb.OSMLayer( {baseUrl:"http://tile.openstreetmap.org"} );
 		globe.setBaseImagery( osmLayer );*/
 		
-		globe.addLayer( new GlobWeb.TileWireframeLayer({outline: true}) );
+		globe.addLayer( new TileWireframeLayer({outline: true}) );
 		/*var atmosphere = new GlobWeb.AtmosphereLayer({ visible: false, exposure: 1.4 });
 		globe.addLayer( atmosphere );*/
 		
@@ -139,7 +139,7 @@
 			}
 			frustumRenderer.compute();
 		}
-   }
+   });
 
 
 </script>
@@ -147,7 +147,7 @@
 </head>
 
 
-<body onload="webGLStart();" style="margin: 0; padding: 0;">
+<body style="margin: 0; padding: 0;">
     <canvas id="GlobWebCanvas" style="border: none; margin: 0; padding: 0;" width="800" height="600"></canvas> 
  	<div id="fps"></div>
 </body>

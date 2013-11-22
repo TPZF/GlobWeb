@@ -28,7 +28,7 @@ require(['../src/Globe','../src/WMSLayer','../src/WCSElevationLayer','../src/Nav
 	// Add stats
 	var stats = new Stats( globe, {element: 'fps', verbose: false} );
 
-	var blueMarbleLayer = new WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble" });
+	var blueMarbleLayer = new WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble" });
 	globe.setBaseImagery( blueMarbleLayer );
 		
 	var elevationLayer = new WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "GTOPO", version: "1.0.0"});

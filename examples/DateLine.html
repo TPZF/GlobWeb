@@ -14,7 +14,7 @@ require(['../src/GlobWeb'], function (GlobWeb)
 
 	var navigation = new GlobWeb.Navigation(globe);
 
-	var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble,esat" });
+	var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble,esat" });
 	globe.setBaseImagery( blueMarbleLayer );
 	
 	var vectorLayer = new GlobWeb.VectorLayer();

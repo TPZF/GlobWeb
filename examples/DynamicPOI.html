@@ -3,15 +3,11 @@
 <head>
 <title>GlobWeb example</title>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
-<link rel="stylesheet" href="GlobWeb.css">
-<script type="text/javascript" src="../src/GlobWeb.js"></script>
-
-
+<script  src="require.min.js"></script>
 <script type="text/javascript">
 	
-		
-    function webGLStart() 
-	{
+require(['../src/GlobWeb'], function (GlobWeb) {
+
 		var cvs = document.getElementById("2d");
 		var ctx = cvs.getContext("2d");
 		//ctx.fillStyle = '#888';
@@ -30,14 +26,13 @@
 		var globe = new GlobWeb.Globe({ canvas: "GlobWebCanvas" });
 		var nav = new GlobWeb.Navigation(globe);
 			
-		var publicWMS = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub",
+		var publicWMS = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub",
 					 layers: "BlueMarble,esat" } );
 		globe.setBaseImagery( publicWMS );		
 	
 		var style = new GlobWeb.FeatureStyle();
 		style.iconUrl = null;
-		//style.icon = ctx.getImageData(0,0,128,22);
-		style.icon =  GlobWeb.Text.generateImageData("Coucou!");
+		style.label = "Coucou!";
 		style.pointMaxSize = 4000;
 		
 		var layer = new GlobWeb.VectorLayer({ style: style });
@@ -59,7 +54,7 @@
 			};
 			layer.addFeature(poi);
 		};
-   }
+   });
 
 
 </script>
@@ -67,7 +62,7 @@
 </head>
 
 
-<body onload="webGLStart();">
+<body>
 	<h1>Glob Web</h1>
   
 	<canvas id="GlobWebCanvas" style="border: none;" width="1024" height="768"></canvas>

@@ -1,3 +1,5 @@
+require(['../src/GlobWeb'], function(GlobWeb) {
+
 var globe = null;
 var geocoder = null;
 var nav = null;
@@ -27,27 +29,19 @@ onGoToClicked = function(e)
 	})
 }
 
+// Initialize go to
+var goTo = document.getElementById('goToButton');
+goTo.onclick = onGoToClicked;
 
-// Main function called the page is loaded
-function main()
-{
-	// Initialize go to
-	var goTo = document.getElementById('goToButton');
-	goTo.onclick = onGoToClicked;
+// Initialize webgl
+globe = new GlobWeb.Globe({ canvas: 'GlobWebCanvas'});
+nav = new GlobWeb.Navigation(globe);
 
-	// Initialize webgl
-	globe = new GlobWeb.Globe({ canvas: 'GlobWebCanvas'});
-	nav = new GlobWeb.Navigation(globe);
-	
-	var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble,esat" });
-	globe.setBaseImagery( blueMarbleLayer );
-	var elevationLayer = new GlobWeb.BasicElevationLayer({ baseUrl:"http://demonstrator.vegaspace.com/json_elevations/get.php"});
-	globe.setBaseElevation( elevationLayer );
-	
-	//var osmLayer = new GlobWeb.OSMLayer( {baseUrl:"http://tile.openstreetmap.org"} );
-	//globe.setBaseImagery( osmLayer );
-}
+var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble,esat" });
+globe.setBaseImagery( blueMarbleLayer );
 
-window.onload = main;
+//var osmLayer = new GlobWeb.OSMLayer( {baseUrl:"http://tile.openstreetmap.org"} );
+//globe.setBaseImagery( osmLayer );
 
+});
 

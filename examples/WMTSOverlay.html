@@ -22,7 +22,7 @@ require(['../src/GlobWeb'], function (GlobWeb)
 	// Add stats
 	var stats = new GlobWeb.Stats( globe.renderContext, {element: 'fps', verbose: true} );
 
-	var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.vegaspace.com/wmspub", layers: "BlueMarble" });
+	var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble" });
 	globe.setBaseImagery( blueMarbleLayer );
 			
 	var eoxLayer = new GlobWeb.WMTSLayer({

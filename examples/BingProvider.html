@@ -7,12 +7,15 @@
 <script  src="require.min.js"></script>
 <script type="text/javascript">
 	
-require(['../src/Globe','../src/BingLayer','../src/Navigation'], 
-	function (Globe,BingLayer,Navigation) 
+require(['../src/Globe','../src/BingLayer','../src/Navigation','../src/Stats'], 
+	function (Globe,BingLayer,Navigation,Stats) 
 {	
 	var globe = new Globe({ canvas: "GlobWebCanvas" });
 	
 	var navigation = new Navigation(globe);
+	
+	// Add stats
+	var stats = new Stats( globe.renderContext, {element: 'fps', verbose: false} );
 		
 	var bingLayer = new BingLayer({ imageSet:"AerialWithLabels", 
 											key: "Ar7-_U1iwNtChqq64tAQsOfO8G7FwF3DabvgkQ1rziC4Z9zzaKZlRDWJTKTOPBPV" 

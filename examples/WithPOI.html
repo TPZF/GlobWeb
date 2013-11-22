@@ -53,10 +53,10 @@ globe = new GlobWeb.Globe( {canvas: "GlobWebCanvas"} );
 nav = new GlobWeb.Navigation(globe);
 
 poiLayer = new GlobWeb.VectorLayer();
-poiLayer.style = new GlobWeb.FeatureStyle({ iconUrl: "hotspot.png", pointMaxSize: 10000, renderHint: "PointSprite" });
+poiLayer.style = new GlobWeb.FeatureStyle({ iconUrl: "hotspot.png", pointMaxSize: 10000 });
 globe.addLayer( poiLayer );
 
-var publicWMS = new GlobWeb.WMSLayer( {baseUrl: "http://demonstrator.vegaspace.com/wmspub",
+var publicWMS = new GlobWeb.WMSLayer( {baseUrl: "http://demonstrator.telespazio.com/wmspub",
 			 layers: "BlueMarble,esat" } );
 globe.setBaseImagery( publicWMS );		
 
