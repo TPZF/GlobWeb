@@ -188,7 +188,8 @@ var PointRenderable = function(bucket)
 /**************************************************************************************************************/
 
 /**
- * Add a geometry to the renderbale
+ * Add a geometry to the renderable
+ * @return if the geometry has been successfully added to the renderable
  */
 PointRenderable.prototype.add = function(geometry)
 {
@@ -205,6 +206,9 @@ PointRenderable.prototype.add = function(geometry)
 		vertical: vertical,
 		geometry: geometry
 	});
+	
+	// Always add the geometry
+	return true;
 }
 
 /**************************************************************************************************************/

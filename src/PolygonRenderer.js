@@ -168,7 +168,10 @@ PolygonRenderable.prototype.add = function(geometry)
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 	
 	mat4.identity(this.matrix);
-	mat4.translate(this.matrix,origin);	
+	mat4.translate(this.matrix,origin);
+	
+	// Always add the geometry
+	return true;
 }
 
 /**************************************************************************************************************/

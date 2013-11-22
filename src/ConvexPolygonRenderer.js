@@ -150,7 +150,8 @@ var Renderable = function(bucket)
 /**************************************************************************************************************/
 
 /**
-	Add the geometry to the renderable
+ *	Add the geometry to the renderable
+ * @return if the geometry has been successfully added to the renderable
  */
 Renderable.prototype.add = function(geometry)
 {
