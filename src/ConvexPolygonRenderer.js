@@ -260,6 +260,8 @@ Renderable.prototype.add = function(geometry)
 		this.bufferDirty = true;
 		this.triBufferDirty = true;
 	}
+	
+	return true;
 }
 
 /**************************************************************************************************************/

@@ -92,6 +92,8 @@ Renderable.prototype.add = function(geometry)
 	// Hack : push away the point, only works for AstroWeb, sufficient for now
 	this.vertices.push( 0.99 * pt[0], 0.99 * pt[1], 0.99 * pt[2] );
 	this.vertexBufferDirty = true;
+	
+	return true;
 }
 
 /**************************************************************************************************************/
