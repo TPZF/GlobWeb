@@ -67,7 +67,6 @@ var TileRequest = function(tileManager)
 		if (!_imageLoaded)
 		{
 			_imageLoaded = true;
-			self.image = _imageRequest.image;
 			if ( _elevationLoaded )
 			{
 				// Call post-process function if defined
@@ -77,6 +76,7 @@ var TileRequest = function(tileManager)
 				tileManager.completedRequests.push(self);
 				tileManager.renderContext.requestFrame();
 			}
+			self.image = _imageRequest.image;
 		}
 	};
 
