@@ -533,7 +533,7 @@ TileManager.prototype.processTile = function(tile,level)
 		if ( this.tileConfig.cullSign < 0 )
 		{
 			gl.depthMask(false);
-			gl.disable(gl.DEPTH_FUNC);
+			gl.disable(gl.DEPTH_TEST);
 			gl.disable(gl.CULL_FACE);
 		}
 		else
@@ -617,7 +617,7 @@ TileManager.prototype.processTile = function(tile,level)
 		if ( this.tileConfig.cullSign < 0 )
 		{
 			gl.depthMask(true);
-			gl.enable(gl.DEPTH_FUNC);
+			gl.enable(gl.DEPTH_TEST);
 		}
 		else		
 		{
