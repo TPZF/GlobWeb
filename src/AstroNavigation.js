@@ -52,7 +52,7 @@ var AstroNavigation = function(globe, options)
 		}
 
 		if ( options.initFov ) {
-			this.globe.renderContext.fov = options.initFov;
+			this.renderContext.fov = options.initFov;
 			this._clampFov();
 		}
 
@@ -84,7 +84,7 @@ AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, callback)
 	var navigation = this;
 	
 	// default values
-	var destFov = fov || 15.0;
+	var destFov = fov || 2.0;
 	duration = duration || 2000;
 	
 	// Create a single animation to animate center3d and fov
@@ -92,7 +92,7 @@ AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, callback)
 	var middleFov = 25.0;	// arbitrary middle fov value which determines if the animation needs two segments
 	
 	CoordinateSystem.from3DToGeo(this.center3d, geoStart);
-	var startValue = [geoStart[0], geoStart[1], this.globe.renderContext.fov];
+	var startValue = [geoStart[0], geoStart[1], this.renderContext.fov];
 	var endValue = [geoPos[0], geoPos[1], destFov];
 	
 	// Compute the shortest path if needed
@@ -118,7 +118,7 @@ AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, callback)
 	// TODO : maybe improve it ?
 	// End point which is out of frustum invokes two steps animation, one step otherwise
 	var end3DValue = CoordinateSystem.fromGeoTo3D( geoPos );
-	if (middleFov > this.globe.renderContext.fov && this.globe.renderContext.worldFrustum.containsSphere( end3DValue, 0.005 ) < 0 )
+	if (middleFov > this.renderContext.fov && this.renderContext.worldFrustum.containsSphere( end3DValue, 0.005 ) < 0 )
 	{
 		// Two steps animation, 'rising' & 'falling'
 		
@@ -294,7 +294,7 @@ AstroNavigation.prototype.computeViewMatrix = function()
 	var eye = [];
 	vec3.normalize(this.center3d);
 	
-	var vm = this.globe.renderContext.viewMatrix;
+	var vm = this.renderContext.viewMatrix;
 
 	mat4.lookAt([0., 0., 0.], this.center3d, this.up, vm);
 	// mat4.inverse( vm );
@@ -303,6 +303,7 @@ AstroNavigation.prototype.computeViewMatrix = function()
 
 	this.up = [ vm[1], vm[5], vm[9] ];
 	this.publish("modified");
+	this.renderContext.requestFrame();
 }
 
 /**************************************************************************************************************/
@@ -311,15 +312,21 @@ AstroNavigation.prototype.computeViewMatrix = function()
 	Event handler for mouse wheel
 	@param delta Delta zoom
  */
-AstroNavigation.prototype.zoom = function(delta)
+AstroNavigation.prototype.zoom = function(delta, scale)
 {
-	// Arbitrary value for smooth zooming
-	delta = 1 + delta * 0.1;
 	
-	// Check differences between firefox and the rest of the world 
-	this.globe.renderContext.fov *= delta;
+	// TODO : improve zoom, using scale or delta ? We should use scale always
+	if ( scale )
+	{
+		this.renderContext.fov *= 1/scale;
+	}
+	else
+	{
+		// Arbitrary value for smooth zooming
+		this.renderContext.fov *= (1 + delta * 0.1);
+	}
+	
 	this._clampFov();
-	
 	this.computeViewMatrix();
 }
 
@@ -332,9 +339,9 @@ AstroNavigation.prototype.zoom = function(delta)
  */
 AstroNavigation.prototype.pan = function(dx, dy)
 {
-	var x = this.globe.renderContext.canvas.width / 2.;
-	var y = this.globe.renderContext.canvas.height / 2.;
-	this.center3d = this.globe.renderContext.get3DFromPixel(x - dx, y - dy);
+	var x = this.renderContext.canvas.width / 2.;
+	var y = this.renderContext.canvas.height / 2.;
+	this.center3d = this.renderContext.get3DFromPixel(x - dx, y - dy);
 		
 	this.computeViewMatrix();
 }
@@ -361,13 +368,13 @@ AstroNavigation.prototype.rotate = function(dx,dy)
  *	Clamping of fov
  */
 AstroNavigation.prototype._clampFov = function() {
-	if ( this.globe.renderContext.fov > this['maxFov'] )
+	if ( this.renderContext.fov > this['maxFov'] )
 	{
-		this.globe.renderContext.fov = this['maxFov'];
+		this.renderContext.fov = this['maxFov'];
 	}
-	if ( this.globe.renderContext.fov < this['minFov'] )
+	if ( this.renderContext.fov < this['minFov'] )
 	{
-		this.globe.renderContext.fov = this['minFov'];
+		this.renderContext.fov = this['minFov'];
 	}
 }
 
