@@ -239,7 +239,7 @@ var TouchNavigationHandler = function(options){
 		// Update last touches
 		_lastTouches = event.touches;
 
-		if ( _navigation.inertia )
+		if ( _navigation.inertia && (_dx != 0 || _dy != 0) )
 		{
 			// Launch inertia depending on action hits while "moving" phase
 			var hitIndex = _actionHits.indexOf( Math.max.apply(this,_actionHits) );
@@ -251,7 +251,7 @@ var TouchNavigationHandler = function(options){
 			else if ( hitIndex == Type.ROTATE )
 			{
 				// Rotate
-				_navigation.inertia.launch("rotate", _rotation, 0);
+				//_navigation.inertia.launch("rotate", _rotation, 0);
 			}
 			else if ( hitIndex == Type.TILT )
 			{
@@ -285,7 +285,7 @@ var TouchNavigationHandler = function(options){
 		var canvas = _navigation.renderContext.canvas;
 		
 		canvas.addEventListener("touchstart", _handleTouchStart,false);
-		document.addEventListener("touchend", _handleTouchEnd,false);
+		canvas.addEventListener("touchend", _handleTouchEnd,false);
 		canvas.addEventListener("touchmove", _handleTouchMove,false);
 	};
 
@@ -297,9 +297,9 @@ var TouchNavigationHandler = function(options){
 		// Setup the mouse event handlers
 		var canvas = _navigation.renderContext.canvas;
 
-		canvas.addEventListener("touchstart", _handleTouchStart,false);
-		document.addEventListener("touchend", _handleTouchEnd,false);
-		canvas.addEventListener("touchmove", _handleTouchMove,false);
+		canvas.removeEventListener("touchstart", _handleTouchStart,false);
+		canvas.removeEventListener("touchend", _handleTouchEnd,false);
+		canvas.removeEventListener("touchmove", _handleTouchMove,false);
 	};
 };
 
