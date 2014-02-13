@@ -60,9 +60,10 @@ var WMSLayer = function( options )
 	url += "&srs=";
 	url += options.hasOwnProperty('srs') ? options['srs'] : 'EPSG:4326';
 	url += "&layers=" + options['layers'];
+	url += "&styles=";
 	if ( options.hasOwnProperty('styles') )
 	{
-		url += "&styles=" + options.styles;
+		url += options.styles;
 	}
 	url += "&format=";
 	url += options.hasOwnProperty('format') ? options['format'] : 'image/jpeg';
