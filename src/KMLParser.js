@@ -366,10 +366,10 @@ var KMLParser = (function()
 		{
 		case "Style":
 			parseStyle( node );
-			break
+			break;
 		case "Placemark":
 			parsePlacemark( node );
-			break
+			break;
 		case "Document":
 		case "Folder":
 			parseDocumentOrFolder( node );
