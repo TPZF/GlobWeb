@@ -121,6 +121,12 @@ TileManager.prototype.addPostRenderer = function(renderer)
 {	
 	this.postRenderers.push( renderer );
 	
+	this.postRenderers.sort( function(r1,r2) {
+		var z1 = r1.zIndex | 0;
+		var z2 = r2.zIndex | 0;
+		return z1 - z2;
+	});
+	
 	if ( renderer.generate )
 	{
 		this.visitTiles( function(tile) {
@@ -346,7 +352,6 @@ TileManager.prototype.visitTiles = function( callback )
 				else if ( tile.state == Tile.State.ERROR && this.imageryProvider )
 				{
 					this.parent.publish("baseLayersError", this.imageryProvider);
-					this.imageryProvider._ready = false;
 				}
 			}
 		}

@@ -51,6 +51,9 @@ var AtmosphereLayer = function(options)
 	this._groundProgram = null;
 	this._originalProgram = null;
 	this._isValid = false;
+	
+	// For rendering
+	this.zIndex = -1;
 }
 
 /**************************************************************************************************************/
