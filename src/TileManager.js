@@ -525,7 +525,7 @@ TileManager.prototype.processTile = function(tile,level)
 		}
 	}
 	rc.near = Math.max( rc.minNear, nr );
-	rc.far = fr;
+	rc.far = Math.max( rc.minFar, fr );
 
 	if ( this.tilesToRender.length != 0 )
 	{
