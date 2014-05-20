@@ -49,6 +49,7 @@
 
 				<h3><a href="#">Imageries</a></h3>
 				<div id="imageryMenu">
+					<div class="input-menu"> <input type="radio" name="imagery" checked="checked" value="BM">Blue Marble</input>  </div>
 					<div class="input-menu"> <input type="radio" name="imagery" checked="checked" value="PO" data-attribution="img/PlanetObserver-256.png">PlanetObserver</input>  </div>
 				<!--	<div class="input-menu"> <input type="radio" name="imagery" value="Landsat">Landsat</input>  </div> -->
 					<div class="input-menu"> <input type="radio" name="imagery" value="OSM" data-attribution="img/osm_logo-256.png">OpenStreetMap</input>  </div>
@@ -82,9 +83,17 @@
 
 		<div id="fps" class="fps ui-widget"></div>
 		<div id="logos" class="logos">
-			<image width="200px" src="img/logoTPZ.png" />
+			<image width="200px" src="img/logoTPZ-256.png" />
 			<image id="attribution" width="100px" src="img/PlanetObserver-256.png" />
 		</div>
+		
+		<div id="errorDialog" style="display: none" class="ui-widget">
+				<div style="padding: 0 .7em;" class="ui-state-error ui-corner-all">
+				<p><span style="float: left; margin-right: .3em;" class="ui-icon ui-icon-alert"></span>
+				<strong>Error :</strong> <span id="errorMessage">Sample ui-state-error style.</span></p>
+			</div>
+		</div>
+		
 	</div>
 	
 <!-- </div> -->

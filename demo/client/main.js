@@ -51,13 +51,28 @@ onGoToClicked = function(e)
 	})
 }
 
+// activate an imagery
+activateImagey = function($input) {
+
+	$('#errorDialog').hide();
+	
+	activeImagery = imageries[ $input.val() ];
+	globe.setBaseImagery( activeImagery );
+	
+	var attrImg = $input.data("attribution");
+	if ( attrImg ) {
+		$("#attribution")
+				.show()
+				.attr("src",attrImg);
+	} else {
+		$("#attribution").hide();
+	}
+}
+
 // Called when an imagery is clicked
 onImageryClicked = function(e)
 {
-	var value = e.currentTarget.value;
-	activeImagery = imageries[value];
-	globe.setBaseImagery( activeImagery );
-	$("#attribution").attr("src",$(this).data("attribution"));
+	activateImagey( $(e.currentTarget) );
 }
 
 // Called when elevation is clicked
@@ -119,14 +134,13 @@ initializeElevation = function(value)
 }
 
 // Initialize the imagery
-initializeImagery = function(value)
+initializeImagery = function()
 {
-	imageries["PO"] = new WMSLayer( { baseUrl: config.serverUrl + "/wmspo",  layers: "PO150m,POFrance15m,POI15m" } );
-	//imageries["Landsat"] = new WMSLayer( { baseUrl: config.serverUrl + "/wmspo",  layers: "PO150m,POFrance15m,POI15m" } );
+	imageries["BM"] = new WMSLayer( { baseUrl: config.serverUrl + "/wmspub",  layers: "BlueMarble" } );
+	imageries["PO"] = new WMSLayer( { baseUrl: config.serverUrl + "/wmspo",  layers: "PO150m,POFrance15m" } );
 	imageries["OSM"] = new WMSLayer( { baseUrl: config.serverUrl + "/geocache/wms", layers: "imposm-fr", format: "image/png" } );
 
-	activeImagery = imageries[value];
-	globe.setBaseImagery( activeImagery );
+	activateImagey( $('#imageryMenu input:checked')  );
 }
 
 initializePath = function()
@@ -298,14 +312,26 @@ $(function()
 		document.getElementById('GlobWebCanvas').style.display = "none";
 		document.getElementById('webGLNotAvailable').style.display = "block";
 	}
+	
+	$('#errorDialog button').button({
+		icons: {
+			primary: "ui-icon-close"
+		},
+		text: false
+	});
+	
+	globe.subscribe("baseLayersError", function() {
+		$('#errorMessage').html("Cannot load the base layer." )
+		$('#errorDialog').show();
+	});
 		
 	nav = new Navigation(globe);
 	
 	atmosphereLayer =  new AtmosphereLayer();
 	globe.addLayer(atmosphereLayer);
 	
-	initializeImagery('PO');
-	initializeElevation('GTOPO');
+	initializeImagery();
+	initializeElevation( $('#elevationMenu input:checked').val() );
 	initializePoi(pois);
 	// Initialize follow path
 	initializePath();
