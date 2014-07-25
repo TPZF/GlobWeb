@@ -291,6 +291,7 @@ PointRenderer.prototype.createBucket = function(layer,style)
 	else if ( style['iconUrl'] )
 	{
 		var image = new Image();
+		image.crossOrigin = '';
 		var self = this;
 		image.onload = function() {self._buildTextureFromImage(bucket,image); self.renderContext.requestFrame(); }
 		image.onerror = function() { self._buildDefaultTexture(bucket); }
