@@ -161,6 +161,12 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 			tileData.state = OpenSearchLayer.TileState.LOADED;
 			self.freeRequests.push( xhr );
 			
+			// Publish event that layer have received new features
+			if ( response.features.length > 0 )
+			{
+				self.globe.publish("features:added", {layer: self, features: response.features});
+			}
+
 			// Publish the end load event, only if there is no pending requests
 			if ( self.maxRequests == self.freeRequests.length )
 			{
