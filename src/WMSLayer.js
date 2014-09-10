@@ -57,8 +57,6 @@ var WMSLayer = function( options )
 	url += "&version="
 	url += options.hasOwnProperty('version') ? options['version'] : '1.1.1';
 	url += "&request=GetMap";
-	url += "&srs=";
-	url += options.hasOwnProperty('srs') ? options['srs'] : 'EPSG:4326';
 	url += "&layers=" + options['layers'];
 	url += "&styles=";
 	if ( options.hasOwnProperty('styles') )
@@ -95,17 +93,19 @@ Utils.inherits(RasterLayer,WMSLayer);
 WMSLayer.prototype.getUrl = function(tile)
 {
 	// Just add the bounding box to the GetMap URL
-	var geoBound = tile.geoBound;
+	var bound = tile.bound;
 	var url = this.getMapBaseUrl;
+	
+	url += "&srs=" + tile.config.srs;
 	url += "&bbox=";
 	
-	url += geoBound.west;
+	url += bound.west;
 	url += ",";
-	url += geoBound.south;
+	url += bound.south;
 	url += ",";
-	url += geoBound.east;
+	url += bound.east;
 	url += ",";
-	url += geoBound.north;
+	url += bound.north;
 
 //	console.log(url);
 	

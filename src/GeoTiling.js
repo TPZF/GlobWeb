@@ -39,6 +39,7 @@ GeoTiling.prototype.generateLevelZeroTiles = function(config)
 {	
 	config.skirt = 1;
 	config.cullSign = 1;
+	config.srs = 'EPSG:4326';
 
 	var level0Tiles = [];
 	
@@ -82,7 +83,7 @@ var GeoTile = function( geoBound, level, x, y )
     // Call ancestor constructor
     Tile.prototype.constructor.call(this);
 	
-	this.geoBound = geoBound;
+	this.bound = this.geoBound = geoBound;
 	this.level = level;
 	this.x = x;
 	this.y = y;
