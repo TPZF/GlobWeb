@@ -116,13 +116,15 @@ VectorRendererManager.prototype.addGeometry = function(layer, geometry, style)
 /**
  	Remove a geometry from the renderer
  */
-VectorRendererManager.prototype.removeGeometry = function(geometry)
+VectorRendererManager.prototype.removeGeometry = function(geometry,layer)
 {
 	var bucket = geometry._bucket;
-	if ( bucket )
+	if ( bucket && bucket.layer == layer )
 	{
 		bucket.renderer.removeGeometry(geometry);
+		return true;
 	}
+	return false;
 }
 
 /**************************************************************************************************************/

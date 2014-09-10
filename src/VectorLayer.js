@@ -162,14 +162,16 @@ VectorLayer.prototype._removeFeatureFromRenderers = function( feature )
 	if ( geometry.type == "GeometryCollection" )
 	{
 		var geoms = geometry["geometries"];
+		var res = false;
 		for ( var i = 0; i < geoms.length; i++ )
 		{
-			this.globe.vectorRendererManager.removeGeometry( geoms[i], this );
+			res = this.globe.vectorRendererManager.removeGeometry( geoms[i], this );
 		}
+		return res;
 	}
 	else
 	{
-		this.globe.vectorRendererManager.removeGeometry( geometry, this );
+		return this.globe.vectorRendererManager.removeGeometry( geometry, this );
 	}
 }
 
@@ -241,9 +243,10 @@ VectorLayer.prototype.removeAllFeatures = function()
 */
 VectorLayer.prototype.modifyFeatureStyle = function( feature, style )
 {
-	this._removeFeatureFromRenderers( feature );
-	feature['properties']['style'] = style;
-	this._addFeatureToRenderers( feature );
+	if ( this._removeFeatureFromRenderers( feature ) ) {
+		feature.properties.style = style;
+		this._addFeatureToRenderers( feature );
+	}
 }
 
 /**************************************************************************************************************/
