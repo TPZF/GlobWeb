@@ -28,6 +28,7 @@ var GroundOverlayRenderer = function(tileManager)
 {
 	this.renderContext = tileManager.renderContext;
 	this.tileIndexBuffer = tileManager.tileIndexBuffer;
+	this.tcoordBuffer = tileManager.tcoordBuffer;
 	
 	var vertexShader = "\
 	attribute vec3 vertex;\n\
@@ -90,8 +91,7 @@ GroundOverlayRenderer.prototype.render = function( tiles )
 	gl.enable(gl.BLEND);
 	gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
 	gl.depthFunc( gl.LEQUAL );
-	gl.enable(gl.POLYGON_OFFSET_FILL);
-	gl.polygonOffset(0,4);
+	gl.depthMask(false);
 	
 	var modelViewMatrix = mat4.create();
 	
@@ -109,11 +109,7 @@ GroundOverlayRenderer.prototype.render = function( tiles )
 		
 		if ( !go.texture )
 		{
-			if ( go.flipY )
-				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true );
-			go.texture = this.renderContext.createNonPowerOfTwoTextureFromImage(go.image);
-			if ( go.flipY )
-				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false );
+			go.texture = this.renderContext.createNonPowerOfTwoTextureFromImage(go.image,go.flipY);
 		}
 		
 		var initialized = false;
@@ -130,7 +126,10 @@ GroundOverlayRenderer.prototype.render = function( tiles )
 
 					gl.activeTexture(gl.TEXTURE0);
 					gl.bindTexture(gl.TEXTURE_2D, go.texture);
-					
+			
+					gl.bindBuffer(gl.ARRAY_BUFFER, this.tcoordBuffer);
+					gl.vertexAttribPointer(attributes['tcoord'], 2, gl.FLOAT, false, 0, 0);
+						
 					initialized = true;
 				}
 
@@ -143,7 +142,7 @@ GroundOverlayRenderer.prototype.render = function( tiles )
 				// Bind the vertex buffer
 				gl.bindBuffer(gl.ARRAY_BUFFER, tile.vertexBuffer);
 				gl.vertexAttribPointer(attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
-				
+					
 				// Bind the index buffer only if different (index buffer is shared between tiles)
 				var indexBuffer = ( tile.state == Tile.State.LOADED ) ? this.tileIndexBuffer.getSolid() : this.tileIndexBuffer.getSubSolid(tile.parentIndex);
 				if ( currentIB != indexBuffer )
@@ -159,7 +158,7 @@ GroundOverlayRenderer.prototype.render = function( tiles )
 	}
 
 	gl.disable(gl.BLEND);
-	gl.disable(gl.POLYGON_OFFSET_FILL);
+	gl.depthMask(true);
 }
 
 //*************************************************************************

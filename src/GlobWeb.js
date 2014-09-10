@@ -18,10 +18,10 @@
  ***************************************/
  
 define( ["./Globe", "./GeoBound",
-		"./WMSLayer", "./WMTSLayer", "./WCSElevationLayer", "./OSMLayer", "./BingLayer", "./VectorLayer", "./AtmosphereLayer", // Layers
+		"./WMSLayer", "./WMTSLayer", "./WCSElevationLayer", "./OSMLayer", "./BingLayer", "./VectorLayer", "./AtmosphereLayer", "./GroundOverlayLayer", // Layers
 		"./Navigation", "./FeatureStyle", "./Stats", "./KMLParser", // Others
 		"./PointRenderer", "./LineStringRenderable", "./PolygonRenderer" ], // Renderers
-	function(Globe, GeoBound, WMSLayer, WMTSLayer, WCSElevationLayer, OSMLayer, BingLayer, VectorLayer, AtmosphereLayer, Navigation, FeatureStyle, Stats, KMLParser, PointRenderer) {
+	function(Globe, GeoBound, WMSLayer, WMTSLayer, WCSElevationLayer, OSMLayer, BingLayer, VectorLayer, AtmosphereLayer, GroundOverlayLayer, Navigation, FeatureStyle, Stats, KMLParser, PointRenderer) {
 
 // Declare GlobWeb 
 var GlobWeb = {};
@@ -36,6 +36,7 @@ GlobWeb.BingLayer = BingLayer;
 GlobWeb.VectorLayer = VectorLayer;
 GlobWeb.FeatureStyle = FeatureStyle;
 GlobWeb.AtmosphereLayer = AtmosphereLayer;
+GlobWeb.GroundOverlayLayer = GroundOverlayLayer;
 GlobWeb.Navigation = Navigation;
 GlobWeb.Stats = Stats;
 GlobWeb.KMLParser = KMLParser;
