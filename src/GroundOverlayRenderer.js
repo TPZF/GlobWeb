@@ -27,8 +27,7 @@ define(['./Program','./Tile'], function(Program,Tile) {
 var GroundOverlayRenderer = function(tileManager)
 {
 	this.renderContext = tileManager.renderContext;
-	this.tileIndexBuffer = tileManager.tileIndexBuffer;
-	this.tcoordBuffer = tileManager.tcoordBuffer;
+	this.tileManager = tileManager;
 	
 	var vertexShader = "\
 	attribute vec3 vertex;\n\
@@ -127,7 +126,7 @@ GroundOverlayRenderer.prototype.render = function( tiles )
 					gl.activeTexture(gl.TEXTURE0);
 					gl.bindTexture(gl.TEXTURE_2D, go.texture);
 			
-					gl.bindBuffer(gl.ARRAY_BUFFER, this.tcoordBuffer);
+					gl.bindBuffer(gl.ARRAY_BUFFER, this.tileManager.tcoordBuffer);
 					gl.vertexAttribPointer(attributes['tcoord'], 2, gl.FLOAT, false, 0, 0);
 						
 					initialized = true;
@@ -144,7 +143,7 @@ GroundOverlayRenderer.prototype.render = function( tiles )
 				gl.vertexAttribPointer(attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
 					
 				// Bind the index buffer only if different (index buffer is shared between tiles)
-				var indexBuffer = ( tile.state == Tile.State.LOADED ) ? this.tileIndexBuffer.getSolid() : this.tileIndexBuffer.getSubSolid(tile.parentIndex);
+				var indexBuffer = ( tile.state == Tile.State.LOADED ) ? this.tileManager.tileIndexBuffer.getSolid() : this.tileManager.tileIndexBuffer.getSubSolid(tile.parentIndex);
 				if ( currentIB != indexBuffer )
 				{
 					gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
