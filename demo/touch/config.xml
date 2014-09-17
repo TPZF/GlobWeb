@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- config.xml reference: https://build.phonegap.com/docs/config-xml -->
+<widget xmlns = "http://www.w3.org/ns/widgets"
+xmlns:gap = "http://phonegap.com/ns/1.0"
+id = "com.phonegap.helloworld"
+version = "1.0.0">
+<name>GlobWeb</name>
+<description>
+GlobWeb test
+</description>
+<author href="http://phonegap.com" email="support@phonegap.com">
+TPZ
+</author>
+
+<!--
+If you do not want any permissions to be added to your app, add the
+following tag to your config.xml; you will still have the INTERNET
+permission on your app, which PhoneGap requires.
+-->
+<preference name="permissions" value="none"/>
+<!-- Customize your app and platform with the preference element. -->
+<preference name="phonegap-version" value="3.5.0" /> <!-- all: current version of PhoneGap -->
+<preference name="android-minSdkVersion" value="19" /> <!-- android: MIN SDK version supported on the target device. MAX version is blank by default. -->
+
+
+<access origin="*"/>
+<!--
+<access origin="http://phonegap.com" /> - allow any secure requests to http://phonegap.com/
+<access origin="http://phonegap.com" subdomains="true" /> - same as above, but including subdomains, such as http://build.phonegap.com/
+<access origin="http://phonegap.com" browserOnly="true" /> - only allows http://phonegap.com to be opened by the child browser.
+-->
+</widget>

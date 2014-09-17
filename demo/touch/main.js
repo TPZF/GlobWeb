@@ -28,13 +28,11 @@ var activeElevation = null;
 		globe = new Globe( { canvas: cvs, 
 				continuousRendering: true } );
 				
-		new Stats(globe,{element: 'fps', verbose: true});
+		new Stats(globe.renderContext,{element: 'fps', verbose: true});
 
 		nav = new Navigation(globe, {
 			handlers: [ new TouchNavigationHandler() ]
 		});
-		//nav.setupTouchEventHandlers();
-		//nav.setupDefaultEventHandlers(true);
 			
 		var blueMarbleLayer = new WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble" });
 		globe.setBaseImagery( blueMarbleLayer );
