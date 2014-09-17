@@ -19,3 +19,5 @@ Thumbs.db
 
 # Mac OS X .DS_Store files
 .DS_Store
+demo/touch/main.min.js
+demo/client/main.min.js
