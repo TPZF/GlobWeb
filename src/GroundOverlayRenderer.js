@@ -132,7 +132,7 @@ GroundOverlayRenderer.prototype.render = function( tiles )
 					initialized = true;
 				}
 
-				var extent = (tile.state == Tile.State.LOADED) ? tile.geoBound : tile.parent.geoBound;
+				var extent = (tile.state == Tile.State.LOADED) ? tile.bound : tile.parent.bound;
 				
 				gl.uniform4f(this.program.uniforms["extent"], extent.west, extent.east, extent.north, extent.south );
 				mat4.multiply( this.renderContext.viewMatrix, tile.matrix, modelViewMatrix );

@@ -29,6 +29,15 @@ var MercatorTiling = function(startLevel)
 	this.startLevel = startLevel;
 }
 
+var lon2merc = function(lon) {
+	return lon * 20037508.34 / 180;
+};
+
+var lat2merc = function(lat) {
+	var y = Math.log(Math.tan((90 + lat) * Math.PI / 360)) / (Math.PI / 180);
+	return y * 20037508.34 / 180;
+};
+
 /**************************************************************************************************************/
 
 /** 
@@ -39,6 +48,9 @@ MercatorTiling.prototype.generateLevelZeroTiles = function(config)
 	config.skirt = true;
 	config.cullSign = 1;
 	config.srs = 'EPSG:3857';
+	config.project = function(coord) {
+		return [ lon2merc(coord[0]), lat2merc(coord[1]) ];
+	};
 	
 	var level0Tiles = [];
 	
@@ -88,14 +100,6 @@ var tile2lat = function(y,z) {
 	return ( 180 / Math.PI * Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
 }		
 
-var lon2merc = function(lon) {
-	return lon * 20037508.34 / 180;
-};
-
-var lat2merc = function(lat) {
-	var y = Math.log(Math.tan((90 + lat) * Math.PI / 360)) / (Math.PI / 180);
-	return y * 20037508.34 / 180;
-};
 /**************************************************************************************************************/
 
 /** @constructor
@@ -110,7 +114,7 @@ var MercatorTile = function( level, x, y )
 	this.x = x;
 	this.y = y;
 	
-	this.geoBound = new GeoBound( tile2long(x,level), tile2lat(y+1,level), tile2long(x+1,level), tile2lat(y,level) );
+	this.geoBound = new GeoBound( tile2long(x,level), tile2lat(y+1,level), tile2long(x+1,level), tile2lat(y,level) );	
 	this.bound = new GeoBound( lon2merc(this.geoBound.west), lat2merc(this.geoBound.south), lon2merc(this.geoBound.east), lat2merc(this.geoBound.north) );
 }
 

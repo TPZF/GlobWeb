@@ -50,7 +50,6 @@ var GroundOverlayLayer = function( options )
 	// Compute the geo bound of the ground overlay
 	this.geoBound = new GeoBound();
 	this.geoBound.computeFromCoordinates( this.quad );
-	this.computeTransform();
 
 	if (typeof options.image == "string")
 	{
@@ -87,6 +86,8 @@ GroundOverlayLayer.prototype._attach = function( globe )
 	renderer.groundOverlays.push( this );
 	
 	this.globe = globe;
+	
+	this.computeTransform();
 }
 
 //*************************************************************************
@@ -119,30 +120,30 @@ GroundOverlayLayer.prototype._detach = function( globe )
 /**
 	Transform a geographic position into the unit square of the ground overlay
  */
-GroundOverlayLayer.prototype.transformFromSquare = function( point )
-{
-	var x = this.transform[0] * point[0] + this.transform[3] * point[1] + this.transform[6];
-	var y = this.transform[1] * point[0] + this.transform[4] * point[1] + this.transform[7];
-	var w = 1.0 / (this.transform[2] * point[0] + this.transform[5] * point[1] + this.transform[8]);
-	x *= w;
-	y *= w;
-	return [ x, y ];
-}
+// GroundOverlayLayer.prototype.transformFromSquare = function( point )
+// {
+	// var x = this.transform[0] * point[0] + this.transform[3] * point[1] + this.transform[6];
+	// var y = this.transform[1] * point[0] + this.transform[4] * point[1] + this.transform[7];
+	// var w = 1.0 / (this.transform[2] * point[0] + this.transform[5] * point[1] + this.transform[8]);
+	// x *= w;
+	// y *= w;
+	// return [ x, y ];
+// }
 
 //*************************************************************************
 
 /**
 	Transform from the unit square of the ground overlay into a unit square
  */
-GroundOverlayLayer.prototype.transformToSquare = function( point )
-{
-	var x = this.inverseTransform[0] * point[0] + this.inverseTransform[3] * point[1] + this.inverseTransform[6];
-	var y = this.inverseTransform[1] * point[0] + this.inverseTransform[4] * point[1] + this.inverseTransform[7];
-	var w = 1.0 / (this.inverseTransform[2] * point[0] + this.inverseTransform[5] * point[1] + this.inverseTransform[8]);
-	x *= w;
-	y *= w;
-	return [ x, y ];
-}
+// GroundOverlayLayer.prototype.transformToSquare = function( point )
+// {
+	// var x = this.inverseTransform[0] * point[0] + this.inverseTransform[3] * point[1] + this.inverseTransform[6];
+	// var y = this.inverseTransform[1] * point[0] + this.inverseTransform[4] * point[1] + this.inverseTransform[7];
+	// var w = 1.0 / (this.inverseTransform[2] * point[0] + this.inverseTransform[5] * point[1] + this.inverseTransform[8]);
+	// x *= w;
+	// y *= w;
+	// return [ x, y ];
+// }
 
 //*************************************************************************
 
@@ -181,16 +182,29 @@ GroundOverlayLayer.prototype.computeInverse = function()
 	Code taken from QTransform
  */
 GroundOverlayLayer.prototype.computeTransform = function()
-{
-    var dx0 = this.quad[0][0];
-    var dx1 = this.quad[1][0];
-    var dx2 = this.quad[2][0];
-    var dx3 = this.quad[3][0];
+{	
+	var q1 = this.quad[0];
+	var q2 = this.quad[1]; 
+	var q3 = this.quad[2]; 
+	var q4 = this.quad[3];
+	
+	var tileConfig = this.globe.tileManager.tileConfig;
+	if ( tileConfig.srs != 'EPSG:4326' ) {
+		q1 = tileConfig.project(q1);
+		q2 = tileConfig.project(q2);
+		q3 = tileConfig.project(q3);
+		q4 = tileConfig.project(q4);
+	}
+	
+    var dx0 = q1[0];
+    var dx1 = q2[0];
+    var dx2 = q3[0];
+    var dx3 = q4[0];
 
-    var dy0 = this.quad[0][1];
-    var dy1 = this.quad[1][1];
-    var dy2 = this.quad[2][1];
-    var dy3 = this.quad[3][1];
+    var dy0 = q1[1];
+    var dy1 = q2[1];
+    var dy2 = q3[1];
+    var dy3 = q4[1];
 
     var ax  = dx0 - dx1 + dx2 - dx3;
     var ay  = dy0 - dy1 + dy2 - dy3;
