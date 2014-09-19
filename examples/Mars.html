@@ -1,0 +1,49 @@
+<html>
+
+<head>
+<title>GlobWeb Mars example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+<script  src="require.min.js"></script>
+<script type="text/javascript">
+	
+require(['../src/GlobWeb'], function (GlobWeb) 
+{	
+	var cvs = document.getElementById("GlobWebCanvas");
+	cvs.width = window.innerWidth;
+	cvs.height = window.innerHeight;
+	
+	// Create the globe
+	var globe = new GlobWeb.Globe( { canvas: cvs, 
+			lighting: false,
+			tileErrorTreshold: 3, 
+			continuousRendering: true } );
+
+	// Add mouse navigation
+	var navigation = new GlobWeb.Navigation(globe, { inertia: true, zoomFactor: 0. });
+	
+	// Add stats
+	var stats = new GlobWeb.Stats( globe, {element: 'fps', verbose: false} );
+
+	var marsLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/mars", layers: "THEMIS" });
+	//var molaRoughness = new GlobWeb.WMSLayer({ baseUrl: "http://localhost/ms-mars", layers: "mola_roughness", format: "image/png" });
+	//var molaColorLayer = new GlobWeb.WMSLayer({ baseUrl: "http://localhost/ms-mars", layers: "MOLA_Color", format: "image/png" });
+	globe.setBaseImagery( marsLayer );
+	var elevationLayer = new GlobWeb.WCSElevationLayer({ baseUrl:"http://demonstrator.telespazio.com/wcspub", coverage: "MARSTOPO", version: "1.0.0"});
+	globe.setBaseElevation( elevationLayer );
+	
+});
+
+
+</script>
+
+</head>
+
+
+<body style="margin: 0; padding: 0;">
+    <canvas id="GlobWebCanvas" style="border: none; margin: 0; padding: 0;" width="800" height="600"></canvas> 
+ 	<div id="fps"></div>
+</body>
+
+</html>
+
