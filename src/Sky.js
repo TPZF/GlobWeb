@@ -42,7 +42,6 @@ var Sky = function(options)
 	Event.prototype.constructor.call( this );
 
 	this.renderContext = new RenderContext(options);
-	this.tilePool =  new TilePool(this.renderContext);
 	this.tileManagers = {
 		'EQ': new TileManager( this ),
 		'GAL': new TileManager( this )
@@ -64,6 +63,19 @@ var Sky = function(options)
 
 Utils.inherits( Event, Sky );
 
+/**************************************************************************************************************/
+
+/** 
+	Dispose the sky and all its ressources
+ */
+Sky.prototype.dispose = function()
+{	
+	for ( var x in this.tileManagers )
+	{
+		this.tileManagers[x].tilePool.disposeAll();	
+	}
+	this.tileManager.reset();
+}
 
 /**************************************************************************************************************/
 
