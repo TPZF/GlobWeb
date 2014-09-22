@@ -46,6 +46,7 @@ var RenderContext = function(options)
 	this.lighting = options['lighting'] || false;
 	this.continuousRendering = options['continuousRendering'] || false;
 	this.stats = null;
+	this.isActive = true;
 
 	// Init GL
 	var canvas = null;
@@ -151,7 +152,6 @@ RenderContext.prototype.requestFrame = function()
 {	
 	if (!this.frameRequested)
 	{
-		var self = this;
 		window.requestAnimationFrame( this.frameCallback );
 		this.frameRequested = true;
 	}
@@ -160,63 +160,86 @@ RenderContext.prototype.requestFrame = function()
 
 /**************************************************************************************************************/
 
+/**
+ 	Deactivate render context
+ */
+RenderContext.prototype.deactivate = function()
+{
+	this.isActive = false;
+	this.frameRequested = false;
+}
+
+/**************************************************************************************************************/
+
+/**
+ 	Activate render context
+ */
+RenderContext.prototype.activate = function()
+{
+	this.isActive = true;
+}
+
+/**************************************************************************************************************/
+
 /** 
 	A frame of the application
 */
 RenderContext.prototype.frame = function() 
-{		
-	// Resest frame requested flag first
-	this.frameRequested = false;
-	
-	var stats = this.stats;
-	var gl = this.gl;
-
-	if (stats) stats.start("globalRenderTime");
-	
-	// Update active animations
-	if ( this.activeAnimations.length > 0)
+{
+	if ( this.isActive )
 	{
-		var time = Date.now();
-		for (var i = 0; i < this.activeAnimations.length; i++)
-		{
-			this.activeAnimations[i].update(time);
-		}
-	}
-	
-	// Clear the buffer
-	if ( RenderContext.contextAttributes.stencil )
-	{
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
-	}
-	else
-	{
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	}
-	
-	// Check canvas size is valid
-	if ( this.canvas.width == 0 || this.canvas.height == 0 )
-		return;
+		// Reset frame requested flag first
+		this.frameRequested = false;
 		
-	gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+		var stats = this.stats;
+		var gl = this.gl;
 
-	// Update view dependent properties to be used during rendering : view matrix, frustum, projection, etc...
-	this.updateViewDependentProperties();
+		if (stats) stats.start("globalRenderTime");
+		
+		// Update active animations
+		if ( this.activeAnimations.length > 0)
+		{
+			var time = Date.now();
+			for (var i = 0; i < this.activeAnimations.length; i++)
+			{
+				this.activeAnimations[i].update(time);
+			}
+		}
+		
+		// Clear the buffer
+		if ( RenderContext.contextAttributes.stencil )
+		{
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+		}
+		else
+		{
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		}
+		
+		// Check canvas size is valid
+		if ( this.canvas.width == 0 || this.canvas.height == 0 )
+			return;
 			
-	// Call renderer
-	this.renderer.render();
-	
-	if (stats) stats.end("globalRenderTime");
-	
-	// Request next frame
-	if ( this.continuousRendering )
-	{
-		this.requestFrame();
-	}
-	else if ( this.activeAnimations.length > 0 )
-	{
-		this.requestFrame();
-	}
-	
+		gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+
+		// Update view dependent properties to be used during rendering : view matrix, frustum, projection, etc...
+		this.updateViewDependentProperties();
+				
+		// Call renderer
+		this.renderer.render();
+		
+		if (stats) stats.end("globalRenderTime");
+		
+		// Request next frame
+		if ( this.continuousRendering )
+		{
+			this.requestFrame();
+		}
+		else if ( this.activeAnimations.length > 0 )
+		{
+			this.requestFrame();
+		}
+	}	
 };
 
 /**************************************************************************************************************/
