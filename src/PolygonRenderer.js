@@ -132,8 +132,8 @@ PolygonRenderable.prototype.add = function(geometry)
 		
 		for ( var i = 0; i < coords.length-1; i++ )
 		{
-			indices.push( upOffset, upOffset + 1, lowOffset );
-			indices.push( upOffset + 1, lowOffset + 1, lowOffset );
+			indices.push( upOffset, lowOffset, upOffset + 1 );
+			indices.push( upOffset + 1, lowOffset, lowOffset + 1 );
 			
 			upOffset += 1;
 			lowOffset += 1;
