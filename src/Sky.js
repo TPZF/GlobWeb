@@ -73,8 +73,8 @@ Sky.prototype.dispose = function()
 	for ( var x in this.tileManagers )
 	{
 		this.tileManagers[x].tilePool.disposeAll();	
+		this.tileManagers[x].reset();
 	}
-	this.tileManager.reset();
 }
 
 /**************************************************************************************************************/

@@ -47,6 +47,7 @@ var TileManager = function( parent )
 	{
 		this.availableRequests[i] = new TileRequest(this);
 	}
+	this.pendingRequests = [];
 	this.completedRequests = [];
 				
 	this.level0TilesLoaded = false;
@@ -278,6 +279,9 @@ TileManager.prototype.setElevationProvider = function(tp)
  */
 TileManager.prototype.reset = function()
 {
+	// Abort all pending requests
+	this.abortRequests();
+
 	// Reset all level zero tiles : destroy render data, and reset state to NONE
 	for (var i = 0; i < this.level0Tiles.length; i++)
 	{
@@ -286,6 +290,19 @@ TileManager.prototype.reset = function()
 	}
 	
 	this.level0TilesLoaded = false;
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Abort all pending requests
+ */
+TileManager.prototype.abortRequests = function()
+{
+	for ( var i=this.pendingRequests.length-1; i>=0; i-- )
+	{
+		this.pendingRequests[i].abort();
+	}
 }
 
 /**************************************************************************************************************/

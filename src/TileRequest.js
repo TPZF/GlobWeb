@@ -73,6 +73,7 @@ var TileRequest = function(tileManager)
 				if ( tileManager.imageryProvider && tileManager.imageryProvider.handleImage )
 					tileManager.imageryProvider.handleImage(_imageRequest);
 
+				tileManager.pendingRequests.splice(tileManager.pendingRequests.indexOf(self), 1);
 				tileManager.completedRequests.push(self);
 				tileManager.renderContext.requestFrame();
 			}
@@ -88,6 +89,7 @@ var TileRequest = function(tileManager)
 	var _handleErrorImage = function() 
 	{
 		self.tile.state = Tile.State.ERROR;
+		tileManager.pendingRequests.splice(tileManager.pendingRequests.indexOf(self), 1);
 		tileManager.availableRequests.push(self);
 	}
 
@@ -99,6 +101,7 @@ var TileRequest = function(tileManager)
 	var _handleAbort = function() 
 	{
 		self.tile.state = Tile.State.NONE;
+		tileManager.pendingRequests.splice(tileManager.pendingRequests.indexOf(self), 1);
 		tileManager.availableRequests.push(self);
 	}
 
@@ -114,6 +117,7 @@ var TileRequest = function(tileManager)
 		
 		if ( _imageLoaded )
 		{
+			tileManager.pendingRequests.splice(tileManager.pendingRequests.indexOf(self), 1);
 			tileManager.completedRequests.push(self);
 			tileManager.renderContext.requestFrame();
 		}
@@ -131,6 +135,7 @@ var TileRequest = function(tileManager)
 		
 		if ( _imageLoaded )
 		{
+			tileManager.pendingRequests.splice(tileManager.pendingRequests.indexOf(self), 1);
 			tileManager.completedRequests.push(self);
 			tileManager.renderContext.requestFrame();
 		}
@@ -145,6 +150,7 @@ var TileRequest = function(tileManager)
 	{
 		tile.state = Tile.State.LOADING;
 		this.tile = tile;
+		tileManager.pendingRequests.push(this);
 		
 		this.image = null;
 		this.elevations = null;
@@ -178,9 +184,21 @@ var TileRequest = function(tileManager)
 		// Check if there is nothing to load
 		if ( !tileManager.imageryProvider && !tileManager.elevationProvider )
 		{
+			tileManager.pendingRequests.splice(tileManager.pendingRequests.indexOf(this), 1);
 			tileManager.completedRequests.push(this);
 		}
 	};
+
+	/**************************************************************************************************************/
+
+	/**
+	 *	Abort launched request
+	 */
+	this.abort = function() {
+		if (_imageRequest) {
+			_imageRequest.abort();
+		}
+	}
 	
 };
 
