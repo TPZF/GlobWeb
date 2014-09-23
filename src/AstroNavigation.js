@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Utils', './CoordinateSystem', './BaseNavigation', './SegmentedAnimation', './Numeric', './glMatrix'], function(Utils,CoordinateSystem,BaseNavigation,SegmentedAnimation,Numeric) {
+define(['./Utils', './BaseNavigation', './SegmentedAnimation', './Numeric', './glMatrix'], function(Utils,BaseNavigation,SegmentedAnimation,Numeric) {
 
 /**************************************************************************************************************/
 
@@ -48,7 +48,7 @@ var AstroNavigation = function(globe, options)
 	if ( options )
 	{
 		if ( options.initTarget ) {
-			CoordinateSystem.fromGeoTo3D(options.initTarget, this.center3d );
+			this.globe.coordinateSystem.fromGeoTo3D(options.initTarget, this.center3d );
 		}
 
 		if ( options.initFov ) {
@@ -91,7 +91,7 @@ AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, callback)
 	var geoStart = [];
 	var middleFov = 25.0;	// arbitrary middle fov value which determines if the animation needs two segments
 	
-	CoordinateSystem.from3DToGeo(this.center3d, geoStart);
+	this.globe.coordinateSystem.from3DToGeo(this.center3d, geoStart);
 	var startValue = [geoStart[0], geoStart[1], this.renderContext.fov];
 	var endValue = [geoPos[0], geoPos[1], destFov];
 	
@@ -107,7 +107,7 @@ AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, callback)
 		duration,
 		// Value setter
 		function(value) {
-			var position3d = CoordinateSystem.fromGeoTo3D( [ value[0], value[1] ] );
+			var position3d = navigation.globe.coordinateSystem.fromGeoTo3D( [ value[0], value[1] ] );
 			navigation.center3d[0] = position3d[0];
 			navigation.center3d[1] = position3d[1];
 			navigation.center3d[2] = position3d[2];
@@ -117,7 +117,7 @@ AstroNavigation.prototype.zoomTo = function(geoPos, fov, duration, callback)
 	
 	// TODO : maybe improve it ?
 	// End point which is out of frustum invokes two steps animation, one step otherwise
-	var end3DValue = CoordinateSystem.fromGeoTo3D( geoPos );
+	var end3DValue = this.globe.coordinateSystem.fromGeoTo3D( geoPos );
 	if (middleFov > this.renderContext.fov && this.renderContext.worldFrustum.containsSphere( end3DValue, 0.005 ) < 0 )
 	{
 		// Two steps animation, 'rising' & 'falling'
@@ -196,7 +196,7 @@ AstroNavigation.prototype.moveTo = function(geoPos, duration, callback)
 	
 	// Create a single animation to animate center3d
 	var geoStart = [];
-	CoordinateSystem.from3DToGeo(this.center3d, geoStart);
+	this.globe.coordinateSystem.from3DToGeo(this.center3d, geoStart);
 	
 	var startValue = [geoStart[0], geoStart[1]];
 	var endValue = [geoPos[0], geoPos[1]];
@@ -214,7 +214,7 @@ AstroNavigation.prototype.moveTo = function(geoPos, duration, callback)
 		duration,
 		// Value setter
 		function(value) {
-			var position3d = CoordinateSystem.fromGeoTo3D( [ value[0], value[1] ] );
+			var position3d = navigation.globe.coordinateSystem.fromGeoTo3D( [ value[0], value[1] ] );
 			navigation.center3d[0] = position3d[0];
 			navigation.center3d[1] = position3d[1];
 			navigation.center3d[2] = position3d[2];
@@ -253,8 +253,8 @@ AstroNavigation.prototype.moveTo = function(geoPos, duration, callback)
 	// Create a single animation to animate up
 	var startValue = [];
 	var endValue = [];
-	CoordinateSystem.from3DToGeo(this.up, startValue);
-	CoordinateSystem.from3DToGeo(vec, endValue);
+	this.globe.coordinateSystem.from3DToGeo(this.up, startValue);
+	this.globe.coordinateSystem.from3DToGeo(vec, endValue);
 	var duration = duration || 1000;
 
 	var navigation = this;
@@ -262,7 +262,7 @@ AstroNavigation.prototype.moveTo = function(geoPos, duration, callback)
 		duration,
 		// Value setter
 		function(value) {
-			var position3d = CoordinateSystem.fromGeoTo3D( [ value[0], value[1] ] );
+			var position3d = navigation.globe.coordinateSystem.fromGeoTo3D( [ value[0], value[1] ] );
 			navigation.up[0] = position3d[0];
 			navigation.up[1] = position3d[1];
 			navigation.up[2] = position3d[2];

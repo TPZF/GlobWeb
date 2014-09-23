@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define( ['./BaseLayer', './Utils', './Program', './Mesh', './CoordinateSystem', './AstroCoordTransform', './FeatureStyle'],
-		function(BaseLayer, Utils, Program, Mesh, CoordinateSystem, AstroCoordTransform, FeatureStyle) {
+define( ['./BaseLayer', './Utils', './Program', './Mesh', './AstroCoordTransform', './FeatureStyle'],
+		function(BaseLayer, Utils, Program, Mesh, AstroCoordTransform, FeatureStyle) {
  
 /**************************************************************************************************************/
 
@@ -250,7 +250,7 @@ CoordinateGridLayer.prototype.render = function( tiles )
 		// Transform geoBound computed in default coordinate system to coordinate system of current grid if different
 		var self = this;
 		geoBound = this.globe.getViewportGeoBound(function(coordinate) {
-			return CoordinateSystem.convert(coordinate, 'EQ', self.coordSystem);
+			return self.globe.coordinateSystem.convert(coordinate, 'EQ', self.coordSystem);
 		});
 	}
 	else
@@ -436,9 +436,9 @@ CoordinateGridLayer.prototype.generateGridBuffers = function()
 				var z = cosTheta;
 
 				if ( this.coordSystem != "EQ" ) {
-					var geo = CoordinateSystem.from3DToGeo( [x, y, z] );
-					geo = CoordinateSystem.convert(geo, this.coordSystem, "EQ");
-					var eq = CoordinateSystem.fromGeoTo3D( geo );
+					var geo = this.globe.coordinateSystem.from3DToGeo( [x, y, z] );
+					geo = this.globe.coordinateSystem.convert(geo, this.coordSystem, "EQ");
+					var eq = this.globe.coordinateSystem.fromGeoTo3D( geo );
 					vertexPositionData.push(eq[0], eq[1], eq[2]);				
 				} else {
 					vertexPositionData.push(x, y, z);
@@ -498,17 +498,17 @@ CoordinateGridLayer.prototype.generateGridBuffers = function()
  *	@param {String} format The building format("HMS", "DMS" or "Deg")
  *	@param angle The angle to build
  */
- function _buildAngle( format, angle ) {
+ CoordinateGridLayer.prototype.buildAngle = function( format, angle ) {
  	var label;
 	switch ( format ) {
 		case "Deg":
 			label = angle+"°";
 			break;
 		case "HMS":
-			label = CoordinateSystem.fromDegreesToHMS( angle );
+			label = this.globe.coordinateSystem.fromDegreesToHMS( angle );
 			break;
 		case "DMS":
-			label = CoordinateSystem.fromDegreesToDMS( angle );
+			label = this.globe.coordinateSystem.fromDegreesToDMS( angle );
 			break;
 		default:
 			console.error(format + " : format not supported");
@@ -525,11 +525,11 @@ CoordinateGridLayer.prototype.generateGridBuffers = function()
 CoordinateGridLayer.prototype.computeGeoCenter = function() {
 	var center3d = this.globe.renderContext.get3DFromPixel( this.globe.renderContext.canvas.width / 2. , this.globe.renderContext.canvas.height / 2. );
 	var geoCenter = [];
-	CoordinateSystem.from3DToGeo( center3d, geoCenter );
+	this.globe.coordinateSystem.from3DToGeo( center3d, geoCenter );
 
 	// Convert geoCenter into grid's coordinate system
 	if ( this.coordSystem != "EQ" ) {
-		geoCenter = CoordinateSystem.convert( geoCenter, "EQ", this.coordSystem );
+		geoCenter = this.globe.coordinateSystem.convert( geoCenter, "EQ", this.coordSystem );
 	}
 	return geoCenter;
 }
@@ -544,10 +544,10 @@ CoordinateGridLayer.prototype.computeGeoCenter = function() {
  */
 CoordinateGridLayer.prototype.updateLabel = function(label, posGeo) {
 	if ( this.coordSystem != "EQ" ) {
-		posGeo = CoordinateSystem.convert( posGeo, this.coordSystem, "EQ" );
+		posGeo = this.globe.coordinateSystem.convert( posGeo, this.coordSystem, "EQ" );
 	}
 
-	var pos3d = CoordinateSystem.fromGeoTo3D( posGeo );
+	var pos3d = this.globe.coordinateSystem.fromGeoTo3D( posGeo );
 	var vertical = vec3.create();
 	vec3.normalize(pos3d, vertical);
 	
@@ -607,7 +607,7 @@ CoordinateGridLayer.prototype.generateLabels = function()
 		// convert to positive [0..360[
 		var angle = (phi < 0) ? phi+360 : phi;
 
-		label = _buildAngle(this.longFormat, angle);
+		label = this.buildAngle(this.longFormat, angle);
 
 		if ( !this.labels["lat_"+label] )
 		{
@@ -632,7 +632,7 @@ CoordinateGridLayer.prototype.generateLabels = function()
 	{
 // 	for (var theta = -90; theta < 90; theta+=this.latitudeSample) {
 
-		label = _buildAngle(this.latFormat, theta);
+		label = this.buildAngle(this.latFormat, theta);
 
 		if ( !this.labels["long_"+label] )
 		{

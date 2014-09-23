@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Utils','./VectorRendererManager','./TiledVectorRenderable','./TiledVectorRenderer','./Numeric','./CoordinateSystem','./Triangulator'],
-	function(Utils,VectorRendererManager,TiledVectorRenderable,TiledVectorRenderer,Numeric,CoordinateSystem,Triangulator) {
+define(['./Utils','./VectorRendererManager','./TiledVectorRenderable','./TiledVectorRenderer','./Numeric','./Triangulator'],
+	function(Utils,VectorRendererManager,TiledVectorRenderable,TiledVectorRenderer,Numeric,Triangulator) {
 
 /**************************************************************************************************************/
 
@@ -328,8 +328,8 @@ PolygonRenderable.prototype.buildVerticesAndIndices = function( tile, coordinate
 		for ( var n = 0; n < polygons.length; n++ )
 		{
 			var invMatrix = tile.inverseMatrix;
-			var radius = CoordinateSystem.radius;
-			var height = 100 * CoordinateSystem.heightScale;
+			var radius = this.globe.coordinateSystem.radius;
+			var height = 100 * this.globe.coordinateSystem.heightScale;
 			
 			var vertexOffset = this.vertices.length;
 			var indexOffset = this.vertices.length / 3;
@@ -372,8 +372,8 @@ PolygonRenderable.prototype.buildVerticesAndIndices = function( tile, coordinate
 
 // Register the renderer
 VectorRendererManager.registerRenderer({
-	creator: function(globe) { 
-			var polygonRenderer = new TiledVectorRenderer(globe.tileManager);
+	creator: function(globe) {
+			var polygonRenderer = new TiledVectorRenderer(globe);
 			polygonRenderer.id = "polygon";
 			polygonRenderer.styleEquals = function(s1,s2) { return s1.isEqualForPoly(s2); };
 			polygonRenderer.renderableConstuctor = PolygonRenderable;

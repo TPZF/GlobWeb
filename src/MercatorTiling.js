@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define (['./Tile', './GeoBound', './CoordinateSystem'], function(Tile,GeoBound,CoordinateSystem) {
+ define (['./Tile', './GeoBound'], function(Tile,GeoBound) {
 
 /**************************************************************************************************************/
 
@@ -188,7 +188,7 @@ MercatorTile.prototype.lonlat2tile = function(coordinates)
 MercatorTile.prototype.generateVertices = function(elevations)
 {	 
 	// Compute tile matrix
-	this.matrix = CoordinateSystem.getLHVTransform( this.geoBound.getCenter() );
+	this.matrix = this.config.coordinateSystem.getLHVTransform( this.geoBound.getCenter() );
 	var invMatrix = mat4.create();
 	mat4.inverse( this.matrix, invMatrix );
 	this.inverseMatrix = invMatrix;
@@ -197,8 +197,8 @@ MercatorTile.prototype.generateVertices = function(elevations)
 	var size = this.config.tesselation;
 	var vertices = new Float32Array( 3*size*(size+6) );
 	var step = 1.0 / (size-1);
-	var radius = CoordinateSystem.radius;
-	var scale = CoordinateSystem.heightScale;
+	var radius = this.config.coordinateSystem.radius;
+	var scale = this.config.coordinateSystem.heightScale;
 	var offset = 0;
 	
 	var twoPowLevel = Math.pow(2,this.level);
@@ -259,7 +259,7 @@ MercatorTile.prototype.generateVertices = function(elevations)
 	{
 		var vertices = this.vertices;
 		
-		var pt = CoordinateSystem.fromGeoTo3D( isTop ? [ 0.0, 90.0, 0.0 ] : [ 0.0, -90.0, 0.0 ] );
+		var pt = this.config.coordinateSystem.fromGeoTo3D( isTop ? [ 0.0, 90.0, 0.0 ] : [ 0.0, -90.0, 0.0 ] );
 		mat4.multiplyVec3( this.inverseMatrix, pt );
 		
 		for ( var i = 0; i < size; i++)

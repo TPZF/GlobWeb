@@ -17,44 +17,54 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define( ['./CoordinateSystem', './Numeric', './AstroCoordTransform', './glMatrix'], function(CoordinateSystem, Numeric, AstroCoordTransform) {
+define( ['./CoordinateSystem', './Utils', './Numeric', './AstroCoordTransform', './glMatrix'], function(CoordinateSystem, Utils, Numeric, AstroCoordTransform) {
 
 /**************************************************************************************************************/
 
-// Default coordinate system: ("EQ" or "GAL")
-CoordinateSystem.type = "EQ";
+var EquatorialCoordinateSystem = function(options)
+{
+	CoordinateSystem.prototype.constructor.call( this, options );
+	// Default coordinate system: ("EQ" or "GAL")
+	this.type = "EQ";
+};
+
+/**************************************************************************************************************/
+
+Utils.inherits( CoordinateSystem, EquatorialCoordinateSystem );
+
+/**************************************************************************************************************/
 
 /**
 *	Convert a 3D position to equatorial coordinates
 */
-CoordinateSystem.from3DToEquatorial = function(position3d, dest){
+EquatorialCoordinateSystem.prototype.from3DToEquatorial = function(position3d, dest){
 	
 	if (!dest) { dest = new Array(3); }
 	
 	var geo = [];
 
-	CoordinateSystem.from3DToGeo(position3d, geo);
-	CoordinateSystem.fromGeoToEquatorial(geo, dest);
+	this.from3DToGeo(position3d, geo);
+	this.fromGeoToEquatorial(geo, dest);
 	
 	return dest;
-}
+};
 
 /**************************************************************************************************************/
 
 /**
 *	Converts an equatorial position to 3D
 */
-CoordinateSystem.fromEquatorialTo3D = function(equatorial, dest){
+EquatorialCoordinateSystem.prototype.fromEquatorialTo3D = function(equatorial, dest){
 	
 	if (!dest) { dest = new Array(3); }
 
 	var geo = [];
 	
-	CoordinateSystem.fromEquatorialToGeo(equatorial, geo);
-	CoordinateSystem.fromGeoTo3D(geo,dest);
+	this.fromEquatorialToGeo(equatorial, geo);
+	this.fromGeoTo3D(geo,dest);
 	
 	return dest;	
-}
+};
 
 /**************************************************************************************************************/
 
@@ -64,7 +74,7 @@ CoordinateSystem.fromEquatorialTo3D = function(equatorial, dest){
 *					  specified by: "hours minuts seconds" and "degrees minuts seconds" respectively
 *	@param {Float[]} dest Destination array of two floats corresponding to Longitude and Latitude
 */
-CoordinateSystem.fromEquatorialToGeo = function(equatorial, dest){
+EquatorialCoordinateSystem.prototype.fromEquatorialToGeo = function(equatorial, dest){
 	
 	if(!dest) dest = [];
 	
@@ -93,7 +103,7 @@ CoordinateSystem.fromEquatorialToGeo = function(equatorial, dest){
 	
 	return dest;
 
-}
+};
 
 /**************************************************************************************************************/
 
@@ -105,7 +115,7 @@ CoordinateSystem.fromEquatorialToGeo = function(equatorial, dest){
 * 	@see <CoordinateSystem.fromDegreesToDMS>
 * * 	@see <CoordinateSystem.fromDegreesToHMS>
 */
-CoordinateSystem.fromGeoToEquatorial = function(geo, dest){
+EquatorialCoordinateSystem.prototype.fromGeoToEquatorial = function(geo, dest){
 	
 	if (!dest) dest = [];
 	
@@ -115,11 +125,11 @@ CoordinateSystem.fromGeoToEquatorial = function(geo, dest){
 		deg += 360;
 	}
 
-	dest[0] = CoordinateSystem.fromDegreesToHMS( deg );
-	dest[1] = CoordinateSystem.fromDegreesToDMS(geo[1]);
+	dest[0] = this.fromDegreesToHMS( deg );
+	dest[1] = this.fromDegreesToDMS(geo[1]);
 	
 	return dest;
-}
+};
 
 /**************************************************************************************************************/
 
@@ -129,7 +139,7 @@ CoordinateSystem.fromGeoToEquatorial = function(geo, dest){
  *	@param {Float} degree The degree
  */
 
-CoordinateSystem.fromDegreesToDMS = function(degree)
+EquatorialCoordinateSystem.prototype.fromDegreesToDMS = function(degree)
 {
 	function stringSign(val)
 	{
@@ -144,7 +154,7 @@ CoordinateSystem.fromDegreesToDMS = function(degree)
 	
 	return stringSign(degree) + deg + String.fromCharCode(176) +" "+ min +"' "+ Numeric.roundNumber(sec, 2)+"\"";
 	
-}
+};
 
 /**************************************************************************************************************/
 
@@ -154,7 +164,7 @@ CoordinateSystem.fromDegreesToDMS = function(degree)
  *	@param {Float} degree The degree > 0
  */
 
-CoordinateSystem.fromDegreesToHMS = function(degree)
+EquatorialCoordinateSystem.prototype.fromDegreesToHMS = function(degree)
 {
 	var degree = degree/15;
 	
@@ -165,7 +175,7 @@ CoordinateSystem.fromDegreesToHMS = function(degree)
 	var sec = (decimal - min) * 60;
 	
 	return hours+"h "+min+"m "+ Numeric.roundNumber(sec, 2) +"s";
-}
+};
 
 /**************************************************************************************************************/
 
@@ -176,7 +186,7 @@ CoordinateSystem.fromDegreesToHMS = function(degree)
  *	@param from Type of source coordinate system
  *	@param to Type of destination coordinate system
  */
-CoordinateSystem.convert = function(geo, from, to)
+EquatorialCoordinateSystem.prototype.convert = function(geo, from, to)
 {
 	switch ( from+"2"+to ) {
 		case "GAL2EQ" :
@@ -191,53 +201,61 @@ CoordinateSystem.convert = function(geo, from, to)
 	}
 	
 	return AstroCoordTransform.transformInDeg( geo, convertType );
-}
+};
 
 /**************************************************************************************************************/
 
 /**
  *	Transfrom 3D vector from galactic coordinate system to equatorial
  */
-CoordinateSystem.transformVec = function( vec )
+EquatorialCoordinateSystem.prototype.transformVec = function( vec )
 {
+	var transformMatrix = this.computeTransformMatrix();
 	var res = [];
 	mat4.multiplyVec3( transformMatrix, vec, res );
 	return res;
-}
+};
 
 /**************************************************************************************************************/
 
-// Compute transformation matrix from GAL to EQ in 3D coordinates
-var transformMatrix = [];
+/**
+ *	Compute transform matrix from GAL to EQ in 3D coordinates
+ */
+EquatorialCoordinateSystem.prototype.computeTransformMatrix = function()
+{
+	var transformMatrix = [];
 
-var galNorth = CoordinateSystem.convert([0,90], 'GAL', 'EQ');
-var gal3DNorth = CoordinateSystem.fromGeoTo3D(galNorth);
+	var galNorth = this.convert([0,90], 'GAL', 'EQ');
+	var gal3DNorth = this.fromGeoTo3D(galNorth);
 
-var galCenter = CoordinateSystem.convert([0, 0], 'GAL', 'EQ');
-var gal3DCenter = CoordinateSystem.fromGeoTo3D(galCenter);
+	var galCenter = this.convert([0, 0], 'GAL', 'EQ');
+	var gal3DCenter = this.fromGeoTo3D(galCenter);
 
-var galEast = CoordinateSystem.convert([90, 0], 'GAL', 'EQ');
-var gal3DEast = CoordinateSystem.fromGeoTo3D(galEast);
+	var galEast = this.convert([90, 0], 'GAL', 'EQ');
+	var gal3DEast = this.fromGeoTo3D(galEast);
 
-transformMatrix[0] = gal3DCenter[0];
-transformMatrix[1] = gal3DCenter[1];
-transformMatrix[2] = gal3DCenter[2];
-transformMatrix[3] = 0.;
-transformMatrix[4] = gal3DEast[0];
-transformMatrix[5] = gal3DEast[1];
-transformMatrix[6] = gal3DEast[2];
-transformMatrix[7] = 0.;
-transformMatrix[8] = gal3DNorth[0];
-transformMatrix[9] = gal3DNorth[1];
-transformMatrix[10] = gal3DNorth[2];
-transformMatrix[11] = 0.;
-transformMatrix[12] = 0.;
-transformMatrix[13] = 0.;
-transformMatrix[14] = 0.;
-transformMatrix[15] = 1.;
-mat4.create(transformMatrix);
-mat4.inverse(transformMatrix);
+	transformMatrix[0] = gal3DCenter[0];
+	transformMatrix[1] = gal3DCenter[1];
+	transformMatrix[2] = gal3DCenter[2];
+	transformMatrix[3] = 0.;
+	transformMatrix[4] = gal3DEast[0];
+	transformMatrix[5] = gal3DEast[1];
+	transformMatrix[6] = gal3DEast[2];
+	transformMatrix[7] = 0.;
+	transformMatrix[8] = gal3DNorth[0];
+	transformMatrix[9] = gal3DNorth[1];
+	transformMatrix[10] = gal3DNorth[2];
+	transformMatrix[11] = 0.;
+	transformMatrix[12] = 0.;
+	transformMatrix[13] = 0.;
+	transformMatrix[14] = 0.;
+	transformMatrix[15] = 1.;
 
-return CoordinateSystem;
+	return transformMatrix;
+};
+
+/**************************************************************************************************************/
+
+return EquatorialCoordinateSystem;
 
 });

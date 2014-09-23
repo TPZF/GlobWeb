@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./Utils','./Tile','./GeoBound','./CoordinateSystem'], function(Utils,Tile,GeoBound,CoordinateSystem) {
+ define(['./Utils','./Tile','./GeoBound'], function(Utils,Tile,GeoBound) {
  
 /**************************************************************************************************************/
 
@@ -117,7 +117,7 @@ GeoTile.prototype.getElevation = function(lon,lat)
 	var vo = this.config.vertexSize * (j * tess + i);
 	var vertex = [ this.vertices[vo], this.vertices[vo+1], this.vertices[vo+2] ];
 	mat4.multiplyVec3( this.matrix, vertex );
-	var geo = CoordinateSystem.from3DToGeo(vertex);
+	var geo = this.config.coordinateSystem.from3DToGeo(vertex);
 	return geo[2];
 }
 
@@ -179,7 +179,7 @@ GeoTile.prototype.lonlat2tile = function(coordinates)
 GeoTile.prototype.generateVertices = function(elevations)
 {	
 	// Compute tile matrix
-	this.matrix = CoordinateSystem.getLHVTransform( this.geoBound.getCenter() );
+	this.matrix = this.config.coordinateSystem.getLHVTransform( this.geoBound.getCenter() );
 	var invMatrix = mat4.create();
 	mat4.inverse( this.matrix, invMatrix );
 	this.inverseMatrix = invMatrix;
@@ -190,8 +190,8 @@ GeoTile.prototype.generateVertices = function(elevations)
 	var vertices = new Float32Array( vertexSize*size*(size+6) );
 	var lonStep = (this.geoBound.east - this.geoBound.west) / (size-1);
 	var latStep = (this.geoBound.south - this.geoBound.north) / (size-1);
-	var radius = CoordinateSystem.radius;
-	var scale = CoordinateSystem.heightScale;
+	var radius = this.config.coordinateSystem.radius;
+	var scale = this.config.coordinateSystem.heightScale;
 	var offset = 0;
 	
 	var lat = this.geoBound.north * Math.PI / 180.0;

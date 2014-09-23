@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./CoordinateSystem', './RenderContext', './TileManager', './TilePool', './Tile', './VectorRendererManager', './Numeric', './GeoBound', './Event', './Utils' ], 
-	function(CoordinateSystem, RenderContext, TileManager, TilePool, Tile, VectorRendererManager, Numeric, GeoBound, Event, Utils) {
+ define(['./EquatorialCoordinateSystem', './RenderContext', './TileManager', './TilePool', './Tile', './VectorRendererManager', './Numeric', './GeoBound', './Event', './Utils' ], 
+	function(EquatorialCoordinateSystem, RenderContext, TileManager, TilePool, Tile, VectorRendererManager, Numeric, GeoBound, Event, Utils) {
 
 /**************************************************************************************************************/
 
@@ -41,6 +41,7 @@ var Sky = function(options)
 {
 	Event.prototype.constructor.call( this );
 
+	this.coordinateSystem = new EquatorialCoordinateSystem(options);
 	this.renderContext = new RenderContext(options);
 	this.tileManagers = {
 		'EQ': new TileManager( this ),
@@ -207,11 +208,11 @@ Sky.prototype.getViewportGeoBound = function(transformCallback)
 		vec3.subtract(points[i], eye, points[i]);
 		vec3.normalize( points[i] );
 		
-		var t = Numeric.raySphereIntersection( eye, points[i], earthCenter, CoordinateSystem.radius);
+		var t = Numeric.raySphereIntersection( eye, points[i], earthCenter, this.coordinateSystem.radius);
 		if ( t < 0.0 )
 			return null;
 			
-		points[i] = CoordinateSystem.from3DToGeo( Numeric.pointOnRay(eye, points[i], t, tmpPt) );
+		points[i] = this.coordinateSystem.from3DToGeo( Numeric.pointOnRay(eye, points[i], t, tmpPt) );
 		if (transformCallback) 
 		{
 			points[i] = transformCallback(points[i]);
@@ -239,7 +240,7 @@ Sky.prototype.getLonLatFromPixel = function(x,y)
 	var pos3d = this.renderContext.get3DFromPixel(x,y);
 	if ( pos3d )
 	{
-		return CoordinateSystem.from3DToGeo(pos3d);
+		return this.coordinateSystem.from3DToGeo(pos3d);
 	}
 	else
 	{
@@ -260,7 +261,7 @@ Sky.prototype.getLonLatFromPixel = function(x,y)
 Sky.prototype.getPixelFromLonLat = function(lon,lat)
 {	
 	var pos3d = vec3.create();
-	CoordinateSystem.fromGeoTo3D([lon,lat], pos3d);
+	this.coordinateSystem.fromGeoTo3D([lon,lat], pos3d);
 	var pixel = this.renderContext.getPixelFrom3D(pos3d[0],pos3d[1],pos3d[2]);
 	return pixel
 }

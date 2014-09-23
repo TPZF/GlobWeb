@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./FeatureStyle','./VectorRendererManager','./Utils','./BaseLayer','./RendererTileData', './CoordinateSystem', './Tile'],
-	function(FeatureStyle,VectorRendererManager,Utils,BaseLayer,RendererTileData, CoordinateSystem, Tile) {
+ define(['./FeatureStyle','./VectorRendererManager','./Utils','./BaseLayer','./RendererTileData', './Tile'],
+	function(FeatureStyle,VectorRendererManager,Utils,BaseLayer,RendererTileData, Tile) {
 
 /**************************************************************************************************************/
 

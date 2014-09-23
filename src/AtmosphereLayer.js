@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./Utils', './BaseLayer', './Program','./CoordinateSystem'], function(Utils,BaseLayer,Program,CoordinateSystem) {
+ define(['./Utils', './BaseLayer', './Program'], function(Utils,BaseLayer,Program) {
 
 /** @name AtmosphereLayer
 	@class
@@ -45,8 +45,6 @@ var AtmosphereLayer = function(options)
 	this.wavelength = (options && options['wavelength']) || [0.650,0.570,0.475];
 	
 	// internal properties
-	this._innerRadius = CoordinateSystem.radius;
-	this._outerRadius = this._innerRadius * 1.025;
 	this._skyProgram = null;
 	this._groundProgram = null;
 	this._originalProgram = null;
@@ -68,6 +66,8 @@ Utils.inherits( BaseLayer,AtmosphereLayer );
 AtmosphereLayer.prototype._attach = function( g )
 {
 	this.globe = g;
+	this._innerRadius = this.globe.coordinateSystem.radius;
+	this._outerRadius = this._innerRadius * 1.025;
 	var renderContext = g.renderContext;
 	
 	// Setup program, uniform now that we have the render context

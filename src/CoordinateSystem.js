@@ -19,14 +19,19 @@
 
 define( ['./Numeric' ], function(Numeric) {
  
-var CoordinateSystem = { radius: 1.0, heightScale: 1.0 / 6356752.3142, realEarthRadius: 6356752.3142  };
+var CoordinateSystem = function(options)
+{
+	this.radius = options && options.hasOwnProperty('radius') ? options.radius : 1.0;
+	this.heightScale = options && options.hasOwnProperty('heightScale') ? options.heightScale : 1.0 / 6356752.3142;
+	this.realEarthRadius = options && options.hasOwnProperty('realEarthRadius') ? options.realEarthRadius : 6356752.3142;
+};
 
 /**************************************************************************************************************/
 
 /*
 	Convert a geographic position to 3D
  */
-CoordinateSystem.fromGeoTo3D = function(geo, dest)
+CoordinateSystem.prototype.fromGeoTo3D = function(geo, dest)
 {
     if (!dest) { dest = new Array(3); }
 
@@ -35,15 +40,15 @@ CoordinateSystem.fromGeoTo3D = function(geo, dest)
 	var cosLat = Math.cos(latInRad);
 	
 	// Take height into account
-	var height = geo.length > 2 ? CoordinateSystem.heightScale * geo[2] : 0;
-	var radius = CoordinateSystem.radius + height;
+	var height = geo.length > 2 ? this.heightScale * geo[2] : 0;
+	var radius = this.radius + height;
 
     dest[0] = radius * Math.cos(longInRad) * cosLat;
     dest[1] = radius * Math.sin(longInRad) * cosLat;
     dest[2] = radius * Math.sin(latInRad);
 
     return dest;
-}
+};
 
 /**************************************************************************************************************/
 
@@ -51,7 +56,7 @@ CoordinateSystem.fromGeoTo3D = function(geo, dest)
 	Convert a 3D position to geographic
     Returns 3 values [long, lat, distance from earth surface]
  */
-CoordinateSystem.from3DToGeo = function(position3d, dest)
+CoordinateSystem.prototype.from3DToGeo = function(position3d, dest)
 {
     if (!dest) { dest = new Array(3); }
 
@@ -63,17 +68,17 @@ CoordinateSystem.from3DToGeo = function(position3d, dest)
 
     dest[0] = Numeric.toDegree(lon);
     dest[1] = Numeric.toDegree(lat);
-    dest[2] = CoordinateSystem.realEarthRadius * (r - CoordinateSystem.radius);
+    dest[2] = this.realEarthRadius * (r - this.radius);
 
     return dest;
-}
+};
 
 /**************************************************************************************************************/
 
 /*
 	Get local transformation
  */
-CoordinateSystem.getLocalTransform = function(geo, dest)
+CoordinateSystem.prototype.getLocalTransform = function(geo, dest)
 {
     if (!dest) { dest = mat4.create(); }
 
@@ -106,14 +111,14 @@ CoordinateSystem.getLocalTransform = function(geo, dest)
 	dest[15] = 1.0;
 
 	return dest;
-}
+};
 
 /**************************************************************************************************************/
 
 /*
 	Get local transformation
  */
-CoordinateSystem.getLHVTransform = function(geo, dest)
+CoordinateSystem.prototype.getLHVTransform = function(geo, dest)
 {
     if (!dest) { dest = mat4.create(); }
 
@@ -125,7 +130,7 @@ CoordinateSystem.getLHVTransform = function(geo, dest)
 	var north = vec3.create();
 	vec3.cross( up, east, north );
 	
-	var pt = CoordinateSystem.fromGeoTo3D(geo);
+	var pt = this.fromGeoTo3D(geo);
 	
 	dest[0] = east[0];
 	dest[1] = east[1];
@@ -148,49 +153,49 @@ CoordinateSystem.getLHVTransform = function(geo, dest)
 	dest[15] = 1.0;
 
 	return dest;
-}
+};
 
 /**************************************************************************************************************/
 
 /*
 	Get the side (i.e. X) vector from a local transformation
  */
-CoordinateSystem.getSideVector = function( matrix, v )
+CoordinateSystem.prototype.getSideVector = function( matrix, v )
 {
 	v[0] = matrix[0];
 	v[1] = matrix[1];
 	v[2] = matrix[2];
 	
     return v;
-}
+};
 
 /**************************************************************************************************************/
 
 /*
 	Get the front (i.e. Y) vector from a local transformation
  */
-CoordinateSystem.getFrontVector = function( matrix, v )
+CoordinateSystem.prototype.getFrontVector = function( matrix, v )
 {
 	v[0] = matrix[4];
 	v[1] = matrix[5];
 	v[2] = matrix[6];
 	
     return v;
-}
+};
 
 /**************************************************************************************************************/
 
 /*
 	Get the up (i.e. Z) vector from a local transformation
  */
-CoordinateSystem.getUpVector = function( matrix, v )
+CoordinateSystem.prototype.getUpVector = function( matrix, v )
 {
 	v[0] = matrix[8];
 	v[1] = matrix[9];
 	v[2] = matrix[10];
 	
     return v;
-}
+};
 
 /**************************************************************************************************************/
 

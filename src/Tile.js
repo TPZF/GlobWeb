@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./BoundingBox','./CoordinateSystem','./glMatrix'], 
-	function(BoundingBox,CoordinateSystem) {
+ define(['./BoundingBox','./glMatrix'], 
+	function(BoundingBox) {
 
 /**************************************************************************************************************/
 
@@ -221,15 +221,15 @@ Tile.prototype.isCulled = function(renderContext)
 			// Compute vertical at the closest point. The earth center is [0, 0, -radius] in tile local space.
 			var vx = pt[0];
 			var vy = pt[1];
-			var vz = pt[2] + CoordinateSystem.radius;
+			var vz = pt[2] + this.config.coordinateSystem.radius;
 			var vl = Math.sqrt( vx * vx + vy * vy + vz * vz );
 			vx /= vl; vy /= vl; vz /= vl;
 			
 			// Compute eye direction at the closest point (clampled on earth to avoid problem with mountains)
 			// The position clamp to earth is Vertical * Radius + EarthCenter. The EarthCenter being 0,0,-radius a lot of simplification is done.
-			var edx = ex - vx * CoordinateSystem.radius;
-			var edy = ey - vy * CoordinateSystem.radius;
-			var edz = ez - (vz - 1.0) * CoordinateSystem.radius;
+			var edx = ex - vx * this.config.coordinateSystem.radius;
+			var edy = ey - vy * this.config.coordinateSystem.radius;
+			var edz = ez - (vz - 1.0) * this.config.coordinateSystem.radius;
 			
 			// Compute dot product between eye direction and the vertical at the point
 			var el = Math.sqrt( edx * edx + edy * edy  + edz * edz );

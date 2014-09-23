@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Utils','./VectorRenderer','./Program','./CoordinateSystem','./FeatureStyle', './VectorRendererManager'],
-	function(Utils,VectorRenderer,Program,CoordinateSystem,FeatureStyle,VectorRendererManager) {
+define(['./Utils','./VectorRenderer','./Program','./FeatureStyle', './VectorRendererManager'],
+	function(Utils,VectorRenderer,Program,FeatureStyle,VectorRendererManager) {
 
 /**************************************************************************************************************/
 
@@ -89,7 +89,8 @@ var Renderable = function(bucket)
 Renderable.prototype.add = function(geometry)
 {
 	this.geometry2vb[ geometry.gid ] = this.vertices.length;
-	var pt = CoordinateSystem.fromGeoTo3D( geometry['coordinates'] );
+	// TODO: Find a better way to access to coordinate system
+	var pt = this.bucket.renderer.globe.coordinateSystem.fromGeoTo3D( geometry['coordinates'] );
 	// Hack : push away the point, only works for AstroWeb, sufficient for now
 	this.vertices.push( 0.99 * pt[0], 0.99 * pt[1], 0.99 * pt[2] );
 	this.vertexBufferDirty = true;

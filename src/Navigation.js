@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./Utils', './CoordinateSystem', './BaseNavigation', './SegmentedAnimation', './Numeric', './glMatrix'], function(Utils,CoordinateSystem,BaseNavigation,SegmentedAnimation,Numeric) {
+ define(['./Utils', './BaseNavigation', './SegmentedAnimation', './Numeric', './glMatrix'], function(Utils,BaseNavigation,SegmentedAnimation,Numeric) {
 
 /**************************************************************************************************************/
 
@@ -41,17 +41,17 @@ var Navigation = function(globe,options)
 		
 	// Default values for min and max distance (in meter)
 	this.minDistance = (options && options.minDistance) || 1.0;
-	this.maxDistance = (options && options.maxDistance) || 3.0 * CoordinateSystem.realEarthRadius;
+	this.maxDistance = (options && options.maxDistance) || 3.0 * this.globe.coordinateSystem.realEarthRadius;
 	
 	// Initialize the navigation
 	this.geoCenter = [0.0, 0.0, 0.0];
 	this.heading = 0.0;
 	this.tilt = 90.0;
-	this.distance = 3.0 * CoordinateSystem.radius;
+	this.distance = 3.0 * this.globe.coordinateSystem.radius;
 		
 	// Scale min and max distance from meter to internal ratio
-	this.minDistance *= CoordinateSystem.heightScale;
-	this.maxDistance *= CoordinateSystem.heightScale;
+	this.minDistance *= this.globe.coordinateSystem.heightScale;
+	this.maxDistance *= this.globe.coordinateSystem.heightScale;
 
 	this.inverseViewMatrix = mat4.create();
 
@@ -107,13 +107,13 @@ Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt )
 {
 	var navigation = this;
 	
-	var destDistance = distance || this.distance / (4.0 * CoordinateSystem.heightScale);
+	var destDistance = distance || this.distance / (4.0 * this.globe.coordinateSystem.heightScale);
 	duration = duration || 5000;
 	var destTilt = tilt || 90;
 	
 	// Create a single animation to animate geoCenter, distance and tilt
 	var startValue = [this.geoCenter[0], this.geoCenter[1], this.distance, this.tilt];
-	var endValue = [geoPos[0], geoPos[1], destDistance * CoordinateSystem.heightScale, destTilt];
+	var endValue = [geoPos[0], geoPos[1], destDistance * this.globe.coordinateSystem.heightScale, destTilt];
 	this.zoomToAnimation = new SegmentedAnimation(
 		duration,
 		// Value setter
@@ -126,8 +126,8 @@ Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt )
 		});
 
 	// Compute a max altitude for the animation
-	var worldStart = CoordinateSystem.fromGeoTo3D(this.geoCenter);
-	var worldEnd   = CoordinateSystem.fromGeoTo3D(geoPos);
+	var worldStart = this.globe.coordinateSystem.fromGeoTo3D(this.geoCenter);
+	var worldEnd   = this.globe.coordinateSystem.fromGeoTo3D(geoPos);
 	var vec = vec3.subtract(worldStart, worldEnd);
 	var len = vec3.length(vec);
 	var canvas = this.globe.renderContext.canvas;
@@ -217,7 +217,7 @@ Navigation.prototype.computeViewMatrix = function()
  */
 Navigation.prototype.computeInverseViewMatrix = function()
 {
-    CoordinateSystem.getLHVTransform(this.geoCenter, this.inverseViewMatrix);
+    this.globe.coordinateSystem.getLHVTransform(this.geoCenter, this.inverseViewMatrix);
 	this.applyLocalRotation(this.inverseViewMatrix);
 	mat4.translate( this.inverseViewMatrix, [0.0, 0.0, this.distance] );
 }
@@ -265,7 +265,7 @@ Navigation.prototype.hasCollision = function()
 {
 	var eye = [ this.inverseViewMatrix[12], this.inverseViewMatrix[13], this.inverseViewMatrix[14] ];
 	var geoEye = vec3.create();
-	CoordinateSystem.from3DToGeo(eye, geoEye);
+	this.globe.coordinateSystem.from3DToGeo(eye, geoEye);
 	var elevation = this.globe.getElevation( geoEye[0], geoEye[1] );
 	
 	return geoEye[2] < elevation + 50;
@@ -285,19 +285,20 @@ Navigation.prototype.pan = function(dx, dy)
 	
 	// Get geographic frame
 	var local2World = mat4.create();
-	CoordinateSystem.getLocalTransform(this.geoCenter, local2World);
+	var coordinateSystem = this.globe.coordinateSystem;
+	coordinateSystem.getLocalTransform(this.geoCenter, local2World);
 	// Then corresponding vertical axis and north
 	var z = vec3.create(); var previousNorth = vec3.create([0.0, 1.0, 0.0]);
-	CoordinateSystem.getUpVector( local2World, z );
-	//CoordinateSystem.getFrontVector( local2World, previousNorth );
+	coordinateSystem.getUpVector( local2World, z );
+	//coordinateSystem.getFrontVector( local2World, previousNorth );
 	mat4.multiplyVec3(local2World, previousNorth, previousNorth);
 	
 	// Then apply local transform
 	this.applyLocalRotation(local2World);
 	// Retrieve corresponding axes
 	var x = vec3.create(); var y = vec3.create();
-	CoordinateSystem.getSideVector( local2World, x );
-	CoordinateSystem.getFrontVector( local2World, y );
+	coordinateSystem.getSideVector( local2World, x );
+	coordinateSystem.getFrontVector( local2World, y );
 	// According to our local configuration, up is y and side is x
 	
 	// Compute direction axes
@@ -312,7 +313,7 @@ Navigation.prototype.pan = function(dx, dy)
 	
 	// Move accordingly
 	var position = vec3.create();
-	CoordinateSystem.fromGeoTo3D(this.geoCenter, position);
+	coordinateSystem.fromGeoTo3D(this.geoCenter, position);
 	vec3.scale(x, dx * this.distance, x);
 	vec3.scale(y, dy * this.distance, y);
 	vec3.subtract(position, x, position);
@@ -320,14 +321,14 @@ Navigation.prototype.pan = function(dx, dy)
 	
 	// Clamp onto sphere
 	vec3.normalize(position);
-	vec3.scale(position, CoordinateSystem.radius);
+	vec3.scale(position, coordinateSystem.radius);
 	
 	// Update geographic center
-	CoordinateSystem.from3DToGeo(position, this.geoCenter);
+	coordinateSystem.from3DToGeo(position, this.geoCenter);
 
 	// Compute new north axis
 	var newNorth = vec3.create([0.0, 1.0, 0.0]);
-	CoordinateSystem.getLocalTransform(this.geoCenter, local2World);
+	coordinateSystem.getLocalTransform(this.geoCenter, local2World);
 	mat4.multiplyVec3(local2World, newNorth, newNorth);
 	
 	// Take care if we traverse the pole, ie the north is inverted

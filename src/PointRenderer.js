@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define( ['./Utils','./VectorRenderer','./CoordinateSystem','./VectorRendererManager','./FeatureStyle','./Program'], 
-	function(Utils,VectorRenderer,CoordinateSystem,VectorRendererManager,FeatureStyle,Program) {
+ define( ['./Utils','./VectorRenderer','./VectorRendererManager','./FeatureStyle','./Program'], 
+	function(Utils,VectorRenderer,VectorRendererManager,FeatureStyle,Program) {
 
 /**************************************************************************************************************/
 
@@ -194,7 +194,8 @@ var PointRenderable = function(bucket)
 PointRenderable.prototype.add = function(geometry)
 {
 	var posGeo = geometry['coordinates'];
-	var pos3d = CoordinateSystem.fromGeoTo3D( posGeo );
+	// TODO: Find a better way to access to coordinate system
+	var pos3d = this.bucket.layer.globe.coordinateSystem.fromGeoTo3D( posGeo );
 	var vertical = vec3.create();
 	vec3.normalize(pos3d, vertical);
 
@@ -377,7 +378,7 @@ PointRenderer.prototype.render = function(renderables,start,end)
 			var poiVec = renderable.points[i].vertical;
 			var scale = bucket.textureHeight * ( pixelSizeVector[0] * worldPoi[0] + pixelSizeVector[1] * worldPoi[1] + pixelSizeVector[2] * worldPoi[2] + pixelSizeVector[3] );
 			scale *= this.tileConfig.cullSign;
-			var scaleInKm = (scale / CoordinateSystem.heightScale) * 0.001;
+			var scaleInKm = (scale / this.globe.coordinateSystem.heightScale) * 0.001;
 			if ( scaleInKm > bucket.style.pointMaxSize )
 				continue;
 				

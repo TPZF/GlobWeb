@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./Utils','./Animation','./CoordinateSystem','./Numeric'], function(Utils,Animation,CoordinateSystem,Numeric) {
+ define(['./Utils','./Animation','./Numeric'], function(Utils,Animation,Numeric) {
 
 /**************************************************************************************************************/
 
@@ -36,14 +36,16 @@ var PathAnimation = function(options)
 {
     // Call ancestor constructor
     Animation.prototype.constructor.call(this);
-
-    this.speed = options.speed * CoordinateSystem.heightScale / 1000;
+    this.globe = options.globe;
+    this.speed = options.speed * this.globe.coordinateSystem.heightScale / 1000;
 	this.nodes = [];
 	for ( var i = 0; i < options.coords.length; i++ )
 	{
-		var node = { position: CoordinateSystem.fromGeoTo3D(options.coords[i]),
-					velocity: null,
-					distance: 0.0 };
+		var node = {
+			position: this.globe.coordinateSystem.fromGeoTo3D(options.coords[i]),
+			velocity: null,
+			distance: 0.0
+		};
 		this.nodes.push( node );
 		if ( i > 0 )
 		{
@@ -98,9 +100,9 @@ var PathAnimation = function(options)
 			var eye;
 			if ( options.globe )
 			{
-				var geoEye = CoordinateSystem.from3DToGeo( value );
+				var geoEye = options.globe.coordinateSystem.from3DToGeo( value );
 				geoEye[2] = options.globe.getElevation( geoEye[0], geoEye[1] ) + that.altitudeOffset;
-				eye =  CoordinateSystem.fromGeoTo3D( geoEye );
+				eye =  options.globe.coordinateSystem.fromGeoTo3D( geoEye );
 			}
 			else
 			{
@@ -127,7 +129,7 @@ Utils.inherits(Animation,PathAnimation);
  */
 PathAnimation.prototype.setSpeed = function(val)
 {
-    this.speed = parseFloat(val) * CoordinateSystem.heightScale / 1000;
+    this.speed = parseFloat(val) * this.globe.coordinateSystem.heightScale / 1000;
 }
 
 /**************************************************************************************************************/

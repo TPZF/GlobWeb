@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
  
-define( ['./Utils','./VectorRenderer','./CoordinateSystem','./VectorRendererManager','./FeatureStyle','./Program','./Triangulator'], 
-	function(Utils,VectorRenderer,CoordinateSystem,VectorRendererManager,FeatureStyle,Program,Triangulator) {
+define( ['./Utils','./VectorRenderer','./VectorRendererManager','./FeatureStyle','./Program','./Triangulator'], 
+	function(Utils,VectorRenderer,VectorRendererManager,FeatureStyle,Program,Triangulator) {
 
 /**************************************************************************************************************/
 
@@ -87,13 +87,15 @@ PolygonRenderable.prototype.add = function(geometry)
 	var vertices = new Float32Array( style.extrude ? coords.length * 6 : coords.length * 3 );
 	
 	var origin = vec3.create();
-	CoordinateSystem.fromGeoTo3D(coords[0], origin);
+	// TODO: Find a better way to access to coordinate system
+	var coordinateSystem = geometry._bucket.layer.globe.coordinateSystem;
+	coordinateSystem.fromGeoTo3D(coords[0], origin);
 	
 	// For polygons only
 	for ( var i=0; i < coords.length; i++)
 	{
 		var pos3d = [];
-		CoordinateSystem.fromGeoTo3D(coords[i], pos3d);
+		coordinateSystem.fromGeoTo3D(coords[i], pos3d);
 		vertices[i*3] = pos3d[0] - origin[0];
 		vertices[i*3+1] = pos3d[1] - origin[1];
 		vertices[i*3+2] = pos3d[2] - origin[2];
@@ -106,7 +108,7 @@ PolygonRenderable.prototype.add = function(geometry)
 		{
 			var pos3d = [];
 			var coordAtZero = [ coords[i][0], coords[i][1], 0.0 ];
-			CoordinateSystem.fromGeoTo3D( coordAtZero, pos3d);
+			coordinateSystem.fromGeoTo3D( coordAtZero, pos3d);
 			vertices[offset] = pos3d[0] - origin[0];
 			vertices[offset+1] = pos3d[1] - origin[1];
 			vertices[offset+2] = pos3d[2] - origin[2];

@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
  
-define( ['./CoordinateSystem','./VectorRendererManager','./FeatureStyle','./Program','./Triangulator','./RenderContext'], 
-	function(CoordinateSystem,VectorRendererManager,FeatureStyle,Program,Triangulator,RenderContext) {
+define( ['./VectorRendererManager','./FeatureStyle','./Program','./Triangulator','./RenderContext'], 
+	function(VectorRendererManager,FeatureStyle,Program,Triangulator,RenderContext) {
 
 /**************************************************************************************************************/
 
@@ -26,9 +26,10 @@ define( ['./CoordinateSystem','./VectorRendererManager','./FeatureStyle','./Prog
  *	Basic renderer for polygon
  */
 
-var StencilPolygonRenderer = function(tileManager)
+var StencilPolygonRenderer = function(globe)
 {
-	this.renderContext = tileManager.renderContext;
+	this.globe = globe;
+	this.renderContext = this.globe.tileManager.renderContext;
 	
 	this.renderables = [];
 		
@@ -85,14 +86,14 @@ StencilPolygonRenderer.prototype.addGeometry = function(geometry, layer, style){
 	{
 		var pos3d = [];
 		var coord = [ coords[i][0], coords[i][1], 50000 ];
-		CoordinateSystem.fromGeoTo3D(coord, pos3d);
+		this.globe.coordinateSystem.fromGeoTo3D(coord, pos3d);
 		vertices[topIndex] = pos3d[0];
 		vertices[topIndex+1] = pos3d[1];
 		vertices[topIndex+2] = pos3d[2];
 		
 		coord[2] = -50000;
 		
-		CoordinateSystem.fromGeoTo3D(coord, pos3d);
+		this.globe.coordinateSystem.fromGeoTo3D(coord, pos3d);
 		vertices[bottomIndex] = pos3d[0];
 		vertices[bottomIndex+1] = pos3d[1];
 		vertices[bottomIndex+2] = pos3d[2];
@@ -265,8 +266,8 @@ RenderContext.contextAttributes.stencil = true;
 // Register the renderer
 VectorRendererManager.registerRenderer({
 	creator: function(globe) { 
-			return new StencilPolygonRenderer(globe.tileManager);
-		},
+		return new StencilPolygonRenderer(globe);
+	},
 	canApply: function(type,style) {return (type == "Polygon") && style.fill; }
 });
 

@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Tile', './HEALPixBase', './GeoBound', './EquatorialCoordinateSystem', './Numeric', './AstroCoordTransform'], 
-	function(Tile, HEALPixBase, GeoBound, CoordinateSystem, Numeric, AstroCoordTransform) {
+define(['./Tile', './HEALPixBase', './GeoBound', './EquatorialCoordinateSystem', './Numeric'], 
+	function(Tile, HEALPixBase, GeoBound, CoordinateSystem, Numeric) {
 
 /**************************************************************************************************************/
  
@@ -76,7 +76,7 @@ HEALPixTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 {	
 	if ( this.coordSystem != "EQ" )
 	{
-		var geo = CoordinateSystem.convert( [lon, lat], 'EQ', this.coordSystem );
+		var geo = this.config.coordinateSystem.convert( [lon, lat], 'EQ', this.coordSystem );
 		lon = geo[0];
 		lat = geo[1];
 	}
@@ -93,7 +93,7 @@ HEALPixTiling.prototype.findInsideTile = function(lon, lat, tiles)
 {
 	if ( this.coordSystem != "EQ" )
 	{
-		var geo = CoordinateSystem.convert( [lon, lat], 'EQ', this.coordSystem );
+		var geo = this.config.coordinateSystem.convert( [lon, lat], 'EQ', this.coordSystem );
 		lon = geo[0];
 		lat = geo[1];
 	}
@@ -237,22 +237,27 @@ HEALPixTile.prototype.generateVertices = function()
 	var pix=this.pixelIndex&(this.nside*this.nside-1);
 	var ix = HEALPixBase.compress_bits(pix);
 	var iy = HEALPixBase.compress_bits(pix>>>1);
-	
+	var coordinateSystem = this.config.coordinateSystem;
 	// Compute array of worldspace coordinates
 	for(var u = 0; u < size; u++){
 		for(var v = 0; v < size; v++){
 
+			var vertice = HEALPixBase.fxyf((ix+u*step)/this.nside, (iy+v*step)/this.nside, this.face);
 
+			// Take sphere radius into account
+			vertice[0] *= this.config.coordinateSystem.radius;
+			vertice[1] *= this.config.coordinateSystem.radius;
+			vertice[2] *= this.config.coordinateSystem.radius;
+			
 			if ( this.config.coordSystem != 'EQ' )
 			{
-				var vertice = HEALPixBase.fxyf((ix+u*step)/this.nside, (iy+v*step)/this.nside, this.face);
-				var geo = CoordinateSystem.from3DToGeo( vertice );
-				var eq = CoordinateSystem.convert(geo, this.config.coordSystem, 'EQ');
-				worldSpaceVertices[u*size + v] = CoordinateSystem.fromGeoTo3D( eq );
+				var geo = coordinateSystem.from3DToGeo( vertice );
+				var eq = coordinateSystem.convert(geo, this.config.coordSystem, 'EQ');
+				worldSpaceVertices[u*size + v] = coordinateSystem.fromGeoTo3D( eq );
 			}
 			else
 			{
-				worldSpaceVertices[u*size + v] = HEALPixBase.fxyf((ix+u*step)/this.nside, (iy+v*step)/this.nside, this.face);
+				worldSpaceVertices[u*size + v] = vertice;
 			}
 		}
 	}
@@ -261,10 +266,10 @@ HEALPixTile.prototype.generateVertices = function()
 	this.geoBound = new GeoBound();
 
 	var corners = [];
-	corners.push( CoordinateSystem.from3DToGeo( worldSpaceVertices[0] ) );
-	corners.push( CoordinateSystem.from3DToGeo( worldSpaceVertices[size-1] ) );
-	corners.push( CoordinateSystem.from3DToGeo( worldSpaceVertices[size*(size-1)] ) );
-	corners.push( CoordinateSystem.from3DToGeo( worldSpaceVertices[size*size-1] ) );
+	corners.push( coordinateSystem.from3DToGeo( worldSpaceVertices[0] ) );
+	corners.push( coordinateSystem.from3DToGeo( worldSpaceVertices[size-1] ) );
+	corners.push( coordinateSystem.from3DToGeo( worldSpaceVertices[size*(size-1)] ) );
+	corners.push( coordinateSystem.from3DToGeo( worldSpaceVertices[size*size-1] ) );
 
 	this.geoBound.computeFromCoordinates( corners );
 
@@ -276,8 +281,8 @@ HEALPixTile.prototype.generateVertices = function()
 	
 	// Compute tile matrix
 	/*var center = HEALPixBase.fxyf((ix+0.5)/this.nside, (iy+0.5)/this.nside, face);
-	var geoCenter = CoordinateSystem.from3DToGeo(center);
-	this.matrix = CoordinateSystem.getLHVTransform( geoCenter );
+	var geoCenter = coordinateSystem.from3DToGeo(center);
+	this.matrix = coordinateSystem.getLHVTransform( geoCenter );
 	var invMatrix = mat4.create();
 	mat4.inverse( this.matrix, invMatrix );
 	this.inverseMatrix = invMatrix;*/

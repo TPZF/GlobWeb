@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Utils','./VectorRenderer','./Program','./CoordinateSystem','./FeatureStyle', './VectorRendererManager', './Triangulator', './glMatrix'],
-	function(Utils,VectorRenderer,Program,CoordinateSystem,FeatureStyle,VectorRendererManager, Triangulator) {
+define(['./Utils','./VectorRenderer','./Program','./FeatureStyle', './VectorRendererManager', './Triangulator', './glMatrix'],
+	function(Utils,VectorRenderer,Program,FeatureStyle,VectorRendererManager, Triangulator) {
 
 /**************************************************************************************************************/
 
@@ -184,6 +184,7 @@ Renderable.prototype.add = function(geometry)
 			triIndexCount: 0
 		};
 
+		var coordinateSystem = this.bucket.renderer.globe.coordinateSystem;
 		// Compute texture coordinates if defined
 		if ( geometry._imageCoordinates )
 		{
@@ -191,9 +192,9 @@ Renderable.prototype.add = function(geometry)
 			data.tcoordsCount = 2 * numPoints;
 
 			// Initialize variables used for texture coordinates computation
-			var p0 = CoordinateSystem.fromGeoTo3D( geometry._imageCoordinates[0][0] ); // origin
-			var p1 = CoordinateSystem.fromGeoTo3D( geometry._imageCoordinates[0][1] );
-			var p3 = CoordinateSystem.fromGeoTo3D( geometry._imageCoordinates[0][3] ); 
+			var p0 = coordinateSystem.fromGeoTo3D( geometry._imageCoordinates[0][0] ); // origin
+			var p1 = coordinateSystem.fromGeoTo3D( geometry._imageCoordinates[0][1] );
+			var p3 = coordinateSystem.fromGeoTo3D( geometry._imageCoordinates[0][3] ); 
 			var v01 = [];
 			vec3.subtract( p1, p0, v01 ); // U-axis
 			var v03 = [];
@@ -203,7 +204,7 @@ Renderable.prototype.add = function(geometry)
 
 			for ( var i=0; i<numPoints; i++ )
 			{
-				var pt = CoordinateSystem.fromGeoTo3D( coords[i] );
+				var pt = coordinateSystem.fromGeoTo3D( coords[i] );
 				var v0P = [];
 				vec3.subtract( pt, p0, v0P );
 
@@ -221,7 +222,7 @@ Renderable.prototype.add = function(geometry)
 		var startIndex = this.vertices.length / 3;
 		for ( var i = 0; i < numPoints; i++ ) 
 		{
-			var pt = CoordinateSystem.fromGeoTo3D( coords[i] );
+			var pt = coordinateSystem.fromGeoTo3D( coords[i] );
 			this.vertices.push( pt[0], pt[1], pt[2] );
 			this.lineIndices.push( startIndex + i, startIndex + ((i+1) % numPoints) );
 		}

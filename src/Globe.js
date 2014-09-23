@@ -40,7 +40,8 @@
 var Globe = function(options)
 {
 	Event.prototype.constructor.call( this );
-
+	
+	this.coordinateSystem = new CoordinateSystem();
 	this.renderContext = new RenderContext(options);
 	this.tileManager = new TileManager( this );
 	this.vectorRendererManager = new VectorRendererManager( this );
@@ -232,11 +233,11 @@ Globe.prototype.getViewportGeoBound = function(transformCallback)
 		vec3.subtract(points[i], eye, points[i]);
 		vec3.normalize( points[i] );
 		
-		var t = Numeric.raySphereIntersection( eye, points[i], earthCenter, CoordinateSystem.radius);
+		var t = Numeric.raySphereIntersection( eye, points[i], earthCenter, this.coordSystem.radius);
 		if ( t < 0.0 )
 			return null;
 			
-		points[i] = CoordinateSystem.from3DToGeo( Numeric.pointOnRay(eye, points[i], t, tmpPt) );
+		points[i] = this.coordinateSystem.from3DToGeo( Numeric.pointOnRay(eye, points[i], t, tmpPt) );
 		if (transformCallback) 
 		{
 			points[i] = transformCallback(points[i]);
@@ -264,7 +265,7 @@ Globe.prototype.getLonLatFromPixel = function(x,y)
 	var pos3d = this.renderContext.get3DFromPixel(x,y);
 	if ( pos3d )
 	{
-		return CoordinateSystem.from3DToGeo(pos3d);
+		return this.coordinateSystem.from3DToGeo(pos3d);
 	}
 	else
 	{
@@ -285,7 +286,7 @@ Globe.prototype.getLonLatFromPixel = function(x,y)
 Globe.prototype.getPixelFromLonLat = function(lon,lat)
 {	
 	var pos3d = vec3.create();
-	CoordinateSystem.fromGeoTo3D([lon,lat], pos3d);
+	this.coordinateSystem.fromGeoTo3D([lon,lat], pos3d);
 	var pixel = this.renderContext.getPixelFrom3D(pos3d[0],pos3d[1],pos3d[2]);
 	return pixel
 }

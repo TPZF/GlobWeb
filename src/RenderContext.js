@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
  
-define([ './Frustum', './Numeric', './CoordinateSystem', './glMatrix' ], 
-	function( Frustum, Numeric, CoordinateSystem ) {
+define([ './Frustum', './Numeric', './glMatrix' ], 
+	function( Frustum, Numeric ) {
 
 /**************************************************************************************************************/
 
@@ -379,7 +379,7 @@ RenderContext.prototype.get3DFromPixel = function(x,y)
 	vec3.normalize(rayDirection);
 	
 	// Intersect earth sphere
-	var t = Numeric.raySphereIntersection(worldCam, rayDirection, [0.0, 0.0, 0.0], CoordinateSystem.radius);
+	var t = Numeric.raySphereIntersection(worldCam, rayDirection, [0.0, 0.0, 0.0], this.renderer.coordinateSystem.radius);
 	if (t >= 0)
 	{
 		var pos3d = Numeric.pointOnRay(worldCam, rayDirection, t);
