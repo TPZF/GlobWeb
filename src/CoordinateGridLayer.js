@@ -431,9 +431,9 @@ CoordinateGridLayer.prototype.generateGridBuffers = function()
 				var cosPhi = Math.cos(radPhi);
 				
 				// z is the up vector
-				var x = cosPhi * sinTheta;
-				var y = sinPhi * sinTheta;
-				var z = cosTheta;
+				var x = cosPhi * sinTheta * this.globe.coordinateSystem.radius;
+				var y = sinPhi * sinTheta * this.globe.coordinateSystem.radius;
+				var z = cosTheta * this.globe.coordinateSystem.radius;
 
 				if ( this.coordSystem != "EQ" ) {
 					var geo = this.globe.coordinateSystem.from3DToGeo( [x, y, z] );
