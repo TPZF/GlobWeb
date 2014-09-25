@@ -31,6 +31,7 @@
 		<ul>
 			<li>minDistance : The minimum distance</li>
 			<li>maxDistance : The maximum distance</li>
+			<li>updateViewMatrix : Boolean indicating if view matrix must be updated on initialization</li>
 		</ul>
  */
 var Navigation = function(globe,options)
@@ -55,8 +56,12 @@ var Navigation = function(globe,options)
 
 	this.inverseViewMatrix = mat4.create();
 
-	// Update the view matrix now
-	this.computeViewMatrix();
+	var updateViewMatrix = (options && options.hasOwnProperty('updateViewMatrix') ? options.updateViewMatrix : true);
+	// Update the view matrix if needed(true by default)
+	if ( updateViewMatrix )
+	{
+		this.computeViewMatrix();
+	}
 }
 
 /**************************************************************************************************************/
