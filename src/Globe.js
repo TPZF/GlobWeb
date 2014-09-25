@@ -78,6 +78,18 @@ Globe.prototype.dispose = function()
 	this.tileManager.reset();
 }
 
+/**************************************************************************************************************/
+
+/**
+ 	Destroy globe
+ */
+ Globe.prototype.destroy = function()
+ {
+ 	this.dispose();
+ 	this.tileManager.removePostRenderer( this.vectorRendererManager );
+ 	this.renderContext.renderers.splice( this.renderContext.renderers.indexOf(this.globe), 1 );
+ }
+
 
 /**************************************************************************************************************/
 
