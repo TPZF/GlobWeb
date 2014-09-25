@@ -51,6 +51,7 @@ var Sky = function(options)
 	{
 		this.renderContext = options.renderContext;
 	}
+	this.tilePool =  new TilePool(this.renderContext);
 	this.tileManagers = {
 		'EQ': new TileManager( this ),
 		'GAL': new TileManager( this )
