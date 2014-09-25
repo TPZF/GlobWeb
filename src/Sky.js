@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./EquatorialCoordinateSystem', './RenderContext', './TileManager', './TilePool', './Tile', './VectorRendererManager', './Numeric', './GeoBound', './Event', './Utils' ], 
-	function(EquatorialCoordinateSystem, RenderContext, TileManager, TilePool, Tile, VectorRendererManager, Numeric, GeoBound, Event, Utils) {
+ define(['./EquatorialCoordinateSystem', './RenderContext', './TileManager', './TilePool', './Tile', './VectorRendererManager', './Ray', './GeoBound', './Event', './Utils' ], 
+	function(EquatorialCoordinateSystem, RenderContext, TileManager, TilePool, Tile, VectorRendererManager, Ray, GeoBound, Event, Utils) {
 
 /**************************************************************************************************************/
 
@@ -31,6 +31,7 @@
 	@param options Configuration properties for the Sky :
 		<ul>
 			<li>canvas : the canvas for WebGL, can be string (id) or a canvas element</li>
+			<li>renderContext : <RenderContext> object to use the existing render context</li>
 			<li>backgroundColor : the background color of the canvas (an array of 4 floats)</li>
 			<li>shadersPath : the path to shaders file</li>
 			<li>continuousRendering: if true rendering is done continuously, otherwise it is done only if needed</li>
@@ -42,7 +43,14 @@ var Sky = function(options)
 	Event.prototype.constructor.call( this );
 
 	this.coordinateSystem = new EquatorialCoordinateSystem(options);
-	this.renderContext = new RenderContext(options);
+	if ( !options.renderContext )
+	{
+		this.renderContext = new RenderContext(options);
+	}
+	else
+	{
+		this.renderContext = options.renderContext;
+	}
 	this.tileManagers = {
 		'EQ': new TileManager( this ),
 		'GAL': new TileManager( this )
@@ -56,7 +64,7 @@ var Sky = function(options)
 	
 	this.tileManager.addPostRenderer( this.vectorRendererManager );
 	
-	this.renderContext.renderer = this;
+	this.renderContext.renderers.push(this);
 	this.renderContext.requestFrame();
 }
 
@@ -199,7 +207,6 @@ Sky.prototype.getViewportGeoBound = function(transformCallback)
 	// Transform the four corners of the frustum into world space
 	// and then for each corner compute the intersection of ray starting from the eye with the earth
 	var points = [ [ -1, -1, 1, 1 ], [ 1, -1, 1, 1 ], [ -1, 1, 1, 1 ], [ 1, 1, 1, 1 ] ];
-	var tmpPt = vec3.create();
 	var earthCenter = [ 0, 0, 0 ];
 	for ( var i = 0; i < 4; i++ )
 	{
@@ -208,11 +215,9 @@ Sky.prototype.getViewportGeoBound = function(transformCallback)
 		vec3.subtract(points[i], eye, points[i]);
 		vec3.normalize( points[i] );
 		
-		var t = Numeric.raySphereIntersection( eye, points[i], earthCenter, this.coordinateSystem.radius);
-		if ( t < 0.0 )
-			return null;
-			
-		points[i] = this.coordinateSystem.from3DToGeo( Numeric.pointOnRay(eye, points[i], t, tmpPt) );
+		var ray = new Ray( eye, points[i] );
+		var pos3d = ray.computePoint( ray.sphereIntersect( earthCenter, this.coordinateSystem.radius ) );
+		points[i] = this.coordinateSystem.from3DToGeo( pos3d );
 		if (transformCallback) 
 		{
 			points[i] = transformCallback(points[i]);
@@ -237,7 +242,9 @@ Sky.prototype.getViewportGeoBound = function(transformCallback)
  */
 Sky.prototype.getLonLatFromPixel = function(x,y)
 {	
-	var pos3d = this.renderContext.get3DFromPixel(x,y);
+	var ray = Ray.createFromPixel(this.renderContext, x, y);
+	var pos3d = ray.computePoint( ray.sphereIntersect( [0,0,0], this.coordinateSystem.radius ) );
+	
 	if ( pos3d )
 	{
 		return this.coordinateSystem.from3DToGeo(pos3d);

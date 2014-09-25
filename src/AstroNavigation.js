@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Utils', './BaseNavigation', './SegmentedAnimation', './Numeric', './glMatrix'], function(Utils,BaseNavigation,SegmentedAnimation,Numeric) {
+define(['./Utils', './BaseNavigation', './SegmentedAnimation', './Numeric', './Ray', './glMatrix'], function(Utils,BaseNavigation,SegmentedAnimation,Numeric,Ray) {
 
 /**************************************************************************************************************/
 
@@ -341,7 +341,8 @@ AstroNavigation.prototype.pan = function(dx, dy)
 {
 	var x = this.renderContext.canvas.width / 2.;
 	var y = this.renderContext.canvas.height / 2.;
-	this.center3d = this.renderContext.get3DFromPixel(x - dx, y - dy);
+	var ray = Ray.createFromPixel(this.renderContext, x - dx, y - dy);
+	this.center3d = ray.computePoint( ray.sphereIntersect( [0,0,0], this.globe.coordinateSystem.radius ) );
 		
 	this.computeViewMatrix();
 }
@@ -363,6 +364,8 @@ AstroNavigation.prototype.rotate = function(dx,dy)
 
 	this.computeViewMatrix();
 }
+
+/**************************************************************************************************************/
 
 /**
  *	Clamping of fov

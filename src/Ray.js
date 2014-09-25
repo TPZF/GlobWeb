@@ -105,7 +105,6 @@ Ray.prototype.computePoint = function( t )
 
  /**
   * Compute intersection between a sphere and ray
-  * TODO : remove code from Numeric
   * @return the nearest intersection, < 0 if no intersection
   */
 Ray.prototype.sphereIntersect = function( center, radius )

@@ -109,8 +109,9 @@ Stats.prototype.print = function()
 		}
 		
 		content += "Average render time : " + (this["sum_globalRenderTime"] / this.numFrames).toFixed(2) + " ms";
-		if ( this.renderContext.renderer.getRenderStats )
-			content += "<br>" + this.renderContext.renderer.getRenderStats();
+		// FIXME: currently count stats for the first renderer in render context
+		if ( this.renderContext.renderers[0].getRenderStats )
+			content += "<br>" + this.renderContext.renderers[0].getRenderStats();
 		
 		if ( this.verbose )
 		{

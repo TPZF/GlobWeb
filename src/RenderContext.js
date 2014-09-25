@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
  
-define([ './Frustum', './Numeric', './glMatrix' ], 
-	function( Frustum, Numeric ) {
+define([ './Frustum', './glMatrix' ], 
+	function( Frustum ) {
 
 /**************************************************************************************************************/
 
@@ -111,12 +111,13 @@ var RenderContext = function(options)
 	this.eyePosition = vec3.create();
 	this.eyeDirection = vec3.create();
 	this.minNear = 0.0001;
-	this.minFar = 0; // No limit on far
+	this.minFar = options['minFar'] || 0; // No limit on far
 	this.near = RenderContext.minNear;
 	this.far = 6.0;
 	this.numActiveAttribArray = 0;
 	this.frameRequested = false;
 	this.fov = 45;
+	this.renderers = [];
 	
 	
 	// Initialize the window requestAnimationFrame
@@ -225,8 +226,11 @@ RenderContext.prototype.frame = function()
 		// Update view dependent properties to be used during rendering : view matrix, frustum, projection, etc...
 		this.updateViewDependentProperties();
 				
-		// Call renderer
-		this.renderer.render();
+		// Call render method of all registered renderers
+		for ( var i=0; i<this.renderers.length; i++ )
+		{
+			this.renderers[i].render();
+		}
 		
 		if (stats) stats.end("globalRenderTime");
 		
@@ -349,50 +353,12 @@ RenderContext.prototype.computePixelSizeVector = function( mv )
 
 	return pixelSizeVector;
 }
-/**************************************************************************************************************/
-
-/** 
-	Get 3D from a pixel
-*/
-RenderContext.prototype.get3DFromPixel = function(x,y)
-{
-	// reverse y because (0,0) is top left but opengl's normalized
-	// device coordinate (-1,-1) is bottom left
-	var nx = ((x / this.canvas.width) * 2.0) - 1.0;
-	var ny = -(((y / this.canvas.height) * 2.0) - 1.0);
-	
-	var tmpMat = mat4.create();
-	mat4.multiply(this.projectionMatrix, this.viewMatrix, tmpMat);
-	mat4.inverse(tmpMat);
-	// Transform pos to world using inverse viewProjection matrix
-	var worldPick = mat4.multiplyVec4(tmpMat, [ nx, ny, -1, 1]);
-	worldPick[0] /= worldPick[3];
-	worldPick[1] /= worldPick[3];
-	worldPick[2] /= worldPick[3];
-	
-	// Shoot a ray from the camera to the picked point
-	// Get camera position
-	mat4.inverse(this.viewMatrix, tmpMat);
-	var worldCam = [tmpMat[12], tmpMat[13], tmpMat[14]];
-	var rayDirection = vec3.create();
-	vec3.subtract(worldPick, worldCam, rayDirection);
-	vec3.normalize(rayDirection);
-	
-	// Intersect earth sphere
-	var t = Numeric.raySphereIntersection(worldCam, rayDirection, [0.0, 0.0, 0.0], this.renderer.coordinateSystem.radius);
-	if (t >= 0)
-	{
-		var pos3d = Numeric.pointOnRay(worldCam, rayDirection, t);
-		return pos3d;
-	}
-	
-	return null;
-}
 
 /**************************************************************************************************************/
 
 /** 
 	Get pixel from 3D
+	TODO: move it to Globe/Sky too ?
 */
 RenderContext.prototype.getPixelFrom3D = function(x,y,z)
 {

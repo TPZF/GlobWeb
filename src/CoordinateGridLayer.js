@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define( ['./BaseLayer', './Utils', './Program', './Mesh', './AstroCoordTransform', './FeatureStyle'],
-		function(BaseLayer, Utils, Program, Mesh, AstroCoordTransform, FeatureStyle) {
+define( ['./BaseLayer', './Utils', './Ray', './Program', './Mesh', './AstroCoordTransform', './FeatureStyle'],
+		function(BaseLayer, Utils, Ray, Program, Mesh, AstroCoordTransform, FeatureStyle) {
  
 /**************************************************************************************************************/
 
@@ -523,7 +523,8 @@ CoordinateGridLayer.prototype.generateGridBuffers = function()
  *	Compute geographic center of canvas in grid's coordinate system
  */
 CoordinateGridLayer.prototype.computeGeoCenter = function() {
-	var center3d = this.globe.renderContext.get3DFromPixel( this.globe.renderContext.canvas.width / 2. , this.globe.renderContext.canvas.height / 2. );
+	var ray = Ray.createFromPixel(this.globe.renderContext, this.globe.renderContext.canvas.width / 2. , this.globe.renderContext.canvas.height / 2.);
+	var center3d = ray.computePoint( ray.sphereIntersect( [0,0,0], this.globe.coordinateSystem.radius ) );
 	var geoCenter = [];
 	this.globe.coordinateSystem.from3DToGeo( center3d, geoCenter );
 

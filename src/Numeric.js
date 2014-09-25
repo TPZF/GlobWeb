@@ -199,21 +199,6 @@ Numeric.toDegree = function(radian)
 /**************************************************************************************************************/
 
 /**
-  Computes point on a ray
-*/
-Numeric.pointOnRay = function(rayOrigin, rayDirection, t, dest)
-{
-    if (!dest) { dest = vec3.create(); }
-
-    vec3.scale(rayDirection, t, dest);
-    vec3.add(dest, rayOrigin, dest);
-
-    return dest;
-}
-
-/**************************************************************************************************************/
-
-/**
   Line-line intersection
   rayDirection must be normalized.
   Returns t at which intersection occurs or -1 if no intersection.
@@ -235,46 +220,6 @@ Numeric.lineIntersection = function( x1, y1, x2, y2, x3, y3, x4, y4 )
 	
 	return [ ua, ub ];
 	//return ua > 0.0 && ua < 1.0 && ub > 0.0 && ub < 1.0;
-}
-
-/**************************************************************************************************************/
-
-/**
-  Ray sphere intersection
-  rayDirection must be normalized.
-  Returns t at which intersection occurs or -1 if no intersection.
-*/
-Numeric.raySphereIntersection = function(rayOrigin, rayDirection, sphereCenter, sphereRadius)
-{
-    // cf. http://wiki.cgsociety.org/index.php/Ray_Sphere_Intersection
-
-    var rs = vec3.subtract( rayOrigin, sphereCenter, vec3.create() );
-    // rayDirection is normalized so a = 1
-    // var a = vec3.dot(rayDirection, rayDirection);
-    var b = 2.0 * vec3.dot(rayDirection, rs);
-    var c = vec3.dot(rs, rs) - sphereRadius*sphereRadius;
-
-    // as a == 1, discriminant = b^2 - (4*c)
-    // var discr = (b*b) - (4*a*c);
-    var discr = (b*b) - (4*c);
-    if (discr < 0)
-        return -1;
-
-    // t0 = (-b - sqrt(discr)) / 2a, t1 = (-b + sqrt(discr)) / 2a, a == 1
-    discr = Math.sqrt(discr);
-    var tNear = (-b - discr) / 2;
-    var tFar  = (-b + discr) / 2;
-    if (tNear > tFar) // Swap t values
-    {
-        var tmp = tNear;
-        tNear = tFar;
-        tFar = tmp;
-    }
-
-    if (tFar < 0) // Hit is beyond ray origin
-        return -1;
-    
-    return tNear < 0 ? tFar : tNear;
 }
 
 /**************************************************************************************************************/
