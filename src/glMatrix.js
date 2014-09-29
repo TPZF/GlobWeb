@@ -490,6 +490,37 @@ define( function () {
     vec3.str = function (vec) {
         return '[' + vec[0] + ', ' + vec[1] + ', ' + vec[2] + ']';
     };
+	
+	/**
+	 * @class 3x3 Matrix
+	 * @name mat3
+	 */
+    var mat3 = {};
+	
+	/**
+	 * Creates a new isntance of mat3
+	 *
+     * @param {mat3} [mat] mat3 containing values to initialize with
+	 *
+	 * @returns {mat3} a new 3x3 matrix
+	 */
+    mat3.create = function (mat) {
+        var dest = new MatrixArray(9);
+
+        if (mat) {
+            dest[0] = mat[0];
+            dest[1] = mat[1];
+            dest[2] = mat[2];
+            dest[3] = mat[3];
+            dest[4] = mat[4];
+            dest[5] = mat[5];
+            dest[6] = mat[6];
+            dest[7] = mat[7];
+            dest[8] = mat[8];
+        }
+
+        return dest;
+    };
 
     /**
      * @class 4x4 Matrix
