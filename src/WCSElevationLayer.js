@@ -34,6 +34,7 @@ define(['./Utils', './RasterLayer', './GeoTiling'],
 			<li>coverage : the name of the coverage to use (WCS parameter)</li>
 			<li>crs : the coordinate reference system to use (WCS parameter)</li>
 			<li>version : 2.0.x or 1.0.x is supported</li>
+			<li>scale : elevation scale value</li>
 		</ul>
  */
 var WCSElevationLayer = function( options )
@@ -47,6 +48,7 @@ var WCSElevationLayer = function( options )
 	this.version = options['version'] || '2.0.0';
 	this.format = options['format'] || 'image/x-aaigrid';
 	this.minElevation = options['minElevation'] || 0;
+	this.scale = options['scale'] || 1;
 	
 	// Build the base GetMap URL
 	var url = this.baseUrl;
@@ -147,7 +149,7 @@ WCSElevationLayer.prototype._parseAAIGrid = function(text)
 			var elevation = parseInt(elts[n]);
 			if ( elevation < this.minElevation ) 
 				elevation = this.minElevation;
-			elevations.push( elevation );
+			elevations.push( elevation * this.scale );
 		}
 	}
 
