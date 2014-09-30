@@ -147,9 +147,15 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 					
 				self.updateFeatures(response.features);
 				
-				for ( var i=0; i < response.features.length; i++ )
+				for ( var i=response.features.length-1; i >= 0; i-- )
 				{
-					self.addFeature( response.features[i], tile );
+					var feature = response.features[i];
+					// Eliminate already added features from response
+					var alreadyAdded = self.featuresSet.hasOwnProperty(feature.properties.identifier);
+					if ( alreadyAdded )
+						response.features.splice(i, 1);
+
+					self.addFeature( feature, tile );
 				}
 			}
 			else if ( xhr.status >= 400 )
