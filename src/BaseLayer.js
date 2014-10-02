@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define( function() {
+ define( ["./Event", "./Utils"], function(Event, Utils) {
  
 /**************************************************************************************************************/
 
@@ -37,6 +37,8 @@
  */
 var BaseLayer = function(options)
 {
+	Event.prototype.constructor.call( this, options );
+
 	this.globe = null;
 	this.name = options && options.hasOwnProperty('name') ? options['name'] : "";
 	this.attribution = options && options.hasOwnProperty('attribution') ? options['attribution'] : "";
@@ -45,6 +47,10 @@ var BaseLayer = function(options)
 	this._visible = options && options.hasOwnProperty('visible') ? options['visible'] : true;
 	this._opacity = options && options.hasOwnProperty('opacity') ? options['opacity'] : 1.0;
 }
+
+/**************************************************************************************************************/
+
+Utils.inherits( Event,BaseLayer );
 
 /**************************************************************************************************************/
 
@@ -91,6 +97,7 @@ BaseLayer.prototype.visible = function( arg )
 
 		this._visible = arg;
 		if ( this.globe ) this.globe.renderContext.requestFrame();
+		this.publish("visibility:changed", this);
 	}
 	return this._visible;
 }
@@ -106,6 +113,7 @@ BaseLayer.prototype.opacity = function( arg )
 	{
 		this._opacity = arg;
 		if ( this.globe ) this.globe.renderContext.requestFrame();
+		this.publish("opacity:changed");
 	}
 	return this._opacity;
 }

@@ -335,18 +335,14 @@ CoordinateGridLayer.prototype.render = function( tiles )
  */
 CoordinateGridLayer.prototype.visible = function( arg )
 {
-	if ( typeof arg == "boolean" && this._visible != arg )
-	{
-		this._visible = arg;
+	BaseLayer.prototype.visible.call( this, arg );
 		
-		if ( arg )
-		{
-			this.globe.tileManager.addPostRenderer(this);
-		}
-		else
-		{
-			this.globe.tileManager.removePostRenderer(this);
-		}
+	if ( this._visible ){
+		this.globe.tileManager.addPostRenderer(this);
+	}
+	else
+	{
+		this.globe.tileManager.removePostRenderer(this);
 	}
 	
 	return this._visible;

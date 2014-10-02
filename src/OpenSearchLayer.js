@@ -170,7 +170,7 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 			// Publish event that layer have received new features
 			if ( response.features.length > 0 )
 			{
-				self.globe.publish("features:added", {layer: self, features: response.features});
+				self.publish("features:added", {layer: self, features: response.features});
 			}
 
 			// Publish the end load event, only if there is no pending requests
