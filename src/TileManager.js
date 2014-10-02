@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Tile','./TilePool', './TileRequest', './TileIndexBuffer', './Program', './CoordinateSystem'],
-	function (Tile,TilePool,TileRequest,TileIndexBuffer,Program, CoordinateSystem) {
+define(['./Tile','./TilePool', './TileRequest', './TileIndexBuffer', './Program'],
+	function (Tile,TilePool,TileRequest,TileIndexBuffer,Program) {
 
 /** @constructor
 	TileManager constructor
@@ -47,6 +47,7 @@ var TileManager = function( parent )
 	{
 		this.availableRequests[i] = new TileRequest(this);
 	}
+	this.pendingRequests = [];
 	this.completedRequests = [];
 				
 	this.level0TilesLoaded = false;
@@ -58,7 +59,8 @@ var TileManager = function( parent )
 		cullSign: 1.0,
 		imageSize: 256,
 		vertexSize: this.renderContext.lighting ? 6 : 3, 
-		normals: this.renderContext.lighting
+		normals: this.renderContext.lighting,
+		coordinateSystem: this.parent.coordinateSystem
 	};
 		
 	// Shared index and texture coordinate buffer : all tiles uses the same
@@ -228,15 +230,6 @@ TileManager.prototype.getOverlappedLevelZeroTiles = function( geometry )
 			coords = coords.concat( geometry.coordinates[n][0] );
 		}
 		break;
-  case "MultiLineString":
-    coords = [[]];
-    for ( var n = 0; n < geometry.coordinates.length; n++ )
-     {
-       coords[n]=[];
-       for ( var j = 0 ; j < geometry.coordinates[n].length; j++)
-          coords[n] = coords[n].concat( geometry.coordinates[n][j] );
-     }
-    break;
 	}
 	
 	if ( !coords )
@@ -246,15 +239,13 @@ TileManager.prototype.getOverlappedLevelZeroTiles = function( geometry )
 	var tileIndices = [];
 	for ( var i = 0; i < coords.length; i++ )
 	{
-		var index=  this.tiling.lonlat2LevelZeroIndex( coords[i][0], coords[i][1] );
-    
-    if ( !indexMap[index] )
+		var index = this.tiling.lonlat2LevelZeroIndex( coords[i][0], coords[i][1] );
+		if ( !indexMap[index] )
 		{
 			indexMap[ index ] = true;
 			tileIndices.push( index );
 		}
 	}
-
 	
 	return tileIndices;
 }
@@ -289,6 +280,9 @@ TileManager.prototype.setElevationProvider = function(tp)
  */
 TileManager.prototype.reset = function()
 {
+	// Abort all pending requests
+	this.abortRequests();
+
 	// Reset all level zero tiles : destroy render data, and reset state to NONE
 	for (var i = 0; i < this.level0Tiles.length; i++)
 	{
@@ -297,6 +291,19 @@ TileManager.prototype.reset = function()
 	}
 	
 	this.level0TilesLoaded = false;
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Abort all pending requests
+ */
+TileManager.prototype.abortRequests = function()
+{
+	for ( var i=this.pendingRequests.length-1; i>=0; i-- )
+	{
+		this.pendingRequests[i].abort();
+	}
 }
 
 /**************************************************************************************************************/
@@ -525,8 +532,8 @@ TileManager.prototype.processTile = function(tile,level)
 	{
 		// When in "Astro" mode, do not compute near/far from tiles not really needed
 		// And the code used for "Earth" does not works really well, when the earth is seen from inside...
-		nr = 0.2 * CoordinateSystem.radius;
-		fr = 1.1 * CoordinateSystem.radius;
+		nr = 0.2 * this.tileConfig.coordinateSystem.radius;
+		fr = 1.1 * this.tileConfig.coordinateSystem.radius;
 	}
 	else
 	{
