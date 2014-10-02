@@ -49,7 +49,9 @@ HEALPixTiling.prototype.generateLevelZeroTiles = function( config, tilePool )
 	config.skirt = false;
 	config.cullSign = -1;
 	config.tesselation = 5;
+	// TODO : change name to avoid ambiguity
 	config.coordSystem = this.coordSystem;
+	this.coordinateSystem = config.coordinateSystem;
 
 	var level0Tiles = [];
 	
@@ -72,11 +74,11 @@ HEALPixTiling.prototype.generateLevelZeroTiles = function( config, tilePool )
 /** 
 	Locate a level zero tile
  */
-HEALPixTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat,coordinateSystem)
+HEALPixTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 {	
 	if ( this.coordSystem != "EQ" )
 	{
-		var geo = coordinateSystem.coordinateSystem.convert( [lon, lat], 'EQ', this.coordSystem );
+		var geo = this.coordinateSystem.convert( [lon, lat], 'EQ', this.coordSystem );
 		lon = geo[0];
 		lat = geo[1];
 	}
@@ -93,8 +95,7 @@ HEALPixTiling.prototype.findInsideTile = function(lon, lat, tiles)
 {
 	if ( this.coordSystem != "EQ" )
 	{
-		// Find better way to extract coordinate system object(on attach ?)
-		var geo = tiles[0].config.coordinateSystem.convert( [lon, lat], 'EQ', this.coordSystem );
+		var geo = this.coordinateSystem.convert( [lon, lat], 'EQ', this.coordSystem );
 		lon = geo[0];
 		lat = geo[1];
 	}

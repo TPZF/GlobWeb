@@ -239,7 +239,7 @@ TileManager.prototype.getOverlappedLevelZeroTiles = function( geometry )
 	var tileIndices = [];
 	for ( var i = 0; i < coords.length; i++ )
 	{
-		var index = this.tiling.lonlat2LevelZeroIndex( coords[i][0], coords[i][1], this.tileConfig.coordinateSystem );
+		var index = this.tiling.lonlat2LevelZeroIndex( coords[i][0], coords[i][1] );
 		if ( !indexMap[index] )
 		{
 			indexMap[ index ] = true;
