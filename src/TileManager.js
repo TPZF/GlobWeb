@@ -17,28 +17,37 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define(['./Tile','./TilePool', './TileRequest', './TileIndexBuffer', './Program'],
-	function (Tile,TilePool,TileRequest,TileIndexBuffer,Program) {
+define(['./Tile', './GeoTiling','./TilePool', './TileRequest', './TileIndexBuffer', './Program'],
+	function (Tile, GeoTiling, TilePool, TileRequest, TileIndexBuffer, Program) {
 
 /** @constructor
 	TileManager constructor
 	
 	Take in parameters its parent : can be a globe or a sky
  */
-var TileManager = function( parent )
+var TileManager = function( parent, options )
 {
 	this.parent = parent;
 	this.renderContext = this.parent.renderContext;
 	// Create a new tile pool or use the one from the parent
 	this.tilePool = parent.tilePool || new TilePool(this.renderContext);
-	this.tiling = null;
+	this.tiling = new GeoTiling( 4, 2 ); // Use geo tiling by default
+
 	this.imageryProvider = null;
 	this.elevationProvider = null;
 	this.tilesToRender = [];
 	this.visibleTiles = [];
 	this.tilesToRequest = [];
 	this.postRenderers = [];
-	this.level0Tiles = [];
+
+	// Init default texture
+	var gl = this.renderContext.gl;
+	this.defaultTexture = gl.createTexture();
+	gl.bindTexture(gl.TEXTURE_2D, this.defaultTexture);
+	var defaultColor = options.defaultColor ? options.defaultColor : [200,200,200,255];
+	var pixel = new Uint8Array(defaultColor);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, 
+	              gl.RGBA, gl.UNSIGNED_BYTE, pixel);
 	
 	// Tile requests : limit to 4 at a given time
 	this.maxRequests = 4;
@@ -62,6 +71,7 @@ var TileManager = function( parent )
 		normals: this.renderContext.lighting,
 		coordinateSystem: this.parent.coordinateSystem
 	};
+	this.level0Tiles = this.tiling.generateLevelZeroTiles(this.tileConfig,this.tilePool);
 		
 	// Shared index and texture coordinate buffer : all tiles uses the same
 	this.tcoordBuffer = null;
@@ -440,8 +450,8 @@ TileManager.prototype.processTile = function(tile,level)
 	
 	if ( isLeaf )
 	{
-		// Push the tiles to render only if the texture is valid
-		if ( tile.texture )
+		// Push the tiles to render only if the texture is valid or there is no imagery provider defined
+		if ( tile.texture || !this.imageryProvider )
 		{
 			this.tilesToRender.push( tile );
 		}
@@ -572,7 +582,7 @@ TileManager.prototype.processTile = function(tile,level)
 			this.program.dispose();
 			this.program = new Program(this.renderContext);
 
-			if ( this.imageryProvider.customShader )
+			if ( this.imageryProvider && this.imageryProvider.customShader )
 			{
 				this.currentFragmentShader = this.imageryProvider.customShader.fragmentCode ? this.imageryProvider.customShader.fragmentCode : this.fragmentShader;
 				this.program.createFromSource( this.imageryProvider.customShader.vertexShader ? this.imageryProvider.customShader.vertexShader : this.vertexShader,
@@ -589,7 +599,7 @@ TileManager.prototype.processTile = function(tile,level)
 		mat4.perspective(rc.fov, rc.canvas.width / rc.canvas.height, rc.near, rc.far, rc.projectionMatrix);
 
 		// Update uniforms if needed
-		if ( this.imageryProvider.customShader )
+		if ( this.imageryProvider && this.imageryProvider.customShader )
 			this.imageryProvider.customShader.updateUniforms(gl, this.program);
 
 		// Setup state
@@ -612,8 +622,15 @@ TileManager.prototype.processTile = function(tile,level)
 			var isLoaded = ( tile.state == Tile.State.LOADED );
 			var isLevelZero = ( tile.parentIndex == -1 );
 			
-			// Bind tile texture
-			gl.bindTexture(gl.TEXTURE_2D, tile.texture);
+			// Bind tile texture if defined, the default texture otherwise
+			if ( tile.texture )
+			{
+				gl.bindTexture(gl.TEXTURE_2D, tile.texture);
+			}
+			else
+			{
+				gl.bindTexture(gl.TEXTURE_2D, this.defaultTexture);
+			}
 
 			// Update uniforms for modelview matrix
 			mat4.multiply( rc.viewMatrix, tile.matrix, rc.modelViewMatrix );
@@ -734,7 +751,7 @@ TileManager.prototype.render = function()
 		if (stats) stats.end("traverseTime");
 	}
 
-	if ( this.level0TilesLoaded )
+	if ( this.level0TilesLoaded || !this.imageryProvider )
 	{
 		if (stats) stats.start("renderTime");
 		this.renderTiles();

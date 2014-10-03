@@ -35,6 +35,7 @@
 			<li>backgroundColor : the background color of the canvas (an array of 4 floats)</li>
 			<li>shadersPath : the path to shaders file</li>
 			<li>continuousRendering: if true rendering is done continuously, otherwise it is done only if needed</li>
+			<li>defaultColor : Texture color without imagery provider</li>
 		</ul>
 	
  */
@@ -51,7 +52,7 @@ var Globe = function(options)
 	{
 		this.renderContext = options.renderContext;
 	}
-	this.tileManager = new TileManager( this );
+	this.tileManager = new TileManager( this, options );
 	this.vectorRendererManager = new VectorRendererManager( this );
 	this.attributionHandler = null;
 	this.preRenderers = [];
@@ -210,7 +211,11 @@ Globe.prototype.removeAnimation = function(anim)
 */
 Globe.prototype.getElevation = function(lon,lat)
 {
-	var tiling = this.tileManager.imageryProvider.tiling;
+	// Use imagery provider tiling if defined, otherwise use globe default one
+	var tiling = this.tileManager.tiling;
+	if ( this.tileManager.imageryProvider ) {
+		var tiling = this.tileManager.imageryProvider.tiling;
+	}
 	var levelZeroTile = this.tileManager.level0Tiles[ tiling.lonlat2LevelZeroIndex(lon,lat) ];
 	if ( levelZeroTile.state == Tile.State.LOADED )
 		return levelZeroTile.getElevation(lon,lat);
