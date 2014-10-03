@@ -72,99 +72,172 @@ var PolygonRenderable = function(bucket)
 /**************************************************************************************************************/
 
 /**
+ *	Extract coordinates from the given geometry as array
+ */
+var _extractCoordinates = function(geometry)
+{
+	var coordinates = [];
+	if ( geometry.type == "MultiPolygon" )
+	{
+		for ( var i = 0; i<geometry['coordinates'].length; i++ )
+		{
+			var coords = geometry['coordinates'][i][0];
+			coordinates.push(coords);	
+		}
+	}
+	else
+	{
+		// Polygon
+		coordinates.push(geometry['coordinates'][0]);
+	}
+	return coordinates;
+}
+
+/**************************************************************************************************************/
+
+/**
  * Add a geometry to the renderbale
+ * VB : coords|extrude
+ * IB : geometry|extrude|lines
  */
 PolygonRenderable.prototype.add = function(geometry)
 {
 	var gl = this.bucket.renderer.tileManager.renderContext.gl;
 	var style = this.bucket.style;
 		
-	// Create vertex buffer
-	this.vertexBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-	
-	var coords = geometry['coordinates'][0];
-	var vertices = new Float32Array( style.extrude ? coords.length * 6 : coords.length * 3 );
-	
+	var lastIndex = 0;
+	var coordinates = _extractCoordinates(geometry);
+	var vertices = [];
+	var indices = [];
+	var lineIndices = [];
+
 	var origin = vec3.create();
 	// TODO: Find a better way to access to coordinate system
 	var coordinateSystem = geometry._bucket.layer.globe.coordinateSystem;
-	coordinateSystem.fromGeoTo3D(coords[0], origin);
-	
-	// For polygons only
-	for ( var i=0; i < coords.length; i++)
-	{
-		var pos3d = [];
-		coordinateSystem.fromGeoTo3D(coords[i], pos3d);
-		vertices[i*3] = pos3d[0] - origin[0];
-		vertices[i*3+1] = pos3d[1] - origin[1];
-		vertices[i*3+2] = pos3d[2] - origin[2];
-	}
-	
-	if ( style.extrude )
-	{
-		var offset = coords.length * 3;
+	coordinateSystem.fromGeoTo3D(coordinates[0][0], origin);
+
+	for ( var n=0; n<coordinates.length; n++ ) {
+
+		var coords = coordinates[n];
+
+		// Build upper polygon vertices
+		var clockwise = 0;
+		var offset = lastIndex * 3;
 		for ( var i=0; i < coords.length; i++)
 		{
 			var pos3d = [];
-			var coordAtZero = [ coords[i][0], coords[i][1], 0.0 ];
-			coordinateSystem.fromGeoTo3D( coordAtZero, pos3d);
+			// Use original height value if > 0., otherwise the extruded one with 0.0 as default value
+			var defaultCoord = [ coords[i][0], coords[i][1], coords[i][2] > 0 ? coords[i][2] : (style.extrude) ? style.extrude : 0.0 ];
+			coordinateSystem.fromGeoTo3D(defaultCoord, pos3d);
 			vertices[offset] = pos3d[0] - origin[0];
 			vertices[offset+1] = pos3d[1] - origin[1];
 			vertices[offset+2] = pos3d[2] - origin[2];
+
+			// Find out if its vertices ordered clockwise to build index buffer properly
+			if ( i < coords.length - 1 ) {
+				clockwise += (coords[i+1][0] - coords[i][0]) * (coords[i+1][1] + coords[i][1]);
+			}
 			offset += 3;
 		}
-	}
 
-	gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-	// Create index buffer(make shared ?)
-	var indices = [];
-	indices = Triangulator.process( coords );
-	
-	if ( indices == null )
-	{
-		console.error("Triangulation error ! Check if your GeoJSON geometry is valid");
-		return false;
-	}
-	
-	if ( style.extrude )
-	{
-		var upOffset = 0;
-		var lowOffset = coords.length;
+		// Build bottom polygon vertices on extrude
+		if ( style.extrude )
+		{
+			var offset = lastIndex * 3 + coords.length * 3;
+			for ( var i=0; i < coords.length; i++)
+			{
+				var pos3d = [];
+				var coordAtZero = [ coords[i][0], coords[i][1], 0.0 ];
+				coordinateSystem.fromGeoTo3D( coordAtZero, pos3d);
+				vertices[offset] = pos3d[0] - origin[0];
+				vertices[offset+1] = pos3d[1] - origin[1];
+				vertices[offset+2] = pos3d[2] - origin[2] ;
+				offset += 3;
+			}
+		}
 		
-		for ( var i = 0; i < coords.length-1; i++ )
+		// Build triangle indices for upper polygon
+		// Create index array(make shared ?)
+		var currentIndices = Triangulator.process( coords );
+		if ( currentIndices == null )
 		{
-			indices.push( upOffset, lowOffset, upOffset + 1 );
-			indices.push( upOffset + 1, lowOffset, lowOffset + 1 );
-			
-			upOffset += 1;
-			lowOffset += 1;
+			console.error("Triangulation error ! Check if your GeoJSON geometry is valid");
+			return false;
 		}
-	}
-	
-	this.numTriIndices = indices.length;
-	
-	var offset = 0;
-	for ( var i = 0; i < coords.length-1; i++ )
-	{
-		indices.push( offset, offset + 1 );
-		offset += 1;
-	}
-	if ( style.extrude )
-	{
-		var upOffset = 0;
-		var lowOffset = coords.length;
-		for ( var i = 0; i < coords.length-1; i++ )
+		for ( var i=0; i<currentIndices.length; i++ )
 		{
-			indices.push( upOffset, lowOffset );
-			
-			upOffset += 1;
-			lowOffset += 1;
+			indices.push(lastIndex + currentIndices[i]);
 		}
-	}
-	
-	this.numLineIndices = indices.length - this.numTriIndices;
 
+		// Build side triangle indices
+		if ( style.extrude )
+		{
+			var upOffset = lastIndex;
+			var lowOffset = lastIndex + coords.length;
+			
+			for ( var i = 0; i < coords.length-1; i++ )
+			{
+				// Depending on vertice order, push the
+				if ( clockwise > 0 )
+				{
+					indices.push( upOffset, upOffset + 1, lowOffset );
+					indices.push( upOffset + 1, lowOffset + 1, lowOffset );	
+				}
+				else
+				{
+					indices.push( upOffset, lowOffset, upOffset + 1 );
+					indices.push( upOffset + 1, lowOffset, lowOffset + 1 );
+				}
+				upOffset += 1;
+				lowOffset += 1;
+			}
+		}
+
+		// Build line indices for upper polygon
+		var offset = 0;
+		for ( var i = 0; i < coords.length-1; i++ )
+		{
+			lineIndices.push( lastIndex + offset, lastIndex + offset + 1 );
+			offset += 1;
+		}
+
+		// Build top-to-bottom line indices
+		if ( style.extrude )
+		{
+			var upOffset = lastIndex;
+			var lowOffset = lastIndex + coords.length;
+			for ( var i = 0; i < coords.length-1; i++ )
+			{
+				lineIndices.push( upOffset, lowOffset );
+				
+				upOffset += 1;
+				lowOffset += 1;
+			}
+		}
+
+		// Update last index
+		if ( style.extrude )
+		{
+			lastIndex += coords.length * 2;
+		}
+		else
+		{
+			lastIndex += coords.length;
+		}
+
+	}
+
+	this.numTriIndices = indices.length;
+	this.numLineIndices = lineIndices.length;
+	// Index buffer contains triange indices and lines one
+	indices = indices.concat(lineIndices);
+
+	// Create vertex buffer
+	this.vertexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( vertices ), gl.STATIC_DRAW);	
+
+	// Create index buffer
 	this.indexBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
@@ -296,7 +369,7 @@ PolygonRenderer.prototype.render = function(renderables, start, end)
  */
 PolygonRenderer.prototype.canApply = function(type,style)
 {
-	return (type == "Polygon") && style.fill;
+	return (type == "Polygon" || type == "MultiPolygon") && style.fill;
 }
 
 /**************************************************************************************************************/
