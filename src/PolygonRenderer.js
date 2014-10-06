@@ -30,14 +30,24 @@ var PolygonRenderer = function(globe)
 {
 	VectorRenderer.prototype.constructor.call( this, globe );
 	this.maxTilePerGeometry = 0;
-		
-	this.vertexShader = "\
+	this.renderContext = globe.renderContext;
+	this.defaultVertexShader = "\
 		attribute vec3 vertex;\n\
-		attribute vec4 normal;\n\
 		uniform mat4 mvp;\n\
 		void main(void) \n\
 		{\n\
-			vec3 extrudedVertex = vertex + normal.w * vec3(normal.x, normal.y, normal.z);\
+			gl_Position = mvp * vec4(vertex, 1.0);\n\
+		}\n\
+	";
+
+	this.extrudeVertexShader = "\
+		attribute vec3 vertex;\n\
+		attribute vec4 normal;\n\
+		uniform float extrusionScale; \n\
+		uniform mat4 mvp;\n\
+		void main(void) \n\
+		{\n\
+			vec3 extrudedVertex = vertex + normal.w * vec3(normal.x, normal.y, normal.z) * extrusionScale;\
 			gl_Position = mvp * vec4(extrudedVertex, 1.0);\n\
 		}\n\
 	";
@@ -50,9 +60,9 @@ var PolygonRenderer = function(globe)
 		gl_FragColor = u_color;\n\
 	}\n\
 	";
-	this.currentVertexShader = this.vertexShader;
+	this.currentVertexShader = this.defaultVertexShader;
 	this.program = new Program(globe.renderContext);
-	this.program.createFromSource(this.vertexShader, this.fragmentShader);
+	this.program.createFromSource(this.defaultVertexShader, this.fragmentShader);
 }
 
 /**************************************************************************************************************/
@@ -108,7 +118,10 @@ var _extractCoordinates = function(geometry)
  */
 PolygonRenderable.prototype.add = function(geometry)
 {
-	var gl = this.bucket.renderer.tileManager.renderContext.gl;
+	this.geometry = geometry;
+
+	var renderer = this.bucket.renderer;
+	var gl = renderer.tileManager.renderContext.gl;
 	var style = this.bucket.style;
 		
 	var lastIndex = 0;
@@ -145,13 +158,17 @@ PolygonRenderable.prototype.add = function(geometry)
 				clockwise += (coords[i+1][0] - coords[i][0]) * (coords[i+1][1] + coords[i][1]);
 			}
 
-			var normal = vec3.create(pos3d);
-			vec3.normalize(normal);
-			normals.push(normal[0]);
-			normals.push(normal[1]);
-			normals.push(normal[2]);
 			if ( style.extrude )
 			{
+				// Update vertex shader to extrude one
+				renderer.setVertexShader(renderer.extrudeVertexShader);
+
+				// Compute normals
+				var normal = vec3.create(pos3d);
+				vec3.normalize(normal);
+				normals.push(normal[0]);
+				normals.push(normal[1]);
+				normals.push(normal[2]);
 				var extrudeValue;
 				if ( typeof style.extrude == "boolean" )
 				{
@@ -164,11 +181,6 @@ PolygonRenderable.prototype.add = function(geometry)
 					extrudeValue = style.extrude;
 				}
 				normals.push(extrudeValue * coordinateSystem.heightScale);
-			}
-			else
-			{
-				// No extrude by default
-				normals.push(0);
 			}
 
 			offset += 3;
@@ -279,14 +291,17 @@ PolygonRenderable.prototype.add = function(geometry)
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 	
-	// Create normal buffer
-	this.normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+	if ( style.extrude )
+	{
+		// Create normal buffer
+		this.normalBuffer = gl.createBuffer();
+	    gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+	    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+	}
 
 	mat4.identity(this.matrix);
 	mat4.translate(this.matrix,origin);
-	
+
 	// Always add the geometry
 	return true;
 }
@@ -301,6 +316,9 @@ PolygonRenderable.prototype.remove = function(geometry)
 	if ( this.geometry == geometry)
 	{
 		this.geometry = null;
+		// Since there is only one geometry per bucket
+		// return 0 to dispose geometry resources
+		return 0;
 	}
 }
 
@@ -326,7 +344,7 @@ PolygonRenderable.prototype.dispose = function(renderContext)
 var PolygonBucket = function(layer,style)
 {
 	this.layer = layer;
-	this.style = new FeatureStyle(style);
+	this.style = style;
 	this.renderer = null;
 }
 
@@ -377,17 +395,6 @@ PolygonRenderer.prototype.render = function(renderables, start, end)
 	{
 		var renderable = renderables[n];
 		
-		// Check if the program of imagery provider changed
-		// Only for vertex shader for now
-		var customShader = renderable.bucket.layer.customShader;
-		if ( customShader && customShader.vertexCode && this.currentVertexShader != customShader.vertexCode )
-		{
-			this.program.dispose();
-			this.program = new Program(renderContext);
-			this.currentVertexShader = customShader.vertexCode ? customShader.vertexCode : this.vertexShader;
-			this.program.createFromSource( this.currentVertexShader, customShader.fragmentCode ? customShader.fragmentCode : this.fragmentShader );
-		}
-
 		// Setup program
 		this.program.apply();
 		
@@ -401,8 +408,12 @@ PolygonRenderer.prototype.render = function(renderables, start, end)
 		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
 		gl.vertexAttribPointer(this.program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
 		
-		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.normalBuffer);
-		gl.vertexAttribPointer(this.program.attributes['normal'], 4, gl.FLOAT, false, 0, 0);
+		if ( renderable.normalBuffer )
+		{
+			gl.bindBuffer(gl.ARRAY_BUFFER, renderable.normalBuffer);
+			gl.vertexAttribPointer(this.program.attributes['normal'], 4, gl.FLOAT, false, 0, 0);
+			gl.uniform1f(this.program.uniforms["extrusionScale"], style.extrusionScale);
+		}
 
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.indexBuffer);
 		
@@ -439,6 +450,21 @@ PolygonRenderer.prototype.createBucket = function(layer,style)
 {
 	return new PolygonBucket(layer,style);
 }
+
+/**************************************************************************************************************/
+
+/**
+	Set the given vertex shader
+ */
+PolygonRenderer.prototype.setVertexShader = function(vertexShader) {
+	if ( this.currentVertexShader != vertexShader )
+	{
+		this.program.dispose();
+		this.program = new Program(this.globe.renderContext);
+		this.program.createFromSource( vertexShader, this.fragmentShader );
+		this.currentVertexShader = vertexShader;
+	}
+};
 
 /**************************************************************************************************************/
 

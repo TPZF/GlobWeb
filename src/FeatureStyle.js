@@ -185,6 +185,7 @@ var parseRgba = /^rgba\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3},\s*(\d{1,3}))\)$/;
 			<li>fillTextureUrl : the texture for solid polygon</li>
 			<li>iconUrl : the icon to be used for point</li>
 			<li>pointMaxSize : maximum size (in meter) for a point</li>
+			<li>extrusionScale : extrusion scale (in meter)</li>
 		</ul>
  */
 var FeatureStyle = function(style)
@@ -205,7 +206,8 @@ var FeatureStyle = function(style)
 	this.pointMaxSize = 40;
 	this.opacity = 1.;
 	this.zIndex = 0;
-	
+	this.extrusionScale = 0.;
+
 	if ( style )
 	{
 		for ( var s in style )
