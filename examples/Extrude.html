@@ -1,0 +1,116 @@
+<html>
+
+<head>
+<title>Extrude animation example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+<script  src="require.min.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+<script type="text/javascript">
+	
+require(['../src/Globe', '../src/VectorLayer', '../src/WMSLayer','../src/WCSElevationLayer','../src/Navigation','../src/Stats', '../src/SegmentedAnimation', '../src/Numeric','../src/TileWireframeLayer', '../src/FeatureStyle',
+		"../src/PointRenderer", "../src/LineStringRenderable", "../src/PolygonRenderer" ], // Renderers], 
+	function (Globe,VectorLayer,WMSLayer,WCSElevationLayer,Navigation,Stats,SegmentedAnimation,Numeric,TileWireframeLayer,FeatureStyle) 
+{	
+		var cvs = document.getElementById("GlobWebCanvas");
+		cvs.width = window.innerWidth;
+		cvs.height = window.innerHeight;
+		
+		// Create the globe
+		var globe = new Globe( { canvas: cvs, 
+			lighting: false,
+			tileErrorTreshold: 3, 
+			continuousRendering: true
+		} );
+
+		// Add mouse navigation
+		var navigation = new Navigation(globe, { inertia: true,
+			zoomFactor: 0 });
+		
+		// Add stats
+		var stats = new Stats( globe.renderContext, {element: 'fps', verbose: false} );
+
+		// Add some vector layer
+		$.ajax({
+			url: "land.json",
+			success: function(data)
+			{
+				var extrusionScale = 0.21;
+				var vectorLayer = new VectorLayer({
+					style : new FeatureStyle({
+						fillColor: [1.,1.,1.,1.],
+						fill: true,
+						strokeColor: [0,0,0,1],
+						extrude: globe.coordinateSystem.realEarthRadius/10, // Extrude max value
+						extrusionScale: extrusionScale
+					})
+				});
+
+				// Generate random country indices
+				var countriesToExtrude = [];
+				var nbCountries = 177;
+				for ( var i=0; i<15; i++ ) {
+					countriesToExtrude.push(Math.floor(Math.random() * nbCountries));
+				}
+
+				var animation = new SegmentedAnimation(
+					1000,
+					// Value setter
+					function(value) {
+						for ( var i=0; i<countriesToExtrude.length; i++ )
+						{
+							// Extract feature for the given country
+							var feature = vectorLayer.features[countriesToExtrude[i]];
+							var featureStyle = feature.properties.style;
+							if ( !featureStyle )
+							{
+								featureStyle = new FeatureStyle(vectorLayer.style);
+							}
+							featureStyle.extrusionScale = value;
+							vectorLayer.modifyFeatureStyle( feature, featureStyle );
+						}
+						// Uncomment to extrude all !
+						vectorLayer.style.extrusionScale = value;
+					});
+
+				animation.addSegment(
+					0.0, extrusionScale,
+					1.0, 2,
+					function(t, a, b) {
+						return Numeric.lerp(t, a, b);
+					}
+				);
+				globe.addAnimation(animation);
+
+				// Start animation 2s after
+				setTimeout(function() {
+					animation.start();
+				}, 2000);
+
+				vectorLayer.addFeatureCollection( data );
+				globe.addLayer( vectorLayer );
+				vectorLayer.visible(true);
+			},
+			error: function(thrownError, response, b)
+			{
+				console.error(thrownError);
+			}
+		});
+});
+
+</script>
+
+</head>
+
+
+<body style="background-color: white;">
+	<h1>Glob Web</h1>
+    <canvas id="GlobWebCanvas" style="border: none;" width="1400" height="1050"></canvas> 
+  	<br/>
+	<div id="fps"><span style="font-weight:bold">FPS : 0</span></div>
+
+</body>
+
+</html>
+
