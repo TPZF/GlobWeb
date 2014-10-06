@@ -31,16 +31,18 @@ var PolygonRenderer = function(globe)
 	VectorRenderer.prototype.constructor.call( this, globe );
 	this.maxTilePerGeometry = 0;
 		
-	var vertexShader = "\
-	attribute vec3 vertex;\n\
-	uniform mat4 mvp;\n\
-	void main(void) \n\
-	{\n\
-		gl_Position = mvp * vec4(vertex, 1.0);\n\
-	}\n\
+	this.vertexShader = "\
+		attribute vec3 vertex;\n\
+		attribute vec4 normal;\n\
+		uniform mat4 mvp;\n\
+		void main(void) \n\
+		{\n\
+			vec3 extrudedVertex = vertex + normal.w * vec3(normal.x, normal.y, normal.z);\
+			gl_Position = mvp * vec4(extrudedVertex, 1.0);\n\
+		}\n\
 	";
 
-	var fragmentShader = "\
+	this.fragmentShader = "\
 	precision lowp float; \n\
 	uniform vec4 u_color;\n\
 	void main(void)\n\
@@ -48,10 +50,12 @@ var PolygonRenderer = function(globe)
 		gl_FragColor = u_color;\n\
 	}\n\
 	";
-	
+	this.currentVertexShader = this.vertexShader;
 	this.program = new Program(globe.renderContext);
-	this.program.createFromSource(vertexShader, fragmentShader);
+	this.program.createFromSource(this.vertexShader, this.fragmentShader);
 }
+
+/**************************************************************************************************************/
 
 Utils.inherits(VectorRenderer,PolygonRenderer);
 
@@ -67,6 +71,7 @@ var PolygonRenderable = function(bucket)
 	this.matrix = mat4.create();
 	this.vertexBuffer = null;
 	this.indexBuffer = null;
+	this.normalBuffer = null;
 }
 
 /**************************************************************************************************************/
@@ -97,8 +102,9 @@ var _extractCoordinates = function(geometry)
 
 /**
  * Add a geometry to the renderbale
- * VB : coords|extrude
- * IB : geometry|extrude|lines
+ * Vertex buffer : geometry|extrude
+ * Index buffer : geometry triangles|extrude triangles|lines
+ * Normal buffer : normals.xyz, extrude value as w 
  */
 PolygonRenderable.prototype.add = function(geometry)
 {
@@ -110,9 +116,10 @@ PolygonRenderable.prototype.add = function(geometry)
 	var vertices = [];
 	var indices = [];
 	var lineIndices = [];
+	var normals = [];
 
 	var origin = vec3.create();
-	// TODO: Find a better way to access to coordinate system
+	// TODO: Find a better way to access to coordinate system 
 	var coordinateSystem = geometry._bucket.layer.globe.coordinateSystem;
 	coordinateSystem.fromGeoTo3D(coordinates[0][0], origin);
 
@@ -126,9 +133,9 @@ PolygonRenderable.prototype.add = function(geometry)
 		for ( var i=0; i < coords.length; i++)
 		{
 			var pos3d = [];
-			// Use original height value if > 0., otherwise the extruded one with 0.0 as default value
-			var defaultCoord = [ coords[i][0], coords[i][1], coords[i][2] > 0 ? coords[i][2] : (style.extrude) ? style.extrude : 0.0 ];
-			coordinateSystem.fromGeoTo3D(defaultCoord, pos3d);
+			// Always use coordinates at zero height on vertex construction, height will be taken into account on extrude
+			var coordAtZero = [ coords[i][0], coords[i][1], 0.0 ];
+			coordinateSystem.fromGeoTo3D(coordAtZero, pos3d);
 			vertices[offset] = pos3d[0] - origin[0];
 			vertices[offset+1] = pos3d[1] - origin[1];
 			vertices[offset+2] = pos3d[2] - origin[2];
@@ -137,21 +144,51 @@ PolygonRenderable.prototype.add = function(geometry)
 			if ( i < coords.length - 1 ) {
 				clockwise += (coords[i+1][0] - coords[i][0]) * (coords[i+1][1] + coords[i][1]);
 			}
+
+			var normal = vec3.create(pos3d);
+			vec3.normalize(normal);
+			normals.push(normal[0]);
+			normals.push(normal[1]);
+			normals.push(normal[2]);
+			if ( style.extrude )
+			{
+				var extrudeValue;
+				if ( typeof style.extrude == "boolean" )
+				{
+					// Extrude value extracted from KML, use the height coordinate
+					extrudeValue = coords[i][2];
+				}
+				else
+				{
+					// Extrude value is a float defined by user
+					extrudeValue = style.extrude;
+				}
+				normals.push(extrudeValue * coordinateSystem.heightScale);
+			}
+			else
+			{
+				// No extrude by default
+				normals.push(0);
+			}
+
 			offset += 3;
 		}
 
 		// Build bottom polygon vertices on extrude
 		if ( style.extrude )
 		{
-			var offset = lastIndex * 3 + coords.length * 3;
+			// Use same vertices as upper polygon
+			var offset = lastIndex * 3;
+			vertices = vertices.concat( vertices.slice(offset, offset + coords.length*3) );
+			// Add normals without extrude value
 			for ( var i=0; i < coords.length; i++)
 			{
-				var pos3d = [];
-				var coordAtZero = [ coords[i][0], coords[i][1], 0.0 ];
-				coordinateSystem.fromGeoTo3D( coordAtZero, pos3d);
-				vertices[offset] = pos3d[0] - origin[0];
-				vertices[offset+1] = pos3d[1] - origin[1];
-				vertices[offset+2] = pos3d[2] - origin[2] ;
+				var normal = vec3.create(pos3d);
+				vec3.normalize(normal);
+				normals.push(normal[0]);
+				normals.push(normal[1]);
+				normals.push(normal[2]);
+				normals.push(0);
 				offset += 3;
 			}
 		}
@@ -242,6 +279,11 @@ PolygonRenderable.prototype.add = function(geometry)
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 	
+	// Create normal buffer
+	this.normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+
 	mat4.identity(this.matrix);
 	mat4.translate(this.matrix,origin);
 	
@@ -271,6 +313,7 @@ PolygonRenderable.prototype.dispose = function(renderContext)
 {
 	var gl = renderContext.gl;
 	if (this.vertexBuffer) gl.deleteBuffer( this.vertexBuffer );
+	if (this.normalBuffer) gl.deleteBuffer( this.normalBuffer );
 	if (this.indexBuffer) gl.deleteBuffer( this.indexBuffer );
 }
 
@@ -325,8 +368,6 @@ PolygonRenderer.prototype.render = function(renderables, start, end)
 	//gl.polygonOffset(-2.0,-2.0);
 	//gl.disable(gl.DEPTH_TEST);
 	
-	this.program.apply();
-	
 	// Compute the viewProj matrix
 	var viewProjMatrix = mat4.create();
 	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, viewProjMatrix);
@@ -335,17 +376,34 @@ PolygonRenderer.prototype.render = function(renderables, start, end)
 	for ( var n = start; n < end; n++ )
 	{
 		var renderable = renderables[n];
-				
+		
+		// Check if the program of imagery provider changed
+		// Only for vertex shader for now
+		var customShader = renderable.bucket.layer.customShader;
+		if ( customShader && customShader.vertexCode && this.currentVertexShader != customShader.vertexCode )
+		{
+			this.program.dispose();
+			this.program = new Program(renderContext);
+			this.currentVertexShader = customShader.vertexCode ? customShader.vertexCode : this.vertexShader;
+			this.program.createFromSource( this.currentVertexShader, customShader.fragmentCode ? customShader.fragmentCode : this.fragmentShader );
+		}
+
+		// Setup program
+		this.program.apply();
+		
 		mat4.multiply(viewProjMatrix,renderable.matrix,modelViewProjMatrix);
 		gl.uniformMatrix4fv(this.program.uniforms["mvp"], false, modelViewProjMatrix);
-			
+		
 		var style = renderable.bucket.style;
 		gl.uniform4f(this.program.uniforms["u_color"], style.fillColor[0], style.fillColor[1], style.fillColor[2], 
 				style.fillColor[3] * renderable.bucket.layer._opacity);  // use fillColor
-				
+		
 		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
 		gl.vertexAttribPointer(this.program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
 		
+		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.normalBuffer);
+		gl.vertexAttribPointer(this.program.attributes['normal'], 4, gl.FLOAT, false, 0, 0);
+
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.indexBuffer);
 		
 		gl.drawElements( gl.TRIANGLES, renderable.numTriIndices, gl.UNSIGNED_SHORT, 0);
