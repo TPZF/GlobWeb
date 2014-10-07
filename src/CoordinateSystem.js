@@ -22,8 +22,8 @@ define( ['./Numeric' ], function(Numeric) {
 var CoordinateSystem = function(options)
 {
 	this.radius = options && options.hasOwnProperty('radius') ? options.radius : 1.0;
-	this.heightScale = options && options.hasOwnProperty('heightScale') ? options.heightScale : 1.0 / 6356752.3142;
 	this.realEarthRadius = options && options.hasOwnProperty('realEarthRadius') ? options.realEarthRadius : 6356752.3142;
+	this.heightScale = 1.0 / this.realEarthRadius;
 };
 
 /**************************************************************************************************************/
