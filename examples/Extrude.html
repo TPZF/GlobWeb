@@ -66,12 +66,12 @@ require(['../src/Globe', '../src/VectorLayer', '../src/WMSLayer','../src/WCSElev
 							if ( !featureStyle )
 							{
 								featureStyle = new FeatureStyle(vectorLayer.style);
+								vectorLayer.modifyFeatureStyle( feature, featureStyle );
 							}
 							featureStyle.extrusionScale = value;
-							vectorLayer.modifyFeatureStyle( feature, featureStyle );
 						}
 						// Uncomment to extrude all !
-						vectorLayer.style.extrusionScale = value;
+						//vectorLayer.style.extrusionScale = value;
 					});
 
 				animation.addSegment(
