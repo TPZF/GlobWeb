@@ -213,13 +213,9 @@ TileManager.prototype.setImageryProvider = function(ip)
 	}
 }
 
-/**************************************************************************************************************/
-
-/** 
-	Get the level zero tiles that overlaps the given geometry
- */
-TileManager.prototype.getOverlappedLevelZeroTiles = function( geometry )
-{	
+// Get all the coordinates of a geometry
+var _getGeometryCoordinates = function( geometry )
+{
 	var coords;
 	switch ( geometry.type )
 	{
@@ -227,8 +223,16 @@ TileManager.prototype.getOverlappedLevelZeroTiles = function( geometry )
 		coords = [];
 		coords.push( geometry.coordinates );
 		break;
+	case "MultiPoint":
 	case "LineString":
 		coords = geometry.coordinates;
+		break;
+	case "MultiLineString":
+		coords = [];
+		for ( var n = 0; n < geometry.coordinates.length; n++ )
+		{
+			coords = coords.concat( geometry.coordinates[n] );
+		}
 		break;
 	case "Polygon":
 		coords = geometry.coordinates[0];
@@ -240,13 +244,34 @@ TileManager.prototype.getOverlappedLevelZeroTiles = function( geometry )
 			coords = coords.concat( geometry.coordinates[n][0] );
 		}
 		break;
+	case "GeometryCollection":
+		coords = [];
+		for ( var n = 0; n < geometry.geometries.length; n++ )
+		{
+			coords = coords.concat( _getGeometryCoordinates(geometry.geometries[n]) );
+		}
+		break;
 	}
-	
+	return coords;
+}
+
+/**************************************************************************************************************/
+
+/** 
+	Get the level zero tiles that overlaps the given geometry
+ */
+TileManager.prototype.getOverlappedLevelZeroTiles = function( geometry )
+{	
+	var tileIndices = [];
+
+	var coords = _getGeometryCoordinates( geometry );
 	if ( !coords )
-		console.log("COOORDDS!!");
+	{
+		console.log("Invalid geometry type or not supported.");
+		return tileIndices;
+	}
 		
 	var indexMap = {};
-	var tileIndices = [];
 	for ( var i = 0; i < coords.length; i++ )
 	{
 		var index = this.tiling.lonlat2LevelZeroIndex( coords[i][0], coords[i][1] );
