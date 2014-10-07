@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
  
-define( ['./Utils','./VectorRenderer','./VectorRendererManager','./FeatureStyle','./Program','./Triangulator'], 
-	function(Utils,VectorRenderer,VectorRendererManager,FeatureStyle,Program,Triangulator) {
+define( ['./Utils','./VectorRenderer','./VectorRendererManager','./FeatureStyle','./Program','./pnltri.min'], 
+	function(Utils,VectorRenderer,VectorRendererManager,FeatureStyle,Program) {
 
 /**************************************************************************************************************/
 
@@ -60,9 +60,12 @@ var PolygonRenderer = function(globe)
 		gl_FragColor = u_color;\n\
 	}\n\
 	";
-	this.currentVertexShader = this.defaultVertexShader;
+
 	this.program = new Program(globe.renderContext);
 	this.program.createFromSource(this.defaultVertexShader, this.fragmentShader);
+	
+	this.extrudeProgram = new Program(globe.renderContext);
+	this.extrudeProgram.createFromSource(this.extrudeVertexShader, this.fragmentShader );
 }
 
 /**************************************************************************************************************/
@@ -87,30 +90,6 @@ var PolygonRenderable = function(bucket)
 /**************************************************************************************************************/
 
 /**
- *	Extract coordinates from the given geometry as array
- */
-var _extractCoordinates = function(geometry)
-{
-	var coordinates = [];
-	if ( geometry.type == "MultiPolygon" )
-	{
-		for ( var i = 0; i<geometry['coordinates'].length; i++ )
-		{
-			var coords = geometry['coordinates'][i][0];
-			coordinates.push(coords);	
-		}
-	}
-	else
-	{
-		// Polygon
-		coordinates.push(geometry['coordinates'][0]);
-	}
-	return coordinates;
-}
-
-/**************************************************************************************************************/
-
-/**
  * Add a geometry to the renderbale
  * Vertex buffer : geometry|extrude
  * Index buffer : geometry triangles|extrude triangles|lines
@@ -125,20 +104,20 @@ PolygonRenderable.prototype.add = function(geometry)
 	var style = this.bucket.style;
 		
 	var lastIndex = 0;
-	var coordinates = _extractCoordinates(geometry);
+	var polygons =  (geometry.type == "MultiPolygon") ? geometry.coordinates : [geometry.coordinates];
 	var vertices = [];
 	var indices = [];
 	var lineIndices = [];
 	var normals = [];
 
 	var origin = vec3.create();
-	// TODO: Find a better way to access to coordinate system 
-	var coordinateSystem = geometry._bucket.layer.globe.coordinateSystem;
-	coordinateSystem.fromGeoTo3D(coordinates[0][0], origin);
+	var coordinateSystem = renderer.globe.coordinateSystem;
+	coordinateSystem.fromGeoTo3D(polygons[0][0][0], origin);
 
-	for ( var n=0; n<coordinates.length; n++ ) {
+	for ( var n=0; n < polygons.length; n++ ) {
 
-		var coords = coordinates[n];
+		// Only take into account outer contour for now
+		var coords = polygons[n][0];
 
 		// Build upper polygon vertices
 		var clockwise = 0;
@@ -160,9 +139,6 @@ PolygonRenderable.prototype.add = function(geometry)
 
 			if ( style.extrude )
 			{
-				// Update vertex shader to extrude one
-				renderer.setVertexShader(renderer.extrudeVertexShader);
-
 				// Compute normals
 				var normal = vec3.create(pos3d);
 				vec3.normalize(normal);
@@ -194,29 +170,20 @@ PolygonRenderable.prototype.add = function(geometry)
 			vertices = vertices.concat( vertices.slice(offset, offset + coords.length*3) );
 			// Add normals without extrude value
 			for ( var i=0; i < coords.length; i++)
-			{
-				var normal = vec3.create(pos3d);
-				vec3.normalize(normal);
-				normals.push(normal[0]);
-				normals.push(normal[1]);
-				normals.push(normal[2]);
-				normals.push(0);
-				offset += 3;
+			{				
+				normals.push(0.0,0.0,0.0,0.0);
 			}
 		}
 		
 		// Build triangle indices for upper polygon
-		// Create index array(make shared ?)
-		var currentIndices = Triangulator.process( coords );
-		if ( currentIndices == null )
+		var triangulator = new PNLTRI.Triangulator();
+		var contour = coords.map( function(value) {  return { x: value[0], y: value[1] }; });
+		var triangList = triangulator.triangulate_polygon( [ contour ] );
+		for ( var i=0; i<triangList.length; i++ )
 		{
-			console.error("Triangulation error ! Check if your GeoJSON geometry is valid");
-			return false;
+			indices.push(lastIndex + triangList[i][0], lastIndex + triangList[i][1], lastIndex + triangList[i][2] );
 		}
-		for ( var i=0; i<currentIndices.length; i++ )
-		{
-			indices.push(lastIndex + currentIndices[i]);
-		}
+
 
 		// Build side triangle indices
 		if ( style.extrude )
@@ -265,15 +232,7 @@ PolygonRenderable.prototype.add = function(geometry)
 		}
 
 		// Update last index
-		if ( style.extrude )
-		{
-			lastIndex += coords.length * 2;
-		}
-		else
-		{
-			lastIndex += coords.length;
-		}
-
+		lastIndex = vertices.length / 3;
 	}
 
 	this.numTriIndices = indices.length;
@@ -386,6 +345,8 @@ PolygonRenderer.prototype.render = function(renderables, start, end)
 	//gl.polygonOffset(-2.0,-2.0);
 	//gl.disable(gl.DEPTH_TEST);
 	
+	var currentProgram = null;
+
 	// Compute the viewProj matrix
 	var viewProjMatrix = mat4.create();
 	mat4.multiply(renderContext.projectionMatrix, renderContext.viewMatrix, viewProjMatrix);
@@ -394,25 +355,30 @@ PolygonRenderer.prototype.render = function(renderables, start, end)
 	for ( var n = start; n < end; n++ )
 	{
 		var renderable = renderables[n];
+		var style = renderable.bucket.style;
 		
 		// Setup program
-		this.program.apply();
+		var program = style.extrude ? this.extrudeProgram : this.program;
+		if ( program != currentProgram )
+		{
+			program.apply();
+			currentProgram = program;
+		}
 		
 		mat4.multiply(viewProjMatrix,renderable.matrix,modelViewProjMatrix);
-		gl.uniformMatrix4fv(this.program.uniforms["mvp"], false, modelViewProjMatrix);
-		
-		var style = renderable.bucket.style;
-		gl.uniform4f(this.program.uniforms["u_color"], style.fillColor[0], style.fillColor[1], style.fillColor[2], 
+		gl.uniformMatrix4fv(program.uniforms["mvp"], false, modelViewProjMatrix);
+				
+		gl.uniform4f(program.uniforms["u_color"], style.fillColor[0], style.fillColor[1], style.fillColor[2], 
 				style.fillColor[3] * renderable.bucket.layer._opacity);  // use fillColor
 		
 		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
-		gl.vertexAttribPointer(this.program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
+		gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
 		
 		if ( renderable.normalBuffer )
 		{
 			gl.bindBuffer(gl.ARRAY_BUFFER, renderable.normalBuffer);
-			gl.vertexAttribPointer(this.program.attributes['normal'], 4, gl.FLOAT, false, 0, 0);
-			gl.uniform1f(this.program.uniforms["extrusionScale"], style.extrusionScale);
+			gl.vertexAttribPointer(program.attributes['normal'], 4, gl.FLOAT, false, 0, 0);
+			gl.uniform1f(program.uniforms["extrusionScale"], style.extrusionScale);
 		}
 
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.indexBuffer);
@@ -420,7 +386,7 @@ PolygonRenderer.prototype.render = function(renderables, start, end)
 		gl.drawElements( gl.TRIANGLES, renderable.numTriIndices, gl.UNSIGNED_SHORT, 0);
 		if ( renderable.numLineIndices > 0 )
 		{
-			gl.uniform4f(this.program.uniforms["u_color"], style.strokeColor[0], style.strokeColor[1], style.strokeColor[2], style.strokeColor[3] * renderable.bucket.layer._opacity);  
+			gl.uniform4f(program.uniforms["u_color"], style.strokeColor[0], style.strokeColor[1], style.strokeColor[2], style.strokeColor[3] * renderable.bucket.layer._opacity);  
 			gl.drawElements( gl.LINES, renderable.numLineIndices, gl.UNSIGNED_SHORT, renderable.numTriIndices * 2);
 		}
 	}
@@ -450,21 +416,6 @@ PolygonRenderer.prototype.createBucket = function(layer,style)
 {
 	return new PolygonBucket(layer,style);
 }
-
-/**************************************************************************************************************/
-
-/**
-	Set the given vertex shader
- */
-PolygonRenderer.prototype.setVertexShader = function(vertexShader) {
-	if ( this.currentVertexShader != vertexShader )
-	{
-		this.program.dispose();
-		this.program = new Program(this.globe.renderContext);
-		this.program.createFromSource( vertexShader, this.fragmentShader );
-		this.currentVertexShader = vertexShader;
-	}
-};
 
 /**************************************************************************************************************/
 
