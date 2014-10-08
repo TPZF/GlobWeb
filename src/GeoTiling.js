@@ -194,24 +194,31 @@ GeoTile.prototype.generateVertices = function(elevations)
 	var scale = this.config.coordinateSystem.heightScale;
 	var offset = 0;
 	
-	var lat = this.geoBound.north * Math.PI / 180.0;
-	latStep = latStep * Math.PI / 180.0;
-	lonStep = lonStep * Math.PI / 180.0;
+	// Optimized build for sphere coordinates : uncomment if needed
+	var lat = this.geoBound.north /* * Math.PI / 180.0*/;
+	// latStep = latStep * Math.PI / 180.0;
+	// lonStep = lonStep * Math.PI / 180.0;
+	var pos3d = [ 0.0, 0.0, 0.0 ];
 	for ( var j=0; j < size; j++)
 	{
-		var cosLat = Math.cos( lat );
-		var sinLat = Math.sin( lat );
+		//var cosLat = Math.cos( lat );
+		//var sinLat = Math.sin( lat );
 		
-		var lon = this.geoBound.west * Math.PI / 180.0;
+		var lon = this.geoBound.west /* * Math.PI / 180.0*/;
 				
 		for ( var i=0; i < size; i++)
 		{
-			var height = elevations ? scale * elevations[ offset ] : 0.0;
-			
-			var x = (radius + height) * Math.cos( lon ) * cosLat;
-			var y = (radius + height) * Math.sin( lon ) * cosLat;
-			var z = (radius + height) * sinLat;
-			
+			// var height = elevations ? scale * elevations[ offset ] : 0.0;
+			// var x = (radius + height) * Math.cos( lon ) * cosLat;
+			// var y = (radius + height) * Math.sin( lon ) * cosLat;
+			// var z = (radius + height) * sinLat;
+
+			var height = elevations ? elevations[ offset ] : 0.0;
+			this.config.coordinateSystem.fromGeoTo3D( [lon, lat, height], pos3d );
+			var x = pos3d[0];
+			var y = pos3d[1];
+			var z = pos3d[2];
+
 			var vi = offset * vertexSize;
 			vertices[vi] = invMatrix[0]*x + invMatrix[4]*y + invMatrix[8]*z + invMatrix[12];
 			vertices[vi+1] = invMatrix[1]*x + invMatrix[5]*y + invMatrix[9]*z + invMatrix[13];

@@ -216,7 +216,8 @@ Tile.prototype.isCulled = function(renderContext)
 		pt[2] = Math.min( Math.max( ez, this.bbox.min[2] ), this.bbox.max[2] );
 		
 		// Compute horizontal culling only if the eye is "behind" the tile
-		if ( ez < 0.0 )
+		// and the coordinate system is not a plane(no need to compute horizon culling on plane)
+		if ( ez < 0.0 && !this.config.coordinateSystem.isFlat )
 		{
 			// Compute vertical at the closest point. The earth center is [0, 0, -radius] in tile local space.
 			var vx = pt[0];

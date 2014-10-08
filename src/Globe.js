@@ -43,7 +43,15 @@ var Globe = function(options)
 {
 	Event.prototype.constructor.call( this );
 	
-	this.coordinateSystem = new CoordinateSystem();
+	if ( options.coordinateSystem )
+	{
+		this.coordinateSystem = options.coordinateSystem;
+	}
+	else
+	{
+		this.coordinateSystem = new CoordinateSystem();
+	}
+
 	if ( !options.renderContext )
 	{
 		this.renderContext = new RenderContext(options);
@@ -285,7 +293,14 @@ Globe.prototype.getViewportGeoBound = function(transformCallback)
 Globe.prototype.getLonLatFromPixel = function(x,y)
 {	
 	var ray = Ray.createFromPixel(this.renderContext, x, y);
-	var pos3d = ray.computePoint( ray.sphereIntersect( [0,0,0], this.coordinateSystem.radius ) );
+	if ( this.coordinateSystem.isFlat )
+	{
+		var pos3d = ray.computePoint( ray.planeIntersect( [0,0,0], [0,0,1] ) );
+	}
+	else
+	{
+		var pos3d = ray.computePoint( ray.sphereIntersect( [0,0,0], this.coordinateSystem.radius ) );
+	}
 	
 	if ( pos3d )
 	{
@@ -330,6 +345,19 @@ Globe.prototype.render = function()
 		
 	// Render tiles
 	this.tileManager.render();
+}
+
+/**************************************************************************************************************/
+
+/**
+	Set coordinate system
+ */
+Globe.prototype.setCoordinateSystem = function(coordinateSystem)
+{
+	this.coordinateSystem = coordinateSystem;
+	this.tileManager.tileConfig.coordinateSystem = coordinateSystem;
+	this.dispose();
+	this.tileManager.level0Tiles = this.tileManager.tiling.generateLevelZeroTiles(this.tileManager.tileConfig,this.tileManager.tilePool);
 }
 
 /**************************************************************************************************************/

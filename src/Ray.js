@@ -104,6 +104,26 @@ Ray.prototype.computePoint = function( t )
 /**************************************************************************************************************/
 
  /**
+  *	Compute intersection between a plan and ray
+  * @return the nearest intersection, < 0 if no intersection
+  */
+Ray.prototype.planeIntersect = function( pt, normal )
+{
+    // Assuming vectors are all normalized
+    var denom = vec3.dot(normal, this.dir);
+	var epsilon = 1e-6;
+    if (Math.abs(denom) > epsilon) {
+        var p0l0 = vec3.create();
+        vec3.subtract(pt, this.orig, p0l0);
+        var t = vec3.dot(p0l0, normal) / denom;
+        return t;
+    }
+    return -1;
+}
+
+/**************************************************************************************************************/
+
+ /**
   * Compute intersection between a sphere and ray
   * @return the nearest intersection, < 0 if no intersection
   */
