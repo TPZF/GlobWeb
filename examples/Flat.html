@@ -1,0 +1,128 @@
+<html>
+
+<head>
+<title>GlobWeb flat example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+<script  src="require.min.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+<script type="text/javascript">
+	
+require(['../src/GlobWeb', '../src/VectorLayer', '../src/FeatureStyle', '../src/TileWireframeLayer', '../src/FlatNavigation', '../src/MercatorCoordinateSystem', '../src/PlateCoordinateSystem', '../src/AugustCoordinateSystem', '../src/MollweideCoordinateSystem', '../src/AitoffCoordinateSystem'], function (GlobWeb,VectorLayer, FeatureStyle, TileWireframeLayer, FlatNavigation, MercatorCoordinateSystem, PlateCoordinateSystem, AugustCoordinateSystem, MollweideCoordinateSystem, AitoffCoordinateSystem) 
+{	
+	var cvs = document.getElementById("GlobWebCanvas");
+	
+	// Create the globe
+	var globe = new GlobWeb.Globe( { canvas: cvs, 
+			lighting: false,
+			tileErrorTreshold: 3, 
+			continuousRendering: true,
+			coordinateSystem: new MercatorCoordinateSystem()
+		} );
+
+	// Add flat navigation
+	var navigation = new FlatNavigation(globe);
+
+	// Add tile wireframe layer to visualize coordinate system vertices
+	var wireframeLayer = new TileWireframeLayer();
+	globe.addLayer(wireframeLayer);
+
+	var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble" });
+	globe.setBaseImagery( blueMarbleLayer );
+	
+	// Add some vector layer
+	var vectorLayer;
+	var featureCollection;
+	$.ajax({
+		url: "land.json",
+		success: function(data)
+		{
+			featureCollection = data;
+			vectorLayer = new VectorLayer({
+				style : new FeatureStyle({
+					fillColor: [1.,1.,1.,1.],
+					strokeColor: [0.3,0.3,0.3,1.],
+					fill: true
+				})
+			});
+			vectorLayer.addFeatureCollection( featureCollection );
+			globe.addLayer( vectorLayer );
+			vectorLayer.visible(true);
+		},
+		error: function(thrownError, response, b)
+		{
+			console.error(thrownError);
+		}
+	});
+	
+	// Test to check inverse transformation for each coordinate system
+	cvs.onclick = function(event)
+	{
+		var lonlat = globe.getLonLatFromPixel(event.layerX,event.layerY);
+		console.log( lonlat );
+		var pixel = globe.getPixelFromLonLat(lonlat[0],lonlat[1]);
+		console.log( "Event " + [event.layerX,event.layerY] + "; Computed " + pixel );
+	}
+
+	$("#selectCoordinateSystem").change(function(){
+		var coordinateSystem = $(this).val();
+		switch( coordinateSystem )
+		{
+			case "Mercator":
+				globe.setCoordinateSystem(new MercatorCoordinateSystem());
+				break;
+			case "Plate":
+				globe.setCoordinateSystem(new PlateCoordinateSystem());
+				break;
+			case "August":
+				globe.setCoordinateSystem(new AugustCoordinateSystem());
+				break;
+			case "Mollweide":
+				globe.setCoordinateSystem(new MollweideCoordinateSystem());
+				break;
+			case "Aitoff":
+				globe.setCoordinateSystem(globe.coordinateSystem = new AitoffCoordinateSystem());
+				break;
+		}
+
+		// Reset vector layer features
+		vectorLayer.removeAllFeatures();
+		vectorLayer.addFeatureCollection(featureCollection);
+	});
+
+	$('#wireframeVisibility').change(function(){
+		var isOn = $(this).is(':checked');
+		wireframeLayer.visible(isOn);
+	});
+});
+
+</script>
+
+</head>
+
+
+<body style="margin: 0; padding: 0;">
+	<div style="vertical-align: top; text-align: center; margin: 30px; display: inline-block; width: 20%">
+		<h2>Select coordinate system: </h2>
+		<select id="selectCoordinateSystem">
+			<option>Mercator</option>
+			<option>Plate</option>
+			<option>August</option>
+			<option>Mollweide</option>
+			<option>Aitoff</option>
+		</select>
+		<br/>
+		<div style="margin-top: 10px; text-align: left;">
+			<label>
+				<input id="wireframeVisibility" type="checkbox" checked="checked" />Show wireframe
+			</label>
+		</div>
+	</div>
+	<div style="display: inline-block; margin: 20px;">
+    	<canvas id="GlobWebCanvas" style="border: none; margin: 0; padding: 0;" width="800" height="600"></canvas> 
+ 		<div id="fps"></div>
+ 	</div>
+</body>
+
+</html>
+
