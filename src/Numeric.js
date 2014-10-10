@@ -40,6 +40,17 @@ Numeric.lerp = function(t, a, b)
 /**************************************************************************************************************/
 
 /**
+  Cosine interpolation between [a, b], t must be [0, 1]
+*/
+Numeric.coserp = function(t, a, b)
+{
+	var t2 = (1 - Math.cos(t * Math.PI))/2;
+    return a + ((b - a) * t2);
+}
+
+/**************************************************************************************************************/
+
+/**
  Cubic interpolation between [a, b], t must be [0, 1]
 */
 Numeric.cubicInterpolation = function(t, startPos, startVel, endPos, endVel)

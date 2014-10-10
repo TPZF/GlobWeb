@@ -1,0 +1,141 @@
+<html>
+
+<head>
+<title>Extrude animation example</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<link rel="stylesheet" href="GlobWeb.css">
+<script  src="require.min.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+<script type="text/javascript">
+	
+require(['../src/Globe', '../src/VectorLayer', '../src/WMSLayer','../src/WCSElevationLayer','../src/FlatNavigation','../src/Stats', '../src/SegmentedAnimation', '../src/Numeric','../src/TileWireframeLayer', '../src/FeatureStyle', '../src/AitoffCoordinateSystem',
+		"../src/PointRenderer", "../src/PolygonRenderer", '../src/LineRenderer' ], // Renderers], 
+	function (Globe,VectorLayer,WMSLayer,WCSElevationLayer,FlatNavigation,Stats,SegmentedAnimation,Numeric,TileWireframeLayer,FeatureStyle, AitoffCoordinateSystem) 
+{	
+		// Create the globe
+		var globe = new Globe( { 
+			canvas: document.getElementById("GlobWebCanvas"),
+			lighting: false,
+			tileErrorTreshold: 3, 
+			continuousRendering: true,
+			coordinateSystem: new AitoffCoordinateSystem()
+		} );
+
+		// Add mouse navigation
+		// var navigation = new Navigation(globe, { inertia: true,
+		// 	zoomFactor: 0 });
+		var navigation = new FlatNavigation(globe, { inertia: true,
+			zoomFactor: 0 });
+		
+		// Add stats
+		var stats = new Stats( globe.renderContext, {element: 'fps', verbose: false} );
+
+		//globe.addLayer(new TileWireframeLayer());
+
+		// Add countries layer
+		$.ajax({
+			url: "land.json",
+			success: function(data)
+			{
+				var extrusionScale = 0.21;
+				var vectorLayer = new VectorLayer({
+					style : new FeatureStyle({
+						fillColor: [1.,1.,1.,1.],
+						fill: true,
+						strokeColor: [0,0,0,1]
+					})
+				});
+
+				vectorLayer.addFeatureCollection( data );
+				globe.addLayer( vectorLayer );
+				vectorLayer.visible(true);
+			}
+		});
+
+		// Add rivers vector layer
+		var riversLayer;
+		$.ajax({
+			url: "world_rivers.json",
+			success: function(data)
+			{
+				riversLayer = new VectorLayer({
+					style : new FeatureStyle({
+						strokeColor: [0.,0.,1.,1.],
+						strokeColor: [0,0,1.,1],
+						strokeWidth: 1,
+						speed: 1,
+						gradientLength: 0.05,
+						palette: [[0.,0.,255.],[0.,200.,255.]]
+					})
+				});
+				riversLayer.addFeatureCollection( data );
+				globe.addLayer( riversLayer );
+				riversLayer.visible(true);
+			},
+			error: function(thrownError, response, b)
+			{
+				console.error(thrownError);
+			}
+		});
+		
+		// Update the speed of animation
+		$('#speed').change(function(){
+			riversLayer.style.speed = parseFloat($(this).val());
+		});
+
+		// Update gradient length value
+		$('#gradientLength').change(function(){
+			riversLayer.style.gradientLength = parseFloat($(this).val());
+		});
+
+		// Update color palette
+		$('.palette').change(function(){
+			var rStart = $('#redStart').val();
+			var gStart = $('#greenStart').val();
+			var bStart = $('#blueStart').val();
+
+			var rStop = $('#redStop').val();
+			var gStop = $('#greenStop').val();
+			var bStop = $('#blueStop').val();
+
+			riversLayer.style.palette = [[parseInt(rStart),parseInt(gStart),parseInt(bStart)],[parseInt(rStop),parseInt(gStop),parseInt(bStop)]];
+		});
+	
+});
+
+</script>
+
+</head>
+
+<body style="background-color: white; margin: 0; padding: 0;">
+	<div style="vertical-align: top; margin: 30px; display: inline-block; width: 20%">
+		<h2>Animation parameters</h2>
+		<label>Gradient length:
+			<input style="width: 20%" id="gradientLength" step="0.01" type="number" value="0.05" />
+		</label>
+		<br/>
+		<label style="width: 100%">Speed:
+			<input style="width: 20%" id="speed" type="number" value="1" />
+		</label>
+		<br/>
+		<label style="width: 100%">Start:<br/>
+			R: <input class="palette" style="width: 20%" id="redStart" type="number" value="0" />
+			G: <input class="palette" style="width: 20%" id="greenStart" type="number" value="0" />
+			B: <input class="palette" style="width: 20%" id="blueStart" type="number" value="255" />
+		</label>
+		<br/>
+		<label style="width: 100%">Stop:<br/>
+			R: <input class="palette" style="width: 20%" id="redStop" type="number" value="0" />
+			G: <input class="palette" style="width: 20%" id="greenStop" type="number" value="200" />
+			B: <input class="palette" style="width: 20%" id="blueStop" type="number" value="255" />
+		</label>
+	</div>
+    <div style="display: inline-block; margin: 20px;">
+    	<canvas id="GlobWebCanvas" style="border: none; margin: 0; padding: 0;" width="800" height="600"></canvas> 
+ 		<div id="fps"></div>
+ 	</div>
+</body>
+
+</html>
+
