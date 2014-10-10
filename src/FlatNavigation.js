@@ -41,7 +41,7 @@ var FlatNavigation = function(globe,options)
 	this.globe = globe;
 		
 	// Default values for min and max distance (in meter)
-	this.minDistance = (options && options.minDistance) || 1.0;
+	this.minDistance = (options && options.minDistance) || 0.01;
 	this.maxDistance = (options && options.maxDistance) || 7.0;
 	
 	// Initialize the navigation
