@@ -222,18 +222,21 @@ TileWireframeLayer.prototype.render = function( tiles )
 /**************************************************************************************************************/
 
 /**
- * 	Set visibility of the layer
+ * 	Get/Set visibility of the layer
  */
 TileWireframeLayer.prototype.visible = function( arg )
 {
 	BaseLayer.prototype.visible.call( this, arg );
-		
-	if ( this._visible ){
-		this.globe.tileManager.addPostRenderer(this);
-	}
-	else
-	{
-		this.globe.tileManager.removePostRenderer(this);
+	
+	if ( typeof arg == "boolean" )
+	{	
+		if ( this._visible ){
+			this.globe.tileManager.addPostRenderer(this);
+		}
+		else
+		{
+			this.globe.tileManager.removePostRenderer(this);
+		}
 	}
 	
 	return this._visible;
