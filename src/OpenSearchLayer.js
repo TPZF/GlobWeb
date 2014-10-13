@@ -157,6 +157,7 @@ OpenSearchLayer.prototype.launchRequest = function(tile, url)
 
 					self.addFeature( feature, tile );
 				}
+				self.globe.refresh();
 			}
 			else if ( xhr.status >= 400 )
 			{
