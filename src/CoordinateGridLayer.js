@@ -331,31 +331,23 @@ CoordinateGridLayer.prototype.render = function( tiles )
 /**************************************************************************************************************/
 
 /**
- * 	Set visibility of the layer
+ * 	Get/Set visibility of the layer
  */
 CoordinateGridLayer.prototype.visible = function( arg )
 {
 	BaseLayer.prototype.visible.call( this, arg );
-		
-	if ( this._visible ){
-		this.globe.tileManager.addPostRenderer(this);
-	}
-	else
+	if ( typeof arg == "boolean" )
 	{
-		this.globe.tileManager.removePostRenderer(this);
+		if ( this._visible ){
+			this.globe.tileManager.addPostRenderer(this);
+		}
+		else
+		{
+			this.globe.tileManager.removePostRenderer(this);
+		}
 	}
 	
 	return this._visible;
-}
-
-/**************************************************************************************************************/
-
-/**
- * 	Set opacity of the layer
- */
-CoordinateGridLayer.prototype.opacity = function( arg )
-{
-	return BaseLayer.prototype.opacity.call( this, arg );
 }
 
 /**************************************************************************************************************/

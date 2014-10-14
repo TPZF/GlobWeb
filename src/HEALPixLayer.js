@@ -36,7 +36,7 @@ var HEALPixLayer = function(options)
 	this.numberOfLevels = options.numberOfLevels || 10;
 	this.type = "ImageryRaster";
 	this.baseUrl = options['baseUrl'];
-	this.dataType = options.dataType || "jpg";
+	this.format = options.format || "jpg";
 	this.coordSystem = options.coordSystem || "EQ";
 	
 	// allsky
@@ -85,7 +85,7 @@ HEALPixLayer.prototype._attach = function( g )
 	// Load level zero image now, only for background
 	if ( !this._overlay )
 	{
-		this.levelZeroImage.src = this.baseUrl + "/Norder3/Allsky."+this.dataType;
+		this.levelZeroImage.src = this.baseUrl + "/Norder3/Allsky."+this.format;
 	}
 }
 
@@ -107,7 +107,7 @@ HEALPixLayer.prototype.getUrl = function(tile)
 	
 	url += "/Npix";
 	url += tile.pixelIndex;
-	url += "."+this.dataType;
+	url += "."+this.format;
 	
 	return url;
 }
