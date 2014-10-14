@@ -84,7 +84,6 @@ var PolygonRenderable = function(bucket)
 	this.matrix = mat4.create();
 	this.vertexBuffer = null;
 	this.indexBuffer = null;
-	this.normalBuffer = null;
 }
 
 /**************************************************************************************************************/
@@ -108,11 +107,13 @@ PolygonRenderable.prototype.add = function(geometry)
 	var vertices = [];
 	var indices = [];
 	var lineIndices = [];
-	var normals = [];
+	var pos3d = [];
 
 	var origin = vec3.create();
 	var coordinateSystem = renderer.globe.coordinateSystem;
 	coordinateSystem.fromGeoTo3D(polygons[0][0][0], origin);
+	
+	var vertexSize = style.extrude ? 7 : 3;
 
 	for ( var n=0; n < polygons.length; n++ ) {
 
@@ -121,13 +122,11 @@ PolygonRenderable.prototype.add = function(geometry)
 
 		// Build upper polygon vertices
 		var clockwise = 0;
-		var offset = lastIndex * 3;
+		var offset = lastIndex * vertexSize;
 		for ( var i=0; i < coords.length; i++)
 		{
-			var pos3d = [];
 			// Always use coordinates at zero height on vertex construction, height will be taken into account on extrude
-			var coordAtZero = [ coords[i][0], coords[i][1], 0.0 ];
-			coordinateSystem.fromGeoTo3D(coordAtZero, pos3d);
+			coordinateSystem.fromGeoTo3D([ coords[i][0], coords[i][1], 0.0 ], pos3d);
 			vertices[offset] = pos3d[0] - origin[0];
 			vertices[offset+1] = pos3d[1] - origin[1];
 			vertices[offset+2] = pos3d[2] - origin[2];
@@ -140,11 +139,10 @@ PolygonRenderable.prototype.add = function(geometry)
 			if ( style.extrude )
 			{
 				// Compute normals
-				var normal = vec3.create(pos3d);
-				vec3.normalize(normal);
-				normals.push(normal[0]);
-				normals.push(normal[1]);
-				normals.push(normal[2]);
+				vec3.normalize(pos3d);
+				vertices[offset+3] = pos3d[0];
+				vertices[offset+4] = pos3d[1];
+				vertices[offset+5] = pos3d[2];
 				var extrudeValue;
 				if ( typeof style.extrude == "boolean" )
 				{
@@ -156,22 +154,23 @@ PolygonRenderable.prototype.add = function(geometry)
 					// Extrude value is a float defined by user
 					extrudeValue = style.extrude;
 				}
-				normals.push(extrudeValue * coordinateSystem.heightScale);
+				vertices[offset+6] = extrudeValue * coordinateSystem.heightScale;
 			}
 
-			offset += 3;
+			offset += vertexSize;
 		}
 
 		// Build bottom polygon vertices on extrude
 		if ( style.extrude )
 		{
-			// Use same vertices as upper polygon
-			var offset = lastIndex * 3;
-			vertices = vertices.concat( vertices.slice(offset, offset + coords.length*3) );
-			// Add normals without extrude value
-			for ( var i=0; i < coords.length; i++)
+			// Use same vertices as upper polygon but resest the 4-th compoenent
+			var prevOffset = lastIndex * vertexSize;
+			vertices = vertices.concat( vertices.slice(prevOffset, offset) );
+			var lastOffset = (offset - prevOffset) + offset;
+			// Reset the 4-th component for extrusion
+			for ( var i=offset; i < lastOffset; i+= vertexSize)
 			{				
-				normals.push(0.0,0.0,0.0,0.0);
+				vertices[i+6] = 0.0;
 			}
 		}
 		
@@ -210,11 +209,9 @@ PolygonRenderable.prototype.add = function(geometry)
 		}
 
 		// Build line indices for upper polygon
-		var offset = 0;
 		for ( var i = 0; i < coords.length-1; i++ )
 		{
-			lineIndices.push( lastIndex + offset, lastIndex + offset + 1 );
-			offset += 1;
+			lineIndices.push( lastIndex + i, lastIndex + i + 1 );
 		}
 
 		// Build top-to-bottom line indices
@@ -224,15 +221,12 @@ PolygonRenderable.prototype.add = function(geometry)
 			var lowOffset = lastIndex + coords.length;
 			for ( var i = 0; i < coords.length-1; i++ )
 			{
-				lineIndices.push( upOffset, lowOffset );
-				
-				upOffset += 1;
-				lowOffset += 1;
+				lineIndices.push( upOffset + i, lowOffset + i );
 			}
 		}
 
 		// Update last index
-		lastIndex = vertices.length / 3;
+		lastIndex = vertices.length / vertexSize;
 	}
 
 	this.numTriIndices = indices.length;
@@ -250,14 +244,6 @@ PolygonRenderable.prototype.add = function(geometry)
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 	
-	if ( style.extrude )
-	{
-		// Create normal buffer
-		this.normalBuffer = gl.createBuffer();
-	    gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
-	    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-	}
-
 	mat4.identity(this.matrix);
 	mat4.translate(this.matrix,origin);
 
@@ -290,7 +276,6 @@ PolygonRenderable.prototype.dispose = function(renderContext)
 {
 	var gl = renderContext.gl;
 	if (this.vertexBuffer) gl.deleteBuffer( this.vertexBuffer );
-	if (this.normalBuffer) gl.deleteBuffer( this.normalBuffer );
 	if (this.indexBuffer) gl.deleteBuffer( this.indexBuffer );
 }
 
@@ -371,13 +356,14 @@ PolygonRenderer.prototype.render = function(renderables, start, end)
 		gl.uniform4f(program.uniforms["u_color"], style.fillColor[0], style.fillColor[1], style.fillColor[2], 
 				style.fillColor[3] * renderable.bucket.layer._opacity);  // use fillColor
 		
-		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
-		gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
+		var vertexSize = style.extrude ? 7 : 3;
 		
-		if ( renderable.normalBuffer )
+		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
+		gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, 4 * vertexSize, 0);
+		
+		if ( style.extrude )
 		{
-			gl.bindBuffer(gl.ARRAY_BUFFER, renderable.normalBuffer);
-			gl.vertexAttribPointer(program.attributes['normal'], 4, gl.FLOAT, false, 0, 0);
+			gl.vertexAttribPointer(program.attributes['normal'], 4, gl.FLOAT, false, 4 * vertexSize, 12);
 			gl.uniform1f(program.uniforms["extrusionScale"], style.extrusionScale);
 		}
 
