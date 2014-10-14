@@ -95,6 +95,8 @@ var RenderContext = function(options)
 		gl.clearColor(0.0, 0.0, 0.0, 1.0);
 	}
 	
+	gl.getExtension('OES_element_index_uint');
+	
 	gl.pixelStorei( gl['UNPACK_COLORSPACE_CONVERSION_WEBGL'], gl.NONE );
 	gl.enable(gl.DEPTH_TEST);
 	gl.enable(gl.CULL_FACE);

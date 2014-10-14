@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
  
-define( ['./Utils', './Numeric', './VectorRenderer','./VectorRendererManager','./Program'], 
-	function(Utils,Numeric,VectorRenderer,VectorRendererManager,Program) {
+define( ['./Utils', './Numeric', './VectorRenderer','./VectorRendererManager','./Program','./BatchRenderable'], 
+	function(Utils,Numeric,VectorRenderer,VectorRendererManager,Program,BatchRenderable) {
 
 /**************************************************************************************************************/
 
@@ -28,7 +28,7 @@ define( ['./Utils', './Numeric', './VectorRenderer','./VectorRendererManager','.
 var LineRenderer = function(globe)
 {
 	VectorRenderer.prototype.constructor.call( this, globe );
-	this.maxTilePerGeometry = 0;
+	this.maxTilePerGeometry = 2;
 	this.renderContext = globe.renderContext;
 	this.defaultVertexShader = "\
 		attribute vec4 vertex;\n\
@@ -120,129 +120,72 @@ LineRenderer.prototype.generateTexture = function(palette)
 /**************************************************************************************************************/
 
 /**
- * Renderable constructor for Polygon
+ * Renderable constructor for Line
  */
 var LineRenderable = function(bucket) 
 {
-	this.bucket = bucket;
-	this.geometry = null;
+	BatchRenderable.prototype.constructor.call( this, bucket );
+		
+	this.vertexSize = 4;
+
+	// TODO : remove matrix ??
 	this.matrix = mat4.create();
-	this.vertexBuffer = null;
-	this.indexBuffer = null;
+	mat4.identity(this.matrix);
 }
+
+Utils.inherits(BatchRenderable,LineRenderable);
 
 /**************************************************************************************************************/
 
 /**
- * Add a geometry to the renderbale
- * Vertex buffer : vertex.xyz and length value on w
- * Index buffer : line indices
+ * Build vertices and indices for the given geometry
  */
-LineRenderable.prototype.add = function(geometry)
+LineRenderable.prototype.build = function(geometry)
 {
-	this.geometry = geometry;
-
 	var renderer = this.bucket.renderer;
-	var gl = renderer.tileManager.renderContext.gl;
 	var style = this.bucket.style;
 		
-	var lastIndex = 0;
 	var lines =  (geometry.type == "MultiLineString") ? geometry.coordinates : [geometry.coordinates];
-	var vertices = [];
-	var indices = [];
 
-	var origin = vec3.create();
-	var coordinateSystem = renderer.globe.coordinateSystem;
-	coordinateSystem.fromGeoTo3D(lines[0][0], origin);
-
+	var currentPoint = vec3.create();
+	var previousPoint = vec3.create();
+	
 	for ( var n=0; n < lines.length; n++ ) {
 
 		var coords = lines[n];
+		
+		var lastIndex = this.vertices.length / 4;
+		var coordinateSystem = renderer.globe.coordinateSystem;
 
 		// Build line vertices
 		var offset = lastIndex * 4;
 		var s = 0;
 		for ( var i=0; i < coords.length; i++)
 		{
-			var pos3d = [];
-			var coordAtZero = [ coords[i][0], coords[i][1], 0.0 ];
-			coordinateSystem.fromGeoTo3D(coordAtZero, pos3d);
-			vertices[offset] = pos3d[0] - origin[0];
-			vertices[offset+1] = pos3d[1] - origin[1];
-			vertices[offset+2] = pos3d[2] - origin[2];
+			coordinateSystem.fromGeoTo3D(coords[i], currentPoint);
+			this.vertices[offset] = currentPoint[0];
+			this.vertices[offset+1] = currentPoint[1];
+			this.vertices[offset+2] = currentPoint[2];
 
 			// Compute s(length) between two points
 			if ( i > 0 )
 			{
-				var vec = vec3.create();
-				var currentPoint = [vertices[offset], vertices[offset+1], vertices[offset+2]];
-				var previousPoint = [vertices[offset-4], vertices[offset-3], vertices[offset-2]];
-				vec3.subtract(currentPoint, previousPoint, vec);
-				var length = vec3.length(vec);
-				s += length;
+				s += vec3.dist(currentPoint,previousPoint);
+				var tmp = previousPoint;
+				previousPoint = currentPoint;
+				currentPoint = tmp;
 			}
-			vertices[offset+3] = s;
+			this.vertices[offset+3] = s;
 			offset += 4;
 		}
 
 		// Build line indices
-		var offset = 0;
 		for ( var i = 0; i < coords.length-1; i++ )
 		{
-			indices.push( lastIndex + offset, lastIndex + offset + 1 );
-			offset += 1;
+			this.lineIndices.push( lastIndex + i, lastIndex + i + 1 );
 		}
-
-		// Update last index
-		lastIndex = vertices.length / 4;
-	}
-	this.numLineIndices = indices.length;
-
-	// Create vertex buffer
-	this.vertexBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( vertices ), gl.STATIC_DRAW);	
-
-	// Create index buffer
-	this.indexBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-	
-	mat4.identity(this.matrix);
-	mat4.translate(this.matrix,origin);
-
-	// Always add the geometry
-	return true;
-}
-
-/**************************************************************************************************************/
-
-/**
- * Remove a geometry from the renderable
- */
-LineRenderable.prototype.remove = function(geometry)
-{
-	if ( this.geometry == geometry)
-	{
-		this.geometry = null;
-		// Since there is only one geometry per bucket
-		// return 0 to dispose geometry resources
-		return 0;
 	}
 }
-
-/**************************************************************************************************************/
-
-/**
- * Dispose the renderable
- */
-LineRenderable.prototype.dispose = function(renderContext)
-{
-	var gl = renderContext.gl;
-	if (this.vertexBuffer) gl.deleteBuffer( this.vertexBuffer );
-	if (this.indexBuffer) gl.deleteBuffer( this.indexBuffer );
-}
-
 
 /**************************************************************************************************************/
 
@@ -273,7 +216,7 @@ LineBucket.prototype.createRenderable = function()
  */
 LineBucket.prototype.isCompatible = function(style)
 {
-	return false;
+	return this.style == style;
 }
 
 /**************************************************************************************************************/
@@ -309,7 +252,7 @@ LineRenderer.prototype.render = function(renderables, start, end)
 	{
 		var renderable = renderables[n];
 		var style = renderable.bucket.style;
-				
+					
 		mat4.multiply(viewProjMatrix,renderable.matrix,modelViewProjMatrix);
 		gl.uniformMatrix4fv(this.program.uniforms["mvp"], false, modelViewProjMatrix);
 		
@@ -320,10 +263,6 @@ LineRenderer.prototype.render = function(renderables, start, end)
 			this.generateTexture(style.palette);
 		}
 		
-		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
-		gl.vertexAttribPointer(this.program.attributes['vertex'], 4, gl.FLOAT, false, 0, 0);
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.indexBuffer);
-
 		gl.lineWidth( style.strokeWidth );
 
 		// Update uniforms
@@ -332,8 +271,12 @@ LineRenderer.prototype.render = function(renderables, start, end)
 		gl.uniform1f(this.program.uniforms["time"], Date.now()/1000 - this.time);
 		gl.uniform1f(this.program.uniforms["gradientLength"], style.gradientLength ? style.gradientLength : 10.);
 
+		renderable.bindBuffers( renderContext );
+		
+		gl.vertexAttribPointer(this.program.attributes['vertex'], 4, gl.FLOAT, false, 0, 0);
+	
 		// Draw
-		gl.drawElements( gl.LINES, renderable.numLineIndices, gl.UNSIGNED_SHORT, 0);
+		gl.drawElements( gl.LINES, renderable.lineIndices.length, renderable.indexType, 0);
 	}
 	
 	// Revert to default

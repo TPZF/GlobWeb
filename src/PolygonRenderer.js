@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
  
-define( ['./Utils','./VectorRenderer','./VectorRendererManager','./FeatureStyle','./Program','./pnltri.min'], 
-	function(Utils,VectorRenderer,VectorRendererManager,FeatureStyle,Program) {
+define( ['./Utils','./VectorRenderer','./VectorRendererManager','./FeatureStyle','./Program','./BatchRenderable','./pnltri.min'], 
+	function(Utils,VectorRenderer,VectorRendererManager,FeatureStyle,Program,BatchRenderable) {
 
 /**************************************************************************************************************/
 
@@ -29,7 +29,7 @@ define( ['./Utils','./VectorRenderer','./VectorRendererManager','./FeatureStyle'
 var PolygonRenderer = function(globe)
 {
 	VectorRenderer.prototype.constructor.call( this, globe );
-	this.maxTilePerGeometry = 0;
+	this.maxTilePerGeometry = 2;
 	this.renderContext = globe.renderContext;
 	this.defaultVertexShader = "\
 		attribute vec3 vertex;\n\
@@ -79,12 +79,15 @@ Utils.inherits(VectorRenderer,PolygonRenderer);
  */
 var PolygonRenderable = function(bucket) 
 {
-	this.bucket = bucket;
-	this.geometry = null;
+	BatchRenderable.prototype.constructor.call( this, bucket );
+
+	this.origin = null;
+	
+	this.vertexSize = bucket.style.extrude ? 7 : 3;
 	this.matrix = mat4.create();
-	this.vertexBuffer = null;
-	this.indexBuffer = null;
 }
+
+Utils.inherits(BatchRenderable,PolygonRenderable);
 
 /**************************************************************************************************************/
 
@@ -94,42 +97,43 @@ var PolygonRenderable = function(bucket)
  * Index buffer : geometry triangles|extrude triangles|lines
  * Normal buffer : normals.xyz, extrude value as w 
  */
-PolygonRenderable.prototype.add = function(geometry)
+PolygonRenderable.prototype.build = function(geometry)
 {
-	this.geometry = geometry;
-
 	var renderer = this.bucket.renderer;
-	var gl = renderer.tileManager.renderContext.gl;
 	var style = this.bucket.style;
-		
-	var lastIndex = 0;
-	var polygons =  (geometry.type == "MultiPolygon") ? geometry.coordinates : [geometry.coordinates];
-	var vertices = [];
-	var indices = [];
-	var lineIndices = [];
-	var pos3d = [];
-
-	var origin = vec3.create();
 	var coordinateSystem = renderer.globe.coordinateSystem;
-	coordinateSystem.fromGeoTo3D(polygons[0][0][0], origin);
-	
-	var vertexSize = style.extrude ? 7 : 3;
+		
+	var polygons =  (geometry.type == "MultiPolygon") ? geometry.coordinates : [geometry.coordinates];
+	var pos3d = vec3.create();
 
+	if (!this.origin)
+	{
+		this.origin = vec3.create();
+		coordinateSystem.fromGeoTo3D(polygons[0][0][0], this.origin);
+
+		mat4.identity(this.matrix);
+		mat4.translate(this.matrix,this.origin);
+	}
+	
+	var lastIndex = this.vertices.length / this.vertexSize;
+	var offset = this.vertices.length;
+	
 	for ( var n=0; n < polygons.length; n++ ) {
 
 		// Only take into account outer contour for now
 		var coords = polygons[n][0];
-
+		
+		offset = this.vertices.length;
+				
 		// Build upper polygon vertices
 		var clockwise = 0;
-		var offset = lastIndex * vertexSize;
 		for ( var i=0; i < coords.length; i++)
 		{
 			// Always use coordinates at zero height on vertex construction, height will be taken into account on extrude
 			coordinateSystem.fromGeoTo3D([ coords[i][0], coords[i][1], 0.0 ], pos3d);
-			vertices[offset] = pos3d[0] - origin[0];
-			vertices[offset+1] = pos3d[1] - origin[1];
-			vertices[offset+2] = pos3d[2] - origin[2];
+			this.vertices[offset] = pos3d[0] - this.origin[0];
+			this.vertices[offset+1] = pos3d[1] - this.origin[1];
+			this.vertices[offset+2] = pos3d[2] - this.origin[2];
 
 			// Find out if its vertices ordered clockwise to build index buffer properly
 			if ( i < coords.length - 1 ) {
@@ -140,9 +144,9 @@ PolygonRenderable.prototype.add = function(geometry)
 			{
 				// Compute normals
 				vec3.normalize(pos3d);
-				vertices[offset+3] = pos3d[0];
-				vertices[offset+4] = pos3d[1];
-				vertices[offset+5] = pos3d[2];
+				this.vertices[offset+3] = pos3d[0];
+				this.vertices[offset+4] = pos3d[1];
+				this.vertices[offset+5] = pos3d[2];
 				var extrudeValue;
 				if ( typeof style.extrude == "boolean" )
 				{
@@ -154,23 +158,22 @@ PolygonRenderable.prototype.add = function(geometry)
 					// Extrude value is a float defined by user
 					extrudeValue = style.extrude;
 				}
-				vertices[offset+6] = extrudeValue * coordinateSystem.heightScale;
+				this.vertices[offset+6] = extrudeValue * coordinateSystem.heightScale;
 			}
 
-			offset += vertexSize;
+			offset += this.vertexSize;
 		}
 
 		// Build bottom polygon vertices on extrude
 		if ( style.extrude )
 		{
 			// Use same vertices as upper polygon but resest the 4-th compoenent
-			var prevOffset = lastIndex * vertexSize;
-			vertices = vertices.concat( vertices.slice(prevOffset, offset) );
-			var lastOffset = (offset - prevOffset) + offset;
+			var prevOffset = lastIndex * this.vertexSize;
+			this.vertices = this.vertices.concat( this.vertices.slice(prevOffset, offset) );
 			// Reset the 4-th component for extrusion
-			for ( var i=offset; i < lastOffset; i+= vertexSize)
+			for ( var i=offset; i < this.vertices.length; i+= this.vertexSize)
 			{				
-				vertices[i+6] = 0.0;
+				this.vertices[i+6] = 0.0;
 			}
 		}
 		
@@ -180,7 +183,7 @@ PolygonRenderable.prototype.add = function(geometry)
 		var triangList = triangulator.triangulate_polygon( [ contour ] );
 		for ( var i=0; i<triangList.length; i++ )
 		{
-			indices.push(lastIndex + triangList[i][0], lastIndex + triangList[i][1], lastIndex + triangList[i][2] );
+			this.triIndices.push(lastIndex + triangList[i][0], lastIndex + triangList[i][1], lastIndex + triangList[i][2] );
 		}
 
 
@@ -195,13 +198,13 @@ PolygonRenderable.prototype.add = function(geometry)
 				// Depending on vertice order, push the
 				if ( clockwise > 0 )
 				{
-					indices.push( upOffset, upOffset + 1, lowOffset );
-					indices.push( upOffset + 1, lowOffset + 1, lowOffset );	
+					this.triIndices.push( upOffset, upOffset + 1, lowOffset );
+					this.triIndices.push( upOffset + 1, lowOffset + 1, lowOffset );	
 				}
 				else
 				{
-					indices.push( upOffset, lowOffset, upOffset + 1 );
-					indices.push( upOffset + 1, lowOffset, lowOffset + 1 );
+					this.triIndices.push( upOffset, lowOffset, upOffset + 1 );
+					this.triIndices.push( upOffset + 1, lowOffset, lowOffset + 1 );
 				}
 				upOffset += 1;
 				lowOffset += 1;
@@ -211,7 +214,7 @@ PolygonRenderable.prototype.add = function(geometry)
 		// Build line indices for upper polygon
 		for ( var i = 0; i < coords.length-1; i++ )
 		{
-			lineIndices.push( lastIndex + i, lastIndex + i + 1 );
+			this.lineIndices.push( lastIndex + i, lastIndex + i + 1 );
 		}
 
 		// Build top-to-bottom line indices
@@ -221,64 +224,14 @@ PolygonRenderable.prototype.add = function(geometry)
 			var lowOffset = lastIndex + coords.length;
 			for ( var i = 0; i < coords.length-1; i++ )
 			{
-				lineIndices.push( upOffset + i, lowOffset + i );
+				this.lineIndices.push( upOffset + i, lowOffset + i );
 			}
 		}
 
 		// Update last index
-		lastIndex = vertices.length / vertexSize;
-	}
-
-	this.numTriIndices = indices.length;
-	this.numLineIndices = lineIndices.length;
-	// Index buffer contains triange indices and lines one
-	indices = indices.concat(lineIndices);
-
-	// Create vertex buffer
-	this.vertexBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( vertices ), gl.STATIC_DRAW);	
-
-	// Create index buffer
-	this.indexBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-	
-	mat4.identity(this.matrix);
-	mat4.translate(this.matrix,origin);
-
-	// Always add the geometry
-	return true;
-}
-
-/**************************************************************************************************************/
-
-/**
- * Remove a geometry from the renderable
- */
-PolygonRenderable.prototype.remove = function(geometry)
-{
-	if ( this.geometry == geometry)
-	{
-		this.geometry = null;
-		// Since there is only one geometry per bucket
-		// return 0 to dispose geometry resources
-		return 0;
+		lastIndex = this.vertices.length / this.vertexSize;
 	}
 }
-
-/**************************************************************************************************************/
-
-/**
- * Dispose the renderable
- */
-PolygonRenderable.prototype.dispose = function(renderContext)
-{
-	var gl = renderContext.gl;
-	if (this.vertexBuffer) gl.deleteBuffer( this.vertexBuffer );
-	if (this.indexBuffer) gl.deleteBuffer( this.indexBuffer );
-}
-
 
 /**************************************************************************************************************/
 
@@ -309,7 +262,7 @@ PolygonBucket.prototype.createRenderable = function()
  */
 PolygonBucket.prototype.isCompatible = function(style)
 {
-	return false;
+	return this.style == style;
 }
 
 /**************************************************************************************************************/
@@ -356,24 +309,23 @@ PolygonRenderer.prototype.render = function(renderables, start, end)
 		gl.uniform4f(program.uniforms["u_color"], style.fillColor[0], style.fillColor[1], style.fillColor[2], 
 				style.fillColor[3] * renderable.bucket.layer._opacity);  // use fillColor
 		
-		var vertexSize = style.extrude ? 7 : 3;
+		renderable.bindBuffers(renderContext);
 		
-		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.vertexBuffer);
-		gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, 4 * vertexSize, 0);
-		
+		// Setup attributes
+		gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, 4 * renderable.vertexSize, 0);
 		if ( style.extrude )
 		{
-			gl.vertexAttribPointer(program.attributes['normal'], 4, gl.FLOAT, false, 4 * vertexSize, 12);
+			gl.vertexAttribPointer(program.attributes['normal'], 4, gl.FLOAT, false, 4 * renderable.vertexSize, 12);
 			gl.uniform1f(program.uniforms["extrusionScale"], style.extrusionScale);
 		}
-
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderable.indexBuffer);
-		
-		gl.drawElements( gl.TRIANGLES, renderable.numTriIndices, gl.UNSIGNED_SHORT, 0);
-		if ( renderable.numLineIndices > 0 )
+				
+		// Draw
+		gl.drawElements( gl.TRIANGLES, renderable.triIndices.length, renderable.indexType, 0);
+		if ( renderable.lineIndices.length > 0 )
 		{
 			gl.uniform4f(program.uniforms["u_color"], style.strokeColor[0], style.strokeColor[1], style.strokeColor[2], style.strokeColor[3] * renderable.bucket.layer._opacity);  
-			gl.drawElements( gl.LINES, renderable.numLineIndices, gl.UNSIGNED_SHORT, renderable.numTriIndices * 2);
+			var size = renderable.indexType == gl.UNSIGNED_INT ? 4 : 2;
+			gl.drawElements( gl.LINES, renderable.lineIndices.length, renderable.indexType, renderable.triIndices.length * size);
 		}
 	}
 	

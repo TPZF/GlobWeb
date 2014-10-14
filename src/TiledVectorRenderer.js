@@ -95,7 +95,7 @@ TiledVectorRenderer.prototype.render = function(renderables,start,end)
 		gl.uniform4f( this.program.uniforms["color"], currentStyle.strokeColor[0], currentStyle.strokeColor[1], currentStyle.strokeColor[2], 
 			currentStyle.strokeColor[3] * renderable.bucket.layer._opacity );
 			
-		renderable.render( this.program.attributes );
+		renderable.render( renderContext, this.program );
 	}
 
 	gl.depthMask(true);

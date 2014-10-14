@@ -206,7 +206,7 @@ var FeatureStyle = function(style)
 	this.pointMaxSize = 40;
 	this.opacity = 1.;
 	this.zIndex = 0;
-	this.extrusionScale = 0.;
+	this.extrusionScale = 1.;
 
 	if ( style )
 	{

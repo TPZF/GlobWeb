@@ -30,7 +30,7 @@
 var LineStringRenderable = function( bucket )
 {
 	TiledVectorRenderable.prototype.constructor.call(this,bucket);
-	this.glMode = this.gl.LINES;
+	this.glMode = bucket.renderer.tileManager.renderContext.gl.LINES;
 }
 
 /**************************************************************************************************************/
@@ -49,10 +49,10 @@ LineStringRenderable.prototype.buildChildrenIndices = function()
 	this.childrenIndices = [ [], [], [], [] ];
 	this.childrenIndexBuffers = [ null, null, null, null ];
 		
-	for ( var n = 0;  n < this.indices.length/2; n++ )
+	for ( var n = 0;  n < this.lineIndices.length/2; n++ )
 	{	
-		var vertexOffset1 = 3 * this.indices[2*n];
-		var vertexOffset2 = 3 * this.indices[2*n+1];
+		var vertexOffset1 = 3 * this.lineIndices[2*n];
+		var vertexOffset2 = 3 * this.lineIndices[2*n+1];
 		
 		var x1 = this.vertices[vertexOffset1];
 		var x2 = this.vertices[vertexOffset2];
@@ -68,8 +68,8 @@ LineStringRenderable.prototype.buildChildrenIndices = function()
 		if ( y1 > 0 ||  ( y1 == 0 && y2 > 0 ) )
 			j = 0;
 		
-		this.childrenIndices[ 2*j + i ].push( this.indices[2*n] )
-		this.childrenIndices[ 2*j + i ].push( this.indices[2*n+1] )
+		this.childrenIndices[ 2*j + i ].push( this.lineIndices[2*n] )
+		this.childrenIndices[ 2*j + i ].push( this.lineIndices[2*n+1] )
 	}
 }
 
@@ -198,8 +198,8 @@ LineStringRenderable.prototype.buildVerticesAndIndices = function( tile, coords 
 		
 		for ( var n = startIndex; n < endIndex - 1; n++ )
 		{
-			this.indices.push( n );
-			this.indices.push( n+1 );
+			this.lineIndices.push( n );
+			this.lineIndices.push( n+1 );
 		}
 	}
 }
