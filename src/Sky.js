@@ -41,6 +41,7 @@
 var Sky = function(options)
 {
 	Event.prototype.constructor.call( this );
+	this.isSky = true;
 
 	this.coordinateSystem = new EquatorialCoordinateSystem(options);
 	if ( !options.renderContext )

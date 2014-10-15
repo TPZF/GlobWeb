@@ -356,6 +356,9 @@ Renderable.prototype.dispose = function(renderContext)
  */
 ConvexPolygonRenderer.prototype.canApply = function(type,style)
 {
+	if ( !this.globe.isSky ) 
+		return false;
+
 	return type == "Polygon" || type == "MultiPolygon" || type == "LineString" || type == "MultiLineString"; 
 }
 
