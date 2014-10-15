@@ -107,8 +107,9 @@ Navigation.prototype.restore = function(state)
 	@param {Int} distance Final zooming distance in meters
 	@param {Int} duration Duration of animation in milliseconds
 	@param {Int} tilt Defines the tilt in the end of animation
+	@param {Function} callback Callback on the end of animation
 */
-Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt )
+Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt, callback )
 {
 	var navigation = this;
 	
@@ -185,6 +186,15 @@ Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt )
 				Numeric.lerp(dt, a[2], b[2]),  // distance
 				Numeric.lerp(t, a[3], b[3])]; // tilt
 		});
+	}
+
+	var self = this;
+	this.zoomToAnimation.onstop = function() {
+		if ( callback )
+		{
+			callback();
+		}
+		self.zoomToAnimation = null;
 	}
 
 	this.globe.addAnimation(this.zoomToAnimation);
