@@ -63,6 +63,7 @@ var Globe = function(options)
 	this.tileManager = new TileManager( this, options );
 	this.vectorRendererManager = new VectorRendererManager( this );
 	this.attributionHandler = null;
+	this.baseImagery = null;
 	this.preRenderers = [];
 	this.nbCreatedLayers = 0;
 	
@@ -119,15 +120,20 @@ Globe.prototype.refresh = function()
 */
 Globe.prototype.setBaseImagery = function(layer)
 {
-	if ( this.tileManager.imageryProvider )
+	if ( this.baseImagery == layer )
+		return;
+
+	if ( this.baseImagery )
 	{
-		this.removeLayer( this.tileManager.imageryProvider );
+		this.removeLayer( this.baseImagery );
+		this.baseImagery = null;
 	}
 	// Attach the layer to the globe 
 	if ( layer )
 	{
 		layer._overlay = false;
 		this.addLayer(layer);
+		this.baseImagery = layer;
 	}
 	// Modify the tile manager after the layer has been attached
 	this.tileManager.setImageryProvider(layer);
@@ -221,8 +227,8 @@ Globe.prototype.getElevation = function(lon,lat)
 {
 	// Use imagery provider tiling if defined, otherwise use globe default one
 	var tiling = this.tileManager.tiling;
-	if ( this.tileManager.imageryProvider ) {
-		var tiling = this.tileManager.imageryProvider.tiling;
+	if ( this.baseImagery ) {
+		var tiling = this.baseImagery.tiling;
 	}
 	var levelZeroTile = this.tileManager.level0Tiles[ tiling.lonlat2LevelZeroIndex(lon,lat) ];
 	if ( levelZeroTile.state == Tile.State.LOADED )

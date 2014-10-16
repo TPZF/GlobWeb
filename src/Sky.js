@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./EquatorialCoordinateSystem', './RenderContext', './TileManager', './TilePool', './Tile', './VectorRendererManager', './Ray', './GeoBound', './Event', './Utils' ], 
-	function(EquatorialCoordinateSystem, RenderContext, TileManager, TilePool, Tile, VectorRendererManager, Ray, GeoBound, Event, Utils) {
+ define(['./Globe', './EquatorialCoordinateSystem', './TileManager', './TilePool', './Utils' ], 
+	function(Globe, EquatorialCoordinateSystem, TileManager, TilePool, Utils) {
 
 /**************************************************************************************************************/
 
@@ -40,39 +40,22 @@
  */
 var Sky = function(options)
 {
-	Event.prototype.constructor.call( this );
-	this.isSky = true;
+	options.coordinateSystem = new EquatorialCoordinateSystem(options);
+	Globe.prototype.constructor.call( this, options );
 
-	this.coordinateSystem = new EquatorialCoordinateSystem(options);
-	if ( !options.renderContext )
-	{
-		this.renderContext = new RenderContext(options);
-	}
-	else
-	{
-		this.renderContext = options.renderContext;
-	}
+	this.isSky = true;
 	this.tilePool =  new TilePool(this.renderContext);
 	this.tileManagers = {
-		'EQ': new TileManager( this, options ),
+		'EQ': this.tileManager,
 		'GAL': new TileManager( this, options )
 	};
-	// Default tile manager is in equatorial coord sys
-	this.tileManager = this.tileManagers['EQ'];
-	this.vectorRendererManager = new VectorRendererManager( this );
-	this.attributionHandler = null;
-	this.baseImagery = null;
-	this.nbCreatedLayers = 0;
-	
-	this.tileManager.addPostRenderer( this.vectorRendererManager );
-	
-	this.renderContext.renderers.push(this);
+
 	this.renderContext.requestFrame();
 }
 
 /**************************************************************************************************************/
 
-Utils.inherits( Event, Sky );
+Utils.inherits( Globe, Sky );
 
 /**************************************************************************************************************/
 
@@ -86,16 +69,6 @@ Sky.prototype.dispose = function()
 		this.tileManagers[x].tilePool.disposeAll();	
 		this.tileManagers[x].reset();
 	}
-}
-
-/**************************************************************************************************************/
-
-/** 
-  Refresh rendering, must be called when canvas size is modified
- */
-Sky.prototype.refresh = function()
-{
-	this.renderContext.requestFrame();
 }
 
 /**************************************************************************************************************/
@@ -124,155 +97,11 @@ Sky.prototype.setBaseImagery = function(layer)
 		this.addLayer(layer);
 		
 		// Modify the tile manager after the layer has been attached
+		this.tileManager = this.tileManagers[layer.coordSystem];
 		this.tileManagers[ layer.coordSystem ].setImageryProvider( layer );
 		this.baseImagery = layer;
 	}
 	
-}
-
-/**************************************************************************************************************/
-
-/** 
-  Add a layer to the globe.
-  A layer must be added to be visualized on the globe.
-  
-  @param layer the layer to add
-*/
-Sky.prototype.addLayer = function(layer)
-{
-	layer.id = this.nbCreatedLayers;
-	layer._attach(this);
-	this.renderContext.requestFrame();
-	this.nbCreatedLayers++;
-}
-
-/**************************************************************************************************************/
-
-/** 
-  Remove a layer
-  
-  @param layer the layer to remove
-*/
-Sky.prototype.removeLayer = function(layer)
-{
-	layer._detach();
-	this.renderContext.requestFrame();
-}
-
-/**************************************************************************************************************/
-
-/** 
-  Add an animation
-  
-  @param anim the animation to add
-*/
-Sky.prototype.addAnimation = function(anim)
-{
-	anim.renderContext = this.renderContext;
-}
-
-/**************************************************************************************************************/
-
-/** 
-  Remove an animation
-  
-  @param anim the animation to remove
-*/
-Sky.prototype.removeAnimation = function(anim)
-{
-	anim.renderContext = null;
-}
-
-/**************************************************************************************************************/
-
-/** 
-	Get the viewport geo bound
-
-	@param transformCallback
-		Callback transforming the frustum/globe intersection coordinates if needed
-
-    @return the geo bound of the viewport
-*/
-Sky.prototype.getViewportGeoBound = function(transformCallback)
-{
-	var rc = this.renderContext;
-	var tmpMat = mat4.create();
-	
-	// Compute eye in world space
-	mat4.inverse(rc.viewMatrix, tmpMat);
-	var eye = [tmpMat[12], tmpMat[13], tmpMat[14]];
-	
-	// Compute the inverse of view/proj matrix
-	mat4.multiply(rc.projectionMatrix, rc.viewMatrix, tmpMat);
-	mat4.inverse(tmpMat);
-	
-	// Transform the four corners of the frustum into world space
-	// and then for each corner compute the intersection of ray starting from the eye with the earth
-	var points = [ [ -1, -1, 1, 1 ], [ 1, -1, 1, 1 ], [ -1, 1, 1, 1 ], [ 1, 1, 1, 1 ] ];
-	var earthCenter = [ 0, 0, 0 ];
-	for ( var i = 0; i < 4; i++ )
-	{
-		mat4.multiplyVec4( tmpMat, points[i] );
-		vec3.scale( points[i], 1.0 / points[i][3] );
-		vec3.subtract(points[i], eye, points[i]);
-		vec3.normalize( points[i] );
-		
-		var ray = new Ray( eye, points[i] );
-		var pos3d = ray.computePoint( ray.sphereIntersect( earthCenter, this.coordinateSystem.radius ) );
-		points[i] = this.coordinateSystem.from3DToGeo( pos3d );
-		if (transformCallback) 
-		{
-			points[i] = transformCallback(points[i]);
-		}
-	}
-
-	var geoBound = new GeoBound();
-	geoBound.computeFromCoordinates( points );
-
-	return geoBound;
-}
-
-/**************************************************************************************************************/
-
-/** 
-	Get the lon-lat from a pixel.
-	The pixel is expressed in the canvas frame, i.e. (0,0) corresponds to the lower-left corner of the pixel
-	
-	@param 	x the pixel x coordinate
-	@param 	y the pixel y coordinate
-	@return	an array of two numbers [lon,lat] or null if the pixel is not on the globe
- */
-Sky.prototype.getLonLatFromPixel = function(x,y)
-{	
-	var ray = Ray.createFromPixel(this.renderContext, x, y);
-	var pos3d = ray.computePoint( ray.sphereIntersect( [0,0,0], this.coordinateSystem.radius ) );
-	
-	if ( pos3d )
-	{
-		return this.coordinateSystem.from3DToGeo(pos3d);
-	}
-	else
-	{
-		return null;
-	}
-}
-
-/**************************************************************************************************************/
-
-/** 
-	Get pixel from lon-lat
-	The pixel is expressed in the canvas frame, i.e. (0,0) corresponds to the lower-left corner of the pixel
-	
-	@param lon	the longitude
-	@param lat	the latitude
-	@return	an array of two numbers [x,y] or null if the pixel is not on the globe
- */
-Sky.prototype.getPixelFromLonLat = function(lon,lat)
-{	
-	var pos3d = vec3.create();
-	this.coordinateSystem.fromGeoTo3D([lon,lat], pos3d);
-	var pixel = this.renderContext.getPixelFrom3D(pos3d[0],pos3d[1],pos3d[2]);
-	return pixel
 }
 
 /**************************************************************************************************************/
@@ -287,17 +116,6 @@ Sky.prototype.render = function()
 	// Render tiles manager
 	this.tileManagers['GAL'].render();
 	this.tileManagers['EQ'].render();
-}
-
-/**************************************************************************************************************/
-
-/**
-	Display some render statistics
-	@private
- */
-Sky.prototype.getRenderStats = function()
-{
-	return "# rendered tiles : " + this.tileManager.tilesToRender.length;
 }
 
 /**************************************************************************************************************/
