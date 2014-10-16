@@ -59,7 +59,7 @@ var AttributionHandler = function(globe, options)
 */
 AttributionHandler.prototype.removeAttribution = function( layer )
 {
-	var div = document.getElementById( "attribution_"+layer.id );
+	var div = document.getElementById( this.element.id+"_"+layer.id );
 	if ( div )
 		this.element.removeChild( div );
 }
@@ -74,7 +74,7 @@ AttributionHandler.prototype.addAttribution = function(layer)
 { 
 	var div = document.createElement('div');
 	div.innerHTML = layer.attribution;
-	div.id = "attribution_"+layer.id;
+	div.id = this.element.id + "_" + layer.id;
 	
 	if(layer.id == 0)
 	{
@@ -95,7 +95,7 @@ AttributionHandler.prototype.addAttribution = function(layer)
 */
 AttributionHandler.prototype.toggleAttribution = function(layer)
 {
-	var div = document.getElementById("attribution_"+layer.id);
+	var div = document.getElementById(this.element.id+"_"+layer.id);
 	if ( div )
 	{
 		this.removeAttribution(layer);
