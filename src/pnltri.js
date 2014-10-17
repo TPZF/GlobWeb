@@ -1,3 +1,5 @@
+define(function() {
+
 // pnltri.js / raw.github.com/jahting/pnltri.js/master/LICENSE
 /**
  * @author jahting / http://www.ameco.tv/
@@ -2094,4 +2096,8 @@ PNLTRI.Triangulator.prototype = {
 
 
 };
+
+return PNLTRI;
+
+});
 
