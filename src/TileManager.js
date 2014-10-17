@@ -77,6 +77,9 @@ var TileManager = function( parent, options )
 	this.tcoordBuffer = null;
 	this.tileIndexBuffer = new TileIndexBuffer(this.renderContext,this.tileConfig);
 
+	// HACK : to fix sky rendering
+	this.renderTileWithoutTexture = options.hasOwnProperty('renderTileWithoutTexture') ? options.renderTileWithoutTexture : true;
+
 	// For debug
 	this.freeze = false;
 
@@ -476,7 +479,7 @@ TileManager.prototype.processTile = function(tile,level)
 	if ( isLeaf )
 	{
 		// Push the tiles to render only if the texture is valid or there is no imagery provider defined
-		if ( tile.texture || !this.imageryProvider )
+		if ( tile.texture || this.renderTileWithoutTexture )
 		{
 			this.tilesToRender.push( tile );
 		}
