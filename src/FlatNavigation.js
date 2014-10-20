@@ -164,8 +164,7 @@ FlatNavigation.prototype.pan = function(dx, dy)
 FlatNavigation.prototype.rotate = function(dx,dy)
 {
 	// Constant tiny angle 
-	var angle = dx * 0.1 * Math.PI/180.;
-	var tiltAngle = dy * 0.1 * Math.PI/180;
+	var angle = -dx * 0.1 * Math.PI/180.;
 
 	var axe = vec3.create();
 	vec3.subtract(this.geoCenter, this.eye, axe);
