@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define( ['./Utils', './Event', './MouseNavigationHandler', './KeyboardNavigationHandler', './InertiaAnimation', './SegmentedAnimation', './Numeric', './glMatrix' ], 
-	function(Utils,Event,MouseNavigationHandler,KeyboardNavigationHandler,InertiaAnimation,SegmentedAnimation,Numeric) {
+define( ['./Utils', './Event', './MouseNavigationHandler', './KeyboardNavigationHandler', './TouchNavigationHandler', './InertiaAnimation', './SegmentedAnimation', './Numeric', './glMatrix' ], 
+	function(Utils,Event,MouseNavigationHandler,KeyboardNavigationHandler,TouchNavigationHandler,InertiaAnimation,SegmentedAnimation,Numeric) {
 
 /**************************************************************************************************************/
 
@@ -34,6 +34,7 @@ define( ['./Utils', './Event', './MouseNavigationHandler', './KeyboardNavigation
 			<li>panFactor : Pan factor</li>
 			<li>rotateFactor : Rotate factor</li>
 			<li>zoomFactor : Zoom factor</li>
+			<li>isMobile : Boolean indicating if navigation supports touch events</li>
 		</ul>
 
  */
@@ -50,7 +51,15 @@ var BaseNavigation = function(renderContext, options)
 	}
 	else
 	{
-		this.handlers = [ new MouseNavigationHandler(options ? options.mouse : null), new KeyboardNavigationHandler(options ? options.keyboard : null) ];
+		// Use mouse & keyboard as default handlers if isMobile isn't defined
+		if ( options && options.isMobile )
+		{
+			this.handlers = [ new TouchNavigationHandler(options ? options.touch : null) ];	
+		}
+		else
+		{
+			this.handlers = [ new MouseNavigationHandler(options ? options.mouse : null), new KeyboardNavigationHandler(options ? options.keyboard : null) ];
+		}
 	}
 	
 	// Inertia effect
