@@ -18,10 +18,14 @@
  ***************************************/
  
 define( ["./Globe", "./GeoBound",
-		"./WMSLayer", "./WMTSLayer", "./WCSElevationLayer", "./OSMLayer", "./BingLayer", "./VectorLayer", "./AtmosphereLayer", "./GroundOverlayLayer", // Layers
-		"./Navigation", "./FeatureStyle", "./Stats", "./KMLParser", // Others
-		"./PointRenderer", "./LineStringRenderable", "./PolygonRenderer" ], // Renderers
-	function(Globe, GeoBound, WMSLayer, WMTSLayer, WCSElevationLayer, OSMLayer, BingLayer, VectorLayer, AtmosphereLayer, GroundOverlayLayer, Navigation, FeatureStyle, Stats, KMLParser, PointRenderer) {
+		"./WMSLayer", "./WMTSLayer", "./WCSElevationLayer", "./OSMLayer", "./BingLayer", "./VectorLayer", "./AtmosphereLayer", "./GroundOverlayLayer", "./TileWireframeLayer", // Layers
+		"./AitoffCoordinateSystem", "./MercatorCoordinateSystem", "./PlateCoordinateSystem", "./AugustCoordinateSystem", "./MollweideCoordinateSystem", // CoordinateSystems
+		"./Navigation", "./FlatNavigation", "./FeatureStyle", "./Stats", "./KMLParser", "./PathAnimation", "./Numeric", "./SegmentedAnimation", // Others
+		"./PointRenderer", "./LineStringRenderable", "./PolygonRenderer", "./LineRenderer" ], // Renderers
+	function(Globe, GeoBound, WMSLayer, WMTSLayer, WCSElevationLayer, OSMLayer, BingLayer, VectorLayer, AtmosphereLayer, GroundOverlayLayer, TileWireframeLayer,
+			AitoffCoordinateSystem, MercatorCoordinateSystem, PlateCoordinateSystem, AugustCoordinateSystem, MollweideCoordinateSystem,
+		 	Navigation, FlatNavigation, FeatureStyle, Stats, KMLParser, PathAnimation, Numeric, SegmentedAnimation,
+		  	PointRenderer) {
 
 // Declare GlobWeb 
 var GlobWeb = {};
@@ -34,18 +38,23 @@ GlobWeb.WCSElevationLayer = WCSElevationLayer;
 GlobWeb.OSMLayer = OSMLayer;
 GlobWeb.BingLayer = BingLayer;
 GlobWeb.VectorLayer = VectorLayer;
+GlobWeb.TileWireframeLayer = TileWireframeLayer;
 GlobWeb.FeatureStyle = FeatureStyle;
 GlobWeb.AtmosphereLayer = AtmosphereLayer;
 GlobWeb.GroundOverlayLayer = GroundOverlayLayer;
 GlobWeb.Navigation = Navigation;
+GlobWeb.FlatNavigation = FlatNavigation;
 GlobWeb.Stats = Stats;
 GlobWeb.KMLParser = KMLParser;
+GlobWeb.Numeric = Numeric;
+GlobWeb.PathAnimation = PathAnimation;
+GlobWeb.SegmentedAnimation = SegmentedAnimation;
 
-// Modify canApply for PointRenderer
-PointRenderer.prototype.canApply = function(type,style)
-{
-	return type == "Point";
-}
+GlobWeb.MercatorCoordinateSystem = MercatorCoordinateSystem
+GlobWeb.PlateCoordinateSystem = PlateCoordinateSystem
+GlobWeb.AugustCoordinateSystem = AugustCoordinateSystem;
+GlobWeb.MollweideCoordinateSystem = MollweideCoordinateSystem;
+GlobWeb.AitoffCoordinateSystem = AitoffCoordinateSystem;
 
 window.GlobWeb = GlobWeb;
 
