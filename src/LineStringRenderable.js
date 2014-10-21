@@ -227,8 +227,9 @@ LineStringRenderer.prototype.canApply = function(type,style)
 	if ( this.globe.isSky )
 		return false;
 
-	return type == "LineString" || type == "MultiLineString"
-							|| (!style.fill && (type == "Polygon" || type == "MultiPolygon")); 
+	return (type == "LineString" || type == "MultiLineString"
+							|| (!style.fill && (type == "Polygon" || type == "MultiPolygon")))
+						&& !style.gradientLength;
 }
 /**************************************************************************************************************/
 

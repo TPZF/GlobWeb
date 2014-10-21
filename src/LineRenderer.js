@@ -295,7 +295,7 @@ LineRenderer.prototype.render = function(renderables, start, end)
  */
 LineRenderer.prototype.canApply = function(type,style)
 {
-	return (type == "LineString" || type == "MultiLineString");
+	return (type == "LineString" || type == "MultiLineString") && style.gradientLength;
 }
 
 /**************************************************************************************************************/
