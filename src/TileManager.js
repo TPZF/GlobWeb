@@ -779,7 +779,7 @@ TileManager.prototype.render = function()
 		if (stats) stats.end("traverseTime");
 	}
 
-	if ( this.level0TilesLoaded || !this.imageryProvider )
+	if ( this.level0TilesLoaded || !this.imageryProvider )
 	{
 		if (stats) stats.start("renderTime");
 		this.renderTiles();
