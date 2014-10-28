@@ -41,7 +41,10 @@ var Animation = function()
 Animation.prototype._unregisterActive = function()
 {
 	var index = this.renderContext.activeAnimations.indexOf(this);
-	this.renderContext.activeAnimations.splice(index,1);
+	if ( index >= 0 )
+	{
+		this.renderContext.activeAnimations.splice(index,1);
+	}
 }
 
 /**************************************************************************************************************/
