@@ -53,9 +53,17 @@ var LineRenderer = function(globe)
 	{\n\
 		// 0.5 is a time scale parameter, parametrize it ?\n\
 		float m = speed * time * 0.5;\n\
-		float u = s/gradientLength + m;\n\
+		float u = (-s+m)/gradientLength;\n\
 		gl_FragColor.rgb = texture2D(colorTexture, vec2(u,0.)).rgb;\n\
-		gl_FragColor.a = 1.0;\n\
+		// TODO: handle appereance of rivers\n\
+		if ( s < m )\n\
+		{\n\
+			gl_FragColor.a = 1.0;\n\
+		}\n\
+		else\n\
+		{\n\
+			gl_FragColor.a = 0.0;\n\
+		}\n\
 	}\n\
 	";
 
@@ -166,15 +174,17 @@ LineRenderable.prototype.build = function(geometry)
 			this.vertices[offset] = currentPoint[0];
 			this.vertices[offset+1] = currentPoint[1];
 			this.vertices[offset+2] = currentPoint[2];
-
 			// Compute s(length) between two points
 			if ( i > 0 )
 			{
-				s += vec3.dist(currentPoint,previousPoint);
-				var tmp = previousPoint;
-				previousPoint = currentPoint;
-				currentPoint = tmp;
+				s += vec3.dist(currentPoint, previousPoint);
 			}
+			
+			// Update previous point(do it by swapping with current cuz it's the same object)
+			var tmp = previousPoint;
+			previousPoint = currentPoint;
+			currentPoint = tmp;
+
 			this.vertices[offset+3] = s;
 			offset += 4;
 		}
