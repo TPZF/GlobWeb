@@ -97,7 +97,7 @@ Sky.prototype.setBaseImagery = function(layer)
 		this.addLayer(layer);
 		
 		// Modify the tile manager after the layer has been attached
-		this.tileManager = this.tileManagers[layer.coordSystem];
+		//this.tileManager = this.tileManagers[layer.coordSystem];
 		this.tileManagers[ layer.coordSystem ].setImageryProvider( layer );
 		this.baseImagery = layer;
 	}
