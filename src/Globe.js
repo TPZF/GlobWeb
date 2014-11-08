@@ -272,7 +272,7 @@ Globe.prototype.getViewportGeoBound = function(transformCallback)
 		vec3.normalize( points[i] );
 
 		var ray = new Ray( eye, points[i] );
-		var pos3d = ray.computePoint(ray.sphereIntersect( earthCenter, this.coordSystem.radius ));
+		var pos3d = ray.computePoint(ray.sphereIntersect( earthCenter, this.coordinateSystem.radius ));
 		points[i] = this.coordinateSystem.from3DToGeo( pos3d );
 		if (transformCallback) 
 		{
