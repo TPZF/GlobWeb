@@ -280,7 +280,12 @@ TiledVectorRenderable.prototype.render = function(renderContext, program)
 	
 	gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
 		
-	gl.drawElements( this.glMode, this.lineIndices.length, this.indexType, 0);
+	if ( this.lineIndices.length > 0 ) {
+		gl.drawElements( gl.LINES, this.lineIndices.length, this.indexType, 0);
+	}
+	if ( this.triIndices.length > 0 ) {
+		gl.drawElements( gl.TRIANGLES, this.triIndices.length, this.indexType, 0);
+	}
 }
 
 /**************************************************************************************************************/

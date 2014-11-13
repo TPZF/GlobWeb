@@ -5,8 +5,73 @@
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 
 <script src="http://code.jquery.com/jquery-latest.js"></script>
+<script  src="../examples/require.min.js"></script>
 
 <script type="text/javascript">
+
+require(['../src/PolygonCutter', '../src/BoundingBox'], function (PolygonCutter) {
+
+
+var clipPolygonToTriGridStartUp = function( points, bounds, level )
+{
+	// Build an index polygon
+	var poly = [];
+	for ( var i = 0; i < points.length; i++ )
+	{
+		poly[i] = i;
+	}
+
+	var cutter = new PolygonCutter( points );
+	cutter.cut( poly, [ bounds[0], bounds[1] ], [ bounds[0], bounds[3] ] );
+	cutter.cutMulti( cutter.insidePolygons, [ bounds[0], bounds[3] ], [ bounds[2], bounds[3] ] );
+	cutter.cutMulti( cutter.insidePolygons, [ bounds[2], bounds[3] ], [ bounds[2], bounds[1] ] );
+	cutter.cutMulti( cutter.insidePolygons, [ bounds[2], bounds[1] ], [ bounds[0], bounds[1] ] );
+
+	//return cutter.insidePolygons;
+	
+	cutter.cutMulti( cutter.insidePolygons, [ bounds[0], bounds[3] ], [ bounds[2], bounds[1] ] );
+	var res = [];
+	if ( cutter.insidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.insidePolygons, points, [ bounds[0], bounds[1] ], [ bounds[0], bounds[3] ], [ bounds[2], bounds[1] ], level, res );
+	if ( cutter.outsidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.outsidePolygons, points, [ bounds[0], bounds[3] ], [ bounds[2], bounds[3] ], [ bounds[2], bounds[1] ], level, res );
+	return res;
+}
+
+var clipPolygonToTriGrid_O = function( polygons, points, a, b, c, level, res )
+{
+	if  ( level == 0 )
+	{
+		for ( var i = 0; i < polygons.length; i++ )
+			res.push( polygons[i] );
+		return;
+	}
+	
+	var ab = [ (a[0] + b[0]) * 0.5, (a[1] + b[1]) * 0.5 ];
+	var bc = [ (c[0] + b[0]) * 0.5, (c[1] + b[1]) * 0.5 ];
+	var ca = [ (a[0] + c[0]) * 0.5, (a[1] + c[1]) * 0.5 ];
+	
+	var cutter = new PolygonCutter( points );
+	cutter.cutMulti( polygons, bc, ab );
+	
+	if ( cutter.insidePolygons.length > 0 )
+		clipPolygonToTriGrid_O( cutter.insidePolygons, points, bc, ab, b, level-1, res );
+	
+	if ( cutter.outsidePolygons.length > 0 )
+	{
+		cutter.cutMulti( cutter.outsidePolygons, ca, bc );
+				
+		if ( cutter.insidePolygons.length > 0 )
+			clipPolygonToTriGrid_O( cutter.insidePolygons, points, ca, bc, c, level-1, res );
+		
+		if ( cutter.outsidePolygons.length > 0 )
+		{
+			cutter.cutMulti( cutter.outsidePolygons, ab, ca );
+
+			if ( cutter.insidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.insidePolygons, points, ab, ca, a, level-1, res );
+			if ( cutter.outsidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.outsidePolygons, points, ca, ab, bc, level-1, res );
+		}
+	}
+}
+
 
 function cleanupPoints( points )
 {
@@ -106,6 +171,8 @@ function cleanupPoints( points )
 			}			
 		});
 	} );
+	
+});
 
 </script>
 </head>
