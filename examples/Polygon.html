@@ -36,7 +36,7 @@ require(['../src/Globe','../src/WMSLayer','../src/WCSElevationLayer','../src/Nav
 		style.fill = true;
 		var polygon = { type: "Feature",
 						geometry: { type: "Polygon",
-							coordinates: [ [ [-5, -5], [5, -4], [3, 3], [-1, 2], [-5, -5] ] ]
+							coordinates: [ [ [-5, -5], [-1, 2], [3, 3], [5, -4], [-5, -5] ] ]
 						}
 					};
 		var vectorLayer = new VectorLayer({ style: style });

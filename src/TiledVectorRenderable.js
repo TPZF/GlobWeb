@@ -34,7 +34,8 @@ var TiledVectorRenderable = function( bucket )
 	this.childrenIndices = null;
 	this.glMode = -1;
 	this.tile = null;
-	this.hasChildren = false;
+	// The tiled vector renderable always has a children
+	this.hasChildren = true;
 }
 
 /**************************************************************************************************************/
@@ -86,7 +87,6 @@ TiledVectorRenderable.prototype.generateChild = function(tile)
 	{
 		this.bucket.renderer._addGeometryToTile( this.bucket, this.geometryInfos[j].geometry, tile );
 	}
-	this.hasChildren = true;
 }
 
 /**************************************************************************************************************/
@@ -206,8 +206,8 @@ TiledVectorRenderable.prototype.disposeChildrenIndexBuffers = function(renderCon
 			gl.deleteBuffer(this.childrenIndexBuffers[3]);
 	}
 	
-	this.childrenIndexBuffers = null;
 	this.childrenIndices = null;
+	this.childrenIndexBuffers = null;
 }
 
 /**************************************************************************************************************/

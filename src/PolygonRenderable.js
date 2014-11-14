@@ -29,7 +29,7 @@ define(['./Utils','./FeatureStyle','./VectorRendererManager','./TiledVectorRende
 var PolygonRenderable = function( bucket )
 {
 	TiledVectorRenderable.prototype.constructor.call(this,bucket);
-	this.glMode = bucket.renderer.tileManager.renderContext.TRIANGLES;
+	this.glMode = bucket.renderer.tileManager.renderContext.gl.TRIANGLES;
 }
 
 /**************************************************************************************************************/
@@ -47,6 +47,31 @@ PolygonRenderable.prototype.buildChildrenIndices = function( tile )
 {
 	this.childrenIndices = [ [], [], [], [] ];
 	this.childrenIndexBuffers = [ null, null, null, null ];
+	
+	for ( var n = 0;  n < this.triIndices.length; n+=3 )
+	{	
+		var vertexOffset1 = 3 * this.triIndices[n];
+		var vertexOffset2 = 3 * this.triIndices[n+1];
+		var vertexOffset3 = 3 * this.triIndices[n+2];
+		
+		var x1 = this.vertices[vertexOffset1];
+		var x2 = this.vertices[vertexOffset2];
+		var x3 = this.vertices[vertexOffset3];
+		
+		var i = 0;
+		if ( x1 > 0 ||  ( x1 == 0 && x2 > 0 ) || (x1 == 0 && x2 == 0 && x3 > 0) )
+			i = 1;			
+		
+		var y1 = this.vertices[vertexOffset1+1];
+		var y2 = this.vertices[vertexOffset2+1];
+		var y3 = this.vertices[vertexOffset3+1];
+		
+		var j = 1;
+		if ( y1 > 0 ||  ( y1 == 0 && y2 > 0 ) || (y1 == 0 && y2 == 0 && y3 > 0) )
+			j = 0;
+		
+		this.childrenIndices[ 2*j + i ].push( this.triIndices[n], this.triIndices[n+1], this.triIndices[n+2] )
+	}
 }
 
 
@@ -120,9 +145,10 @@ PolygonRenderable.prototype.buildVerticesAndIndices = function( tile, coordinate
 {
 	var coordinateSystem = tile.config.coordinateSystem;
 	
+	var numLevel = Math.floor( Math.log( tile.config.tesselation-1 ) / Math.log(2) );
 	//var coords = clipPolygon( coordinates, [ tile.geoBound.west, tile.geoBound.south, tile.geoBound.east, tile.geoBound.north ] );
 	var points = coordinates.slice(0);
-	var polygons = clipPolygonToTriGridStartUp( points, [ tile.geoBound.west, tile.geoBound.south, tile.geoBound.east, tile.geoBound.north ], 6 );
+	var polygons = clipPolygonToTriGridStartUp( points, [ tile.geoBound.west, tile.geoBound.south, tile.geoBound.east, tile.geoBound.north ], numLevel );
 	if ( polygons.length > 0 )
 	{
 		for ( var n = 0; n < polygons.length; n++ )
