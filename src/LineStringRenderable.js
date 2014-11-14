@@ -40,41 +40,6 @@ Utils.inherits(TiledVectorRenderable,LineStringRenderable);
 /**************************************************************************************************************/
 
 /**
- * Build children indices.
- * Children indices are used to render a tile children when it is not completely loaded.
- */
-LineStringRenderable.prototype.buildChildrenIndices = function()
-{
-	this.childrenIndices = [ [], [], [], [] ];
-	this.childrenIndexBuffers = [ null, null, null, null ];
-		
-	for ( var n = 0;  n < this.lineIndices.length/2; n++ )
-	{	
-		var vertexOffset1 = 3 * this.lineIndices[2*n];
-		var vertexOffset2 = 3 * this.lineIndices[2*n+1];
-		
-		var x1 = this.vertices[vertexOffset1];
-		var x2 = this.vertices[vertexOffset2];
-		
-		var i = 0;
-		if ( x1 > 0 ||  ( x1 == 0 && x2 > 0 ) )
-			i = 1;			
-		
-		var y1 = this.vertices[vertexOffset1+1];
-		var y2 = this.vertices[vertexOffset2+1];
-		
-		var j = 1;
-		if ( y1 > 0 ||  ( y1 == 0 && y2 > 0 ) )
-			j = 0;
-		
-		this.childrenIndices[ 2*j + i ].push( this.lineIndices[2*n] )
-		this.childrenIndices[ 2*j + i ].push( this.lineIndices[2*n+1] )
-	}
-}
-
-/**************************************************************************************************************/
-
-/**
  * Build vertices and indices from the coordinates.
  * Clamp a line string on a tile
  */
