@@ -87,9 +87,31 @@ function _getArea( ring )
 	return - area * 0.5;
 }
 
+
+var PointSet = function(points)
+{
+	this.points = [];
+	this.indexMap = {};
+	
+	for ( var i = 0; i < points.length; i++ )
+	{
+		this.addPoint( points[i] );
+	}
+}
+
+PointSet.prototype.addPoint = function(pt)
+{
+	var key = pt[0] + "-" + pt[1];
+	if ( !this.indexMap[key] )
+	{
+		this.indexMap[key] = this.points.length;
+		this.points.push(pt);
+	}
+	return this.indexMap[key];
+}
+			
 		
-		
-var clipPolygonToTriGrid_O = function( polygons, points, a, b, c, level, res )
+var clipPolygonToTriGrid_O = function( polygons, pointSet, a, b, c, level, res )
 {
 	if  ( level == 0 )
 	{
@@ -102,39 +124,39 @@ var clipPolygonToTriGrid_O = function( polygons, points, a, b, c, level, res )
 	var bc = [ (c[0] + b[0]) * 0.5, (c[1] + b[1]) * 0.5 ];
 	var ca = [ (a[0] + c[0]) * 0.5, (a[1] + c[1]) * 0.5 ];
 	
-	var cutter = new PolygonCutter( points );
+	var cutter = new PolygonCutter( pointSet );
 	cutter.cutMulti( polygons, bc, ab );
 	
 	if ( cutter.insidePolygons.length > 0 )
-		clipPolygonToTriGrid_O( cutter.insidePolygons, points, bc, ab, b, level-1, res );
+		clipPolygonToTriGrid_O( cutter.insidePolygons, pointSet, bc, ab, b, level-1, res );
 	
 	if ( cutter.outsidePolygons.length > 0 )
 	{
 		cutter.cutMulti( cutter.outsidePolygons, ca, bc );
 				
 		if ( cutter.insidePolygons.length > 0 )
-			clipPolygonToTriGrid_O( cutter.insidePolygons, points, ca, bc, c, level-1, res );
+			clipPolygonToTriGrid_O( cutter.insidePolygons, pointSet, ca, bc, c, level-1, res );
 		
 		if ( cutter.outsidePolygons.length > 0 )
 		{
 			cutter.cutMulti( cutter.outsidePolygons, ab, ca );
 
-			if ( cutter.insidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.insidePolygons, points, ab, ca, a, level-1, res );
-			if ( cutter.outsidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.outsidePolygons, points, ca, ab, bc, level-1, res );
+			if ( cutter.insidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.insidePolygons, pointSet, ab, ca, a, level-1, res );
+			if ( cutter.outsidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.outsidePolygons, pointSet, ca, ab, bc, level-1, res );
 		}
 	}
 }
 
-var clipPolygonToTriGridStartUp = function( points, bounds, level )
+var clipPolygonToTriGridStartUp = function( pointSet, bounds, level )
 {
 	// Build an index polygon
 	var poly = [];
-	for ( var i = 0; i < points.length; i++ )
+	for ( var i = 0; i < pointSet.points.length; i++ )
 	{
 		poly[i] = i;
 	}
 
-	var cutter = new PolygonCutter( points );
+	var cutter = new PolygonCutter( pointSet );
 	cutter.cut( poly, [ bounds[0], bounds[1] ], [ bounds[0], bounds[3] ] );
 	cutter.cutMulti( cutter.insidePolygons, [ bounds[0], bounds[3] ], [ bounds[2], bounds[3] ] );
 	cutter.cutMulti( cutter.insidePolygons, [ bounds[2], bounds[3] ], [ bounds[2], bounds[1] ] );
@@ -144,8 +166,8 @@ var clipPolygonToTriGridStartUp = function( points, bounds, level )
 	
 	cutter.cutMulti( cutter.insidePolygons, [ bounds[0], bounds[3] ], [ bounds[2], bounds[1] ] );
 	var res = [];
-	if ( cutter.insidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.insidePolygons, points, [ bounds[0], bounds[1] ], [ bounds[0], bounds[3] ], [ bounds[2], bounds[1] ], level, res );
-	if ( cutter.outsidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.outsidePolygons, points, [ bounds[0], bounds[3] ], [ bounds[2], bounds[3] ], [ bounds[2], bounds[1] ], level, res );
+	if ( cutter.insidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.insidePolygons, pointSet, [ bounds[0], bounds[1] ], [ bounds[0], bounds[3] ], [ bounds[2], bounds[1] ], level, res );
+	if ( cutter.outsidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.outsidePolygons, pointSet, [ bounds[0], bounds[3] ], [ bounds[2], bounds[3] ], [ bounds[2], bounds[1] ], level, res );
 	return res;
 }
 
@@ -177,58 +199,49 @@ PolygonRenderable.prototype.buildVerticesAndIndices = function( tile, coordinate
 	}
 	
 	// Recursively tesselate a polygon
-	var polygons = clipPolygonToTriGridStartUp( points, [ 0.0, 0.0, size, size ], numLevel );
+	var pointSet = new PointSet( points );
+	var polygons = clipPolygonToTriGridStartUp( pointSet, [ 0.0, 0.0, size, size ], numLevel );
 	if ( polygons.length > 0 )
 	{
+		var indexOffset = this.vertices.length / 3;
+		
+		// First fill vertex buffer
+		for ( var n = 0; n < pointSet.points.length; n++ )
+		{	
+			var pt = pointSet.points[ n ];
+			var vec = tile.computePosition(pt[0],pt[1]);
+			this.vertices.push( vec[0], vec[1], vec[2] );
+		}
+		
+		// Then fill index buffer
 		for ( var n = 0; n < polygons.length; n++ )
-		{			
-			var vertexOffset = this.vertices.length;
-			var indexOffset = this.vertices.length / 3;
-			
-			// Process one polygon
-			var coords = [];
+		{
 			var polygon = polygons[n];
-			var prevPt = null;
-			for ( var i = 0; i < polygon.length; i++ )
-			{
-				var pt = points[ polygon[i] ];
-				
-				// Cleanup coords
-				if ( prevPt )
-				{
-					// Skip coincident points
-					if ( prevPt[0] == pt[0] && prevPt[1] == pt[1] )
-						continue;
-				}
-				coords.push(pt);
-				prevPt = pt;
-								
-				var vec = tile.computePosition(pt[0],pt[1]);
-				this.vertices[vertexOffset] = vec[0];
-				this.vertices[vertexOffset+1] = vec[1];
-				this.vertices[vertexOffset+2] = vec[2];
-				vertexOffset += 3;
+			if ( polygon.length == 4 ) {
+				this.triIndices.push( polygon[0] + indexOffset, polygon[2] + indexOffset, polygon[1] + indexOffset );
+				//this.lineIndices.push( polygon[0] + indexOffset, polygon[2] + indexOffset, polygon[2] + indexOffset, polygon[1] + indexOffset, polygon[1] + indexOffset, polygon[0] + indexOffset );
 			}
-			
-			if ( coords.length == 4 ) {
-				this.triIndices.push( indexOffset, indexOffset+2, indexOffset+1 );
-				//this.lineIndices.push(  indexOffset, indexOffset+2, indexOffset+2, indexOffset+1,indexOffset+1, indexOffset );
-			}
-			else if ( coords.length == 5 ) {
-				this.triIndices.push( indexOffset, indexOffset+3, indexOffset+1 );
-				this.triIndices.push( indexOffset+3, indexOffset+2, indexOffset+1 );
-				//this.lineIndices.push(  indexOffset, indexOffset+3, indexOffset+3, indexOffset+1,indexOffset+1, indexOffset );
-				//this.lineIndices.push(  indexOffset+1, indexOffset+2, indexOffset+2, indexOffset+3,indexOffset+3, indexOffset+1 );
+			else if ( polygon.length == 5 ) {
+				this.triIndices.push( polygon[0] + indexOffset, polygon[3] + indexOffset, polygon[1] + indexOffset );
+				this.triIndices.push( polygon[3] + indexOffset, polygon[2] + indexOffset, polygon[1] + indexOffset );
+				//this.lineIndices.push(  polygon[0] + indexOffset, polygon[3] + indexOffset, polygon[3] + indexOffset, polygon[1] + indexOffset, polygon[1] + indexOffset, polygon[0] + indexOffset );
+				//this.lineIndices.push(  polygon[3] + indexOffset, polygon[2] + indexOffset, polygon[2] + indexOffset, polygon[1] + indexOffset, polygon[1] + indexOffset, polygon[3] + indexOffset );
 			} else {
+				// Process one polygon
+				var coords = new Array( polygon.length );
+				for ( var i = 0; i < polygon.length; i++ )
+				{
+					coords[i] = pointSet.points[ polygon[i] ];
+				}
 				var tris = Triangulator.process( coords );
 				if ( tris )
 				{		
 					for ( var i = 0; i < tris.length; i+= 3 )
 					{
-						this.triIndices.push( tris[i] + indexOffset, tris[i+2] + indexOffset, tris[i+1] + indexOffset  );
-						//this.lineIndices.push( tris[i] + indexOffset, tris[i+1] + indexOffset );
-						//this.lineIndices.push( tris[i+1] + indexOffset, tris[i+2] + indexOffset );
-						//this.lineIndices.push( tris[i+2] + indexOffset, tris[i] + indexOffset );
+						this.triIndices.push( polygon[ tris[i] ] + indexOffset, polygon[ tris[i+2] ] + indexOffset, polygon[ tris[i+1] ] + indexOffset );
+						//this.lineIndices.push( polygon[ tris[i] ] + indexOffset, polygon[ tris[i+2] ] + indexOffset );
+						//this.lineIndices.push( polygon[ tris[i+2] ] + indexOffset, polygon[ tris[i+1] ] + indexOffset );
+						//this.lineIndices.push( polygon[ tris[i+1] ] + indexOffset, polygon[ tris[i] ] + indexOffset );
 					}
 				}
 				else
