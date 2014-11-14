@@ -29,7 +29,6 @@ define(['./Utils','./FeatureStyle','./VectorRendererManager','./TiledVectorRende
 var PolygonRenderable = function( bucket )
 {
 	TiledVectorRenderable.prototype.constructor.call(this,bucket);
-	this.glMode = bucket.renderer.tileManager.renderContext.gl.TRIANGLES;
 }
 
 /**************************************************************************************************************/
@@ -38,41 +37,6 @@ var PolygonRenderable = function( bucket )
 Utils.inherits(TiledVectorRenderable,PolygonRenderable);
 
 /**************************************************************************************************************/
-
-/**
- * Build children indices.
- * Children indices are used to render a tile children when it is not completely loaded.
- */
-PolygonRenderable.prototype.buildChildrenIndices = function( tile )
-{
-	this.childrenIndices = [ [], [], [], [] ];
-	this.childrenIndexBuffers = [ null, null, null, null ];
-	
-	for ( var n = 0;  n < this.triIndices.length; n+=3 )
-	{	
-		var vertexOffset1 = 3 * this.triIndices[n];
-		var vertexOffset2 = 3 * this.triIndices[n+1];
-		var vertexOffset3 = 3 * this.triIndices[n+2];
-		
-		var x1 = this.vertices[vertexOffset1];
-		var x2 = this.vertices[vertexOffset2];
-		var x3 = this.vertices[vertexOffset3];
-		
-		var i = 0;
-		if ( x1 > 0 ||  ( x1 == 0 && x2 > 0 ) || (x1 == 0 && x2 == 0 && x3 > 0) )
-			i = 1;			
-		
-		var y1 = this.vertices[vertexOffset1+1];
-		var y2 = this.vertices[vertexOffset2+1];
-		var y3 = this.vertices[vertexOffset3+1];
-		
-		var j = 1;
-		if ( y1 > 0 ||  ( y1 == 0 && y2 > 0 ) || (y1 == 0 && y2 == 0 && y3 > 0) )
-			j = 0;
-		
-		this.childrenIndices[ 2*j + i ].push( this.triIndices[n], this.triIndices[n+1], this.triIndices[n+2] )
-	}
-}
 
 function _getArea( ring ) 
 {

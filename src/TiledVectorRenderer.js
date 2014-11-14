@@ -91,11 +91,25 @@ TiledVectorRenderer.prototype.render = function(renderables,start,end)
 		gl.uniform1f( this.program.uniforms["zOffset"], tile.radius * 0.0007 );
 		
 		var currentStyle = renderable.bucket.style;
-		gl.lineWidth( currentStyle.strokeWidth );
-		gl.uniform4f( this.program.uniforms["color"], currentStyle.strokeColor[0], currentStyle.strokeColor[1], currentStyle.strokeColor[2], 
-			currentStyle.strokeColor[3] * renderable.bucket.layer._opacity );
 			
-		renderable.render( renderContext, this.program );
+		renderable.bindBuffers(renderContext);
+	
+		gl.vertexAttribPointer(this.program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
+			
+		if ( renderable.lineIndices.length > 0 ) 
+		{
+			gl.lineWidth( currentStyle.strokeWidth );
+			gl.uniform4f( this.program.uniforms["color"], currentStyle.strokeColor[0], currentStyle.strokeColor[1], currentStyle.strokeColor[2], 
+				currentStyle.strokeColor[3] * renderable.bucket.layer._opacity );
+			gl.drawElements( gl.LINES, renderable.lineIndices.length, renderable.indexType, 0);
+		}
+		
+		if ( renderable.triIndices.length > 0 ) 
+		{
+			gl.uniform4f( this.program.uniforms["color"], currentStyle.fillColor[0], currentStyle.fillColor[1], currentStyle.fillColor[2], 
+				currentStyle.fillColor[3] * renderable.bucket.layer._opacity );
+			gl.drawElements( gl.TRIANGLES, renderable.triIndices.length, renderable.indexType, 0);
+		}
 	}
 
 	gl.depthMask(true);

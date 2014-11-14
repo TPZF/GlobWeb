@@ -37,6 +37,7 @@ var BatchRenderable = function( bucket )
 	this.bufferDirty = true;
 	this.vertexSize = 3;
 	this.indexType = 0;
+	this.vertexBufferShared = false;
 }
 
 /**************************************************************************************************************/
@@ -142,11 +143,12 @@ BatchRenderable.prototype.dispose = function(renderContext)
 	
 	if ( this.indexBuffer )
 		gl.deleteBuffer(this.indexBuffer);
-	if ( this.vertexBuffer )
-		gl.deleteBuffer(this.vertexBuffer);
-	
 	this.indexBuffer = null;
-	this.vertexBuffer = null;
+	if ( this.vertexBuffer && !this.vertexBufferShared)
+	{
+		gl.deleteBuffer(this.vertexBuffer);
+		this.vertexBuffer = null;
+	}
 }
 
 /**************************************************************************************************************/
@@ -162,10 +164,17 @@ BatchRenderable.prototype.bindBuffers = function(renderContext)
 	{
 		this.dispose(renderContext);
 
-		// Create vertex buffer
-		this.vertexBuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( this.vertices ), gl.STATIC_DRAW);	
+		// Create vertex buffer if needed
+		if (this.vertexBuffer)
+		{
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+		}
+		else
+		{
+			this.vertexBuffer = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array( this.vertices ), gl.STATIC_DRAW);	
+		}
 
 		// Create index buffer
 		this.indexBuffer = gl.createBuffer();

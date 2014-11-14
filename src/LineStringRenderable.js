@@ -30,7 +30,6 @@
 var LineStringRenderable = function( bucket )
 {
 	TiledVectorRenderable.prototype.constructor.call(this,bucket);
-	this.glMode = bucket.renderer.tileManager.renderContext.gl.LINES;
 }
 
 /**************************************************************************************************************/
