@@ -83,11 +83,14 @@ Tile.State =
  */
 Tile.prototype.computePosition = function(u,v)
 {
+	var size = this.config.tesselation;
+	u = Math.min( size-1, Math.max( 0, u ) );
+	v = Math.min( size-1, Math.max( 0, v ) );
+	
 	var vFloor = Math.floor( v );
 	var vFrac = v - vFloor;
 	var uFloor = Math.floor( u );
 	var uFrac = u - uFloor;
-	var size = this.config.tesselation;
 	var vertexSize = this.config.vertexSize;
 	var vertexOffset = vertexSize*( vFloor*size + uFloor );
 	var vec = [ 0.0, 0.0, 0.0 ];

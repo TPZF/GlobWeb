@@ -74,8 +74,21 @@ PolygonRenderable.prototype.buildChildrenIndices = function( tile )
 	}
 }
 
+function _getArea( ring ) 
+{
+	var p1, p2;
+	var area = 0.0;
+	for(var i=0; i<ring.length-1; i++) {
+		p1 = ring[i];
+		p2 = ring[i+1];
+		
+		area += (p1[0] + p2[0]) * (p2[1] - p1[1]);
+	}
+	return - area * 0.5;
+}
 
-
+		
+		
 var clipPolygonToTriGrid_O = function( polygons, points, a, b, c, level, res )
 {
 	if  ( level == 0 )
@@ -143,52 +156,57 @@ var clipPolygonToTriGridStartUp = function( points, bounds, level )
  */
 PolygonRenderable.prototype.buildVerticesAndIndices = function( tile, coordinates )
 {
-	var coordinateSystem = tile.config.coordinateSystem;
+	var size = tile.config.tesselation-1;
+	var numLevel = Math.floor( Math.log( size ) / Math.log(2) );
 	
-	var numLevel = Math.floor( Math.log( tile.config.tesselation-1 ) / Math.log(2) );
-	//var coords = clipPolygon( coordinates, [ tile.geoBound.west, tile.geoBound.south, tile.geoBound.east, tile.geoBound.north ] );
-	var points = coordinates.slice(0);
-	var polygons = clipPolygonToTriGridStartUp( points, [ tile.geoBound.west, tile.geoBound.south, tile.geoBound.east, tile.geoBound.north ], numLevel );
+	// Convert points to tile "coordinates"
+	var points = tile.lonlat2tile(coordinates);
+	
+	// A CW order is needed, so compute signed area to check if the input polygon is CW or not
+	// Note : the transfromation lonlat2tile inverse the area compared to input coordinates
+	var area = _getArea(points);
+	if  ( area > 0 )
+	{
+		// Revert the points to have a CW polygon as input
+		for ( var n = 0; n < points.length / 2; n++ )
+		{
+			var tmp = points[n];
+			points[n] = points[ points.length - n - 1];
+			points[ points.length - n - 1] = tmp;
+		}		
+	}
+	
+	// Recursively tesselate a polygon
+	var polygons = clipPolygonToTriGridStartUp( points, [ 0.0, 0.0, size, size ], numLevel );
 	if ( polygons.length > 0 )
 	{
 		for ( var n = 0; n < polygons.length; n++ )
-		{
-			var invMatrix = tile.inverseMatrix;
-			var radius = coordinateSystem.radius;
-			var height = 10 * coordinateSystem.heightScale;
-			
+		{			
 			var vertexOffset = this.vertices.length;
 			var indexOffset = this.vertices.length / 3;
 			
+			// Process one polygon
 			var coords = [];
 			var polygon = polygons[n];
+			var prevPt = null;
 			for ( var i = 0; i < polygon.length; i++ )
 			{
-				coords[i] = points[ polygon[i] ];
+				var pt = points[ polygon[i] ];
 				
 				// Cleanup coords
-				if ( i > 0 )
+				if ( prevPt )
 				{
 					// Skip coincident points
-					if ( coords[i-1][0] == coords[i][0] && coords[i-1][1] == coords[i][1] )
+					if ( prevPt[0] == pt[0] && prevPt[1] == pt[1] )
 						continue;
 				}
-				
-				
-				/*if ( coords[i][0] < tile.geoBound.west || coords[i][0] > tile.geoBound.east )
-					console.log('error!');
-				if ( coords[i][1] < tile.geoBound.south || coords[i][1] > tile.geoBound.north )
-					console.log('error!');*/
-				
-				var cosLat = Math.cos( coords[i][1] * Math.PI / 180.0 );
-				var x = (radius + height) * Math.cos( coords[i][0] * Math.PI / 180.0 ) * cosLat;
-				var y = (radius + height) * Math.sin( coords[i][0] * Math.PI / 180.0 ) * cosLat;
-				var z = (radius + height) * Math.sin( coords[i][1] * Math.PI / 180.0 );
-				
-				this.vertices[vertexOffset] = invMatrix[0]*x + invMatrix[4]*y + invMatrix[8]*z + invMatrix[12];
-				this.vertices[vertexOffset+1] = invMatrix[1]*x + invMatrix[5]*y + invMatrix[9]*z + invMatrix[13];
-				this.vertices[vertexOffset+2] = invMatrix[2]*x + invMatrix[6]*y + invMatrix[10]*z + invMatrix[14];
-				
+				coords.push(pt);
+				prevPt = pt;
+								
+				var vec = tile.computePosition(pt[0],pt[1]);
+				this.vertices[vertexOffset] = vec[0];
+				this.vertices[vertexOffset+1] = vec[1];
+				this.vertices[vertexOffset+2] = vec[2];
 				vertexOffset += 3;
 			}
 			
@@ -207,7 +225,7 @@ PolygonRenderable.prototype.buildVerticesAndIndices = function( tile, coordinate
 				{		
 					for ( var i = 0; i < tris.length; i+= 3 )
 					{
-						this.triIndices.push( tris[i] + indexOffset, tris[i+1] + indexOffset, tris[i+2] + indexOffset  );
+						this.triIndices.push( tris[i] + indexOffset, tris[i+2] + indexOffset, tris[i+1] + indexOffset  );
 						//this.lineIndices.push( tris[i] + indexOffset, tris[i+1] + indexOffset );
 						//this.lineIndices.push( tris[i+1] + indexOffset, tris[i+2] + indexOffset );
 						//this.lineIndices.push( tris[i+2] + indexOffset, tris[i] + indexOffset );
