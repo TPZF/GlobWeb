@@ -111,7 +111,7 @@ PolygonCutter.cut = function( polygon, pointSet, a, b, result )
 	// Sort intersections
 	if ( intersections.length > 0 )
 	{
-		intersections.sort( function(a,b) { return a.t < b.t; } );
+		intersections.sort( function(a,b) { return a.t - b.t; } );
 	}
 	//intersections.length = intersections.length & (~1);
 	if ( intersections.length & 1 ) {
