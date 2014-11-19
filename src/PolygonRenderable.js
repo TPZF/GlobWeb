@@ -74,43 +74,7 @@ PointSet.prototype.addPoint = function(pt)
 	return this.indexMap[key];
 }
 			
-		
-var clipPolygonToTriGrid_O = function( polygons, pointSet, a, b, c, level, res )
-{
-	if  ( level == 0 )
-	{
-		for ( var i = 0; i < polygons.length; i++ )
-			res.push( polygons[i] );
-		return;
-	}
 	
-	var ab = [ (a[0] + b[0]) * 0.5, (a[1] + b[1]) * 0.5 ];
-	var bc = [ (c[0] + b[0]) * 0.5, (c[1] + b[1]) * 0.5 ];
-	var ca = [ (a[0] + c[0]) * 0.5, (a[1] + c[1]) * 0.5 ];
-	
-	var cutter = new PolygonCutter( pointSet );
-	cutter.cutMulti( polygons, bc, ab );
-	
-	if ( cutter.insidePolygons.length > 0 )
-		clipPolygonToTriGrid_O( cutter.insidePolygons, pointSet, bc, ab, b, level-1, res );
-	
-	if ( cutter.outsidePolygons.length > 0 )
-	{
-		cutter.cutMulti( cutter.outsidePolygons, ca, bc );
-				
-		if ( cutter.insidePolygons.length > 0 )
-			clipPolygonToTriGrid_O( cutter.insidePolygons, pointSet, ca, bc, c, level-1, res );
-		
-		if ( cutter.outsidePolygons.length > 0 )
-		{
-			cutter.cutMulti( cutter.outsidePolygons, ab, ca );
-
-			if ( cutter.insidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.insidePolygons, pointSet, ab, ca, a, level-1, res );
-			if ( cutter.outsidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.outsidePolygons, pointSet, ca, ab, bc, level-1, res );
-		}
-	}
-}
-
 var clipPolygonToTriGridStartUp = function( pointSet, bounds, level )
 {
 	// Build an index polygon
@@ -120,19 +84,54 @@ var clipPolygonToTriGridStartUp = function( pointSet, bounds, level )
 		poly[i] = i;
 	}
 
-	var cutter = new PolygonCutter( pointSet );
-	cutter.cut( poly, [ bounds[0], bounds[1] ], [ bounds[0], bounds[3] ] );
-	cutter.cutMulti( cutter.insidePolygons, [ bounds[0], bounds[3] ], [ bounds[2], bounds[3] ] );
-	cutter.cutMulti( cutter.insidePolygons, [ bounds[2], bounds[3] ], [ bounds[2], bounds[1] ] );
-	cutter.cutMulti( cutter.insidePolygons, [ bounds[2], bounds[1] ], [ bounds[0], bounds[1] ] );
+	var result = PolygonCutter.cut( poly, pointSet, [ bounds[0], bounds[1] ], [ bounds[0], bounds[3] ] );
+	result = PolygonCutter.cutMulti( result.insidePolygons, pointSet, [ bounds[0], bounds[3] ], [ bounds[2], bounds[3] ] );
+	result = PolygonCutter.cutMulti( result.insidePolygons, pointSet, [ bounds[2], bounds[3] ], [ bounds[2], bounds[1] ] );
+	result = PolygonCutter.cutMulti( result.insidePolygons, pointSet, [ bounds[2], bounds[1] ], [ bounds[0], bounds[1] ] );
 
-//	return cutter.insidePolygons;
+	var polygons = [];
+	dividePolygon( result.insidePolygons, pointSet, bounds, level, polygons );
+	return polygons;
+}
+
+var dividePolygon = function( polygons, pointSet, bounds, level, res )
+{
+	if  ( level == 0 )
+	{
+		for ( var i = 0; i < polygons.length; i++ )
+			res.push( polygons[i] );
+		return;
+	}
 	
-	cutter.cutMulti( cutter.insidePolygons, [ bounds[0], bounds[3] ], [ bounds[2], bounds[1] ] );
-	var res = [];
-	if ( cutter.insidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.insidePolygons, pointSet, [ bounds[0], bounds[1] ], [ bounds[0], bounds[3] ], [ bounds[2], bounds[1] ], level, res );
-	if ( cutter.outsidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.outsidePolygons, pointSet, [ bounds[0], bounds[3] ], [ bounds[2], bounds[3] ], [ bounds[2], bounds[1] ], level, res );
-	return res;
+	var cx = (bounds[0] + bounds[2]) * 0.5;
+	var cy = (bounds[1] + bounds[3]) * 0.5;
+	
+	var result = PolygonCutter.cutMulti( polygons, pointSet, [cx, bounds[1]], [cx, bounds[3]]  );
+	
+	if ( result.insidePolygons.length > 0 )
+	{
+		var nres = PolygonCutter.cutMulti( result.insidePolygons, pointSet, [bounds[0], cy], [bounds[2], cy] );
+		if ( nres.insidePolygons.length > 0 )
+		{
+			dividePolygon( nres.insidePolygons, pointSet, [cx, bounds[1], bounds[2], cy ], level-1, res );
+		}
+		if ( nres.outsidePolygons.length > 0 )
+		{
+			dividePolygon( nres.outsidePolygons, pointSet, [ cx, cy, bounds[2], bounds[3] ], level-1, res );
+		}
+	}
+	if ( result.outsidePolygons.length > 0 )
+	{
+		var nres = PolygonCutter.cutMulti( result.outsidePolygons, pointSet, [bounds[0], cy], [bounds[2], cy] );
+		if ( nres.insidePolygons.length > 0 )
+		{
+			dividePolygon( nres.insidePolygons, pointSet, [ bounds[0], bounds[1], cx, cy ], level-1, res );
+		}
+		if ( nres.outsidePolygons.length > 0 )
+		{
+			dividePolygon( nres.outsidePolygons, pointSet, [ bounds[0], cy, cx, bounds[3] ], level-1, res );
+		}
+	}
 }
 
 /**************************************************************************************************************/
@@ -183,15 +182,50 @@ PolygonRenderable.prototype.buildVerticesAndIndices = function( tile, coordinate
 			var polygon = polygons[n];
 			if ( polygon.length == 4 ) {
 				this.triIndices.push( polygon[0] + indexOffset, polygon[2] + indexOffset, polygon[1] + indexOffset );
-				//this.lineIndices.push( polygon[0] + indexOffset, polygon[2] + indexOffset, polygon[2] + indexOffset, polygon[1] + indexOffset, polygon[1] + indexOffset, polygon[0] + indexOffset );
+				this.lineIndices.push( polygon[0] + indexOffset, polygon[2] + indexOffset, polygon[2] + indexOffset, polygon[1] + indexOffset, polygon[1] + indexOffset, polygon[0] + indexOffset );
 			}
 			else if ( polygon.length == 5 ) {
 				this.triIndices.push( polygon[0] + indexOffset, polygon[3] + indexOffset, polygon[1] + indexOffset );
 				this.triIndices.push( polygon[3] + indexOffset, polygon[2] + indexOffset, polygon[1] + indexOffset );
-				//this.lineIndices.push(  polygon[0] + indexOffset, polygon[3] + indexOffset, polygon[3] + indexOffset, polygon[1] + indexOffset, polygon[1] + indexOffset, polygon[0] + indexOffset );
-				//this.lineIndices.push(  polygon[3] + indexOffset, polygon[2] + indexOffset, polygon[2] + indexOffset, polygon[1] + indexOffset, polygon[1] + indexOffset, polygon[3] + indexOffset );
+				this.lineIndices.push(  polygon[0] + indexOffset, polygon[3] + indexOffset, polygon[3] + indexOffset, polygon[1] + indexOffset, polygon[1] + indexOffset, polygon[0] + indexOffset );
+				this.lineIndices.push(  polygon[3] + indexOffset, polygon[2] + indexOffset, polygon[2] + indexOffset, polygon[1] + indexOffset, polygon[1] + indexOffset, polygon[3] + indexOffset );
 			} else {
-				// Process one polygon
+				
+				// Build triangle indices for upper polygon
+				/*var triangulator = new PNLTRI.Triangulator();
+				var coords = new Array( polygon.length );
+				for ( var i = 0; i < polygon.length; i++ )
+				{
+					coords[i] = { x: pointSet.points[ polygon[i] ][0], y: pointSet.points[ polygon[i] ][1] };
+				}
+				var triangList = triangulator.triangulate_polygon( [ coords ] );
+				for ( var i=0; i<triangList.length; i++ )
+				{
+					this.triIndices.push(indexOffset + polygon[triangList[i][0]], indexOffset + polygon[triangList[i][2]], indexOffset + polygon[triangList[i][1]] );
+				}*/
+				
+				/*var coords = new Array( polygon.length-1 );
+				for ( var i = 0; i < polygon.length-1; i++ )
+				{
+					coords[i] = { x: pointSet.points[ polygon[i] ][0], y: pointSet.points[ polygon[i] ][1], id: polygon[i]  };
+				}
+				try {
+					var swctx = new poly2tri.SweepContext(coords);
+					swctx.triangulate();
+					var triangles = swctx.getTriangles();
+					for ( var i=0; i<triangles.length; i++ )
+					{
+						this.triIndices.push(indexOffset + triangles[i].getPoint(0).id, indexOffset + triangles[i].getPoint(2).id, indexOffset + triangles[i].getPoint(1).id );
+						this.lineIndices.push(indexOffset + triangles[i].getPoint(0).id, indexOffset + triangles[i].getPoint(1).id,
+											indexOffset + triangles[i].getPoint(1).id, indexOffset + triangles[i].getPoint(2).id,
+											indexOffset + triangles[i].getPoint(2).id, indexOffset + triangles[i].getPoint(0).id);
+						
+					}
+
+				} catch(e) {
+					console.log("Triangulation error : " + e);
+				}*/
+
 				var coords = new Array( polygon.length );
 				for ( var i = 0; i < polygon.length; i++ )
 				{
@@ -203,9 +237,9 @@ PolygonRenderable.prototype.buildVerticesAndIndices = function( tile, coordinate
 					for ( var i = 0; i < tris.length; i+= 3 )
 					{
 						this.triIndices.push( polygon[ tris[i] ] + indexOffset, polygon[ tris[i+2] ] + indexOffset, polygon[ tris[i+1] ] + indexOffset );
-						//this.lineIndices.push( polygon[ tris[i] ] + indexOffset, polygon[ tris[i+2] ] + indexOffset );
-						//this.lineIndices.push( polygon[ tris[i+2] ] + indexOffset, polygon[ tris[i+1] ] + indexOffset );
-						//this.lineIndices.push( polygon[ tris[i+1] ] + indexOffset, polygon[ tris[i] ] + indexOffset );
+						this.lineIndices.push( polygon[ tris[i] ] + indexOffset, polygon[ tris[i+2] ] + indexOffset );
+						this.lineIndices.push( polygon[ tris[i+2] ] + indexOffset, polygon[ tris[i+1] ] + indexOffset );
+						this.lineIndices.push( polygon[ tris[i+1] ] + indexOffset, polygon[ tris[i] ] + indexOffset );
 					}
 				}
 				else

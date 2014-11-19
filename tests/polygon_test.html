@@ -11,7 +11,7 @@
 
 require(['../src/PolygonCutter', '../src/BoundingBox'], function (PolygonCutter) {
 
-
+/*
 var clipPolygonToTriGridStartUp = function( points, bounds, level )
 {
 	// Build an index polygon
@@ -70,8 +70,89 @@ var clipPolygonToTriGrid_O = function( polygons, points, a, b, c, level, res )
 			if ( cutter.outsidePolygons.length > 0 ) clipPolygonToTriGrid_O( cutter.outsidePolygons, points, ca, ab, bc, level-1, res );
 		}
 	}
+}*/
+
+var PointSet = function(points)
+{
+	this.points = [];
+	this.indexMap = {};
+	
+	for ( var i = 0; i < points.length; i++ )
+	{
+		this.addPoint( points[i] );
+	}
 }
 
+PointSet.prototype.addPoint = function(pt)
+{
+	var key = pt[0] + "-" + pt[1];
+	if ( !this.indexMap[key] )
+	{
+		this.indexMap[key] = this.points.length;
+		this.points.push(pt);
+	}
+	return this.indexMap[key];
+}
+			
+
+var clipPolygonToTriGridStartUp = function( pointSet, bounds, level )
+{
+	// Build an index polygon
+	var poly = [];
+	for ( var i = 0; i < pointSet.points.length; i++ )
+	{
+		poly[i] = i;
+	}
+
+	var result = PolygonCutter.cut( poly, pointSet, [ bounds[0], bounds[1] ], [ bounds[0], bounds[3] ] );
+	result = PolygonCutter.cutMulti( result.insidePolygons, pointSet, [ bounds[0], bounds[3] ], [ bounds[2], bounds[3] ] );
+	result = PolygonCutter.cutMulti( result.insidePolygons, pointSet, [ bounds[2], bounds[3] ], [ bounds[2], bounds[1] ] );
+	result = PolygonCutter.cutMulti( result.insidePolygons, pointSet, [ bounds[2], bounds[1] ], [ bounds[0], bounds[1] ] );
+
+	var polygons = [];
+	dividePolygon( result.insidePolygons, pointSet, bounds, level, polygons );
+	return polygons;
+}
+
+var dividePolygon = function( polygons, pointSet, bounds, level, res )
+{
+	if  ( level == 0 )
+	{
+		for ( var i = 0; i < polygons.length; i++ )
+			res.push( polygons[i] );
+		return;
+	}
+	
+	var cx = (bounds[0] + bounds[2]) * 0.5;
+	var cy = (bounds[1] + bounds[3]) * 0.5;
+	
+	var result = PolygonCutter.cutMulti( polygons, pointSet, [cx, bounds[1]], [cx, bounds[3]]  );
+	
+	if ( result.insidePolygons.length > 0 )
+	{
+		var nres = PolygonCutter.cutMulti( result.insidePolygons, pointSet, [bounds[0], cy], [bounds[2], cy] );
+		if ( nres.insidePolygons.length > 0 )
+		{
+			dividePolygon( nres.insidePolygons, pointSet, [cx, bounds[1], bounds[2], cy ], level-1, res );
+		}
+		if ( nres.outsidePolygons.length > 0 )
+		{
+			dividePolygon( nres.outsidePolygons, pointSet, [ cx, cy, bounds[2], bounds[3] ], level-1, res );
+		}
+	}
+	if ( result.outsidePolygons.length > 0 )
+	{
+		var nres = PolygonCutter.cutMulti( result.outsidePolygons, pointSet, [bounds[0], cy], [bounds[2], cy] );
+		if ( nres.insidePolygons.length > 0 )
+		{
+			dividePolygon( nres.insidePolygons, pointSet, [ bounds[0], bounds[1], cx, cy ], level-1, res );
+		}
+		if ( nres.outsidePolygons.length > 0 )
+		{
+			dividePolygon( nres.outsidePolygons, pointSet, [ bounds[0], cy, cx, bounds[3] ], level-1, res );
+		}
+	}
+}
 
 function cleanupPoints( points )
 {
@@ -159,7 +240,9 @@ function cleanupPoints( points )
 			
 			cleanupPoints( points );
 			
-			var polys = clipPolygonToTriGridStartUp( points, [100,100,356,356], 3 );
+			var pointSet = new PointSet( points );
+			var polys = clipPolygonToTriGridStartUp( pointSet, [100,100,356,356], 3 );
+			points = pointSet.points;
 			
 			for ( var i = 0; i < polys.length; i++ )
 			{
