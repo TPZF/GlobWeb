@@ -141,6 +141,8 @@ var LineRenderable = function(bucket)
 	mat4.identity(this.matrix);
 }
 
+/**************************************************************************************************************/
+
 Utils.inherits(BatchRenderable,LineRenderable);
 
 /**************************************************************************************************************/
@@ -195,6 +197,8 @@ LineRenderable.prototype.build = function(geometry)
 			this.lineIndices.push( lastIndex + i, lastIndex + i + 1 );
 		}
 	}
+	// Geometry is always added contrary to tiled renderables
+	return true;
 }
 
 /**************************************************************************************************************/
@@ -277,9 +281,9 @@ LineRenderer.prototype.render = function(renderables, start, end)
 
 		// Update uniforms
 		gl.uniform4f(this.program.uniforms["u_color"], style.strokeColor[0], style.strokeColor[1], style.strokeColor[2], style.strokeColor[3] * renderable.bucket.layer._opacity);
-		gl.uniform1f(this.program.uniforms["speed"], style.speed ? style.speed : 1.);
+		gl.uniform1f(this.program.uniforms["speed"], style.hasOwnProperty('speed') ? style.speed : 1.0);
 		gl.uniform1f(this.program.uniforms["time"], Date.now()/1000 - this.time);
-		gl.uniform1f(this.program.uniforms["gradientLength"], style.gradientLength ? style.gradientLength : 10.);
+		gl.uniform1f(this.program.uniforms["gradientLength"], style.hasOwnProperty('gradientLength') ? style.gradientLength : 10.0);
 
 		renderable.bindBuffers( renderContext );
 		

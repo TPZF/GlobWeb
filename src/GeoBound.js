@@ -122,6 +122,51 @@ GeoBound.prototype.intersects = function( geoBound )
 
 /**************************************************************************************************************/
 
+/**
+ 	Intersects this geo bound with GeoJSON geometry
+ */
+GeoBound.prototype.intersectsGeometry = function( geometry )
+{
+	var isIntersected = false;
+	var geoBound = new GeoBound();
+	var coords = geometry['coordinates'];
+	switch (geometry['type'])
+	{
+		case "LineString":
+			geoBound.computeFromCoordinates( coords[i] );
+			isIntersected |= this.intersects(geoBound);
+			break;
+		case "Polygon":
+			// Don't take care about holes
+			for ( var i = 0; i < coords.length && !isIntersected; i++ )
+			{
+				geoBound.computeFromCoordinates( coords[i] );
+				isIntersected |= this.intersects(geoBound);
+			}
+			break;
+		case "MultiLineString":
+			for ( var i = 0; i < coords.length && !isIntersected; i++ )
+			{
+				geoBound.computeFromCoordinates( coords[i] );
+				isIntersected |= this.intersects(geoBound);
+			}
+			break;
+		case "MultiPolygon":
+			for ( var i = 0; i < coords.length && !isIntersected; i++ )
+			{
+				for ( var j = 0; j < coords[i].length && !isIntersected; j++ )
+				{
+					geoBound.computeFromCoordinates( coords[i][j] );
+					isIntersected |= this.intersects(geoBound);
+				}
+			}
+			break;
+	}
+	return isIntersected;
+}
+
+/**************************************************************************************************************/
+
 return GeoBound;
 
 });

@@ -58,6 +58,7 @@ var PolygonRenderer = function(globe)
 	void main(void)\n\
 	{\n\
 		gl_FragColor = u_color;\n\
+		//if (u_color.a == 0.0) discard;\n\
 	}\n\
 	";
 
@@ -184,6 +185,7 @@ PolygonRenderable.prototype.build = function(geometry)
 		for ( var i=0; i<triangList.length; i++ )
 		{
 			this.triIndices.push(lastIndex + triangList[i][0], lastIndex + triangList[i][1], lastIndex + triangList[i][2] );
+			//this.lineIndices.push( lastIndex + triangList[i][0], lastIndex + triangList[i][1], lastIndex + triangList[i][1], lastIndex + triangList[i][2], lastIndex + triangList[i][2], lastIndex + triangList[i][0] );
 		}
 
 
@@ -231,6 +233,8 @@ PolygonRenderable.prototype.build = function(geometry)
 		// Update last index
 		lastIndex = this.vertices.length / this.vertexSize;
 	}
+	// Geometry is always added contrary to tiled renderables
+	return true;
 }
 
 /**************************************************************************************************************/
@@ -310,6 +314,7 @@ PolygonRenderer.prototype.render = function(renderables, start, end)
 				style.fillColor[3] * renderable.bucket.layer._opacity);  // use fillColor
 		
 		renderable.bindBuffers(renderContext);
+		gl.lineWidth( style.strokeWidth );
 		
 		// Setup attributes
 		gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, 4 * renderable.vertexSize, 0);
@@ -329,6 +334,9 @@ PolygonRenderer.prototype.render = function(renderables, start, end)
 		}
 	}
 	
+	// Revert line width
+	gl.lineWidth(1.);
+
 	//gl.enable(gl.DEPTH_TEST);
 	//gl.disable(gl.POLYGON_OFFSET_FILL);
 	gl.depthFunc(gl.LESS);

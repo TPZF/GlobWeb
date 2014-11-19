@@ -29,6 +29,8 @@ define(['./Utils', './BaseLayer', './FeatureStyle'],
 	@param options Configuration properties for VectorLayer. See {@link BaseLayer} for base properties :
 		<ul>
 			<li>style : the style to use. See {@link FeatureStyle}</li>
+			<li>minLevel : minimum rendering level depending on tile level</li>
+			<li>maxLevel : maximum rendering level depending on tile level</li>
 		</ul>
  */
 var VectorLayer = function( options )
@@ -41,6 +43,9 @@ var VectorLayer = function( options )
 	else
 		this.style = new FeatureStyle();
 	
+	this.minLevel = options && options.hasOwnProperty('minLevel') ? options['minLevel'] : 0.0;
+	this.maxLevel = options && options.hasOwnProperty('maxLevel') ? options['maxLevel'] : 15.0;
+
 	this.features = [];
 }
 

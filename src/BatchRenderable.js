@@ -106,21 +106,20 @@ BatchRenderable.prototype.remove = function( geometry )
 BatchRenderable.prototype.add = function( geometry, tile )
 {
 	this.tile = tile;
-		
-	var numVertices = this.vertices.length;
-	var numLineIndices = this.lineIndices.length;
-	var numTriIndices = this.triIndices.length;
-						
-	this.build( geometry, tile );
-	
-	var vertexCount = this.vertices.length - numVertices;
-		
-	if ( vertexCount > 0 )
+	var geometryInTile = this.build( geometry, tile );
+	if ( geometryInTile )
 	{
-		this.geometryInfos.push({ geometry: geometry,
-						vertexCount: vertexCount,
-						lineIndexCount: this.lineIndices.length - numLineIndices,
-						triIndexCount: this.triIndices.length - numTriIndices });
+		var vertexCount = this.vertices.length - numVertices;
+		var numVertices = this.vertices.length;
+		var numLineIndices = this.lineIndices.length;
+		var numTriIndices = this.triIndices.length;
+
+		this.geometryInfos.push({
+			geometry: geometry,
+			vertexCount: vertexCount,
+			lineIndexCount: this.lineIndices.length - numLineIndices,
+			triIndexCount: this.triIndices.length - numTriIndices
+		});
 		this.bufferDirty = true;
 				
 		return true;
