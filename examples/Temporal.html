@@ -28,6 +28,9 @@ require(['../src/GlobWeb', '../src/TemporalWMSLayer'], function (GlobWeb, Tempor
 	
 	// Add stats
 	var stats = new GlobWeb.Stats( globe, {element: 'fps', verbose: false} );
+	globe.addLayer(new GlobWeb.TileWireframeLayer({
+		outline: true,
+	}));
 
 	// var blueMarbleLayer = new GlobWeb.WMSLayer({
 	// 	baseUrl: "http://demonstrator.telespazio.com/wmspub",
@@ -43,6 +46,7 @@ require(['../src/GlobWeb', '../src/TemporalWMSLayer'], function (GlobWeb, Tempor
 	// globe.addLayer( otherLayer );
 
 	var temporalLayer = new TemporalWMSLayer({
+		name: "Temporal",
 		baseUrls: [
 		{
 			baseUrl: "http://demonstrator.telespazio.com/wmspub",
@@ -51,6 +55,10 @@ require(['../src/GlobWeb', '../src/TemporalWMSLayer'], function (GlobWeb, Tempor
 		{
 			baseUrl: "http://localhost/wmspub",
 			layers: "precip.mon.total.2.5x2.5.v6_B1"
+		},
+		{
+			baseUrl: "http://localhost/wmspub",
+			layers: "precip.mon.total.1x1.v6_B1"
 		},
 		{
 			baseUrl: "http://localhost/wmspub",
@@ -88,9 +96,11 @@ require(['../src/GlobWeb', '../src/TemporalWMSLayer'], function (GlobWeb, Tempor
 	globe.addLayer( temporalLayer );
 	
 	temporalLayer.subscribe("animation:paused", function() {
+		$('#next').attr('disabled', 'disabled');
 		$("#loading").show();
 	});
 	temporalLayer.subscribe("animation:unpaused", function() {
+		$('#next').removeAttr('disabled');
 		$("#loading").hide();
 	});
 
@@ -99,7 +109,6 @@ require(['../src/GlobWeb', '../src/TemporalWMSLayer'], function (GlobWeb, Tempor
 	});
 
 	$('#time').on('input', function(){
-		console.log($(this).val());
 		temporalLayer.time = parseFloat($(this).val());
 	});
 

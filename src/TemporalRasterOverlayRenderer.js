@@ -114,9 +114,9 @@ var TemporalRasterOverlayRenderer = function(globe)
 				}
 			},
 			abortCallback: function(){
-				//console.log("Raster overlay request abort.");
 				if ( this.renderable )
 				{
+					//console.log("Raster overlay request abort : " + this.renderable.request.image.src);
 					this.renderable.onRequestFinished(false);
 					this.renderable = null;
 					this.baseIndex = null;
@@ -178,27 +178,30 @@ TemporalRasterOverlayRenderer.prototype.addOverlay = function( overlay )
 	var self = this;
 	overlay.subscribe("time:changed", function() {
 
-		for ( var i=0; i<self.imageRequests.length; i++ )
+		var publishPause = false;
+		var allRequests = self.requestsToSend.concat(self.imageRequests);
+		for ( var i=0; i<allRequests.length; i++ )
 		{
-			var ir = self.imageRequests[i];
-			if ( ir.renderable )
+			var ir = allRequests[i];
+			if ( ir.renderable && overlay.id == ir.renderable.bucket.layer.id )
 			{
 				// Publish paused event in case where base index of current image
 				// requests isn't sufficient to continue the rendering
 				// (at least first bufferized texture must be loaded)
-				var publishPause = (ir.baseIndex <= (ir.renderable.nbTexturesToRender + 1));
-				if ( publishPause )
-				{
-					overlay.publish("animation:paused");
-				}
+				publishPause |= (ir.baseIndex <= ir.renderable.nbTexturesToRender);
 
 				// Abort only request of base url which won't be used anymore(the first one)
-				if ( ir.baseIndex == 0 )
+				if ( ir.baseIndex == 0 && ir.renderable.request )
 				{
-					console.log("Aborting:" + ir.image.src);
-					ir.abort();
+					console.log("Aborting:" + ir.renderable.request.image.src);
+					ir.renderable.request.abort();
 				}
 			} 
+		}
+		
+		if ( publishPause )
+		{
+			overlay.publish("animation:paused");
 		}
 
 		var tp = self.tileManager.tilePool;
@@ -278,8 +281,8 @@ TemporalRasterOverlayRenderer.prototype.addOverlayToTile = function( tile, bucke
  */
 TemporalRasterOverlayRenderer.prototype.generateRequests = function (renderable)
 {
-	// if ( !renderable.request )
-	// {		
+	if ( !renderable.request )
+	{
 		for ( var i=renderable.ownTextures.length; i<(renderable.nbTexturesToRender + renderable.nbBufferizedTextures); i++ )
 		{
 			var url = renderable.bucket.layer.getUrl(renderable.tile, i);
@@ -289,7 +292,7 @@ TemporalRasterOverlayRenderer.prototype.generateRequests = function (renderable)
 				renderable: renderable
 			} );
 		}
-	// }
+	}
 }
 
 /**************************************************************************************************************/
@@ -318,6 +321,7 @@ TemporalRasterOverlayRenderer.prototype.requestOverlayTextureForTile = function(
 			imageRequest.renderable = renderable;
 			imageRequest.frameNumber = this.frameNumber;
 			imageRequest.baseIndex = request.baseIndex;
+			//console.log(request.baseIndex + " " + request.url);
 			imageRequest.send(renderable.bucket.layer.getUrl(renderable.tile, renderable.ownTextures.length));
 		}
 	}
@@ -361,14 +365,36 @@ TemporalRasterOverlayRenderer.prototype.launchRequests = function()
 	// Check if all the current requests have base index > 2
 	// so we can unpause the animation
 	var baseIndex = Number.MAX_VALUE;
-	for ( var i=0; i<this.imageRequests.length; i++ )
+	var unpause = true;
+	var layersToPause = {};
+	var allRequests = this.requestsToSend.concat( this.imageRequests );
+	for ( var i=0; i<allRequests.length; i++ )
 	{
-		var request = this.imageRequests[i];
-		baseIndex = Math.min(baseIndex, request.baseIndex);
-		// TODO: handle when nbBufferizedTextures = 1
-		if ( request.renderable && baseIndex > request.renderable.nbTexturesToRender ) // 3 > 2
+		var request = allRequests[i];
+		if ( request.renderable )
 		{
-			request.renderable.bucket.layer.publish("animation:unpaused");
+			var layerName = request.renderable.bucket.layer.name;
+			var layerInfo = layersToPause[ layerName ];
+			if ( !layerInfo )
+			{
+				layerInfo = {
+					layer: request.renderable.bucket.layer,
+					baseIndex: request.baseIndex,
+					nbTexturesToRender: request.renderable.nbTexturesToRender
+				};
+				layersToPause[ layerName ] = layerInfo;
+			}
+
+			layerInfo.baseIndex = Math.min( layerInfo.baseIndex, request.baseIndex );
+		}
+	}
+
+	for ( var x in layersToPause )
+	{
+		var layerInfo = layersToPause[x];
+		if ( layerInfo.baseIndex >= layerInfo.nbTexturesToRender )
+		{
+			layerInfo.layer.publish("animation:unpaused");
 		}
 	}
 }

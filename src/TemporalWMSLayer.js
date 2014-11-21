@@ -83,6 +83,7 @@ var TemporalWMSLayer = function( options )
 	this.animationUnpaused = function() {
 		if ( self.isPaused )
 		{
+			console.log("Unpaused !");
 			// console.log("unsubscribe 'animation:unpaused'");
 			self.unsubscribe("animation:unpaused", self.animationUnpaused);
 			self.isPaused = false;
@@ -96,6 +97,7 @@ var TemporalWMSLayer = function( options )
 	this.animationPaused = function() {
 		if ( !self.isPaused )
 		{
+			console.log("Paused !");
 			self.isPaused = true;
 			// console.log("subscribe 'animation:unpaused'");
 			self.subscribe("animation:unpaused", self.animationUnpaused);
@@ -155,6 +157,7 @@ TemporalWMSLayer.prototype.start = function()
  */
 TemporalWMSLayer.prototype.stop = function()
 {
+	this.isPaused = false;
 	this.animation.onstopCallback = null;
 	this.unsubscribe("animation:unpaused", this.animationUnpaused);
 	this.unsubscribe("animation:paused", this.animationPaused);
@@ -172,7 +175,7 @@ TemporalWMSLayer.prototype.next = function(onstop)
 
 	var self = this;
 	this.animation = new GlobWeb.SegmentedAnimation(
-		1000,
+		200,
 		// Value setter
 		function(value) {
 			self.time = value;
