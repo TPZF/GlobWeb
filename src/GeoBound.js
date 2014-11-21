@@ -133,7 +133,7 @@ GeoBound.prototype.intersectsGeometry = function( geometry )
 	switch (geometry['type'])
 	{
 		case "LineString":
-			geoBound.computeFromCoordinates( coords[i] );
+			geoBound.computeFromCoordinates( coords );
 			isIntersected |= this.intersects(geoBound);
 			break;
 		case "Polygon":
