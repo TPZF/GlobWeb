@@ -106,11 +106,11 @@ BatchRenderable.prototype.remove = function( geometry )
 BatchRenderable.prototype.add = function( geometry, tile )
 {
 	this.tile = tile;
+	var numVertices = this.vertices.length;
 	var geometryInTile = this.build( geometry, tile );
 	if ( geometryInTile )
 	{
 		var vertexCount = this.vertices.length - numVertices;
-		var numVertices = this.vertices.length;
 		var numLineIndices = this.lineIndices.length;
 		var numTriIndices = this.triIndices.length;
 
