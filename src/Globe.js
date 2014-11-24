@@ -299,18 +299,19 @@ Globe.prototype.getViewportGeoBound = function(transformCallback)
 Globe.prototype.getLonLatFromPixel = function(x,y)
 {	
 	var ray = Ray.createFromPixel(this.renderContext, x, y);
+	var intersection;
 	if ( this.coordinateSystem.isFlat )
 	{
-		var pos3d = ray.computePoint( ray.planeIntersect( [0,0,0], [0,0,1] ) );
+		intersection =  ray.planeIntersect( [0,0,0], [0,0,1] );
 	}
 	else
 	{
-		var pos3d = ray.computePoint( ray.sphereIntersect( [0,0,0], this.coordinateSystem.radius ) );
+		intersection = ray.sphereIntersect( [0,0,0], this.coordinateSystem.radius );
 	}
 	
-	if ( pos3d )
+	if ( intersection >= 0 )
 	{
-		return this.coordinateSystem.from3DToGeo(pos3d);
+		return this.coordinateSystem.from3DToGeo( ray.computePoint(intersection) );
 	}
 	else
 	{
