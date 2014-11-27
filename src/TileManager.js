@@ -392,16 +392,6 @@ TileManager.prototype.visitTiles = function( callback )
 		{
 			var tile = this.level0Tiles[i];
 
-			// Generate tile if already stored in cache
-			if ( this.imageryProvider && this.imageryProvider.cacheLevel >= tile.level )
-			{
-				var cachedTileRequest = this.imageryProvider.getFromCache(tile);
-				if ( cachedTileRequest )
-				{
-					this.generateTile( tile, cachedTileRequest );
-				}
-			}
-
 			var tileIsLoaded = tile.state == Tile.State.LOADED;
 			
 			// Update frame number
@@ -465,23 +455,10 @@ TileManager.prototype.processTile = function(tile,level)
 	// Request the tile if needed
 	if ( tile.state == Tile.State.NONE )
 	{
-		// Generate tile if already stored in cache
-		if ( this.imageryProvider && this.imageryProvider.cacheLevel >= tile.level )
-		{
-			var cachedTileRequest = this.imageryProvider.getFromCache(tile);
-			if ( cachedTileRequest )
-			{
-				this.generateTile( tile, cachedTileRequest );
-			}
-		}
+		tile.state = Tile.State.REQUESTED;
 		
-		if ( tile.state != Tile.State.LOADED )
-		{
-			tile.state = Tile.State.REQUESTED;
-			
-			// Add it to the request
-			this.tilesToRequest.push(tile);
-		}
+		// Add it to the request
+		this.tilesToRequest.push(tile);
 	}
 		
 	// Check if the tiles needs to be refined
@@ -573,12 +550,6 @@ TileManager.prototype.generateTile = function(tile, tileRequest)
 		if ( tile.frameNumber == this.frameNumber )
 		{
 			this.generateTile( tile, tileRequest );
-
-			// Store in cache if possible
-			if ( this.imageryProvider && this.imageryProvider.cacheLevel >= tile.level )
-			{
-				this.imageryProvider.storeInCache( tileRequest );
-			}
 		}
 		else
 		{
