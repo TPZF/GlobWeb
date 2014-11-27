@@ -391,6 +391,17 @@ TileManager.prototype.visitTiles = function( callback )
 		for ( var i = 0; i < this.level0Tiles.length; i++ )
 		{
 			var tile = this.level0Tiles[i];
+
+			// Generate tile if already stored in cache
+			if ( this.imageryProvider && this.imageryProvider.cacheLevel >= tile.level )
+			{
+				var cachedTileRequest = this.imageryProvider.getFromCache(tile);
+				if ( cachedTileRequest )
+				{
+					this.generateTile( tile, cachedTileRequest );
+				}
+			}
+
 			var tileIsLoaded = tile.state == Tile.State.LOADED;
 			
 			// Update frame number
@@ -454,10 +465,23 @@ TileManager.prototype.processTile = function(tile,level)
 	// Request the tile if needed
 	if ( tile.state == Tile.State.NONE )
 	{
-		tile.state = Tile.State.REQUESTED;
+		// Generate tile if already stored in cache
+		if ( this.imageryProvider && this.imageryProvider.cacheLevel >= tile.level )
+		{
+			var cachedTileRequest = this.imageryProvider.getFromCache(tile);
+			if ( cachedTileRequest )
+			{
+				this.generateTile( tile, cachedTileRequest );
+			}
+		}
 		
-		// Add it to the request
-		this.tilesToRequest.push(tile);
+		if ( tile.state != Tile.State.LOADED )
+		{
+			tile.state = Tile.State.REQUESTED;
+			
+			// Add it to the request
+			this.tilesToRequest.push(tile);
+		}
 	}
 		
 	// Check if the tiles needs to be refined
@@ -517,6 +541,27 @@ TileManager.prototype.processTile = function(tile,level)
 /**************************************************************************************************************/
 
 /**
+ 	Generate tile
+ */
+TileManager.prototype.generateTile = function(tile, tileRequest)
+{
+	// Generate the tile using data from tileRequest
+	tile.generate( this.tilePool, tileRequest.image, tileRequest.elevations );
+
+	// Now post renderers can generate their data on the new tile
+	for (var i=0; i < this.postRenderers.length; i++ )
+	{
+		if ( this.postRenderers[i].generate )
+			this.postRenderers[i].generate( tile );
+	}
+	
+	this.numTilesGenerated++;
+	this.renderContext.requestFrame();
+}
+
+/**************************************************************************************************************/
+
+/**
 	Generate tiles
  */
  TileManager.prototype.generateReceivedTiles = function()
@@ -527,18 +572,13 @@ TileManager.prototype.processTile = function(tile,level)
 		var tile = tileRequest.tile;
 		if ( tile.frameNumber == this.frameNumber )
 		{
-			// Generate the tile using data from tileRequest
-			tile.generate( this.tilePool, tileRequest.image, tileRequest.elevations );
+			this.generateTile( tile, tileRequest );
 
-			// Now post renderers can generate their data on the new tile
-			for (var i=0; i < this.postRenderers.length; i++ )
+			// Store in cache if possible
+			if ( this.imageryProvider && this.imageryProvider.cacheLevel >= tile.level )
 			{
-				if ( this.postRenderers[i].generate )
-					this.postRenderers[i].generate(tile);
+				this.imageryProvider.storeInCache( tileRequest );
 			}
-			
-			this.numTilesGenerated++;
-			this.renderContext.requestFrame();
 		}
 		else
 		{
@@ -756,17 +796,11 @@ TileManager.prototype.render = function()
 		{
 			var tile = this.level0Tiles[n];
 			// Generate the tile
-			tile.generate( this.tilePool );
-
-			// Now post renderers can generate their data on the new tile
-			for (var i = 0; i < this.postRenderers.length; i++ )
-			{
-				if ( this.postRenderers[i].generate )
-					this.postRenderers[i].generate(tile);
-			}
+			this.generateTile( tile );
 		}
 
 		this.level0TilesLoaded = true;
+
 		this.parent.publish("baseLayersReady");
 	}
 

@@ -31,7 +31,8 @@
 		<ul>
 			<li>tilePixelSize : the image size for a tile, default is 256.</li>
 			<li>numberOfLevels : the maximum number of levels</li> 
-			<li>geoBound : the extent of the layer</li> 
+			<li>geoBound : the extent of the layer</li>
+			<li>cacheLevel : the maximum level of tiles to be cached</li>
 		</ul>
 */
 var RasterLayer = function( options )
@@ -45,10 +46,19 @@ var RasterLayer = function( options )
 	this.geoBound = options.geoBound || null;
 	this.coordinates = options.coordinates || null;
 	this.zIndex = options.zIndex || 0;
+
+	// Init cache
+	this.cacheLevel = options.hasOwnProperty('cacheLevel') ? options.cacheLevel : -1;
+	if ( this.cacheLevel != -1 && !localStorage.getItem(this.name) )
+	{
+		// Create cache space in local storage named after layer
+		localStorage.setItem(this.name, "{}");
+	}
 	
 	// Internal
 	this._overlay = true; 
 	this._ready = true; // Ready is use by TileManager
+	this._cache = JSON.parse(localStorage.getItem(this.name));
 }
 
 /**************************************************************************************************************/
@@ -97,6 +107,73 @@ RasterLayer.prototype._detach = function()
 	}
 	
 	BaseLayer.prototype._detach.call(this);
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Get tile request from cache for the given tile
+ *	@returns The image(TODO: handle elevations) corresponding to the given tile, null if doesn't exist in cache
+ */
+RasterLayer.prototype.getFromCache = function( tile )
+{
+	var tileId = this.getUrl(tile);
+	var tileInfo = this._cache[tileId];
+	if ( tileInfo )
+	{
+		var image = new Image();
+		image.src = tileInfo.dataUrl;
+		image.dataType = "byte";
+		return {
+			image: image,
+			elevations: tileInfo.elevations
+		};
+	}
+	else
+	{
+		return null;
+	}
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Internal method to generate data url from HTML image object
+ */
+var _createDataURL = function( image )
+{
+	var imgCanvas = document.createElement("canvas"),
+	imgContext = imgCanvas.getContext("2d");
+
+	// Make sure canvas is as big as the picture
+	imgCanvas.width = image.width;
+	imgCanvas.height = image.height;
+
+	// Draw image into canvas element
+	imgContext.drawImage(image, 0, 0, image.width, image.height);
+
+	// Save image as a data URL
+	return imgCanvas.toDataURL("image/png");
+}
+
+/**************************************************************************************************************/
+
+/**
+ *	Store tile request in cache
+ */
+RasterLayer.prototype.storeInCache = function( tileRequest )
+{
+	var tile = tileRequest.tile;
+	var tileId = this.getUrl(tile);
+	this._cache[tileId] = {
+		dataUrl: _createDataURL(tileRequest.image),
+		elevations: tileRequest.elevations
+	};
+	console.log("Stored for " + tileRequest.image.src);
+
+	// Update local storage with new cache
+	localStorage.setItem(this.name, JSON.stringify(this._cache));
+	
 }
 
 /**************************************************************************************************************/
