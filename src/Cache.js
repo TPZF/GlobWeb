@@ -21,11 +21,11 @@ define(function() {
 
 /**
  *	Cache storing <RasterLayer> tile requests in browser's local storage
+ *	Due to performance reasons, it's recommended to use it only for tiles of level 0
  *	@param options
  *		<ul>
  *			<li>layer: Layer which will contain the given cache(required)</li>
  *			<li>cacheLevel: the maximum level of tiles to be cached</li>
- *			<li>maxCacheSize: the number of tile request to be cached(work in progress..)</li>
  *		</ul>
  */
 var Cache = function(options) {
@@ -33,18 +33,23 @@ var Cache = function(options) {
 	this.layer = options.layer;
 
 	this.cacheLevel = options.hasOwnProperty('cacheLevel') ? options.cacheLevel : 1;
-	this._maxCacheSize = options.hasOwnProperty('maxCacheSize') ? options.cacheLevel : 9;
 
 	if ( !localStorage.getItem(this.layer.name) )
 	{
 		// Create cache space in local storage named after layer
-		localStorage.setItem(this.layer.name, JSON.stringify({
-			length: 0
-		}));
+		localStorage.setItem(this.layer.name, JSON.stringify({}));
 	}
 
-	this._cache = JSON.parse(localStorage.getItem(this.layer.name));
+	this._cacheMap = JSON.parse(localStorage.getItem(this.layer.name));
+
+	this.imgCanvas = document.createElement("canvas");
+	// Make sure canvas is as big as layer requests
+	this.imgCanvas.width = options['tilePixelSize'] || 256;
+	this.imgCanvas.height = options['tilePixelSize'] || 256;
+
+	this.imgContext = this.imgCanvas.getContext("2d");
 }
+
 
 /**************************************************************************************************************/
 
@@ -58,7 +63,7 @@ Cache.prototype.getFromCache = function( tile )
 	if ( this.cacheLevel >= tile.level )
 	{
 		var tileId = this.layer.getUrl(tile);
-		var tileInfo = this._cache[tileId];
+		var tileInfo = this._cacheMap[tileId];
 		if ( tileInfo )
 		{
 			// Update access info
@@ -81,20 +86,13 @@ Cache.prototype.getFromCache = function( tile )
 /**
  *	Internal method to generate data url from HTML image object
  */
-var _createDataURL = function( image )
+Cache.prototype._createDataURL = function( image )
 {
-	var imgCanvas = document.createElement("canvas"),
-	imgContext = imgCanvas.getContext("2d");
-
-	// Make sure canvas is as big as the picture
-	imgCanvas.width = image.width;
-	imgCanvas.height = image.height;
-
 	// Draw image into canvas element
-	imgContext.drawImage(image, 0, 0, image.width, image.height);
+	this.imgContext.drawImage(image, 0, 0, image.width, image.height);
 
 	// Save image as a data URL
-	return imgCanvas.toDataURL("image/png");
+	return this.imgCanvas.toDataURL("image/png");
 };
 
 /**************************************************************************************************************/
@@ -108,42 +106,15 @@ Cache.prototype.storeInCache = function( tileRequest )
 	if ( this.cacheLevel >= tile.level )
 	{
 		var tileId = this.layer.getUrl(tile);
-		this._cache[tileId] = {
-			dataUrl: _createDataURL(tileRequest.image),
+		this._cacheMap[tileId] = {
+			dataUrl: this._createDataURL(tileRequest.image),
 			elevations: tileRequest.elevations,
 			lastAccess: Date.now()
 		};
 		console.log("Stored for " + tileRequest.image.src);
 
-		this._cache.length++;
-
-		// Draft to purge some cached requests
-		// if ( this._maxCacheSize < this._cache.length )
-		// {
-		// 	var keys = [];
-		// 	// Purge the least accessed request
-		// 	for ( var x in this._cache )
-		// 	{
-		// 		var lastAccess = this._cache[x].lastAccess;
-		// 		if ( lastAccess ) // To avoid "length" property
-		// 		{
-		// 			keys.push(this._cache[x]);
-		// 		}
-		// 	}
-
-		// 	keys.sort(function(a,b){
-		// 		return a.lastAccess - b.lastAccess;
-		// 	});
-
-		// 	while( this._maxCacheSize < keys.length )
-		// 	{
-		// 		console.log("deleting: " + this._cache[0]);
-		// 		delete this._cache[keys[0]];
-		// 	}
-		// }
-
 		// Update local storage with new cache
-		localStorage.setItem(this.layer.name, JSON.stringify(this._cache));
+		localStorage.setItem(this.layer.name, JSON.stringify(this._cacheMap));
 	}
 };
 
