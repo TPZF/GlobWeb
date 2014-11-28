@@ -39,6 +39,49 @@ Utils.inherits(TiledVectorRenderable,LineStringRenderable);
 
 /**************************************************************************************************************/
 
+/**************************************************************************************************************/
+
+/** 
+  Check if a geometry crosses the date line
+*/
+LineStringRenderable.prototype._fixDateLine = function( tile, coords ) 
+{		
+	var newCoords = [];
+	var lines = [ newCoords ]
+	for ( var n = 0; n < coords.length-1; n++) {
+
+		newCoords.push( coords[n] );
+		
+		var x1 = coords[n][0];
+		var y1 = coords[n][1];
+		var x2 = coords[n+1][0];
+		var y2 = coords[n+1][1];
+		
+		if ( Math.abs(x2 - x1) > 180 ) 
+		{
+			if ( x1 < 0 ) {
+				x1 += 360;
+			}
+			if ( x2 < 0 ) {
+				x2 += 360;
+			}
+			
+			var t = (180 - x1) / (x2 - x1);
+			if ( t > 0 && t < 1) {
+				var y = y1 + t * (y2 - y1);
+				var x = coords[n][0] > 0 ? 180 : -180;
+				newCoords.push( [x,y] );
+				newCoords = [ [-x,y] ];
+				lines.push( newCoords );
+			}
+		}
+	}
+	
+	newCoords.push( coords[0] );
+	
+	return lines;
+};
+
 /**
  * Build vertices and indices from the coordinates.
  * Clamp a line string on a tile
@@ -47,17 +90,28 @@ LineStringRenderable.prototype.buildVerticesAndIndices = function( tile, coords 
 {
 	if ( coords.length == 0 )
 		return;
-
+		
 	// Fix date line for coordinates first
 	var coordinates = this._fixDateLine( tile, coords );
-		
+	
+	for ( var i = 0; i < coordinates.length; i++ ) {
+		this._buildVerticesAndIndices( tile, coordinates[i] );
+	}
+}
+
+/**
+ * Build vertices and indices from the coordinates.
+ * Clamp a line string on a tile
+ */
+LineStringRenderable.prototype._buildVerticesAndIndices = function( tile, coords )
+{		
 	var size = tile.config.tesselation;
 	var vs = tile.config.vertexSize;
 	
 	// Convert lon/lat coordinates to tile coordinates (between [0,size-1] inside the tile)
 	var tileCoords = tile.lonlat2tile(coords);
 
-	for ( var i = 0; i < coordinates.length - 1; i++ )
+	for ( var i = 0; i < coords.length - 1; i++ )
 	{
 		var u1 = tileCoords[i][0];
 		var v1 = tileCoords[i][1];

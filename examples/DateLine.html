@@ -31,7 +31,20 @@ require(['../src/GlobWeb'], function (GlobWeb)
 											[179.34, 70.2] ] ]
 							}
 				};
-	vectorLayer.addFeature( feature );
+
+	var feature2 = { type: "Feature",
+					geometry: { type: "Polygon",
+							coordinates: [ [ 	
+[125.57222222222222,70.60583333333332],
+[134.93055555555554,73.66194444444444],
+[-45.76305555555555,70.09138888888889],
+[4.3075,67.63944444444445],
+[125.57222222222222,70.60583333333332] ] ]
+							}
+				};
+
+	vectorLayer.addFeature( feature2 );
+
 	globe.addLayer( vectorLayer );
 });
 

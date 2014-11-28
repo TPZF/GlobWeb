@@ -129,57 +129,6 @@ TiledVectorRenderable.prototype.buildChildrenIndices = function( parent, index )
 	}
 }
 
-/**************************************************************************************************************/
-
-/** 
-  Check if a geometry crosses the date line
-*/
-TiledVectorRenderable.prototype._fixDateLine = function( tile, coords ) 
-{		
-	var crossDateLine = false;
-	var startLon = coords[0][0];
-	for ( var i = 1; i < coords.length && !crossDateLine; i++) {
-		var deltaLon = Math.abs( coords[i][0] - startLon );
-		if ( deltaLon > 180 ) {
-			// DateLine!
-			crossDateLine =  true;
-		}
-	}
-	
-	if ( crossDateLine )
-	{
-		var fixCoords = [];
-		
-		if ( tile.geoBound.west < 0.0 )
-		{
-			// Ensure coordinates are always negative
-			for ( var n = 0; n < coords.length; n++) {
-				if ( coords[n][0] > 0 ) {
-					fixCoords[n] = [ coords[n][0] - 360, coords[n][1] ];
-				} else {
-					fixCoords[n] = [ coords[n][0], coords[n][1] ];
-				}
-			}
-		}
-		else
-		{
-			// Ensure coordinates are always positive
-			for ( var n = 0; n < coords.length; n++) {
-				if ( coords[n][0] < 0 ) {
-					fixCoords[n] = [ coords[n][0] + 360, coords[n][1] ];
-				} else {
-					fixCoords[n] = [ coords[n][0], coords[n][1] ];
-				}
-			}
-		}
-		
-		return fixCoords;
-	}
-	else
-	{
-		return coords;
-	}
-};
 
 /**************************************************************************************************************/
 
