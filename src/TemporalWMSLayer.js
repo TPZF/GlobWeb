@@ -158,9 +158,12 @@ TemporalWMSLayer.prototype.start = function()
 TemporalWMSLayer.prototype.stop = function()
 {
 	this.isPaused = false;
-	this.animation.onstopCallback = null;
-	this.unsubscribe("animation:unpaused", this.animationUnpaused);
-	this.unsubscribe("animation:paused", this.animationPaused);
+	if ( this.animation )
+	{
+		this.animation.onstopCallback = null;
+		this.unsubscribe("animation:unpaused", this.animationUnpaused);
+		this.unsubscribe("animation:paused", this.animationPaused);
+	}
 }
 
 /**************************************************************************************************************/

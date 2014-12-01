@@ -130,7 +130,7 @@ RasterOverlayRenderable.prototype.generateChild = function( tile )
 			if ( rd )
 			{
 				var cr = rd.getRenderable(this.bucket);
-				if ( cr && !cr.ownTextures.length > cr.nbTexturesToRender - 1 )
+				if ( cr && !(cr.ownTextures.length > cr.nbTexturesToRender - 1) )
 				{
 					cr.updateTextureFromParent( this );
 					cr.updateChildrenTexture();

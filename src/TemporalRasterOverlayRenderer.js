@@ -216,6 +216,7 @@ TemporalRasterOverlayRenderer.prototype.addOverlay = function( overlay )
 				{
 					tp.disposeGLTexture(renderable.ownTextures[0]);
 					renderable.ownTextures.splice(0,1);
+					renderable.updateChildrenTexture();
 				}
 
 				// Force renderable to continue texture loading
@@ -253,7 +254,7 @@ TemporalRasterOverlayRenderer.prototype.addOverlayToTile = function( tile, bucke
 	renderable.tile = tile;
 	tile.extension.renderer.renderables.push( renderable );
 	
-	if ( parentRenderable && parentRenderable.textures.length > 0 )
+	if ( parentRenderable && parentRenderable.textures.length > parentRenderable.nbTexturesToRender - 1 )
 	{
 		renderable.updateTextureFromParent( parentRenderable );
 	}
