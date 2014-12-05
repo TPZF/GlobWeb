@@ -522,7 +522,7 @@ TileManager.prototype.processTile = function(tile,level)
  */
 TileManager.prototype.generateTile = function(tile, tileRequest)
 {
-	// Generate the tile using data from tileRequest
+	// Generate the tile using data from tileRequest if defined
 	tile.generate( this.tilePool, tileRequest.image, tileRequest.elevations );
 
 	// Now post renderers can generate their data on the new tile
@@ -766,8 +766,8 @@ TileManager.prototype.render = function()
 		for (var n = 0; n < this.level0Tiles.length; n++ )
 		{
 			var tile = this.level0Tiles[n];
-			// Generate the tile
-			this.generateTile( tile );
+			// Generate the tile without tile request
+			this.generateTile( tile, {} );
 		}
 
 		this.level0TilesLoaded = true;
