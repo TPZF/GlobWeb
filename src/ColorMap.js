@@ -18,7 +18,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
-define([], function() {
+define(["./Numeric"], function(Numeric) {
 
 /**************************************************************************************************************/
 var transferFonctions = {
@@ -334,6 +334,48 @@ function _textureFromPixelArray(gl, dataArray, format, dataType, width, height) 
 }
 
 return {
+
+	/**
+	 *	Create custom colormap with equidistant intervals
+	 *
+	 *	@param name Colormap name
+	 *	@param colors The array of colors defining the colormap(must have length at least >=2)
+	 */
+	addCustomColormap : function(name, colors)
+	{
+		if ( colors.length < 2 )
+		{
+			console.error("Colors length must be >= 2");
+			return null;
+		}
+		
+		var colormapSize = 256;	
+		var colormap = {
+			red: [],
+			green: [],
+			blue: []
+		};
+		
+		var nbIntervals = colors.length-1;
+		for ( var i=0; i<nbIntervals; i++ )
+		{
+			var c1 = colors[i];
+			var c2 = colors[i+1];
+
+			var intervalLength = colormapSize / (colors.length - 1);
+			var start = colormap.red.length;
+			var end = Math.floor((i+1)*intervalLength);
+			for ( var j = start; j < end; j++ )
+			{
+				colormap.red.push( Numeric.lerp( j/end, c1[0], c2[0] ));
+				colormap.green.push( Numeric.lerp( j/end, c1[1], c2[1] ));
+				colormap.blue.push( Numeric.lerp( j/end, c1[2], c2[2] ));
+			}
+		}
+
+		// Add to colormaps object
+		colormaps[name] = colormap;
+	},
 
 	/**
 	 * Generate colormap
