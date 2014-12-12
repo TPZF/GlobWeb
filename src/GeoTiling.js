@@ -167,9 +167,9 @@ GeoTiling.prototype.getOverlappedLevelZeroTiles = function(geometry)
 	var bbox = _getBBox(geometry);
 	
 	var i1 = this._lon2LevelZeroIndex(bbox[0]);
- 	var j1 = this._lat2LevelZeroIndex(bbox[1]);
+ 	var j1 = this._lat2LevelZeroIndex(bbox[3]);
 	var i2 = this._lon2LevelZeroIndex(bbox[2]);
- 	var j2 = this._lat2LevelZeroIndex(bbox[3]);
+ 	var j2 = this._lat2LevelZeroIndex(bbox[1]);
 	
 	var tileIndices = [];
 	
