@@ -17,7 +17,7 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define (['./Tile', './GeoBound'], function(Tile,GeoBound) {
+ define (['./Tile', './GeoBound', './GeoTiling'], function(Tile,GeoBound,GeoTiling) {
 
 /**************************************************************************************************************/
 
@@ -27,7 +27,12 @@
 var MercatorTiling = function(startLevel)
 {
 	this.startLevel = startLevel;
+	this.level0NumTilesX = Math.pow(2,this.startLevel);
 }
+
+/** inherits from geotiling */
+MercatorTiling.prototype = new GeoTiling;
+
 
 var lon2merc = function(lon) {
 	return lon * 20037508.34 / 180;
@@ -75,19 +80,24 @@ MercatorTiling.prototype.generateLevelZeroTiles = function(config)
 /** 
 	Locate a level zero tile
  */
-MercatorTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
-{
+MercatorTiling.prototype._lon2LevelZeroIndex = function(lon)
+{	
 	var x = (lon + 180) / 360; 
+	return Math.min(  this.level0NumTilesX-1, Math.floor( x * this.level0NumTilesX ) );
+}
+
+/**************************************************************************************************************/
+
+/** 
+	Locate a level zero tile
+ */
+MercatorTiling.prototype._lat2LevelZeroIndex = function(lat)
+{	
 	var sinLatitude = Math.sin(lat * Math.PI / 180);
 	var y = 0.5 - Math.log((1 + sinLatitude) / (1 - sinLatitude)) / (4 * Math.PI);
-
-	var level0NumTiles = Math.pow(2,this.startLevel);
-	
-	var i = Math.floor( x * level0NumTiles ) % level0NumTiles;
-	var j = Math.floor( y * level0NumTiles ) % level0NumTiles;
-	
-	return j * level0NumTiles + i;
+	return Math.min(  this.level0NumTilesX-1, Math.floor( y * this.level0NumTilesX ) );
 }
+
 
 /**************************************************************************************************************/
 

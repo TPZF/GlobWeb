@@ -14,8 +14,10 @@ require(['../src/GlobWeb'], function (GlobWeb)
 
 	var navigation = new GlobWeb.Navigation(globe);
 
-	var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble,esat" });
-	globe.setBaseImagery( blueMarbleLayer );
+	//var blueMarbleLayer = new GlobWeb.WMSLayer({ baseUrl: "http://demonstrator.telespazio.com/wmspub", layers: "BlueMarble,esat" });
+	//globe.setBaseImagery( blueMarbleLayer );
+	var bingLayer = new GlobWeb.BingLayer({imageSet:"AerialWithLabels", key: "Ar7-_U1iwNtChqq64tAQsOfO8G7FwF3DabvgkQ1rziC4Z9zzaKZlRDWJTKTOPBPV"});
+	globe.setBaseImagery( bingLayer );
 	
 	var vectorLayer = new GlobWeb.VectorLayer();
 	var feature = { type: "Feature",

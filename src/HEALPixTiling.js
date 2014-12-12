@@ -69,6 +69,78 @@ HEALPixTiling.prototype.generateLevelZeroTiles = function( config, tilePool )
 	return level0Tiles;
 }
 
+// Get all the coordinates of a geometry
+var _getGeometryCoordinates = function( geometry )
+{
+	var coords;
+	switch ( geometry.type )
+	{
+	case "Point":
+		coords = [];
+		coords.push( geometry.coordinates );
+		break;
+	case "MultiPoint":
+	case "LineString":
+		coords = geometry.coordinates;
+		break;
+	case "MultiLineString":
+		coords = [];
+		for ( var n = 0; n < geometry.coordinates.length; n++ )
+		{
+			coords = coords.concat( geometry.coordinates[n] );
+		}
+		break;
+	case "Polygon":
+		coords = geometry.coordinates[0];
+		break;
+	case "MultiPolygon":
+		coords = [];
+		for ( var n = 0; n < geometry.coordinates.length; n++ )
+		{
+			coords = coords.concat( geometry.coordinates[n][0] );
+		}
+		break;
+	case "GeometryCollection":
+		coords = [];
+		for ( var n = 0; n < geometry.geometries.length; n++ )
+		{
+			coords = coords.concat( _getGeometryCoordinates(geometry.geometries[n]) );
+		}
+		break;
+	}
+	return coords;
+}
+
+/**************************************************************************************************************/
+
+/** 
+	Get the level zero tiles that overlaps the given geometry
+ */
+HEALPixTiling.prototype.getOverlappedLevelZeroTiles = function( geometry )
+{	
+	var tileIndices = [];
+
+	var coords = _getGeometryCoordinates( geometry );
+	if ( !coords )
+	{
+		console.log("Invalid geometry type or not supported.");
+		return tileIndices;
+	}
+		
+	var indexMap = {};
+	for ( var i = 0; i < coords.length; i++ )
+	{
+		var index = this.lonlat2LevelZeroIndex( coords[i][0], coords[i][1] );
+		if ( !indexMap[index] )
+		{
+			indexMap[ index ] = true;
+			tileIndices.push( index );
+		}
+	}
+	
+	return tileIndices;
+}
+
 /**************************************************************************************************************/
 
 /** 

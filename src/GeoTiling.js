@@ -60,6 +60,92 @@ GeoTiling.prototype.generateLevelZeroTiles = function(config)
 	return level0Tiles;
 }
 
+
+/**
+ * Compute the bbox of a feature
+ */
+var _getBBox = function(geometry) {
+
+	// Get the coordinates
+	var coords;
+	var numOuterRings = 1;
+	var checkDateLine = true;
+	switch (geometry.type) {
+		case "Point":
+			coords = geometry.coordinates;
+			return [ coords[0], coords[1], coords[0], coords[1] ];
+		case "MultiPoint":
+			coords = geometry.coordinates;
+			checkDateLine = false;
+			break;
+		case "Polygon":
+			coords = geometry.coordinates[0];
+			break;
+		case "MultiPolygon":
+			coords = geometry.coordinates[0][0];
+			break;
+		case "LineString":
+			coords = geometry.coordinates;
+			break;
+		case "MultiLineString":
+			coords = geometry.coordinates[0];
+			break;
+	}
+	
+	if (!coords)
+		return;
+
+	
+	var minX = coords[0][0];
+	var minY = coords[0][1];
+	var maxX =  coords[0][0];
+	var maxY =  coords[0][1];
+	
+	for ( var j = 0; j < numOuterRings; j++ ) {
+		switch (geometry.type) {
+			case "MultiPolygon":
+				coords = geometry.coordinates[j][0];
+				break;
+			case "MultiLineString":
+				coords = geometry.coordinates[j];
+				break;
+		}
+		for ( var i = 0;  i < coords.length; i++ )	{
+			minX = Math.min( minX, coords[i][0] );	
+			minY = Math.min( minY, coords[i][1] );	
+			maxX = Math.max( maxX, coords[i][0] );	
+			maxY = Math.max( maxY, coords[i][1] );	
+			
+			// Check if the coordinates cross dateline
+			if ( checkDateLine && i > 0 && Math.abs(coords[i-1][0] - coords[i][0]) > 180 ) {
+				minX = -180;
+				maxX = 180;
+			}
+		}
+	}
+	
+	return [ minX, minY, maxX, maxY ];
+};
+
+/**************************************************************************************************************/
+
+/** 
+	Locate a level zero tile
+ */
+GeoTiling.prototype._lon2LevelZeroIndex = function(lon)
+{	
+	return Math.min(  this.level0NumTilesX-1, Math.floor( (lon + 180) * this.level0NumTilesX / 360 ) );
+}
+
+/**************************************************************************************************************/
+
+/** 
+	Locate a level zero tile
+ */
+GeoTiling.prototype._lat2LevelZeroIndex = function(lat)
+{	
+	return Math.min(  this.level0NumTilesY-1, Math.floor( (90 - lat) * this.level0NumTilesY / 180 ) );
+}
 /**************************************************************************************************************/
 
 /** 
@@ -67,10 +153,33 @@ GeoTiling.prototype.generateLevelZeroTiles = function(config)
  */
 GeoTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
 {	
-	var i = Math.floor( (lon + 180) * this.level0NumTilesX / 360 ) % this.level0NumTilesX;
- 	var j = Math.floor( (90 - lat) * this.level0NumTilesY / 180 ) % this.level0NumTilesY;
-	return j * this.level0NumTilesX + i;
+	return this._lat2LevelZeroIndex(lat) * this.level0NumTilesX + this._lon2LevelZeroIndex(lon);
+}
 
+
+/**************************************************************************************************************/
+
+/** 
+	Get the overlapped tile by the given geometry
+ */
+GeoTiling.prototype.getOverlappedLevelZeroTiles = function(geometry)
+{
+	var bbox = _getBBox(geometry);
+	
+	var i1 = this._lon2LevelZeroIndex(bbox[0]);
+ 	var j1 = this._lat2LevelZeroIndex(bbox[1]);
+	var i2 = this._lon2LevelZeroIndex(bbox[2]);
+ 	var j2 = this._lat2LevelZeroIndex(bbox[3]);
+	
+	var tileIndices = [];
+	
+	for ( var j = j1; j <= j2; j++ ) {
+		for ( var i = i1; i <= i2; i++ ) {
+			tileIndices.push( j * this.level0NumTilesX + i );
+		}
+	}
+
+	return tileIndices;
 }
 
 /**************************************************************************************************************/

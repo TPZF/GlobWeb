@@ -115,7 +115,7 @@ VectorRenderer.prototype.addGeometry = function(layer, geometry, style)
 	var bucket = this.getOrCreateBucket(layer, geometry, style);
 	geometry._bucket = bucket;
 	
-	var tileIndices = this.maxTilePerGeometry > 0 ? this.tileManager.getOverlappedLevelZeroTiles(geometry) : null;
+	var tileIndices = this.maxTilePerGeometry > 0 ? this.tileManager.tiling.getOverlappedLevelZeroTiles(geometry) : null;
 	if ( tileIndices && tileIndices.length < this.maxTilePerGeometry )
 	{
 		// Add geometry to each tile in range
