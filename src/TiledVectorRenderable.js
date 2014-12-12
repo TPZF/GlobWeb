@@ -134,31 +134,36 @@ TiledVectorRenderable.prototype.buildChildrenIndices = function( parent, index )
 
 /**
  *	Add a feature to the renderable
+ *	@return	Boolean indicating if geometry intersects the given tile
  */
 TiledVectorRenderable.prototype.build = function( geometry, tile )
 {
 	this.tile = tile;
-						
-	var coords = geometry['coordinates'];
-	switch (geometry['type'])
+	var tileInRange = this.bucket.layer.minLevel <= tile.level && this.bucket.layer.maxLevel > tile.level;
+	if ( tileInRange )
 	{
-		case "LineString":
-			this.buildVerticesAndIndices( tile, coords );
-			break;
-		case "Polygon":
-			for ( var i = 0; i < coords.length; i++ )
-				this.buildVerticesAndIndices( tile, coords[i] );
-			break;
-		case "MultiLineString":
-			for ( var i = 0; i < coords.length; i++ )
-				this.buildVerticesAndIndices( tile, coords[i] );
-			break;
-		case "MultiPolygon":
-			for ( var j = 0; j < coords.length; j++ )
-				for ( var i = 0; i < coords[j].length; i++ )
-					this.buildVerticesAndIndices( tile, coords[j][i] );
-			break;
+		var coords = geometry['coordinates'];
+		switch (geometry['type'])
+		{
+			case "LineString":
+				this.buildVerticesAndIndices( tile, coords );
+				break;
+			case "Polygon":
+				for ( var i = 0; i < coords.length; i++ )
+					this.buildVerticesAndIndices( tile, coords[i] );
+				break;
+			case "MultiLineString":
+				for ( var i = 0; i < coords.length; i++ )
+					this.buildVerticesAndIndices( tile, coords[i] );
+				break;
+			case "MultiPolygon":
+				for ( var j = 0; j < coords.length; j++ )
+					for ( var i = 0; i < coords[j].length; i++ )
+						this.buildVerticesAndIndices( tile, coords[j][i] );
+				break;
+		}
 	}
+	return tile.geoBound.intersectsGeometry(geometry);
 }
 
 /**************************************************************************************************************/

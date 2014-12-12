@@ -319,6 +319,7 @@ TileManager.prototype.visitTiles = function( callback )
 		for ( var i = 0; i < this.level0Tiles.length; i++ )
 		{
 			var tile = this.level0Tiles[i];
+
 			var tileIsLoaded = tile.state == Tile.State.LOADED;
 			
 			// Update frame number
@@ -445,6 +446,27 @@ TileManager.prototype.processTile = function(tile,level)
 /**************************************************************************************************************/
 
 /**
+ 	Generate tile
+ */
+TileManager.prototype.generateTile = function(tile, tileRequest)
+{
+	// Generate the tile using data from tileRequest if defined
+	tile.generate( this.tilePool, tileRequest.image, tileRequest.elevations );
+
+	// Now post renderers can generate their data on the new tile
+	for (var i=0; i < this.postRenderers.length; i++ )
+	{
+		if ( this.postRenderers[i].generate )
+			this.postRenderers[i].generate( tile );
+	}
+	
+	this.numTilesGenerated++;
+	this.renderContext.requestFrame();
+}
+
+/**************************************************************************************************************/
+
+/**
 	Generate tiles
  */
  TileManager.prototype.generateReceivedTiles = function()
@@ -455,18 +477,7 @@ TileManager.prototype.processTile = function(tile,level)
 		var tile = tileRequest.tile;
 		if ( tile.frameNumber == this.frameNumber )
 		{
-			// Generate the tile using data from tileRequest
-			tile.generate( this.tilePool, tileRequest.image, tileRequest.elevations );
-
-			// Now post renderers can generate their data on the new tile
-			for (var i=0; i < this.postRenderers.length; i++ )
-			{
-				if ( this.postRenderers[i].generate )
-					this.postRenderers[i].generate(tile);
-			}
-			
-			this.numTilesGenerated++;
-			this.renderContext.requestFrame();
+			this.generateTile( tile, tileRequest );
 		}
 		else
 		{
@@ -683,18 +694,12 @@ TileManager.prototype.render = function()
 		for (var n = 0; n < this.level0Tiles.length; n++ )
 		{
 			var tile = this.level0Tiles[n];
-			// Generate the tile
-			tile.generate( this.tilePool );
-
-			// Now post renderers can generate their data on the new tile
-			for (var i = 0; i < this.postRenderers.length; i++ )
-			{
-				if ( this.postRenderers[i].generate )
-					this.postRenderers[i].generate(tile);
-			}
+			// Generate the tile without tile request
+			this.generateTile( tile, {} );
 		}
 
 		this.level0TilesLoaded = true;
+
 		this.parent.publish("baseLayersReady");
 	}
 

@@ -642,7 +642,7 @@ RasterOverlayRenderer.prototype.render = function( renderables, start, end )
 		
 		// Bind the vertex buffer
 		gl.bindBuffer(gl.ARRAY_BUFFER, renderable.tile.vertexBuffer);
-		gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, 0, 0);
+		gl.vertexAttribPointer(program.attributes['vertex'], 3, gl.FLOAT, false, 4*renderable.tile.config.vertexSize, 0);
 		
 		// Bind the index buffer only if different (index buffer is shared between tiles)
 		var indexBuffer = ( renderable.tile.state == Tile.State.LOADED ) ? this.tileManager.tileIndexBuffer.getSolid() : this.tileManager.tileIndexBuffer.getSubSolid(renderable.tile.parentIndex);

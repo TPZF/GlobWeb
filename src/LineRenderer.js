@@ -53,9 +53,17 @@ var LineRenderer = function(globe)
 	{\n\
 		// 0.5 is a time scale parameter, parametrize it ?\n\
 		float m = speed * time * 0.5;\n\
-		float u = s/gradientLength + m;\n\
+		float u = (-s+m)/gradientLength;\n\
 		gl_FragColor.rgb = texture2D(colorTexture, vec2(u,0.)).rgb;\n\
-		gl_FragColor.a = 1.0;\n\
+		// TODO: handle appereance of rivers\n\
+		if ( s < m )\n\
+		{\n\
+			gl_FragColor.a = 1.0;\n\
+		}\n\
+		else\n\
+		{\n\
+			gl_FragColor.a = 0.0;\n\
+		}\n\
 	}\n\
 	";
 
@@ -133,6 +141,8 @@ var LineRenderable = function(bucket)
 	mat4.identity(this.matrix);
 }
 
+/**************************************************************************************************************/
+
 Utils.inherits(BatchRenderable,LineRenderable);
 
 /**************************************************************************************************************/
@@ -166,15 +176,17 @@ LineRenderable.prototype.build = function(geometry)
 			this.vertices[offset] = currentPoint[0];
 			this.vertices[offset+1] = currentPoint[1];
 			this.vertices[offset+2] = currentPoint[2];
-
 			// Compute s(length) between two points
 			if ( i > 0 )
 			{
-				s += vec3.dist(currentPoint,previousPoint);
-				var tmp = previousPoint;
-				previousPoint = currentPoint;
-				currentPoint = tmp;
+				s += vec3.dist(currentPoint, previousPoint);
 			}
+			
+			// Update previous point(do it by swapping with current cuz it's the same object)
+			var tmp = previousPoint;
+			previousPoint = currentPoint;
+			currentPoint = tmp;
+
 			this.vertices[offset+3] = s;
 			offset += 4;
 		}
@@ -185,6 +197,8 @@ LineRenderable.prototype.build = function(geometry)
 			this.lineIndices.push( lastIndex + i, lastIndex + i + 1 );
 		}
 	}
+	// Geometry is always added contrary to tiled renderables
+	return true;
 }
 
 /**************************************************************************************************************/
@@ -267,9 +281,9 @@ LineRenderer.prototype.render = function(renderables, start, end)
 
 		// Update uniforms
 		gl.uniform4f(this.program.uniforms["u_color"], style.strokeColor[0], style.strokeColor[1], style.strokeColor[2], style.strokeColor[3] * renderable.bucket.layer._opacity);
-		gl.uniform1f(this.program.uniforms["speed"], style.speed ? style.speed : 1.);
+		gl.uniform1f(this.program.uniforms["speed"], style.hasOwnProperty('speed') ? style.speed : 1.0);
 		gl.uniform1f(this.program.uniforms["time"], Date.now()/1000 - this.time);
-		gl.uniform1f(this.program.uniforms["gradientLength"], style.gradientLength ? style.gradientLength : 10.);
+		gl.uniform1f(this.program.uniforms["gradientLength"], style.hasOwnProperty('gradientLength') ? style.gradientLength : 10.0);
 
 		renderable.bindBuffers( renderContext );
 		

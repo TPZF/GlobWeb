@@ -17,8 +17,8 @@
  * along with GlobWeb. If not, see <http://www.gnu.org/licenses/>.
  ***************************************/
 
- define(['./Utils', './BaseLayer', './RasterOverlayRenderer' ], 
-	function(Utils, BaseLayer, RasterOverlayRenderer) {
+ define(['./Utils', './BaseLayer', './RasterOverlayRenderer', './Cache' ], 
+	function(Utils, BaseLayer, RasterOverlayRenderer, Cache) {
 
 /**************************************************************************************************************/
 
@@ -31,7 +31,8 @@
 		<ul>
 			<li>tilePixelSize : the image size for a tile, default is 256.</li>
 			<li>numberOfLevels : the maximum number of levels</li> 
-			<li>geoBound : the extent of the layer</li> 
+			<li>geoBound : the extent of the layer</li>
+			<li>cache : Object containing cache options</li>
 		</ul>
 */
 var RasterLayer = function( options )
@@ -45,6 +46,13 @@ var RasterLayer = function( options )
 	this.geoBound = options.geoBound || null;
 	this.coordinates = options.coordinates || null;
 	this.zIndex = options.zIndex || 0;
+
+	// Init cache if defined
+	if ( options.cache )
+	{
+		options.cache.layer = this;
+		this.cache = new Cache(options.cache);
+	}
 	
 	// Internal
 	this._overlay = true; 

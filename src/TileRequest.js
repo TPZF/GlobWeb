@@ -158,6 +158,7 @@ var TileRequest = function(tileManager)
 		// Request the elevation if needed
 		if ( tileManager.elevationProvider )
 		{
+			// TODO : handle the elevations coming from cache
 			_elevationLoaded = false;
 			_xhr.open("GET", tileManager.elevationProvider.getUrl(tile) );
 			_xhr.send();
@@ -172,13 +173,41 @@ var TileRequest = function(tileManager)
 			if (!_imageRequest)
 			{
 				_imageRequest = new ImageRequest({
-					successCallback: _handleLoadedImage,
+					successCallback: function() {
+						_handleLoadedImage();
+						if ( tileManager.imageryProvider.cache )
+						{
+							tileManager.imageryProvider.cache.storeInCache( self );
+						}
+					},
 					failCallback: _handleErrorImage,
 					abortCallback: _handleAbort
 				});
 			}
+			
+			// Check if the image isn't already loaded in cache
+			var cachedTileRequest;
+			if ( tileManager.imageryProvider.cache )
+			{
+				cachedTileRequest = cachedTileRequest = tileManager.imageryProvider.cache.getFromCache(tile);
+			}
+			
 			_imageLoaded = false;
-			_imageRequest.send( tileManager.imageryProvider.getUrl(tile) );
+			if ( cachedTileRequest )
+			{
+				_imageRequest.image = cachedTileRequest.image;
+				_handleLoadedImage();
+			}
+			else
+			{
+				// Tile not found in cache or cache isn't activated, send the request
+				_imageRequest.send( tileManager.imageryProvider.getUrl(tile) );
+			}
+
+		}
+		else
+		{
+			_imageLoaded = true;
 		}
 		
 		// Check if there is nothing to load
