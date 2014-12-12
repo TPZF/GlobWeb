@@ -30,10 +30,12 @@ var TileWireframeLayer = function( options )
 {
 	BaseLayer.prototype.constructor.call( this, options );
 	this.outline = (options && options['outline']) ? options['outline'] : false;
+	this.color = (options && options['color']) ? options['color'] : [1.,1.,1.];
 	this.globe = null;
 	this.program = null;
 	this.indexBuffer = null;
 	this.subIndexBuffer = [ null, null, null, null ];
+	this.zIndex = -1;
 }
 
 /**************************************************************************************************************/
@@ -143,10 +145,11 @@ TileWireframeLayer.prototype._attach = function( g )
 
 		var fragmentShader = "\
 		precision highp float; \n\
+		uniform vec3 color; \n\
 		uniform float alpha; \n\
 		void main(void)\n\
 		{\n\
-				gl_FragColor = vec4(1.0,1.0,1.0,alpha);\n\
+			gl_FragColor = vec4(color,alpha);\n\
 		}\n\
 		";
 		
@@ -197,6 +200,7 @@ TileWireframeLayer.prototype.render = function( tiles )
 		// Update uniforms for modelview matrix
 		mat4.multiply( rc.viewMatrix, tile.matrix, rc.modelViewMatrix );
 		gl.uniformMatrix4fv(this.program.uniforms["modelViewMatrix"], false, rc.modelViewMatrix);
+		gl.uniform3f(this.program.uniforms["color"], this.color[0], this.color[1], this.color[2] );
 		gl.uniform1f(this.program.uniforms["alpha"], this.opacity() );
 			
 		// Bind the vertex buffer
