@@ -68,7 +68,6 @@ var _getBBox = function(geometry) {
 
 	// Get the coordinates
 	var coords;
-	var numOuterRings = 1;
 	var checkDateLine = true;
 	switch (geometry.type) {
 		case "Point":
@@ -95,12 +94,12 @@ var _getBBox = function(geometry) {
 	if (!coords)
 		return;
 
-	
 	var minX = coords[0][0];
 	var minY = coords[0][1];
 	var maxX =  coords[0][0];
 	var maxY =  coords[0][1];
 	
+	var numOuterRings = (geometry.type == "MultiPolygon" || geometry.type == "MultiLineString" ? geometry.coordinates.length : 1);
 	for ( var j = 0; j < numOuterRings; j++ ) {
 		switch (geometry.type) {
 			case "MultiPolygon":
@@ -110,6 +109,7 @@ var _getBBox = function(geometry) {
 				coords = geometry.coordinates[j];
 				break;
 		}
+
 		for ( var i = 0;  i < coords.length; i++ )	{
 			minX = Math.min( minX, coords[i][0] );	
 			minY = Math.min( minY, coords[i][1] );	
