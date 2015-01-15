@@ -98,8 +98,24 @@ $('#GlobWebCanvas').mousemove(onMouseMove);
 $('#GlobWebCanvas').mouseup(onMouseUp);
 	
 $('#GlobWebCanvas').keypress( function() {
-	navigation.stop();
-	activated = !activated;
+
+		if (activated)
+		{
+			navigation.start();
+		}
+		else
+		{
+			navigation.stop();
+			feature = {
+				id: '0',
+				type: 'Feature',
+				geometry: {
+					type: 'Polygon',
+					coordinates: []
+				}
+			};
+		}
+		activated = !activated;
 	});
  });
 

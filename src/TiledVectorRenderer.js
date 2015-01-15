@@ -100,7 +100,11 @@ TiledVectorRenderer.prototype.render = function(renderables,start,end)
 		{
 			gl.uniform4f( this.program.uniforms["color"], currentStyle.fillColor[0], currentStyle.fillColor[1], currentStyle.fillColor[2], 
 				currentStyle.fillColor[3] * renderable.bucket.layer._opacity );
+				try  {
 			gl.drawElements( gl.TRIANGLES, renderable.triIndices.length, renderable.indexType, 0);
+			} catch (e) {
+				console.log(e);
+			}
 		}
 		
 		if ( renderable.lineIndices.length > 0 ) 
@@ -109,7 +113,11 @@ TiledVectorRenderer.prototype.render = function(renderables,start,end)
 			gl.uniform4f( this.program.uniforms["color"], currentStyle.strokeColor[0], currentStyle.strokeColor[1], currentStyle.strokeColor[2], 
 				currentStyle.strokeColor[3] * renderable.bucket.layer._opacity );
 			var size = renderable.indexType == gl.UNSIGNED_INT ? 4 : 2;
+			try  {
 			gl.drawElements( gl.LINES, renderable.lineIndices.length, renderable.indexType, renderable.triIndices.length * size);
+			} catch(e) {
+			console.log(e);
+			}
 		}
 	}
 
