@@ -275,7 +275,7 @@ Globe.prototype.getViewportGeoBound = function(transformCallback)
 		var t = ray.sphereIntersect( earthCenter, this.coordinateSystem.radius );
 		if ( t < 0.0 )
 			return null;
-		var pos3d = ray.computePoint();
+		var pos3d = ray.computePoint(t);
 		points[i] = this.coordinateSystem.from3DToGeo( pos3d );
 		if (transformCallback) 
 		{
