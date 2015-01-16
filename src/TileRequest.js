@@ -201,7 +201,7 @@ var TileRequest = function(tileManager)
 			else
 			{
 				// Tile not found in cache or cache isn't activated, send the request
-				_imageRequest.send( tileManager.imageryProvider.getUrl(tile) );
+				_imageRequest.send( tileManager.imageryProvider.getUrl(tile), tileManager.imageryProvider.crossOrigin );
 			}
 
 		}

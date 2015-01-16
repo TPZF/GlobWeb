@@ -36,10 +36,10 @@ var ImageRequest = function(options)
 /**
  *	Send image request
  */
-ImageRequest.prototype.send = function(url)
+ImageRequest.prototype.send = function(url,crossOrigin)
 {
 	this.image = new Image();
-	this.image.crossOrigin = '';
+	this.image.crossOrigin = crossOrigin;
 	this.image.dataType = "byte";
 
 	var self = this;

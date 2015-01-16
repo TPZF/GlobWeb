@@ -46,6 +46,7 @@ var RasterLayer = function( options )
 	this.geoBound = options.geoBound || null;
 	this.coordinates = options.coordinates || null;
 	this.zIndex = options.zIndex || 0;
+	this.crossOrigin = options.crossOrigin || 'anonymous';
 
 	// Init cache if defined
 	if ( options.cache )
