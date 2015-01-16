@@ -1,6 +1,6 @@
 ({
 	baseUrl: "../src",
-	name: "GlobWeb",
+	name: "GlobWeb.light",
 	out: "../build/generated/GlobWeb.min.js",
 	optimize: "uglify2",
 	onBuildWrite: function ( name, path, contents )
