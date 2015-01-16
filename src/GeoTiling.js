@@ -91,7 +91,7 @@ var _getBBox = function(geometry) {
 			break;
 	}
 	
-	if (!coords)
+	if (!coords || coords.length == 0)
 		return;
 
 	var minX = coords[0][0];
@@ -164,18 +164,21 @@ GeoTiling.prototype.lonlat2LevelZeroIndex = function(lon,lat)
  */
 GeoTiling.prototype.getOverlappedLevelZeroTiles = function(geometry)
 {
-	var bbox = _getBBox(geometry);
-	
-	var i1 = this._lon2LevelZeroIndex(bbox[0]);
- 	var j1 = this._lat2LevelZeroIndex(bbox[3]);
-	var i2 = this._lon2LevelZeroIndex(bbox[2]);
- 	var j2 = this._lat2LevelZeroIndex(bbox[1]);
-	
 	var tileIndices = [];
 	
-	for ( var j = j1; j <= j2; j++ ) {
-		for ( var i = i1; i <= i2; i++ ) {
-			tileIndices.push( j * this.level0NumTilesX + i );
+	var bbox = _getBBox(geometry);
+	if (bbox)
+	{
+		var i1 = this._lon2LevelZeroIndex(bbox[0]);
+		var j1 = this._lat2LevelZeroIndex(bbox[3]);
+		var i2 = this._lon2LevelZeroIndex(bbox[2]);
+		var j2 = this._lat2LevelZeroIndex(bbox[1]);
+		
+		
+		for ( var j = j1; j <= j2; j++ ) {
+			for ( var i = i1; i <= i2; i++ ) {
+				tileIndices.push( j * this.level0NumTilesX + i );
+			}
 		}
 	}
 
