@@ -161,6 +161,11 @@ var TileRequest = function(tileManager)
 			// TODO : handle the elevations coming from cache
 			_elevationLoaded = false;
 			_xhr.open("GET", tileManager.elevationProvider.getUrl(tile) );
+
+            // Set withCredentials property after "open": http://stackoverflow.com/questions/19666809/cors-withcredentials-support-limited?answertab=votes#tab-top
+            var useCredentials = tileManager.elevationProvider.crossOrigin == 'use-credentials';
+            _xhr.withCredentials = useCredentials;
+
 			_xhr.send();
 		}
 		else
