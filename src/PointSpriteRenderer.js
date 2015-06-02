@@ -91,8 +91,9 @@ Renderable.prototype.add = function(geometry)
 	this.geometry2vb[ geometry.gid ] = this.vertices.length;
 	// TODO: Find a better way to access to coordinate system
 	var pt = this.bucket.renderer.globe.coordinateSystem.fromGeoTo3D( geometry['coordinates'] );
-	// Hack : push away the point, only works for AstroWeb, sufficient for now
-	this.vertices.push( 0.99 * pt[0], 0.99 * pt[1], 0.99 * pt[2] );
+	// Hack : push away/abroad the point depending on globe type
+	var scale = this.bucket.renderer.globe.isSky ? 0.99 : 1.01;
+	this.vertices.push( scale * pt[0], scale * pt[1], scale * pt[2] );
 	this.vertexBufferDirty = true;
 	
 	return true;
@@ -180,7 +181,7 @@ PointSpriteRenderer.prototype._buildTextureFromImage = function(bucket,image)
  */
 PointSpriteRenderer.prototype.canApply = function(type,style)
 {
-	return type == "Point"&& !style.label; 
+	return type == "Point" && !style.label; 
 }
 
 /**************************************************************************************************************/
@@ -272,7 +273,7 @@ PointSpriteRenderer.prototype.render = function(renderables,start,end)
 	var gl = renderContext.gl;
 	
 	// Setup states
-	gl.disable(gl.DEPTH_TEST);
+	//gl.disable(gl.DEPTH_TEST);
 	gl.enable(gl.BLEND);
 	gl.blendEquation(gl.FUNC_ADD);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -325,7 +326,7 @@ PointSpriteRenderer.prototype.render = function(renderables,start,end)
 		gl.drawArrays(gl.POINTS, 0, renderable.vertices.length/3);
 	}
 
-    gl.enable(gl.DEPTH_TEST);
+    //gl.enable(gl.DEPTH_TEST);
     gl.disable(gl.BLEND);
 }
 
