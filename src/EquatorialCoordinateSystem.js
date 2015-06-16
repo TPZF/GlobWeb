@@ -37,14 +37,17 @@ Utils.inherits( CoordinateSystem, EquatorialCoordinateSystem );
 /**
 *	Convert a 3D position to equatorial coordinates
 */
-EquatorialCoordinateSystem.prototype.from3DToEquatorial = function(position3d, dest){
+EquatorialCoordinateSystem.prototype.from3DToEquatorial = function(position3d, dest, inSexagesimal){
 	
-	if (!dest) { dest = new Array(3); }
+	dest = dest || new Array(3);
+	if( typeof(inSexagesimal) == 'undefined' ) {
+		inSexagesimal = true;	
+	}
 	
 	var geo = [];
 
 	this.from3DToGeo(position3d, geo);
-	this.fromGeoToEquatorial(geo, dest);
+	this.fromGeoToEquatorial(geo, dest, inSexagesimal);
 	
 	return dest;
 };
@@ -54,13 +57,15 @@ EquatorialCoordinateSystem.prototype.from3DToEquatorial = function(position3d, d
 /**
 *	Converts an equatorial position to 3D
 */
-EquatorialCoordinateSystem.prototype.fromEquatorialTo3D = function(equatorial, dest){
+EquatorialCoordinateSystem.prototype.fromEquatorialTo3D = function(equatorial, dest, inSexagesimal){
 	
-	if (!dest) { dest = new Array(3); }
-
+	dest = dest || new Array(3);
+	if( typeof(inSexagesimal) == 'undefined' ) {
+		inSexagesimal = true;	
+	}
 	var geo = [];
 	
-	this.fromEquatorialToGeo(equatorial, geo);
+	this.fromEquatorialToGeo(equatorial, geo, inSexagesimal);
 	this.fromGeoTo3D(geo,dest);
 	
 	return dest;	
@@ -70,37 +75,46 @@ EquatorialCoordinateSystem.prototype.fromEquatorialTo3D = function(equatorial, d
 
 /**
 *	Convert an equatorial position to geographic
-*	@param {String[]} equatorial Array of two strings corresponding to Right Ascension and Declination
-*					  specified by: "hours minuts seconds" and "degrees minuts seconds" respectively
-*	@param {Float[]} dest Destination array of two floats corresponding to Longitude and Latitude
+*	@param {String[]} equatorial Array of two numbers or strings corresponding to Right Ascension and Declination
+*	@param {Float[]} dest Destination array of two floats corresponding to Longitude and Latitude		  
+*	@param {Boolean} inSexagesimal, by default true. When inSexagesimal is true, the equatorial parameter is processed as a sexagesimal expression
+*                                       specified by: 'hours+"h" minuts+"m" seconds+"s"' and 'degrees+"°" minuts+"\'" seconds+"""'
 */
-EquatorialCoordinateSystem.prototype.fromEquatorialToGeo = function(equatorial, dest){
+EquatorialCoordinateSystem.prototype.fromEquatorialToGeo = function(equatorial, dest, inSexagesimal){
 	
-	if(!dest) dest = [];
-	
-	// we use string because : parseFloat("-0") returns 0..
-	function sign(stringDegree){
-		return ((stringDegree[0] == "-") ? -1 : 1);
+	dest = dest || [];
+	if( typeof(inSexagesimal) == 'undefined' ) {
+		inSexagesimal = true;	
 	}
 
-	var RA = equatorial[0].split(" ");
-	// long
-	var deg = parseFloat(RA[0]);
-	var min = parseFloat(RA[1]);
-	var sec = parseFloat(RA[2]);
+	if (inSexagesimal) {	
+		// we use string because : parseFloat("-0") returns 0..
+		function sign(stringDegree){
+			return ((stringDegree[0] == "-") ? -1 : 1);
+		}
+
+		var RA = equatorial[0].split(" ");
+		// long
+		var deg = parseFloat(RA[0]);
+		var min = parseFloat(RA[1]);
+		var sec = parseFloat(RA[2]);
 	
-	dest[0] = (deg + min/60 + sec/3600) * 15.;
-	if(dest[0] > 180)
+		dest[0] = (deg + min/60 + sec/3600) * 15.;
+	
+		var Decl = equatorial[1].split(" ");
+		// lat
+		deg = parseFloat(Decl[0]);
+		min = parseFloat(Decl[1]);
+		sec = parseFloat(Decl[2]);
+	
+		dest[1] = sign(Decl[0]) * (Math.abs(deg) + min/60 + sec/3600);
+	} else {
+		dest[0] = equatorial[0];
+		dest[1] = equatorial[1];
+	}
+	if(dest[0] > 180) {
 		dest[0] -= 360;
-	
-	var Decl = equatorial[1].split(" ");
-	// lat
-	deg = parseFloat(Decl[0]);
-	min = parseFloat(Decl[1]);
-	sec = parseFloat(Decl[2]);
-	
-	dest[1] = sign(Decl[0]) * (Math.abs(deg) + min/60 + sec/3600);
-	
+	}	
 	return dest;
 
 };
@@ -110,26 +124,37 @@ EquatorialCoordinateSystem.prototype.fromEquatorialToGeo = function(equatorial, 
 /**
 *	Convert a geographic position to equatorial
 *	@param {Float[]} geo Array of two floats corresponding to Longitude and Latitude
-*	@param {String[]} dest Destination array of two strings corresponding to Right Ascension and Declination
-*					  specified by: 'hours+"h" minuts+"m" seconds+"s"' and 'degrees+"�" minuts+"\'" seconds+"""' respectively
+*	@param {String[]} dest Destination array of two numbers or two strings in sexagesimal, respectively the Right Ascension and Declination
+*			  the Right ascension is in [0..360], the declination [-90..90]			  
+*	@param {Boolean} inSexagesimal, by default true. When inSexagesimal is true, the dest parameter is transformed in sexagesimal
+*                                       specified by: 'hours+"h" minuts+"m" seconds+"s"' and 'degrees+"°" minuts+"\'" seconds+"""'
 * 	@see <CoordinateSystem.fromDegreesToDMS>
 * * 	@see <CoordinateSystem.fromDegreesToHMS>
 */
-EquatorialCoordinateSystem.prototype.fromGeoToEquatorial = function(geo, dest){
+EquatorialCoordinateSystem.prototype.fromGeoToEquatorial = function(geo, dest, inSexagesimal){
 	
-	if (!dest) dest = [];
-	
+	dest = dest || [];
+	if( typeof(inSexagesimal) == 'undefined' ) {
+		inSexagesimal = true;	
+	}
+	 
 	var deg = geo[0];
 	// RA
 	if(deg < 0){
 		deg += 360;
 	}
 
-	dest[0] = this.fromDegreesToHMS( deg );
-	dest[1] = this.fromDegreesToDMS(geo[1]);
+	if (inSexagesimal) {
+		dest[0] = this.fromDegreesToHMS( deg );
+		dest[1] = this.fromDegreesToDMS(geo[1]);
+	} else {
+		dest[0] = deg;
+		dest[1] = geo[1];
+	}
 	
 	return dest;
 };
+
 
 /**************************************************************************************************************/
 
@@ -188,19 +213,31 @@ EquatorialCoordinateSystem.prototype.fromDegreesToHMS = function(degree)
  */
 EquatorialCoordinateSystem.prototype.convert = function(geo, from, to)
 {
+	var convertedGeo = null;
+	var convertType = null;
 	switch ( from+"2"+to ) {
 		case "GAL2EQ" :
 			convertType = AstroCoordTransform.Type.GAL2EQ;
+			convertedGeo = AstroCoordTransform.transformInDeg( geo, convertType );
 			break;
 		case "EQ2GAL" :
 			convertType = AstroCoordTransform.Type.EQ2GAL;
+			convertedGeo = AstroCoordTransform.transformInDeg( geo, convertType );
+                        if (convertedGeo[0] < 0) { // TODO : Check if convertedGeo can be negative;
+                            convertedGeo[0]+=360;
+			}
+			break;
+		case "EQ2EQ" :
+			convertedGeo = geo;
+			break;
+		case "GAL2GAL":
+			convertedGeo = geo;
 			break;
 		default:
 			console.error("Not implemented");
-			return null;
 	}
 	
-	return AstroCoordTransform.transformInDeg( geo, convertType );
+	return convertedGeo;
 };
 
 /**************************************************************************************************************/
