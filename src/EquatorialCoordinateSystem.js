@@ -213,6 +213,11 @@ EquatorialCoordinateSystem.prototype.fromDegreesToHMS = function(degree)
  */
 EquatorialCoordinateSystem.prototype.convert = function(geo, from, to)
 {
+	// No conversion needed
+	if ( from == to ) {
+		return geo;
+	}
+
 	var convertedGeo = null;
 	var convertType = null;
 	switch ( from+"2"+to ) {
@@ -223,15 +228,11 @@ EquatorialCoordinateSystem.prototype.convert = function(geo, from, to)
 		case "EQ2GAL" :
 			convertType = AstroCoordTransform.Type.EQ2GAL;
 			convertedGeo = AstroCoordTransform.transformInDeg( geo, convertType );
-                        if (convertedGeo[0] < 0) { // TODO : Check if convertedGeo can be negative;
-                            convertedGeo[0]+=360;
+            if (convertedGeo[0] < 0) {
+            	// TODO : Check if convertedGeo can be negative
+            	console.warn("EQ2GAL transformation returned negative value");
+                convertedGeo[0]+=360;
 			}
-			break;
-		case "EQ2EQ" :
-			convertedGeo = geo;
-			break;
-		case "GAL2GAL":
-			convertedGeo = geo;
 			break;
 		default:
 			console.error("Not implemented");
