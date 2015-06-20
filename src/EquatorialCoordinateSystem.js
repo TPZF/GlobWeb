@@ -228,10 +228,10 @@ EquatorialCoordinateSystem.prototype.convert = function(geo, from, to)
 		case "EQ2GAL" :
 			convertType = AstroCoordTransform.Type.EQ2GAL;
 			convertedGeo = AstroCoordTransform.transformInDeg( geo, convertType );
-            if (convertedGeo[0] < 0) {
-            	// TODO : Check if convertedGeo can be negative
-            	console.warn("EQ2GAL transformation returned negative value");
-                convertedGeo[0]+=360;
+			if (convertedGeo[0] < 0) {
+				// TODO : Check if convertedGeo can be negative
+				console.warn("EQ2GAL transformation returned negative value");
+				convertedGeo[0]+=360;
 			}
 			break;
 		default:
