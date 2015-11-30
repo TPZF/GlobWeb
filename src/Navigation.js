@@ -31,6 +31,9 @@
 		<ul>
 			<li>minDistance : The minimum distance</li>
 			<li>maxDistance : The maximum distance</li>
+			<li>geoCenter : The initial geo center of camera</li>
+			<li>distance : The initial distance from globe of camera in 3D</li>
+			<li>zoomDuration : The duration of zoom in ms</li>
 			<li>updateViewMatrix : Boolean indicating if view matrix must be updated on initialization</li>
 		</ul>
  */
@@ -45,10 +48,11 @@ var Navigation = function(globe,options)
 	this.maxDistance = (options && options.maxDistance) || 3.0 * this.globe.coordinateSystem.realEarthRadius;
 	
 	// Initialize the navigation
-	this.geoCenter = [0.0, 0.0, 0.0];
+	this.geoCenter = (options && options.geoCenter) ? options.geoCenter : [0.0, 0.0, 0.0];
 	this.heading = 0.0;
 	this.tilt = 90.0;
-	this.distance = 3.0 * this.globe.coordinateSystem.radius;
+	this.distance = (options && options.distance) ? options.distance : 3.0 * this.globe.coordinateSystem.radius;
+	this.zoomDuration = (options && options.zoomDuration) ? options.zoomDuration : 5000;
 		
 	// Scale min and max distance from meter to internal ratio
 	this.minDistance *= this.globe.coordinateSystem.heightScale;
@@ -114,7 +118,7 @@ Navigation.prototype.zoomTo = function(geoPos, distance, duration, tilt, callbac
 	var navigation = this;
 	
 	var destDistance = distance || this.distance / (4.0 * this.globe.coordinateSystem.heightScale);
-	duration = duration || 5000;
+	duration = duration || this.zoomDuration;
 	var destTilt = tilt || 90;
 	
 	// Create a single animation to animate geoCenter, distance and tilt
