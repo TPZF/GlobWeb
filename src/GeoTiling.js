@@ -134,7 +134,15 @@ var _getBBox = function(geometry) {
  */
 GeoTiling.prototype._lon2LevelZeroIndex = function(lon)
 {	
-	return Math.min(  this.level0NumTilesX-1, Math.floor( (lon + 180) * this.level0NumTilesX / 360 ) );
+	var levelZeroIndex = Math.floor( (lon + 180) * this.level0NumTilesX / 360 );
+
+    // Clamp between 0 and level0NumTilesX (can occure when lon isn't normalized)
+    if ( levelZeroIndex > this.level0NumTilesX-1 )
+        return this.level0NumTilesX-1;
+    if ( levelZeroIndex < 0 )
+        return 0;
+
+    return levelZeroIndex;
 }
 
 /**************************************************************************************************************/
