@@ -88,7 +88,7 @@ GeoBound.prototype.getEast = function()
 /**
 	Compute the geo bound from coordinates
  */
-GeoBound.prototype.computeFromCoordinates = function( coordinates )
+GeoBound.prototype.computeFromCoordinates = function( coordinates, checkDateLine )
 {
 	this.west = coordinates[0][0];
 	this.east = coordinates[0][0];
@@ -101,6 +101,13 @@ GeoBound.prototype.computeFromCoordinates = function( coordinates )
 		this.east = Math.max( this.east, coordinates[i][0] );
 		this.south = Math.min( this.south, coordinates[i][1] );
 		this.north = Math.max( this.north, coordinates[i][1] );
+
+		// HACK: If coordinates crosses dateline take all the globe
+		// Only used within intersectGeometry method to render properly crossing dateline polygon for now
+		if ( checkDateLine && Math.abs(coordinates[i-1][0] - coordinates[i][0]) > 180 ) {
+			this.west = -180;
+			this.east = 180;
+		}
 	}
 }
 
@@ -140,7 +147,7 @@ GeoBound.prototype.intersectsGeometry = function( geometry )
 			// Don't take care about holes
 			for ( var i = 0; i < coords.length && !isIntersected; i++ )
 			{
-				geoBound.computeFromCoordinates( coords[i] );
+				geoBound.computeFromCoordinates( coords[i], true );
 				isIntersected |= this.intersects(geoBound);
 			}
 			break;
