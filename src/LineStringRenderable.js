@@ -184,7 +184,7 @@ LineStringRenderable.prototype._buildVerticesAndIndices = function( tile, coords
 		}*/
 		
 		// Sort intersections found on the segment
-		intersections.sort( function(a,b) { return a[0] > b[0]; } );
+		intersections.sort( function(a,b) { return a[0] - b[0]; } );
 		
 		// Build the vertices from the intersections found
 		var startIndex = this.vertices.length / 3;
